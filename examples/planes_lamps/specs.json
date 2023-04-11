@@ -1,20 +1,19 @@
 {
     "Description": "Validating impact of latent size on vanilla deepsdf",
     "DataSource": "/home/shared/deepsdfcomp/data",
-    "TrainSplit": "/home/shared/deepsdfcomp/searches/splits/sv2_planes_train.json",
-    "TestSplit": "/home/shared/deepsdfcomp/searches/splits/sv2_planes_test_20.json",
-    "ShapeNetPath": "/mnt/hdd/ShapeNetCore.v2",
+    "TrainSplit": "examples/splits/sv2_planes_lamps_train.json",
+    "TestSplit": "examples/splits/sv2_planes_lamps_test_40.json",
     "NetworkArch": "siren_decoder",
     "NetworkSpecs": {
         "dims": [
-            256,
-            256,
-            256,
             512,
-            256,
-            256,
-            256,
-            256
+            512,
+            512,
+            512,
+            512,
+            512,
+            512,
+            512
         ],
         "dropout": [],
         "dropout_prob": 0,
@@ -29,8 +28,8 @@
         "encoding_features": 1,
         "encoding_sigma": 0
     },
-    "CodeLength": 256,
-    "NumEpochs": 2001,
+    "CodeLength": 320,
+    "NumEpochs": 3001,
     "SnapshotFrequency": 100,
     "AdditionalSnapshots": [
         100,
@@ -39,20 +38,20 @@
     "LearningRateSchedule": [
         {
             "Type": "Step",
-            "Initial": 0.0005,
-            "Interval": 500,
+            "Initial": 0.00025,
+            "Interval": 600,
             "Factor": 0.5
         },
         {
             "Type": "Step",
-            "Initial": 0.001,
-            "Interval": 500,
+            "Initial": 0.0005,
+            "Interval": 600,
             "Factor": 0.5
         }
     ],
     "SamplesPerScene": 16384,
     "ScenesPerBatch": 128,
-    "DataLoaderThreads": 12,
+    "DataLoaderThreads": 16,
     "LoadDatasetIntoRAM": true,
     "ClampingDistance": 0.1,
     "CodeRegularization": true,
@@ -61,7 +60,6 @@
     "EvalTrainFrequency": 100,
     "EvalTestFrequency": 100,
     "EvalTestOptimizationSteps": 200,
-    "EvalTrainSceneNumber": 10,
-    "EvalTestSceneNumber": 20
+    "EvalTrainSceneNumber": 40,
+    "EvalTestSceneNumber": 40
 }
-
