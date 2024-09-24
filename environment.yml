@@ -1,5 +1,5 @@
 # run: conda env create --file environment.yml
-name: deep3dcomp
+name: inr_sdf
 channels: 
   - pytorch         # Channel ordering is important!
   - nvidia          
