@@ -32,10 +32,10 @@ def main(data_dir, source_dir, splits_dir, debug=False):
         start_time = time.time()
         with open(split_path, "r") as f:
             split = json.load(f)
-            num_shapes = len(list(list(split.values())[0].values())[0])
+            num_shapes = len(split)
         logging.info(f"[{i}/{len(all_splits_paths)}] Preprocessing split: {split_path} (containing {num_shapes} shapes).")
 
-        cmd_train = f"python ../../preprocess_data.py --data_dir {data_dir} --name ShapeNetV2 --source {source_dir} --split {split_path} --threads {num_threads} --skip"
+        cmd_train = f"python preprocess_data.py --data_dir {data_dir} --source {source_dir} --split {split_path} --threads {num_threads} --skip"
         cmd_eval = f"{cmd_train} --surface"
         cmd_test = f"{cmd_train} --test"
         
@@ -58,9 +58,9 @@ def main(data_dir, source_dir, splits_dir, debug=False):
 
 if __name__ == "__main__":
 
-    data_dir = "../../../../shared/deepsdfcomp/data"        # This needs to be changed to where you want your data to be extracted to!
-    source_dir = "/mnt/hdd/ShapeNetCore.v2"
-    splits_dir = "../../examples/splits"
+    data_dir = "../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/sdf_data"        # This needs to be changed to where you want your data to be extracted to!
+    source_dir = "../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/obj_files"
+    splits_dir = "examples/splits/splits_new"
 
     arg_parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     deep_sdf.add_common_args(arg_parser)
