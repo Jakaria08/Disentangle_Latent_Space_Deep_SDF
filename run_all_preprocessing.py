@@ -39,7 +39,7 @@ def main(data_dir, source_dir, splits_dir, debug=False):
         cmd_eval = f"{cmd_train} --surface"
         cmd_test = f"{cmd_train} --test"
         
-        for cmd in [cmd_train, cmd_eval, cmd_test]:
+        for cmd in [cmd_train]:
             if debug: 
                 logging.info(f"Running cmd: {cmd}")
             try:

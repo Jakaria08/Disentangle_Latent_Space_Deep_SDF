@@ -16,22 +16,19 @@ from typing import Tuple, List
 
 def get_instance_filenames(data_source, split):
     npzfiles = []
-    for dataset in split:
-        for class_name in split[dataset]:
-            for instance_name in split[dataset][class_name]:
-                instance_filename = os.path.join(
-                    dataset, class_name, instance_name + ".npz"
-                )
-                if not os.path.isfile(
-                    os.path.join(data_source, ws.sdf_samples_subdir, instance_filename)
-                ):
-                    # raise RuntimeError(
-                    #     'Requested non-existent file "' + instance_filename + "'"
-                    # )
-                    logging.warning(
-                        "Requested non-existent file '{}'".format(instance_filename)
-                    )
-                npzfiles += [instance_filename]
+    for instance_name in split:
+        instance_filename = os.path.join(data_source, instance_name + ".npz")
+
+        if not os.path.isfile(
+            os.path.join(data_source, ws.sdf_samples_subdir, instance_filename)
+        ):
+            # raise RuntimeError(
+            #     'Requested non-existent file "' + instance_filename + "'"
+            # )
+            logging.warning(
+                "Requested non-existent file '{}'".format(instance_filename)
+            )
+        npzfiles += [instance_filename]
     return npzfiles
 
 
