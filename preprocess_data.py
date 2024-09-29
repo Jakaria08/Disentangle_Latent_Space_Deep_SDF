@@ -165,7 +165,7 @@ if __name__ == "__main__":
             additional_general_args += ["-t"]
 
     with open(args.split_filename, "r") as f:
-        split = json.load(f)
+        object_files = json.load(f)
 
     if args.source_name is None:
         args.source_name = os.path.basename(os.path.normpath(args.source_dir))
@@ -191,62 +191,38 @@ if __name__ == "__main__":
 
     append_data_source_map(args.data_dir, args.source_name, args.source_dir)
 
-    class_directories = split[args.source_name]
-
     meshes_targets_and_specific_args = []
 
-    for class_dir in class_directories:
-        class_path = os.path.join(args.source_dir, class_dir)
-        instance_dirs = class_directories[class_dir]
+    for obj_file in object_files:
+        shape_dir = os.path.join(args.source_dir, obj_file)
 
-        logging.debug(
-            "Processing " + str(len(instance_dirs)) + " instances of class " + class_dir
-        )
+        processed_filepath = os.path.join(dest_dir, os.path.splitext(obj_file)[0] + extension)
+        if args.skip and os.path.isfile(processed_filepath):
+            logging.debug("skipping " + processed_filepath)
+            continue
 
-        target_dir = os.path.join(dest_dir, class_dir)
+        try:
+            specific_args = []
 
-        if not os.path.isdir(target_dir):
-            os.mkdir(target_dir)
-
-        for instance_dir in instance_dirs:
-
-            shape_dir = os.path.join(class_path, instance_dir)
-
-            processed_filepath = os.path.join(target_dir, instance_dir + extension)
-            if args.skip and os.path.isfile(processed_filepath):
-                logging.debug("skipping " + processed_filepath)
-                continue
-
-            try:
-                mesh_filename = deep_sdf.data.find_mesh_in_directory(shape_dir)
-
-                specific_args = []
-
-                if args.surface_sampling:
-                    normalization_param_target_dir = os.path.join(
-                        normalization_param_dir, class_dir
-                    )
-
-                    if not os.path.isdir(normalization_param_target_dir):
-                        os.mkdir(normalization_param_target_dir)
-
-                    normalization_param_filename = os.path.join(
-                        normalization_param_target_dir, instance_dir + ".npz"
-                    )
-                    specific_args = ["-n", normalization_param_filename]
-
-                meshes_targets_and_specific_args.append(
-                    (
-                        os.path.join(shape_dir, mesh_filename),
-                        processed_filepath,
-                        specific_args,
-                    )
+            if args.surface_sampling:
+                normalization_param_filename = os.path.join(
+                    normalization_param_dir, os.path.splitext(obj_file)[0] + ".npz"
                 )
+                specific_args = ["-n", normalization_param_filename]
 
-            except deep_sdf.data.NoMeshFileError:
-                logging.warning("No mesh found for instance " + instance_dir)
-            except deep_sdf.data.MultipleMeshFileError:
-                logging.warning("Multiple meshes found for instance " + instance_dir)
+            meshes_targets_and_specific_args.append(
+                (
+                    shape_dir,
+                    processed_filepath,
+                    specific_args,
+                )
+            )
+
+        except deep_sdf.data.NoMeshFileError:
+            logging.warning("No mesh found for instance " + obj_file)
+        except deep_sdf.data.MultipleMeshFileError:
+            logging.warning("Multiple meshes found for instance " + obj_file)
+
 
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=int(args.num_threads)
