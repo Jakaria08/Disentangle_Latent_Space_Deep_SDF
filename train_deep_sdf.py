@@ -732,6 +732,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
 if __name__ == "__main__":
 
+    #python train_deep_sdf.py -e examples/torus
+
     import argparse
 
     arg_parser = argparse.ArgumentParser(description="Train a DeepSDF autodecoder")

@@ -17,10 +17,12 @@ from typing import Tuple, List
 def get_instance_filenames(data_source, split):
     npzfiles = []
     for instance_name in split:
-        instance_filename = os.path.join(data_source, instance_name + ".npz")
+        # Remove .obj extension
+        instance_name_without_extension = os.path.splitext(instance_name)[0]
+        instance_filename = os.path.join(data_source, instance_name_without_extension + ".npz")
 
         if not os.path.isfile(
-            os.path.join(data_source, ws.sdf_samples_subdir, instance_filename)
+            os.path.join(data_source, instance_filename)
         ):
             # raise RuntimeError(
             #     'Requested non-existent file "' + instance_filename + "'"
@@ -143,7 +145,7 @@ class SDFSamples(torch.utils.data.Dataset):
         if load_ram:
             self.loaded_data = []
             for f in self.npyfiles:
-                filename = os.path.join(self.data_source, ws.sdf_samples_subdir, f)
+                filename = os.path.join(self.data_source, f)
                 npz = np.load(filename)
                 pos_tensor = remove_nans(torch.from_numpy(npz["pos"]))
                 neg_tensor = remove_nans(torch.from_numpy(npz["neg"]))
@@ -161,7 +163,7 @@ class SDFSamples(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         TIME = time.time()
         filename = os.path.join(
-            self.data_source, ws.sdf_samples_subdir, self.npyfiles[idx]
+            self.data_source, self.npyfiles[idx]
         )
         if self.load_ram:
             retval = (
