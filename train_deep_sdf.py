@@ -272,10 +272,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     with open(train_split_file, "r") as f:
         train_split = json.load(f)
 
-    shapenet_path = get_spec_with_default(specs, "ShapeNetPath", "/mnt/hdd/ShapeNetCore.v2")
-    if not os.path.exists(shapenet_path):
-        logging.error(f"Running w/o validation, since the specified ShapeNet path does not exist: {shapenet_path}")
-        shapenet_path = None
+    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/sdf_data/obj_files")
+    if not os.path.exists(torus_path):
+        logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
+        torus_path = None
     load_ram = get_spec_with_default(specs, "LoadDatasetIntoRAM", False)
     if load_ram:
         logging.info(f"Loading SDF samples into memory because LoadDatasetIntoRAM=true")
@@ -297,14 +297,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 9999)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 10)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 
     # Get test evaluation settings.
     with open(test_split_file, "r") as f:
         test_split = json.load(f)
-    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 9999)
+    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 10)
     eval_test_scene_num = get_spec_with_default(specs, "EvalTestSceneNumber", 10)
     eval_test_optimization_steps = get_spec_with_default(specs, "EvalTestOptimizationSteps", 1000)
     eval_test_filenames = deep_sdf.data.get_instance_filenames(data_source, test_split)
@@ -555,9 +555,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     epoch,
                 )
             
-
-            # EVALUATION 
-            if shapenet_path:
+        
+                # EVALUATION 
+            if torus_path is not None:
                 # Only if the path to the GT meshes exists.
                 if epoch % eval_train_frequency == 0:
                     # Training-set evaluation: Reconstruct mesh from learned latent and compute metrics.
@@ -566,9 +566,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     eval_train_time_start = time.time()
                     for index in eval_train_scene_idxs:
                         lat_vec = lat_vecs(torch.LongTensor([index])).cuda()
-                        mesh_class_id = sdf_dataset.npyfiles[index].split(".npz")[0].split(os.sep)[-2]
-                        mesh_shape_id = sdf_dataset.npyfiles[index].split(".npz")[0].split(os.sep)[-1]
-                        save_name = mesh_class_id + "_" + mesh_shape_id
+                        save_name = os.path.basename(sdf_dataset.npyfiles[index]).split(".npz")[0]
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_train_reconstructions, save_name)
                         if not os.path.exists(path):
                             os.makedirs(path)
@@ -586,12 +584,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         logging.debug("[Train eval] Total time to create training mesh: {}".format(time.time() - start))
 
                         if train_mesh is not None:
-                            gt_mesh_path = f"{shapenet_path}/{mesh_class_id}/{mesh_shape_id}/models/model_normalized.obj"
+                            gt_mesh_path = f"{torus_path}/{save_name}.obj"
                             cd, cd_all = metrics.compute_metric(gt_mesh=gt_mesh_path, gen_mesh=train_mesh, metric="chamfer")
                             chamfer_dists.append(cd)
                             chamfer_dists_all.append(cd_all)
                         
-                        del train_mesh, mesh_class_id, mesh_shape_id, save_name
+                        del train_mesh, save_name
 
                     if chamfer_dists:
                         logging.debug(f"Chamfer distance mean: {sum(chamfer_dists)/len(chamfer_dists)} from {chamfer_dists}.")            
@@ -614,10 +612,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     mesh_label_names = []
                     test_latents = []
                     for test_fname in eval_test_filenames:
-                        mesh_class_id = test_fname.split(".npz")[0].split(os.sep)[-2]
-                        mesh_shape_id = test_fname.split(".npz")[0].split(os.sep)[-1]
-                        mesh_label_names.append(f"{mesh_class_id}_{mesh_shape_id}")
-                        save_name = mesh_class_id + "_" + mesh_shape_id
+                        save_name = os.path.basename(sdf_dataset.npyfiles[index]).split(".npz")[0]
+                        mesh_label_names.append(save_name)
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_test_reconstructions, save_name)
                         if not os.path.exists(path):
                             os.makedirs(path)
@@ -658,7 +654,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         logging.debug("[Test eval] Total time to create test mesh: {}".format(time.time() - start))
 
                         if test_mesh is not None:
-                            gt_mesh_path = f"{shapenet_path}/{mesh_class_id}/{mesh_shape_id}/models/model_normalized.obj"
+                            gt_mesh_path = f"{torus_path}/{save_name}.obj"
                             cd, cd_all = metrics.compute_metric(gt_mesh=gt_mesh_path, gen_mesh=test_mesh, metric="chamfer")
                             chamfer_dists.append(cd)
                             chamfer_dists_all.append(cd_all)

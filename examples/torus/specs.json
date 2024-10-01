@@ -1,9 +1,10 @@
 {
   "Description" : [ "This experiment learns a shape representation for torus ",
                     "using synthetic data." ],
-  "DataSource" : "../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/sdf_data/SdfSamples/obj_files",
+  "DataSource" : "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/sdf_data/SdfSamples/obj_files",
   "TrainSplit" : "examples/splits/splits_new/test_split_torus.json",
   "TestSplit" : "examples/splits/splits_new/val_split_torus.json",
+  "TorusPath" : "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/sdf_data/obj_files",
   "NetworkArch" : "deep_sdf_decoder",
   "NetworkSpecs" : {
     "dims" : [ 512, 512, 512, 512, 512, 512, 512, 512 ],
