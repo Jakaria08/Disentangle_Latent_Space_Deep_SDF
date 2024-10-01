@@ -22,7 +22,6 @@ import reconstruct
 
 from torch.utils.tensorboard import SummaryWriter
 
-
 def save_model(experiment_directory, filename, decoder, epoch):
 
     model_params_dir = ws.get_model_params_dir(experiment_directory, True)
@@ -185,6 +184,8 @@ def append_parameter_magnitudes(param_mag_log, model):
 
 def main_function(experiment_directory: str, continue_from, batch_split: int):
 
+   
+    
     logging.debug("running experiment " + experiment_directory)
 
     specs = ws.load_experiment_specifications(experiment_directory)
@@ -272,8 +273,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     with open(train_split_file, "r") as f:
         train_split = json.load(f)
 
-    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/sdf_data/obj_files")
-    if not os.path.exists(torus_path):
+    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/obj_files")
+    logging.info(f"Torus path: {torus_path}")
+    if not os.path.exists(torus_path): 
         logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
         torus_path = None
     load_ram = get_spec_with_default(specs, "LoadDatasetIntoRAM", False)
@@ -297,14 +299,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 10)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 20)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 
     # Get test evaluation settings.
     with open(test_split_file, "r") as f:
         test_split = json.load(f)
-    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 10)
+    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 20)
     eval_test_scene_num = get_spec_with_default(specs, "EvalTestSceneNumber", 10)
     eval_test_optimization_steps = get_spec_with_default(specs, "EvalTestOptimizationSteps", 1000)
     eval_test_filenames = deep_sdf.data.get_instance_filenames(data_source, test_split)
@@ -492,7 +494,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     chunk_loss.backward()
 
                     batch_loss_tb += chunk_loss.item()
-                                    
+                    # Print batch loss
+                print(f"Batch loss: {batch_loss_tb}")                    
                 logging.debug("loss = {}".format(batch_loss_tb))
                 loss_log.append(batch_loss_tb)
                 epoch_losses.append(batch_loss_tb)
@@ -558,8 +561,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         
                 # EVALUATION 
             if torus_path is not None:
+                
                 # Only if the path to the GT meshes exists.
                 if epoch % eval_train_frequency == 0:
+                    logging.info(f"Train Evaluation Started...")
                     # Training-set evaluation: Reconstruct mesh from learned latent and compute metrics.
                     chamfer_dists = []
                     chamfer_dists_all = []
@@ -603,6 +608,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     # End of eval train.
                 
                 if epoch % eval_test_frequency == 0:
+                    logging.info(f"Test Evaluation Started...")
                     # Test-set evaluation: Reconstruct latent and mesh from GT sdf values and compute metrics.
                     eval_test_time_start = time.time()
                     test_err_sum = 0.
