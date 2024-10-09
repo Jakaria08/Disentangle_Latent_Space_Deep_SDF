@@ -755,8 +755,6 @@ def plot_lat_interpolation(
     shape_id_1: str,
     shape_id_2: str,
     interpolation_weight: float,
-    synset_id: str = "02691156", 
-    dataset_name: str = "ShapeNetV2", 
     checkpoint: int = 2000
     ):
     assert 0.0 <= interpolation_weight <= 1.0, "INTERPOLATION WEIGHT MUST BE IN [0.0, 1.0]"
@@ -771,8 +769,7 @@ def plot_lat_interpolation(
         specs = json.load(f)
     with open(specs["TrainSplit"]) as f:
         splits = json.load(f)
-        shape_ids = [shape_id for synset_id in splits[dataset_name] for shape_id in splits[dataset_name][synset_id]]
-        splits[dataset_name][synset_id]
+        shape_ids = splits
         latent1 = latents[shape_ids.index(shape_id_1)]
         latent2 = latents[shape_ids.index(shape_id_2)]
         latent = torch.lerp(latent1, latent2, interpolation_weight)
@@ -795,9 +792,9 @@ def plot_lat_interpolation(
             decoder, latent, N=256, max_batch=int(2 ** 18), return_trimesh=True
         )
     
-    color, _ = pyrender_helper(mesh, -math.pi/4, 3*math.pi/4, 0)
+    color, _ = pyrender_helper(mesh, 0, 0, 0)
     ax.imshow(color)
     
     fig.tight_layout()
     plt.close()
-    return fig
+    return fig, mesh

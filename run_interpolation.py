@@ -6,13 +6,13 @@ from random import choice
 import os
 
 
-with open("examples/splits/sv2_planes_lamps_train.json") as f:
+with open("examples/splits/splits_new/test_split_torus.json") as f: 
     splits = json.load(f)
 
-shape_id_choices = splits["ShapeNetV2"]["02691156"]
-
+shape_id_choices = splits
+n = 2
 i = 0
-while True:
+while i < n:
     i += 1
     shape_id_1 = choice(shape_id_choices)
     shape_id_2 = choice(shape_id_choices)
@@ -21,11 +21,13 @@ while True:
     # single image takes approx. 20sec -x30-> 600sec=10min
     for j, w in enumerate(np.linspace(0.0, 1.0, 30)):
         
-        fig = plotting.plot_lat_interpolation(
-            exp_dir = "examples/planes_lamps",    
+        fig, mesh = plotting.plot_lat_interpolation(
+            exp_dir = "examples/torus",    
             shape_id_1 = shape_id_1,
             shape_id_2 = shape_id_2,
             interpolation_weight = w,
-            checkpoint = 3000,
+            checkpoint = 2000,
         )
         fig.savefig(f"interpolation/{i}_{shape_id_1}_{shape_id_2}/{j:06}.jpg")
+        mesh_filename = f"interpolation/{i}_{shape_id_1}_{shape_id_2}/{j:06}.ply"
+        mesh.export(mesh_filename)
