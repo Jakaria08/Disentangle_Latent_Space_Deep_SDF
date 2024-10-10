@@ -1,9 +1,12 @@
 import os
 import trimesh
 
-# Directory containing the .ply files
-input_directory = '../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle'
-output_directory = '../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/obj_files'
+#Directory containing the .ply files
+#input_directory = '../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle'
+#output_directory = '../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/obj_files'
+
+input_directory = '../../../torus_two_models_data/torus_two'
+output_directory = '../../../torus_two_models_data/torus_two/obj_files'
 
 # Ensure the output directory exists
 if not os.path.exists(output_directory):
