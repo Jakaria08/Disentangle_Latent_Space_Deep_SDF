@@ -39,7 +39,7 @@ def main(data_dir, source_dir, splits_dir, debug=False):
         cmd_eval = f"{cmd_train} --surface"
         cmd_test = f"{cmd_train} --test"
         
-        for cmd in [cmd_train]:
+        for cmd in [cmd_train, cmd_test]:
             if debug: 
                 logging.info(f"Running cmd: {cmd}")
             try:
@@ -58,9 +58,9 @@ def main(data_dir, source_dir, splits_dir, debug=False):
 
 if __name__ == "__main__":
 
-    data_dir = "../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/sdf_data"        # This needs to be changed to where you want your data to be extracted to!
-    source_dir = "../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/obj_files"
-    splits_dir = "examples/splits/splits_new"
+    data_dir = "../../torus_two_models_data/torus_two/sdf_data"        # This needs to be changed to where you want your data to be extracted to!
+    source_dir = "../../torus_two_models_data/torus_two/obj_files"
+    splits_dir = "examples/splits/splits_torus_rotate_bump"
 
     arg_parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     deep_sdf.add_common_args(arg_parser)

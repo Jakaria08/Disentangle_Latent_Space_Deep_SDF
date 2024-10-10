@@ -273,7 +273,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     with open(train_split_file, "r") as f:
         train_split = json.load(f)
 
-    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/obj_files")
+    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria//torus_two_models_data/torus_two/obj_files")
     logging.info(f"Torus path: {torus_path}")
     if not os.path.exists(torus_path): 
         logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
@@ -734,7 +734,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
 if __name__ == "__main__":
 
-    #python train_deep_sdf.py -e examples/torus
+    #python train_deep_sdf.py -e examples/torus_bump_rotate
 
     import argparse
 
