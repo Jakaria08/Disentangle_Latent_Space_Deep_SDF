@@ -10,7 +10,7 @@ def run(cmd):
     except KeyboardInterrupt:
         p.terminate()
 
-path = "examples/torus"
+path = "/home/jakaria/INR/Deep3DComp/examples/torus"
 #python_exe = "C:/Users/Lenny/anaconda3/envs/deep-comp/python.exe"
 
 data_path = "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/sdf_data/SdfSamples/obj_files"

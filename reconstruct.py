@@ -236,15 +236,15 @@ if __name__ == "__main__":
 
             if rerun > 1:
                 mesh_filename = os.path.join(
-                    reconstruction_meshes_dir, npz[:-4] + "-" + str(k + rerun)
+                    reconstruction_meshes_dir, os.path.basename(npz)[:-4] + "-" + str(k + rerun)
                 )
                 latent_filename = os.path.join(
-                    reconstruction_codes_dir, npz[:-4] + "-" + str(k + rerun) + ".pth"
+                    reconstruction_codes_dir, os.path.basename(npz)[:-4] + "-" + str(k + rerun) + ".pth"
                 )
             else:
-                mesh_filename = os.path.join(reconstruction_meshes_dir, npz[:-4])
+                mesh_filename = os.path.join(reconstruction_meshes_dir, os.path.basename(npz)[:-4])
                 latent_filename = os.path.join(
-                    reconstruction_codes_dir, npz[:-4] + ".pth"
+                    reconstruction_codes_dir, os.path.basename(npz)[:-4] + ".pth"
                 )
 
             if (
@@ -283,13 +283,15 @@ if __name__ == "__main__":
             if not os.path.exists(os.path.dirname(mesh_filename)):
                 os.makedirs(os.path.dirname(mesh_filename))
 
+            logging.info("Mesh File Name: {}".format(mesh_filename))
+
             if not save_latvec_only:
                 start = time.time()
                 with torch.no_grad():
                     mesh.create_mesh(
                         decoder, latent, mesh_filename, N=256, max_batch=int(2 ** 18)
                     )
-                logging.debug("total time: {}".format(time.time() - start))
+                logging.info("total time: {}".format(time.time() - start))
 
             if not os.path.exists(os.path.dirname(latent_filename)):
                 os.makedirs(os.path.dirname(latent_filename))
