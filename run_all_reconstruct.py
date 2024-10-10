@@ -32,6 +32,7 @@ run(cmd)
 # reconstruct train
 cmd = f"{python_exe} reconstruct.py --split {train_split_file_path} -d {data_path} -e {path} -c {checkpoint} --skip"
 run(cmd)
+'''
 if not os.path.exists(os.path.join(path, "Evaluation", str(checkpoint), "chamfer.csv")):
     # evaluate eval
     print("eval on test set")
@@ -42,3 +43,4 @@ if not os.path.exists(os.path.join(path, "Evaluation", str(checkpoint), "chamfer
     print("eval on train set")
     cmd = f"{python_exe} evaluate.py --split {train_split_file_path} -d {data_path} -e {path} -c {checkpoint}"
     run(cmd)
+'''
