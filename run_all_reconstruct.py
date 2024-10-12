@@ -10,12 +10,12 @@ def run(cmd):
     except KeyboardInterrupt:
         p.terminate()
 
-path = "/home/jakaria/INR/Deep3DComp/examples/torus"
+path = "/home/jakaria/INR/Deep3DComp/examples/torus_bump_rotate"
 #python_exe = "C:/Users/Lenny/anaconda3/envs/deep-comp/python.exe"
 
-data_path = "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/sdf_data/SdfSamples/obj_files"
-eval_split_file_path = "examples/splits/splits_new/test_split_torus.json"
-train_split_file_path = "examples/splits/splits_new/test_split_torus.json"
+data_path = "/home/jakaria/torus_two_models_data/torus_two/sdf_data/SdfSamples/obj_files"
+eval_split_file_path = "examples/splits/splits_torus_rotate_bump/val_split_torus.json"
+train_split_file_path = "examples/splits/splits_torus_rotate_bump/train_split_torus.json"
 
 #path = "../../shared/deepsdfcomp/searches/num_params_search/upload"
 python_exe = "python"
