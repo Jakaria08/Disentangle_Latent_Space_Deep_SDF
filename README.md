@@ -177,13 +177,11 @@ python evaluate.py -e ../../shared/deepsdfcomp/searches/double_nonlinearity/line
 
 ## Team
 
-Philipp Wulff and Leonard Freißmuth.
-
-We want thank Prof. Matthias Nießner for supervising our project.
+Jakaria Rabbi
 
 ## Citation
 
-If you use Deep3DComp in your research, please cite:
+Deep3DComp
 
 ```
 @article{freissmuth2023deep3dcomp,
