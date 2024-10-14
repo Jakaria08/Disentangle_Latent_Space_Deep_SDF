@@ -6,7 +6,7 @@ from random import choice
 import os
 
 
-with open("examples/splits/splits_new/test_split_torus.json") as f: 
+with open("examples/splits/splits_torus_rotate_bump/train_split_torus.json") as f: 
     splits = json.load(f)
 
 shape_id_choices = splits
