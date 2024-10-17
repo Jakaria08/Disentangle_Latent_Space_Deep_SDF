@@ -25,7 +25,7 @@ class Decoder(nn.Module):
         def make_sequence():
             return []
 
-        dims = [latent_size + 3] + dims + [1]
+        dims = [latent_size + 4] + dims + [1]
 
         self.num_layers = len(dims)
         self.norm_layers = norm_layers

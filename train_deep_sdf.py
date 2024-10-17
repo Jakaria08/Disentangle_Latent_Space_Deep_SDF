@@ -185,7 +185,7 @@ def append_parameter_magnitudes(param_mag_log, model):
 def main_function(experiment_directory: str, continue_from, batch_split: int):
 
    
-    
+
     logging.debug("running experiment " + experiment_directory)
 
     specs = ws.load_experiment_specifications(experiment_directory)
@@ -430,17 +430,26 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             decoder.train()
 
             adjust_learning_rate(lr_schedules, optimizer_all, epoch, loss_log_epoch)
-            for sdf_data, indices in sdf_loader:
+            for sdf_data, indices, labels in sdf_loader:
                 # logging.debug(f"time for dataloading: {(time.time() - TIME)*1000:.3f} ms"); TIME = time.time()
                 # Process the input data
                 sdf_data = sdf_data.reshape(-1, 4)
 
                 num_sdf_samples = sdf_data.shape[0]
-
+                #logging.info(f"sdf_data shape: {sdf_data.shape}")
+                #logging.info(f"labels shape: {labels.shape}")
+                #logging.info(f"indices: {indices}")
                 sdf_data.requires_grad = False
 
                 xyz = sdf_data[:, 0:3]
                 xyz.requires_grad = True
+                labels = labels[:,0] # Bump or no Bump, binary label
+                labels = labels.to(torch.float32)
+                #labels = labels.cuda()
+                #logging.info(f"labels shape: {labels.shape}")
+                #logging.info(f"labels data type: {labels.dtype}")
+                #logging.info(f"xyz data type: {xyz.dtype}")
+                labels.requires_grad = True
                 sdf_gt = sdf_data[:, 3].unsqueeze(1)
 
                 if enforce_minmax:
@@ -451,6 +460,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     indices.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1),
                     batch_split,
                 )
+
+                labels = torch.chunk(
+                    labels.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1),
+                    batch_split,
+                )
+
+                #labels = torch.chunk(labels, batch_split)
 
                 sdf_gt = torch.chunk(sdf_gt, batch_split)
 
@@ -464,7 +480,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 for i in range(batch_split):
 
                     batch_vecs = lat_vecs(indices[i])
-                    input = torch.cat([batch_vecs, xyz[i]], dim=1)
+                    labels = labels[i].unsqueeze(-1)
+                    #logging.info(f"batch_vecs shape: {batch_vecs.shape}")
+                    #logging.info(f"xyz shape: {xyz[i].shape}")
+                    #logging.info(f"indices shape: {indices[i].shape}")
+                    #logging.info(f"indices: {indices[i]}")
+                    #logging.info(f"labels shape: {labels.shape}")
+                    input = torch.cat([batch_vecs, xyz[i], labels], dim=1)
                     
                     # NN optimization
                     pred_sdf = decoder(input)
@@ -561,7 +583,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         
                 # EVALUATION 
             if torus_path is not None:
-                
+                logging.info(f"Torus path: {torus_path}")
                 # Only if the path to the GT meshes exists.
                 if epoch % eval_train_frequency == 0:
                     logging.info(f"Train Evaluation Started...")
