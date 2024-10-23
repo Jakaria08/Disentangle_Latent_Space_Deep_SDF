@@ -16,11 +16,16 @@ import random
 import numpy as np
 
 import deep_sdf
-from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils
+from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils, loss
 import deep_sdf.workspace as ws
 import reconstruct
 
 from torch.utils.tensorboard import SummaryWriter
+
+guided_contrastive_loss = True
+beta = 0.0015
+temp = 181
+w_cls = 0.5
 
 def save_model(experiment_directory, filename, decoder, epoch):
 
@@ -181,6 +186,14 @@ def append_parameter_magnitudes(param_mag_log, model):
             param_mag_log[name] = []
         param_mag_log[name].append(param.data.norm().item())
 
+def reparameterize(mu, logvar):
+    std = torch.exp(0.5 * logvar)
+    eps = torch.randn_like(std)
+    return mu + eps * std
+
+def kl_divergence(mu, logvar):
+    return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+
 
 def main_function(experiment_directory: str, continue_from, batch_split: int):
 
@@ -223,12 +236,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     def save_latest(epoch):
         save_model(experiment_directory, "latest.pth", decoder, epoch)
         save_optimizer(experiment_directory, "latest.pth", optimizer_all, epoch)
-        save_latent_vectors(experiment_directory, "latest.pth", lat_vecs, epoch)
+        save_latent_vectors(experiment_directory, "latest.pth", mu, epoch)
 
     def save_checkpoints(epoch):
         save_model(experiment_directory, str(epoch) + ".pth", decoder, epoch)
         save_optimizer(experiment_directory, str(epoch) + ".pth", optimizer_all, epoch)
-        save_latent_vectors(experiment_directory, str(epoch) + ".pth", lat_vecs, epoch)
+        save_latent_vectors(experiment_directory, str(epoch) + ".pth", mu, epoch)
 
     # def signal_handler(sig, frame):
     #     logging.info("Stopping early...")
@@ -319,17 +332,30 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     logging.info("There are {} scenes".format(num_scenes))
 
     logging.debug(decoder)
-
+    '''
     lat_vecs = torch.nn.Embedding(num_scenes, latent_size, max_norm=code_bound)
     torch.nn.init.normal_(
         lat_vecs.weight.data,
         0.0,
         get_spec_with_default(specs, "CodeInitStdDev", 1.0) / math.sqrt(latent_size),
     )
-
+    '''
+    mu = torch.nn.Embedding(num_scenes, latent_size, max_norm=code_bound)
+    torch.nn.init.normal_(
+        mu.weight.data,
+        0.0,
+        get_spec_with_default(specs, "CodeInitStdDev", 1.0) / math.sqrt(latent_size),
+    )
+    logvar = torch.nn.Embedding(num_scenes, latent_size, max_norm=code_bound)
+    torch.nn.init.normal_(
+        logvar.weight.data,
+        0.0,
+        get_spec_with_default(specs, "CodeInitStdDev", 1.0) / math.sqrt(latent_size),
+    )
+    #using mu instead of lat_vecs
     logging.debug(
         "initialized with mean magnitude {}".format(
-            get_mean_latent_vector_magnitude(lat_vecs)
+            get_mean_latent_vector_magnitude(mu)
         )
     )
 
@@ -341,9 +367,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             "lr": lr_schedules[0].get_learning_rate(0),
         },
         {
-            "params": lat_vecs.parameters(),
-            "lr": lr_schedules[1].get_learning_rate(0),
-        }]
+            "params": mu.parameters(),
+            "lr": lr_schedules[2].get_learning_rate(0),
+        }
+        ]
     )
 
     summary_writer = SummaryWriter(log_dir=os.path.join(experiment_directory, ws.tb_logs_dir))
@@ -362,7 +389,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         logging.info('continuing from "{}"'.format(continue_from))
 
         lat_epoch = load_latent_vectors(
-            experiment_directory, continue_from + ".pth", lat_vecs
+            experiment_directory, continue_from + ".pth", mu
         )
 
         model_epoch = ws.load_model_parameters(
@@ -406,9 +433,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     )
     logging.info(
         "Number of shape code parameters: {} (# codes {}, code dim {})".format(
-            lat_vecs.num_embeddings * lat_vecs.embedding_dim,
-            lat_vecs.num_embeddings,
-            lat_vecs.embedding_dim,
+            mu.num_embeddings * mu.embedding_dim,
+            mu.num_embeddings,
+            mu.embedding_dim,
         )
     )
     
@@ -423,6 +450,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_sdf_losses = []
             epoch_reg_losses = []
             epoch_eikonal_losses = []
+            epoch_snnl = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -474,19 +502,23 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 sdf_loss_tb = 0.0
                 reg_loss_tb = 0.0
                 eikonal_loss_tb = 0.0
+                snnl = 0.0
 
                 optimizer_all.zero_grad()
 
                 for i in range(batch_split):
 
-                    batch_vecs = lat_vecs(indices[i])
+                    #batch_vecs = lat_vecs(indices[i])
+                    batch_mu = mu(indices[i])
+                    batch_logvar = logvar(indices[i])
                     labels = labels[i].unsqueeze(-1)
                     #logging.info(f"batch_vecs shape: {batch_vecs.shape}")
                     #logging.info(f"xyz shape: {xyz[i].shape}")
                     #logging.info(f"indices shape: {indices[i].shape}")
                     #logging.info(f"indices: {indices[i]}")
                     #logging.info(f"labels shape: {labels.shape}")
-                    input = torch.cat([batch_vecs, xyz[i], labels], dim=1)
+                    z = reparameterize(batch_mu, batch_logvar)
+                    input = torch.cat([z, xyz[i]], dim=1)
                     
                     # NN optimization
                     pred_sdf = decoder(input)
@@ -497,7 +529,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     sdf_loss_tb += chunk_loss.item()
 
                     if do_code_regularization:
-                        l2_size_loss = torch.sum(torch.norm(batch_vecs, dim=1))
+                        l2_size_loss = torch.sum(torch.norm(z, dim=1))
                         reg_loss = (
                             code_reg_lambda * min(1, epoch / 100) * l2_size_loss
                         ) / num_sdf_samples
@@ -513,6 +545,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         chunk_loss += eikonal_loss
                         eikonal_loss_tb += eikonal_loss.item()
 
+                    if guided_contrastive_loss:
+                        #Classification Loss
+                        SNN_Loss = loss.SNNLoss(temp)
+                        loss_snn = SNN_Loss(z, labels)
+                        chunk_loss += loss_snn * w_cls
+                        #print(loss_snn.item())
+                        snnl += loss_snn.item()
+                        '''
+                        #Regression Loss
+                        SNN_Loss_Reg = SNNRegLoss(temp, threshold)
+                        loss_snn_reg = SNN_Loss_Reg(z, label[:, :, 2])
+                        loss += loss_snn_reg * w_cls
+                        #print(loss_snn.item())
+                        snnl_reg += loss_snn_reg.item()
+                        '''
                     chunk_loss.backward()
 
                     batch_loss_tb += chunk_loss.item()
@@ -524,6 +571,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 epoch_sdf_losses.append(sdf_loss_tb)
                 epoch_reg_losses.append(reg_loss_tb)
                 epoch_eikonal_losses.append(eikonal_loss_tb)
+                epoch_snnl.append(snnl)
 
                 if grad_clip is not None:
 
@@ -542,12 +590,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             summary_writer.add_scalar("Loss/train_reg", sum(epoch_reg_losses)/len(epoch_reg_losses), global_step=epoch)
             if use_eikonal:
                 summary_writer.add_scalar("Loss/train_eikonal", sum(epoch_eikonal_losses)/len(epoch_eikonal_losses), global_step=epoch)
+            if guided_contrastive_loss:
+                summary_writer.add_scalar("Loss/train_snnl", sum(epoch_snnl)/len(epoch_snnl), global_step=epoch)
             # Log learning rate.
             lr_log.append([schedule.get_learning_rate(epoch) for schedule in lr_schedules])
             summary_writer.add_scalar("Learning Rate/Params", lr_log[-1][0], global_step=epoch)
             summary_writer.add_scalar("Learning Rate/Latent", lr_log[-1][1], global_step=epoch)
             # Log latent vector length.
-            mlm = get_mean_latent_vector_magnitude(lat_vecs)
+            mlm = get_mean_latent_vector_magnitude(mu)
             lat_mag_log.append(mlm)
             summary_writer.add_scalar("Mean Latent Magnitude/train", mlm, global_step=epoch)
             append_parameter_magnitudes(param_mag_log, decoder)

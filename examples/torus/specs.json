@@ -33,6 +33,12 @@
       "Initial" : 0.001,
       "Interval" : 500,
       "Factor" : 0.5
+    },
+    {
+      "Type" : "Step",
+      "Initial" : 0.001,
+      "Interval" : 500,
+      "Factor" : 0.5
     }],
   "SamplesPerScene" : 16384,
   "ScenesPerBatch" : 64,

@@ -8,6 +8,7 @@ from deep_sdf.metrics.chamfer import *
 from deep_sdf.utils import *
 from deep_sdf.workspace import *
 from deep_sdf.lr_scheduling import *
+from deep_sdf.loss import *
 
 # Required by some methods in mesh_to_sdf and pyrender
 os.environ['PYOPENGL_PLATFORM'] = 'egl'
