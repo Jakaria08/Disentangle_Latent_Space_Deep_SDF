@@ -270,7 +270,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     do_code_regularization = get_spec_with_default(specs, "CodeRegularization", True)
     code_reg_lambda = get_spec_with_default(specs, "CodeRegularizationLambda", 1e-4)
-    use_eikonal = get_spec_with_default(specs, "UseEikonal", False)
+    use_eikonal = get_spec_with_default(specs, "UseEikonal", True)
 
     code_bound = get_spec_with_default(specs, "CodeBound", None)
 
@@ -526,6 +526,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     if enforce_minmax:
                         pred_sdf = torch.clamp(pred_sdf, minT, maxT)
                     chunk_loss = loss_l1(pred_sdf, sdf_gt[i].cuda()) / num_sdf_samples
+                    chunk_loss += beta * kl_divergence(batch_mu, batch_logvar) / num_sdf_samples
                     sdf_loss_tb += chunk_loss.item()
 
                     if do_code_regularization:
@@ -564,7 +565,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
                     batch_loss_tb += chunk_loss.item()
                     # Print batch loss
-                print(f"Batch loss: {batch_loss_tb}")                    
+                print(f"Batch loss: {batch_loss_tb}")   
+                print(f"SNNL: {snnl}")                 
                 logging.debug("loss = {}".format(batch_loss_tb))
                 loss_log.append(batch_loss_tb)
                 epoch_losses.append(batch_loss_tb)
@@ -612,7 +614,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     summary_writer.add_scalar(f"GradsNorm/{_name}.grad", grad_norm.item(), global_step=epoch)
                     grad_norms.append(grad_norm)
             summary_writer.add_scalar(f"GradsNorm/allNetParams.grad", torch.norm(torch.stack(grad_norms), p=2).item(), global_step=epoch)
-            summary_writer.add_scalar(f"GradsNorm/allLatParams.grad", torch.norm(lat_vecs.weight.grad.detach(), p=2).item(), global_step=epoch)
+            summary_writer.add_scalar(f"GradsNorm/allLatParams.grad", torch.norm(mu.weight.grad.detach(), p=2).item(), global_step=epoch)
 
             # Save checkpoint.
             if epoch in checkpoints:
@@ -642,7 +644,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     chamfer_dists_all = []
                     eval_train_time_start = time.time()
                     for index in eval_train_scene_idxs:
-                        lat_vec = lat_vecs(torch.LongTensor([index])).cuda()
+                        lat_vec = mu(torch.LongTensor([index])).cuda()
                         save_name = os.path.basename(sdf_dataset.npyfiles[index]).split(".npz")[0]
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_train_reconstructions, save_name)
                         if not os.path.exists(path):
@@ -787,7 +789,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             # Storage values in MB.
             "model_size_mb": model_size_mb,
             "model_param_cnt": param_cnt,
-            "single_latent_size_mb": sum(p.nelement()*p.element_size() for p in lat_vecs.parameters()),
+            "single_latent_size_mb": sum(p.nelement()*p.element_size() for p in mu.parameters()),
             # "NumEpochs": specs["NumEpochs"],
             # "CodeLength": specs["CodeLength"],
             # "CodeRegularization": str(do_code_regularization),
