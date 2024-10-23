@@ -519,7 +519,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     #logging.info(f"labels shape: {labels.shape}")
                     z = reparameterize(batch_mu, batch_logvar)
                     input = torch.cat([z, xyz[i]], dim=1)
-                    
+                    logging.info(f"input shape: {input.shape}")
                     # NN optimization
                     pred_sdf = decoder(input)
 
