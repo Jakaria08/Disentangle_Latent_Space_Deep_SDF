@@ -4,11 +4,117 @@ import torch.nn as nn
 import math
 import scipy.optimize
 from scipy.spatial.distance import cdist
-    
-# SNNL loss modified fast
+import logging
+import torch
+import torch.nn as nn
+from torch.utils.checkpoint import checkpoint
+
 class SNNLoss(nn.Module):
-    def __init__(self, T):
+    def __init__(self, T, chunk_size=32):
         super(SNNLoss, self).__init__()
+        self.T = T
+        self.STABILITY_EPS = 1e-12
+        self.chunk_size = chunk_size
+
+    def _compute_chunk_distances(self, x_chunk, x_full, mask_chunk=None):
+        # Compute distances for a chunk of data to reduce memory usage
+        squared_dist = torch.cdist(x_chunk, x_full, p=2) ** 2
+        exp_dist = torch.exp(-squared_dist / self.T)
+        if mask_chunk is not None:
+            exp_dist.mul_(mask_chunk)
+        return exp_dist
+
+    def _compute_chunked_distances(self, x, same_class_mask, time_step):
+        batch_size = x.size(0)
+        result = torch.zeros(batch_size, batch_size, device=x.device)
+
+        # Process in chunks to reduce memory usage
+        for i in range(0, batch_size, self.chunk_size):
+            end_idx = min(i + self.chunk_size, batch_size)
+            chunk_data = x[i:end_idx, time_step].unsqueeze(1)
+
+            # Compute chunk distances efficiently
+            chunk_dist = self._compute_chunk_distances(
+                chunk_data, 
+                x[:, time_step].unsqueeze(1),
+                same_class_mask[i:end_idx] if same_class_mask is not None else None
+            )
+
+            # Store results in pre-allocated tensor
+            result[i:end_idx] = chunk_dist
+
+            # Clear unnecessary tensors
+            del chunk_dist
+            torch.cuda.empty_cache()
+
+        return result
+
+    @staticmethod
+    def _create_same_class_mask(y):
+        # Memory-efficient way to create same class mask
+        unique_labels, inverse_indices = torch.unique(y, return_inverse=True)
+        mask = (inverse_indices.unsqueeze(1) == inverse_indices.unsqueeze(0))
+        return mask
+
+    def forward(self, x, y):
+        batch_size = x.size(0)
+        device = x.device
+
+        # Create masks efficiently
+        same_class_mask = self._create_same_class_mask(y.squeeze())
+        eye_mask = torch.ones(batch_size, batch_size, device=device)
+        eye_mask.fill_diagonal_(0)
+
+        # Compute first time step distances
+        exp_distances = self._compute_chunked_distances(x, None, 0)
+        exp_distances.mul_(eye_mask)
+
+        # Calculate numerator and denominator
+        numerator = exp_distances * same_class_mask
+        denominator = exp_distances.clone()
+
+        # Pre-allocate accumulation tensor
+        exp_distances_all = torch.zeros_like(exp_distances)
+
+        # Process remaining time steps with gradient checkpointing
+        for i in range(1, x.shape[1]):
+            # Use gradient checkpointing to save memory during training
+            if self.training:
+                chunk_result = checkpoint(
+                    self._compute_chunked_distances,
+                    x, same_class_mask, i
+                )
+            else:
+                chunk_result = self._compute_chunked_distances(x, same_class_mask, i)
+
+            chunk_result.mul_(eye_mask)
+            exp_distances_all.add_(chunk_result)
+
+            # Clear cache after each time step
+            del chunk_result
+            torch.cuda.empty_cache()
+
+        # Compute final loss with stable operations
+        exp_distances_all.div_(float(x.shape[1] - 1))
+
+        # Use log-sum-exp trick for numerical stability
+        log_denominator = torch.log(
+            0.5 * denominator.sum(dim=1) + 0.5 * exp_distances_all.sum(dim=1) + self.STABILITY_EPS
+        )
+
+        log_numerator = torch.log(numerator.sum(dim=1) + self.STABILITY_EPS)
+        loss = -(log_numerator - log_denominator).mean()
+
+        return loss
+
+    def extra_repr(self) -> str:
+        return f'T={self.T}, chunk_size={self.chunk_size}'
+
+
+# SNNL loss modified fast
+class Old_SNNLoss(nn.Module):
+    def __init__(self, T):
+        super(Old_SNNLoss, self).__init__()
         self.T = T
         self.STABILITY_EPS = 0.00001
 
@@ -23,18 +129,18 @@ class SNNLoss(nn.Module):
 
         squared_distances = (x_expanded - x_expanded.t()) ** 2
         exp_distances = torch.exp(-(squared_distances / self.T))
-        exp_distances = exp_distances * (1 - torch.eye(b, device='cuda:0'))
+        exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
         #print(exp_distances)
 
         numerator = exp_distances * same_class_mask
         denominator = exp_distances
         # remaining elements
-        exp_distances_all = torch.zeros_like(exp_distances, device='cuda:0')
+        exp_distances_all = torch.zeros_like(exp_distances, device='cuda')
         for i in range(1, x.shape[1]):
             x_expanded = x[:,i].unsqueeze(1)
             squared_distances = (x_expanded - x_expanded.t()) ** 2
             exp_distances = torch.exp(-(squared_distances / self.T))
-            exp_distances = exp_distances * (1 - torch.eye(b, device='cuda:0'))
+            exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
             exp_distances = exp_distances * same_class_mask
             exp_distances_all = exp_distances_all + exp_distances
 
@@ -66,24 +172,24 @@ class SNNRegLoss(nn.Module):
 
         squared_distances = (x_expanded - x_expanded.t()) ** 2
         exp_distances = torch.exp(-(squared_distances / self.T))
-        exp_distances = exp_distances * (1 - torch.eye(b, device='cuda:0'))
+        exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
         #print(exp_distances)
 
         numerator = exp_distances * same_class_mask
         denominator = exp_distances
         # remaining elements
-        exp_distances_all = torch.zeros_like(exp_distances, device='cuda:0')
+        exp_distances_all = torch.zeros_like(exp_distances, device='cuda')
         x_expanded = x[:,0].unsqueeze(1)
         squared_distances = (x_expanded - x_expanded.t()) ** 2
         exp_distances = torch.exp(-(squared_distances / self.T))
-        exp_distances = exp_distances * (1 - torch.eye(b, device='cuda:0'))
+        exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
         exp_distances = exp_distances * same_class_mask
         exp_distances_all = exp_distances_all + exp_distances
         for i in range(2, x.shape[1]):
             x_expanded = x[:,i].unsqueeze(1)
             squared_distances = (x_expanded - x_expanded.t()) ** 2
             exp_distances = torch.exp(-(squared_distances / self.T))
-            exp_distances = exp_distances * (1 - torch.eye(b, device='cuda:0'))
+            exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
             exp_distances = exp_distances * same_class_mask
             exp_distances_all = exp_distances_all + exp_distances
 
@@ -299,7 +405,7 @@ class SNNLCrossEntropy():
         :returns: A tensor for the row normalized exponentiated pairwise distance
                   between all the elements of x.
         """
-        f = SNNLCrossEntropy.fits(x, x, temp, cos_distance) - torch.eye(x.shape[0], device='cuda:0')
+        f = SNNLCrossEntropy.fits(x, x, temp, cos_distance) - torch.eye(x.shape[0], device='cuda')
         return f / (SNNLCrossEntropy.STABILITY_EPS + f.sum(axis=1).unsqueeze(1))
     
     @staticmethod

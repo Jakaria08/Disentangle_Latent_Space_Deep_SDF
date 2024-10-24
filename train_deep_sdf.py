@@ -22,7 +22,7 @@ import reconstruct
 
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = True
+guided_contrastive_loss = False
 beta = 0.0015
 temp = 181
 w_cls = 0.5
@@ -270,7 +270,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     do_code_regularization = get_spec_with_default(specs, "CodeRegularization", True)
     code_reg_lambda = get_spec_with_default(specs, "CodeRegularizationLambda", 1e-4)
-    use_eikonal = get_spec_with_default(specs, "UseEikonal", True)
+    use_eikonal = get_spec_with_default(specs, "UseEikonal", False)
 
     code_bound = get_spec_with_default(specs, "CodeBound", None)
 
@@ -368,6 +368,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         },
         {
             "params": mu.parameters(),
+            "lr": lr_schedules[1].get_learning_rate(0),
+        },
+                {
+            "params": logvar.parameters(),
             "lr": lr_schedules[2].get_learning_rate(0),
         }
         ]
@@ -484,13 +488,17 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     sdf_gt = torch.clamp(sdf_gt, minT, maxT)
 
                 xyz = torch.chunk(xyz, batch_split)
+                '''
                 indices = torch.chunk(
                     indices.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1),
                     batch_split,
                 )
+                '''
+
+                indices = torch.chunk(indices, batch_split)
 
                 labels = torch.chunk(
-                    labels.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1),
+                    labels,
                     batch_split,
                 )
 
@@ -511,14 +519,18 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     #batch_vecs = lat_vecs(indices[i])
                     batch_mu = mu(indices[i])
                     batch_logvar = logvar(indices[i])
+                    #batch_mu = mu[i]
+                    #batch_logvar = logvar[i]
                     labels = labels[i].unsqueeze(-1)
-                    #logging.info(f"batch_vecs shape: {batch_vecs.shape}")
-                    #logging.info(f"xyz shape: {xyz[i].shape}")
-                    #logging.info(f"indices shape: {indices[i].shape}")
-                    #logging.info(f"indices: {indices[i]}")
-                    #logging.info(f"labels shape: {labels.shape}")
+                    labels = labels.cuda()
+                    logging.info(f"batch_mu shape: {batch_mu.shape}")
+                    logging.info(f"xyz shape: {xyz[i].shape}")
+                    logging.info(f"indices shape: {indices[i].shape}")
+                    logging.info(f"Device: {batch_mu.device}")
+                    logging.info(f"labels Device: {labels.device}")
                     z = reparameterize(batch_mu, batch_logvar)
-                    input = torch.cat([z, xyz[i]], dim=1)
+                    z_repeated = z.unsqueeze(1).repeat(1, num_samp_per_scene, 1).view(-1, latent_size)
+                    input = torch.cat([z_repeated, xyz[i]], dim=1)
                     logging.info(f"input shape: {input.shape}")
                     # NN optimization
                     pred_sdf = decoder(input)
@@ -548,7 +560,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
                     if guided_contrastive_loss:
                         #Classification Loss
-                        SNN_Loss = loss.SNNLoss(temp)
+                        #SNN_Loss = loss.SNNLoss(temp)
+                        z = z.cuda()
+                        SNN_Loss = loss.Old_SNNLoss(temp)
                         loss_snn = SNN_Loss(z, labels)
                         chunk_loss += loss_snn * w_cls
                         #print(loss_snn.item())
