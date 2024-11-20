@@ -538,7 +538,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     if enforce_minmax:
                         pred_sdf = torch.clamp(pred_sdf, minT, maxT)
                     chunk_loss = loss_l1(pred_sdf, sdf_gt[i].cuda()) / num_sdf_samples
-                    chunk_loss += beta * kl_divergence(batch_mu, batch_logvar) / num_sdf_samples
+                    #chunk_loss += beta * kl_divergence(batch_mu, batch_logvar) / num_sdf_samples
                     sdf_loss_tb += chunk_loss.item()
 
                     if do_code_regularization:
@@ -580,7 +580,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     batch_loss_tb += chunk_loss.item()
                     # Print batch loss
                 print(f"Batch loss: {batch_loss_tb}")   
-                print(f"SNNL: {snnl}")                 
+                #print(f"SNNL: {snnl}")                 
                 logging.debug("loss = {}".format(batch_loss_tb))
                 loss_log.append(batch_loss_tb)
                 epoch_losses.append(batch_loss_tb)
