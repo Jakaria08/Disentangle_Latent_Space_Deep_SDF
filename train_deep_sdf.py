@@ -23,7 +23,7 @@ import reconstruct
 from torch.utils.tensorboard import SummaryWriter
 
 guided_contrastive_loss = False
-beta = 0.0015
+beta = 0.000015
 temp = 181
 w_cls = 0.5
 
