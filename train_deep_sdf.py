@@ -455,6 +455,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_reg_losses = []
             epoch_eikonal_losses = []
             epoch_snnl = []
+            epoch_kl_losses = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -511,6 +512,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 reg_loss_tb = 0.0
                 eikonal_loss_tb = 0.0
                 snnl = 0.0
+                kl_loss_tb = 0.0
 
                 optimizer_all.zero_grad()
 
@@ -538,8 +540,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     if enforce_minmax:
                         pred_sdf = torch.clamp(pred_sdf, minT, maxT)
                     chunk_loss = loss_l1(pred_sdf, sdf_gt[i].cuda()) / num_sdf_samples
-                    #chunk_loss += beta * kl_divergence(batch_mu, batch_logvar) / num_sdf_samples
+                    kl_loss = beta * kl_divergence(batch_mu, batch_logvar) / num_sdf_samples
+                    chunk_loss += kl_loss
                     sdf_loss_tb += chunk_loss.item()
+                    kl_loss_tb += kl_loss.item()
 
                     if do_code_regularization:
                         l2_size_loss = torch.sum(torch.norm(z, dim=1))
@@ -580,11 +584,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     batch_loss_tb += chunk_loss.item()
                     # Print batch loss
                 print(f"Batch loss: {batch_loss_tb}")   
-                #print(f"SNNL: {snnl}")                 
+                #print(f"SNNL: {snnl}")   
+                print(f"KL Loss: {kl_loss_tb}")              
                 logging.debug("loss = {}".format(batch_loss_tb))
                 loss_log.append(batch_loss_tb)
                 epoch_losses.append(batch_loss_tb)
                 epoch_sdf_losses.append(sdf_loss_tb)
+                epoch_kl_losses.append(kl_loss_tb)
                 epoch_reg_losses.append(reg_loss_tb)
                 epoch_eikonal_losses.append(eikonal_loss_tb)
                 epoch_snnl.append(snnl)
@@ -603,6 +609,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             loss_log_epoch.append(epoch_loss)
             summary_writer.add_scalar("Loss/train", epoch_loss, global_step=epoch)
             summary_writer.add_scalar("Loss/train_sdf", sum(epoch_sdf_losses)/len(epoch_sdf_losses), global_step=epoch)
+            summary_writer.add_scalar("Loss/train_kl", sum(epoch_kl_losses)/len(epoch_kl_losses), global_step=epoch)
             summary_writer.add_scalar("Loss/train_reg", sum(epoch_reg_losses)/len(epoch_reg_losses), global_step=epoch)
             if use_eikonal:
                 summary_writer.add_scalar("Loss/train_eikonal", sum(epoch_eikonal_losses)/len(epoch_eikonal_losses), global_step=epoch)
@@ -648,6 +655,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             
         
                 # EVALUATION 
+            logging.info(f"Epoch {epoch} completed in {seconds_elapsed:.2f} seconds.")
+            logging.info(f"Checking for torus path for evaluation...")
             if torus_path is not None:
                 logging.info(f"Torus path: {torus_path}")
                 # Only if the path to the GT meshes exists.
