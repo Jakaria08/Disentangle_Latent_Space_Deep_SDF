@@ -540,7 +540,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     if enforce_minmax:
                         pred_sdf = torch.clamp(pred_sdf, minT, maxT)
                     chunk_loss = loss_l1(pred_sdf, sdf_gt[i].cuda()) / num_sdf_samples
-                    kl_loss = beta * kl_divergence(batch_mu, batch_logvar) / num_sdf_samples
+                    # beta is not used for now
+                    kl_loss = kl_divergence(batch_mu, batch_logvar) / num_sdf_samples
                     chunk_loss += kl_loss
                     sdf_loss_tb += chunk_loss.item()
                     kl_loss_tb += kl_loss.item()
