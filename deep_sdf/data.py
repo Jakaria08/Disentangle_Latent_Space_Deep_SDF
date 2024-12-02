@@ -132,6 +132,7 @@ class SDFSamples(torch.utils.data.Dataset):
 
         self.data_source = data_source
         self.npyfiles = get_instance_filenames(data_source, split)
+        self.labels = self.load_lablels()
 
         logging.debug(
             "using "
@@ -157,6 +158,10 @@ class SDFSamples(torch.utils.data.Dataset):
                 )
         logging.debug(f"Time for loading into RAM: {(time.time() - TIME)*1000} ms"); TIME = time.time()
 
+    def load_lables(self):
+        labels = torch.load(self.data_source + "/labels.pt")
+        return labels
+    
     def __len__(self):
         return len(self.npyfiles)
 
@@ -165,13 +170,16 @@ class SDFSamples(torch.utils.data.Dataset):
         filename = os.path.join(
             self.data_source, self.npyfiles[idx]
         )
+        
+        label = self.labels[self.npyfiles[idx]]
+        
         if self.load_ram:
             retval = (
                 unpack_sdf_samples_from_ram(self.loaded_data[idx], self.subsample),
-                idx,
+                idx, label,
             )
         else:
-            retval = unpack_sdf_samples(filename, self.subsample), idx
+            retval = unpack_sdf_samples(filename, self.subsample), idx, label
         
         logging.debug(f"Time for getting item: {(time.time() - TIME)*1000} ms"); TIME = time.time()
         return retval
