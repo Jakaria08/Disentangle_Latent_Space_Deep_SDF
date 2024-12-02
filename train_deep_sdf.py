@@ -16,11 +16,16 @@ import random
 import numpy as np
 
 import deep_sdf
-from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils
+from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils, loss
 import deep_sdf.workspace as ws
 import reconstruct
 
 from torch.utils.tensorboard import SummaryWriter
+
+guided_contrastive_loss = True
+beta = 0.01
+temp = 181
+w_cls = 0.5
 
 def save_model(experiment_directory, filename, decoder, epoch):
 
@@ -423,6 +428,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_sdf_losses = []
             epoch_reg_losses = []
             epoch_eikonal_losses = []
+            epoch_snnl = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -430,17 +436,30 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             decoder.train()
 
             adjust_learning_rate(lr_schedules, optimizer_all, epoch, loss_log_epoch)
-            for sdf_data, indices in sdf_loader:
+            for sdf_data, indices, labels in sdf_loader:
                 # logging.debug(f"time for dataloading: {(time.time() - TIME)*1000:.3f} ms"); TIME = time.time()
                 # Process the input data
                 sdf_data = sdf_data.reshape(-1, 4)
 
                 num_sdf_samples = sdf_data.shape[0]
+                #logging.info(f"sdf_data shape: {sdf_data.shape}")
+                #logging.info(f"label shape: {labels.shape}")
+                #logging.info(f"indices shape: {indices.shape}")
+                #logging.info(f"indices: {indices}")
 
                 sdf_data.requires_grad = False
 
                 xyz = sdf_data[:, 0:3]
                 xyz.requires_grad = True
+
+                labels = labels[:,0] # bump or no bump binary label
+                labels = labels.to(torch.float32)
+                #labels = labels.cuda()
+                #logging.info(f"labels shape: {labels.shape}")
+                #logging.info(f"labels data type: {labels.dtype}")
+                #logging.info(f"xyz data type: {xyz.dtype}")
+                labels.requires_grad = True
+
                 sdf_gt = sdf_data[:, 3].unsqueeze(1)
 
                 if enforce_minmax:
@@ -452,18 +471,29 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     batch_split,
                 )
 
+                labels = labels.chunk(labels.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1), batch_split)
+
                 sdf_gt = torch.chunk(sdf_gt, batch_split)
 
                 batch_loss_tb = 0.0
                 sdf_loss_tb = 0.0
                 reg_loss_tb = 0.0
                 eikonal_loss_tb = 0.0
+                snnl = 0.0
 
                 optimizer_all.zero_grad()
 
                 for i in range(batch_split):
 
                     batch_vecs = lat_vecs(indices[i])
+                    labels = labels[i].unsqueeze(-1)
+
+                    #logging.info(f"batch_vecs shape: {batch_vecs.shape}")
+                    #logging.info(f"xyz shape: {xyz[i].shape}")
+                    #logging.info(f"indices shape: {indices[i].shape}")
+                    #logging.info(f"indices: {indices[i]}")
+                    #logging.info(f"labels shape: {labels.shape}")
+
                     input = torch.cat([batch_vecs, xyz[i]], dim=1)
                     
                     # NN optimization
@@ -491,17 +521,34 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         chunk_loss += eikonal_loss
                         eikonal_loss_tb += eikonal_loss.item()
 
+                    if guided_contrastive_loss:
+                        #Classification Loss
+                        SNN_Loss = loss.SNNLoss(temp)
+                        loss_snn = SNN_Loss(batch_vecs, labels)
+                        chunk_loss += loss_snn * w_cls
+                        #print(loss_snn.item())
+                        snnl += loss_snn.item()
+                        '''
+                        #Regression Loss
+                        SNN_Loss_Reg = SNNRegLoss(temp, threshold)
+                        loss_snn_reg = SNN_Loss_Reg(z, label[:, :, 2])
+                        loss += loss_snn_reg * w_cls
+                        #print(loss_snn.item())
+                        snnl_reg += loss_snn_reg.item()
+                        '''
                     chunk_loss.backward()
 
                     batch_loss_tb += chunk_loss.item()
                     # Print batch loss
-                print(f"Batch loss: {batch_loss_tb}")                    
+                #print(f"SNNL Loss: {snnl}")
+                #print(f"Batch loss: {batch_loss_tb}")                    
                 logging.debug("loss = {}".format(batch_loss_tb))
                 loss_log.append(batch_loss_tb)
                 epoch_losses.append(batch_loss_tb)
                 epoch_sdf_losses.append(sdf_loss_tb)
                 epoch_reg_losses.append(reg_loss_tb)
                 epoch_eikonal_losses.append(eikonal_loss_tb)
+                epoch_snnl.append(snnl)
 
                 if grad_clip is not None:
 
@@ -520,6 +567,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             summary_writer.add_scalar("Loss/train_reg", sum(epoch_reg_losses)/len(epoch_reg_losses), global_step=epoch)
             if use_eikonal:
                 summary_writer.add_scalar("Loss/train_eikonal", sum(epoch_eikonal_losses)/len(epoch_eikonal_losses), global_step=epoch)
+            
+            if guided_contrastive_loss:
+                summary_writer.add_scalar("Loss/train_snnl", sum(epoch_snnl)/len(epoch_snnl), global_step=epoch)
             # Log learning rate.
             lr_log.append([schedule.get_learning_rate(epoch) for schedule in lr_schedules])
             summary_writer.add_scalar("Learning Rate/Params", lr_log[-1][0], global_step=epoch)
@@ -529,6 +579,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             lat_mag_log.append(mlm)
             summary_writer.add_scalar("Mean Latent Magnitude/train", mlm, global_step=epoch)
             append_parameter_magnitudes(param_mag_log, decoder)
+
+            print(f"Epoch Loss: {epoch_loss}")
+            print(f"SNNL Loss: {sum(epoch_snnl)/len(epoch_snnl)}")
+
             # Log weights and gradient flow.
             grad_norms = []
             for _name, _param in decoder.named_parameters():
@@ -560,8 +614,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             
         
                 # EVALUATION 
+            logging.info(f"Torus path: {torus_path}")
             if torus_path is not None:
-                
+                logging.info(f"Starting evaluation at epoch {epoch}...")
                 # Only if the path to the GT meshes exists.
                 if epoch % eval_train_frequency == 0:
                     logging.info(f"Train Evaluation Started...")

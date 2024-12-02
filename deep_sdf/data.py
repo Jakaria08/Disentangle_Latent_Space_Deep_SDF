@@ -171,7 +171,8 @@ class SDFSamples(torch.utils.data.Dataset):
             self.data_source, self.npyfiles[idx]
         )
         
-        label = self.labels[self.npyfiles[idx]]
+        label = self.labels[os.path.splitext(os.path.basename(self.npyfiles[idx]))[0]]
+        label = torch.tensor(label)
         
         if self.load_ram:
             retval = (

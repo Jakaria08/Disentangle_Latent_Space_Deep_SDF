@@ -25,6 +25,8 @@ class Decoder(nn.Module):
         def make_sequence():
             return []
 
+        #label can be inputted as an extra variable in addition to the latent vector
+        #and do it later if needed
         dims = [latent_size + 3] + dims + [1]
 
         self.num_layers = len(dims)
