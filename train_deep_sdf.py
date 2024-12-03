@@ -2,6 +2,7 @@
 # Copyright 2004-present Facebook. All Rights Reserved.
 
 import torch
+torch.autograd.set_detect_anomaly(True)
 import torch.utils.data as data_utils
 from torch.utils.tensorboard import SummaryWriter
 import signal
@@ -311,7 +312,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get test evaluation settings.
     with open(test_split_file, "r") as f:
         test_split = json.load(f)
-    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 100)
+    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 200)
     eval_test_scene_num = get_spec_with_default(specs, "EvalTestSceneNumber", 10)
     eval_test_optimization_steps = get_spec_with_default(specs, "EvalTestOptimizationSteps", 1000)
     eval_test_filenames = deep_sdf.data.get_instance_filenames(data_source, test_split)
@@ -454,11 +455,11 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
                 labels = labels[:,0] # bump or no bump binary label
                 labels = labels.to(torch.float32)
-                #labels = labels.cuda()
+                labels = labels.to(torch.device("cuda"))
                 #logging.info(f"labels shape: {labels.shape}")
                 #logging.info(f"labels data type: {labels.dtype}")
                 #logging.info(f"xyz data type: {xyz.dtype}")
-                labels.requires_grad = True
+                labels.requires_grad = False
 
                 sdf_gt = sdf_data[:, 3].unsqueeze(1)
 
@@ -466,12 +467,16 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     sdf_gt = torch.clamp(sdf_gt, minT, maxT)
 
                 xyz = torch.chunk(xyz, batch_split)
+
+                indices_z = torch.chunk(indices, batch_split)
+                
                 indices = torch.chunk(
                     indices.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1),
                     batch_split,
                 )
 
-                labels = labels.chunk(labels.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1), batch_split)
+                #labels = labels.chunk(labels.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1), batch_split)
+                labels = torch.chunk(labels, batch_split)
 
                 sdf_gt = torch.chunk(sdf_gt, batch_split)
 
@@ -484,11 +489,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 optimizer_all.zero_grad()
 
                 for i in range(batch_split):
-
-                    batch_vecs = lat_vecs(indices[i])
+                    z = lat_vecs(indices_z[i])
+                    batch_vecs = z.unsqueeze(1).repeat(1, num_samp_per_scene, 1).view(-1, latent_size)
+                    #batch_vecs = lat_vecs(indices[i])
+                    #z_for_c_loss = lat_vecs(indices_z[i])
                     labels = labels[i].unsqueeze(-1)
 
                     #logging.info(f"batch_vecs shape: {batch_vecs.shape}")
+                    #logging.info(f"latent vecs z (for loss) shape: {z_for_c_loss.shape}")
                     #logging.info(f"xyz shape: {xyz[i].shape}")
                     #logging.info(f"indices shape: {indices[i].shape}")
                     #logging.info(f"indices: {indices[i]}")
@@ -524,7 +532,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     if guided_contrastive_loss:
                         #Classification Loss
                         SNN_Loss = loss.SNNLoss(temp)
-                        loss_snn = SNN_Loss(batch_vecs, labels)
+                        loss_snn = SNN_Loss(z, labels)
                         chunk_loss += loss_snn * w_cls
                         #print(loss_snn.item())
                         snnl += loss_snn.item()
