@@ -16,13 +16,15 @@ class SNNLoss(nn.Module):
         b = x.size(0)  # Batch size
         y = y.squeeze()
 
-        x_expanded = x[:,0].unsqueeze(1)  # Expand dimensions for broadcasting
+        x_expanded = x[:,0].unsqueeze(1)
+          # Expand dimensions for broadcasting
         y_expanded = y.unsqueeze(0)
 
         same_class_mask = y_expanded == y_expanded.t()
 
         squared_distances = (x_expanded - x_expanded.t()) ** 2
         exp_distances = torch.exp(-(squared_distances / self.T))
+        exp_distances = exp_distances.to('cuda')
         exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
         #print(exp_distances)
 
@@ -34,6 +36,7 @@ class SNNLoss(nn.Module):
             x_expanded = x[:,i].unsqueeze(1)
             squared_distances = (x_expanded - x_expanded.t()) ** 2
             exp_distances = torch.exp(-(squared_distances / self.T))
+            exp_distances = exp_distances.to('cuda')
             exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
             exp_distances = exp_distances * same_class_mask
             exp_distances_all = exp_distances_all + exp_distances
