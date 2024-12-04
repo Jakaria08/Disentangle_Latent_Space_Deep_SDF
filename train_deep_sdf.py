@@ -23,9 +23,10 @@ import reconstruct
 
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = True
+guided_contrastive_loss = False
+attribute_loss = True
 beta = 0.01
-temp = 181
+temp = 181 # change this?
 w_cls = 0.5
 
 def save_model(experiment_directory, filename, decoder, epoch):
@@ -430,6 +431,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_reg_losses = []
             epoch_eikonal_losses = []
             epoch_snnl = []
+            epoch_attr = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -437,7 +439,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             decoder.train()
 
             adjust_learning_rate(lr_schedules, optimizer_all, epoch, loss_log_epoch)
-            for sdf_data, indices, labels in sdf_loader:
+            for sdf_data, indices, labels, filenames in sdf_loader:
                 # logging.debug(f"time for dataloading: {(time.time() - TIME)*1000:.3f} ms"); TIME = time.time()
                 # Process the input data
                 sdf_data = sdf_data.reshape(-1, 4)
@@ -485,6 +487,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 reg_loss_tb = 0.0
                 eikonal_loss_tb = 0.0
                 snnl = 0.0
+                attr_loss = 0.0
 
                 optimizer_all.zero_grad()
 
@@ -501,6 +504,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     #logging.info(f"indices shape: {indices[i].shape}")
                     #logging.info(f"indices: {indices[i]}")
                     #logging.info(f"labels shape: {labels.shape}")
+                    #logging.info(f"labels: {labels}")
+                    #logging.info(f"filename: {filenames}")
 
                     input = torch.cat([batch_vecs, xyz[i]], dim=1)
                     
@@ -544,6 +549,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         #print(loss_snn.item())
                         snnl_reg += loss_snn_reg.item()
                         '''
+
+                    if attribute_loss:
+                        loss_attr = loss.AttributeLoss()
+                        #cls
+                        loss_attr_cls = loss_attr(z[:,0], labels)
+                        chunk_loss += loss_attr_cls * w_cls
+                        attr_loss += loss_attr_cls.item()
+                        '''
+                        #reg
+                        loss_attr_reg = loss_attr(z[:,1], label[:, :, 2])
+                        loss += loss_attr_reg * w_cls
+                        #print(corr_loss.item())
+                        loss_attribute_cls += loss_attr_cls.item()
+                        loss_attribute_reg += loss_attr_reg.item()
+                        '''
                     chunk_loss.backward()
 
                     batch_loss_tb += chunk_loss.item()
@@ -557,6 +577,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 epoch_reg_losses.append(reg_loss_tb)
                 epoch_eikonal_losses.append(eikonal_loss_tb)
                 epoch_snnl.append(snnl)
+                epoch_attr.append(attr_loss)
 
                 if grad_clip is not None:
 
@@ -578,6 +599,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             
             if guided_contrastive_loss:
                 summary_writer.add_scalar("Loss/train_snnl", sum(epoch_snnl)/len(epoch_snnl), global_step=epoch)
+            
+            if attribute_loss:
+                summary_writer.add_scalar("Loss/train_attr", sum(epoch_attr)/len(epoch_attr), global_step=epoch)
+
             # Log learning rate.
             lr_log.append([schedule.get_learning_rate(epoch) for schedule in lr_schedules])
             summary_writer.add_scalar("Learning Rate/Params", lr_log[-1][0], global_step=epoch)
@@ -589,7 +614,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             append_parameter_magnitudes(param_mag_log, decoder)
 
             print(f"Epoch Loss: {epoch_loss}")
-            print(f"SNNL Loss: {sum(epoch_snnl)/len(epoch_snnl)}")
+            if guided_contrastive_loss:
+                print(f"SNNL Loss: {sum(epoch_snnl)/len(epoch_snnl)}")
+            if attribute_loss:
+                print(f"Attribute Loss: {sum(epoch_attr)/len(epoch_attr)}")
 
             # Log weights and gradient flow.
             grad_norms = []

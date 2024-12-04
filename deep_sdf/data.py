@@ -9,7 +9,7 @@ import os
 import random
 import torch
 import torch.utils.data
-
+import logging
 import deep_sdf.workspace as ws
 from typing import Tuple, List
 
@@ -180,7 +180,7 @@ class SDFSamples(torch.utils.data.Dataset):
                 idx, label,
             )
         else:
-            retval = unpack_sdf_samples(filename, self.subsample), idx, label
+            retval = unpack_sdf_samples(filename, self.subsample), idx, label, filename
         
         logging.debug(f"Time for getting item: {(time.time() - TIME)*1000} ms"); TIME = time.time()
         return retval

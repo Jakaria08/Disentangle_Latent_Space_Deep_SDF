@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import math
 import scipy.optimize
+import logging
 from scipy.spatial.distance import cdist
     
 # SNNL loss modified fast
@@ -107,6 +108,7 @@ class AttributeLoss(nn.Module):
 
     def forward(self, latent_code, attribute):
         # compute latent distance matrix
+        latent_code = latent_code.to('cuda')
         latent_code = latent_code.view(-1, 1).repeat(1, latent_code.shape[0])
         lc_dist_mat = (latent_code - latent_code.transpose(1, 0)).view(-1, 1)
 
@@ -117,6 +119,9 @@ class AttributeLoss(nn.Module):
         # compute regularization loss
         lc_tanh = torch.tanh(lc_dist_mat * self.factor)
         attribute_sign = torch.sign(attribute_dist_mat)
+        #write logging code to check the device of lc_tanh and attribute_sign
+        #logging.info('lc_tanh device: %s', lc_tanh.device)
+        #logging.info('attribute_sign device: %s', attribute_sign.device)
         attribute_loss = self.loss_fn(lc_tanh, attribute_sign.float())
 
         return attribute_loss
