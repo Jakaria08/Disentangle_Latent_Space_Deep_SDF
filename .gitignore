@@ -5,6 +5,7 @@ data/*
 *.csv
 *.obj
 *.pyl
+*.ply
 **/3d_metrics
 .DS_store
 .idea
