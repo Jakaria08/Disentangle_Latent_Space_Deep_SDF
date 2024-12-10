@@ -280,7 +280,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     with open(train_split_file, "r") as f:
         train_split = json.load(f)
 
-    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria//torus_two_models_data/torus_two/obj_files")
+     = get_spec_with_default(specs,torus_path "TorusPath", "/home/jakaria//torus_two_models_data/torus_two/obj_files")
     logging.info(f"Torus path: {torus_path}")
     if not os.path.exists(torus_path): 
         logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
@@ -709,7 +709,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     mesh_label_names = []
                     test_latents = []
                     for test_fname in eval_test_filenames:
-                        save_name = os.path.basename(sdf_dataset.npyfiles[index]).split(".npz")[0]
+                        save_name = os.path.basename(test_fname).split(".npz")[0]
                         mesh_label_names.append(save_name)
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_test_reconstructions, save_name)
                         if not os.path.exists(path):
