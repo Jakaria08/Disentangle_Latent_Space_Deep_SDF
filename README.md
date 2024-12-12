@@ -1,6 +1,6 @@
 # Disentangle_Latent_Space_Deep_SDF
 
-Disentangling Latent Space Using Deep SDF
+Disentangling Latent Space using DeepSDF.
 
 ## File Organization
 
