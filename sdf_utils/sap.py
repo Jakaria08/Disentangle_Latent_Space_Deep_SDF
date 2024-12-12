@@ -128,7 +128,7 @@ def _sap_classification(factors, codes, nb_factors, nb_codes):
             for sp in range(1, 10):
                 # perform cross validation on the tree classifiers
                 clf = tree.DecisionTreeClassifier(max_depth=sp)
-                scores = cross_val_score(clf, codes[:, c].reshape(-1, 1), factors[:, f].reshape(-1, 1), cv=10)
+                scores = cross_val_score(clf, codes[:, c].reshape(-1, 1), factors[:, f].reshape(-1, 1), cv=5)
                 scores = scores.mean()
                 
                 if scores > best_score:
