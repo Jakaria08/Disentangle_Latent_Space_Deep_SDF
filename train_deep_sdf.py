@@ -23,11 +23,12 @@ import reconstruct
 
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = False
-attribute_loss = True
+guided_contrastive_loss = True
+attribute_loss = False
 beta = 0.01
 temp = 181 # change this?
 w_cls = 0.5
+threshold = 0.025
 
 def save_model(experiment_directory, filename, decoder, epoch):
 
@@ -306,7 +307,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 100)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 200)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 
@@ -431,7 +432,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_reg_losses = []
             epoch_eikonal_losses = []
             epoch_snnl = []
+            epoch_snnl_reg = []
             epoch_attr = []
+            epoch_attr_reg = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -455,13 +458,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 xyz = sdf_data[:, 0:3]
                 xyz.requires_grad = True
 
-                labels = labels[:,0] # bump or no bump binary label
-                labels = labels.to(torch.float32)
-                labels = labels.to(torch.device("cuda"))
-                #logging.info(f"labels shape: {labels.shape}")
-                #logging.info(f"labels data type: {labels.dtype}")
+                labels_cls = labels[:,0] # bump or no bump binary label
+                labels_reg = labels[:,2] # torus scale
+
+                labels_cls = labels_cls.to(torch.float32)
+                labels_reg = labels_reg.to(torch.float32)
+
+                labels_cls = labels_cls.to(torch.device("cuda"))
+                labels_reg = labels_reg.to(torch.device("cuda"))
+
+                #logging.info(f"labels_cls shape: {labels_cls.shape}")
+                #logging.info(f"labels_cls data type: {labels_cls.dtype}")
                 #logging.info(f"xyz data type: {xyz.dtype}")
-                labels.requires_grad = False
+
+                labels_cls.requires_grad = False
+                labels_reg.requires_grad = False
 
                 sdf_gt = sdf_data[:, 3].unsqueeze(1)
 
@@ -477,8 +488,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     batch_split,
                 )
 
-                #labels = labels.chunk(labels.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1), batch_split)
-                labels = torch.chunk(labels, batch_split)
+                #labels_cls = labels_cls.chunk(labels_cls.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1), batch_split)
+                labels_cls = torch.chunk(labels_cls, batch_split)
+                labels_reg = torch.chunk(labels_reg, batch_split)
 
                 sdf_gt = torch.chunk(sdf_gt, batch_split)
 
@@ -487,7 +499,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 reg_loss_tb = 0.0
                 eikonal_loss_tb = 0.0
                 snnl = 0.0
+                snnl_reg = 0.0
                 attr_loss = 0.0
+                attr_loss_reg = 0.0
 
                 optimizer_all.zero_grad()
 
@@ -496,15 +510,16 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     batch_vecs = z.unsqueeze(1).repeat(1, num_samp_per_scene, 1).view(-1, latent_size)
                     #batch_vecs = lat_vecs(indices[i])
                     #z_for_c_loss = lat_vecs(indices_z[i])
-                    labels = labels[i].unsqueeze(-1)
+                    labels_cls = labels_cls[i].unsqueeze(-1)
+                    labels_reg = labels_reg[i].unsqueeze(-1)
 
                     #logging.info(f"batch_vecs shape: {batch_vecs.shape}")
                     #logging.info(f"latent vecs z (for loss) shape: {z_for_c_loss.shape}")
                     #logging.info(f"xyz shape: {xyz[i].shape}")
                     #logging.info(f"indices shape: {indices[i].shape}")
                     #logging.info(f"indices: {indices[i]}")
-                    #logging.info(f"labels shape: {labels.shape}")
-                    #logging.info(f"labels: {labels}")
+                    #logging.info(f"labels_cls shape: {labels_cls.shape}")
+                    #logging.info(f"labels_cls: {labels_cls}")
                     #logging.info(f"filename: {filenames}")
 
                     input = torch.cat([batch_vecs, xyz[i]], dim=1)
@@ -537,33 +552,34 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     if guided_contrastive_loss:
                         #Classification Loss
                         SNN_Loss = loss.SNNLoss(temp)
-                        loss_snn = SNN_Loss(z, labels)
+                        loss_snn = SNN_Loss(z, labels_cls)
                         chunk_loss += loss_snn * w_cls
                         #print(loss_snn.item())
                         snnl += loss_snn.item()
-                        '''
+                        
                         #Regression Loss
-                        SNN_Loss_Reg = SNNRegLoss(temp, threshold)
-                        loss_snn_reg = SNN_Loss_Reg(z, label[:, :, 2])
-                        loss += loss_snn_reg * w_cls
+                        SNN_Loss_Reg = loss.SNNRegLoss(temp, threshold)
+                        loss_snn_reg = SNN_Loss_Reg(z, labels_reg)
+                        chunk_loss += loss_snn_reg * w_cls
                         #print(loss_snn.item())
                         snnl_reg += loss_snn_reg.item()
-                        '''
+                        
 
                     if attribute_loss:
                         loss_attr = loss.AttributeLoss()
                         #cls
-                        loss_attr_cls = loss_attr(z[:,0], labels)
+                        loss_attr_cls = loss_attr(z[:,0], labels_cls)
                         chunk_loss += loss_attr_cls * w_cls
                         attr_loss += loss_attr_cls.item()
-                        '''
+                        
                         #reg
-                        loss_attr_reg = loss_attr(z[:,1], label[:, :, 2])
-                        loss += loss_attr_reg * w_cls
+                        loss_attr_reg = loss_attr(z[:,1], labels_reg)
+                        chunk_loss += loss_attr_reg * w_cls
                         #print(corr_loss.item())
-                        loss_attribute_cls += loss_attr_cls.item()
-                        loss_attribute_reg += loss_attr_reg.item()
-                        '''
+                        #loss_attribute_cls += loss_attr_cls.item()
+                        #loss_attribute_reg += loss_attr_reg.item()
+                        attr_loss_reg += loss_attr_reg.item()
+                        
                     chunk_loss.backward()
 
                     batch_loss_tb += chunk_loss.item()
@@ -578,6 +594,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 epoch_eikonal_losses.append(eikonal_loss_tb)
                 epoch_snnl.append(snnl)
                 epoch_attr.append(attr_loss)
+                epoch_snnl_reg.append(snnl_reg)
+                epoch_attr_reg.append(attr_loss_reg)
 
                 if grad_clip is not None:
 
@@ -599,9 +617,11 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             
             if guided_contrastive_loss:
                 summary_writer.add_scalar("Loss/train_snnl", sum(epoch_snnl)/len(epoch_snnl), global_step=epoch)
+                summary_writer.add_scalar("Loss/train_snnl_reg", sum(epoch_snnl_reg)/len(epoch_snnl_reg), global_step=epoch)
             
             if attribute_loss:
                 summary_writer.add_scalar("Loss/train_attr", sum(epoch_attr)/len(epoch_attr), global_step=epoch)
+                summary_writer.add_scalar("Loss/train_attr_reg", sum(epoch_attr_reg)/len(epoch_attr_reg), global_step=epoch)
 
             # Log learning rate.
             lr_log.append([schedule.get_learning_rate(epoch) for schedule in lr_schedules])
@@ -616,8 +636,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             print(f"Epoch Loss: {epoch_loss}")
             if guided_contrastive_loss:
                 print(f"SNNL Loss: {sum(epoch_snnl)/len(epoch_snnl)}")
+                print(f"SNNL Reg Loss: {sum(epoch_snnl_reg)/len(epoch_snnl_reg)}")
             if attribute_loss:
                 print(f"Attribute Loss: {sum(epoch_attr)/len(epoch_attr)}")
+                print(f"Attribute Reg Loss: {sum(epoch_attr_reg)/len(epoch_attr_reg)}")
 
             # Log weights and gradient flow.
             grad_norms = []
