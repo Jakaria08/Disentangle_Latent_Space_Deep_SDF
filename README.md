@@ -1,6 +1,6 @@
-# Deep3DComp
+# Disentangle_Latent_Space_Deep_SDF
 
-This is an implementation of our 2023 semester project *Deep 3D-Shape Compression*. You can read our [research report](https://github.com/philippwulff/Deep3DComp/blob/main/docs/Deep3DComp_report.pdf) or view a summary of our results on our [website](https://philippwulff.github.io/Deep3DComp/). We thank the authors of [DeepSDF](https://github.com/facebookresearch/DeepSDF) from whom be borrow code.
+Disentangling Latent Space using DeepSDF.
 
 ## File Organization
 
