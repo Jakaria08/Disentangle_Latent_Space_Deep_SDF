@@ -278,9 +278,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     log_frequency = get_spec_with_default(specs, "LogFrequency", 100)
     
     with open(train_split_file, "r") as f:
-        train_split = json.load(f)
+        train_split = json.load(f) 
 
-     = get_spec_with_default(specs,torus_path "TorusPath", "/home/jakaria//torus_two_models_data/torus_two/obj_files")
+    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria//torus_two_models_data/torus_two/obj_files")
     logging.info(f"Torus path: {torus_path}")
     if not os.path.exists(torus_path): 
         logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
