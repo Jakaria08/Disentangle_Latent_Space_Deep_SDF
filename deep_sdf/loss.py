@@ -14,6 +14,7 @@ class SNNLoss(nn.Module):
         self.STABILITY_EPS = 0.00001
 
     def forward(self, x, y):
+        x = x.to('cuda')
         b = x.size(0)  # Batch size
         y = y.squeeze()
 
@@ -25,7 +26,6 @@ class SNNLoss(nn.Module):
 
         squared_distances = (x_expanded - x_expanded.t()) ** 2
         exp_distances = torch.exp(-(squared_distances / self.T))
-        exp_distances = exp_distances.to('cuda')
         exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
         #print(exp_distances)
 
@@ -37,7 +37,6 @@ class SNNLoss(nn.Module):
             x_expanded = x[:,i].unsqueeze(1)
             squared_distances = (x_expanded - x_expanded.t()) ** 2
             exp_distances = torch.exp(-(squared_distances / self.T))
-            exp_distances = exp_distances.to('cuda')
             exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
             exp_distances = exp_distances * same_class_mask
             exp_distances_all = exp_distances_all + exp_distances
@@ -59,6 +58,7 @@ class SNNRegLoss(nn.Module):
         self.threshold = threshold
 
     def forward(self, x, y):
+        x = x.to('cuda')
         b = x.size(0)  # Batch size
         y = y.squeeze()
 
@@ -70,7 +70,6 @@ class SNNRegLoss(nn.Module):
 
         squared_distances = (x_expanded - x_expanded.t()) ** 2
         exp_distances = torch.exp(-(squared_distances / self.T))
-        exp_distances = exp_distances.to('cuda')
         exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
         #print(exp_distances)
 
@@ -81,7 +80,6 @@ class SNNRegLoss(nn.Module):
         x_expanded = x[:,0].unsqueeze(1)
         squared_distances = (x_expanded - x_expanded.t()) ** 2
         exp_distances = torch.exp(-(squared_distances / self.T))
-        exp_distances = exp_distances.to('cuda')
         exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
         exp_distances = exp_distances * same_class_mask
         exp_distances_all = exp_distances_all + exp_distances
@@ -89,7 +87,7 @@ class SNNRegLoss(nn.Module):
             x_expanded = x[:,i].unsqueeze(1)
             squared_distances = (x_expanded - x_expanded.t()) ** 2
             exp_distances = torch.exp(-(squared_distances / self.T))
-            exp_distances = exp_distances.to('cuda')
+            exp_distances = exp_distances
             exp_distances = exp_distances * (1 - torch.eye(b, device='cuda'))
             exp_distances = exp_distances * same_class_mask
             exp_distances_all = exp_distances_all + exp_distances

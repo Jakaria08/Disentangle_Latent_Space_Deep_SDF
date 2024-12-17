@@ -23,12 +23,13 @@ import reconstruct
 
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = False
-attribute_loss = True
+guided_contrastive_loss = True
+attribute_loss = False
 beta = 0.01
-temp = 181 # change this?
+temp = 181
+temp_reg = 20 # change this?
 w_cls = 0.5
-threshold = 0.025
+threshold = 0.5
 
 def save_model(experiment_directory, filename, decoder, epoch):
 
@@ -508,6 +509,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 for i in range(batch_split):
                     z = lat_vecs(indices_z[i])
                     batch_vecs = z.unsqueeze(1).repeat(1, num_samp_per_scene, 1).view(-1, latent_size)
+                    #print(f"Batch vecs device: {batch_vecs[i].device}")
+                    #print(f"z vecs device: {z[i].device}")
                     #batch_vecs = lat_vecs(indices[i])
                     #z_for_c_loss = lat_vecs(indices_z[i])
                     labels_cls = labels_cls[i].unsqueeze(-1)
@@ -523,6 +526,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     #logging.info(f"filename: {filenames}")
 
                     input = torch.cat([batch_vecs, xyz[i]], dim=1)
+                    #print(f"input device: {input.device}")
                     
                     # NN optimization
                     pred_sdf = decoder(input)
@@ -558,7 +562,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         snnl += loss_snn.item()
                         
                         #Regression Loss
-                        SNN_Loss_Reg = loss.SNNRegLoss(temp, threshold)
+                        SNN_Loss_Reg = loss.SNNRegLoss(temp_reg, threshold)
                         loss_snn_reg = SNN_Loss_Reg(z, labels_reg)
                         chunk_loss += loss_snn_reg * w_cls
                         #print(loss_snn.item())
@@ -670,8 +674,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     epoch,
                 )
             
-        
-                # EVALUATION 
+            # EVALUATION 
             logging.info(f"Torus path: {torus_path}")
             if torus_path is not None:
                 logging.info(f"Starting evaluation at epoch {epoch}...")
