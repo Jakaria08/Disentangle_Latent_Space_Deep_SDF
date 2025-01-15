@@ -215,7 +215,7 @@ float BoundingCubeNormalization(
   const float zCenter = (zMax + zMin) / 2.0f;
 
   // make the mean zero
-  float maxDistance = -1.0f;
+  //float maxDistance = -1.0f;
   for (size_t i = 0; i < numVertices; i++) {
     // pass when it's not used.
     if (verticesUsed[i] == false)
@@ -224,21 +224,21 @@ float BoundingCubeNormalization(
     vertices(1, i) -= yCenter;
     vertices(2, i) -= zCenter;
 
-    const float dist = Eigen::Map<Eigen::Vector3f>(vertices.RowPtr(i)).norm();
-    maxDistance = std::max(maxDistance, dist);
+    //const float dist = Eigen::Map<Eigen::Vector3f>(vertices.RowPtr(i)).norm();
+    //maxDistance = std::max(maxDistance, dist);
   }
 
   // add some buffer
-  maxDistance *= buffer;
+  //maxDistance *= buffer;
 
-  if (fitToUnitSphere) {
-    for (size_t i = 0; i < numVertices; i++) {
-      vertices(0, i) /= maxDistance;
-      vertices(1, i) /= maxDistance;
-      vertices(2, i) /= maxDistance;
-    }
-    maxDistance = 1;
-  }
+  //if (fitToUnitSphere) {
+    //for (size_t i = 0; i < numVertices; i++) {
+      //vertices(0, i) /= maxDistance;
+      //vertices(1, i) /= maxDistance;
+      //vertices(2, i) /= maxDistance;
+    //}
+    //maxDistance = 1;
+  //}
 
-  return maxDistance;
+  return 1.0f;
 }
