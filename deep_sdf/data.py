@@ -11,6 +11,7 @@ import torch
 import torch.utils.data
 import logging
 import deep_sdf.workspace as ws
+import trimesh
 from typing import Tuple, List
 
 
@@ -32,6 +33,24 @@ def get_instance_filenames(data_source, split):
             )
         npzfiles += [instance_filename]
     return npzfiles
+
+def get_mesh_paths(data_source, split):
+    mesh_paths = []
+    for instance_name in split:
+
+        instance_filename = os.path.join(data_source, instance_name)
+
+        if not os.path.isfile(
+            os.path.join(data_source, instance_filename)
+        ):
+            # raise RuntimeError(
+            #     'Requested non-existent file "' + instance_filename + "'"
+            # )
+            logging.warning(
+                "Requested non-existent file '{}'".format(instance_filename)
+            )
+        mesh_paths += [instance_filename]
+    return mesh_paths
 
 
 class NoMeshFileError(RuntimeError):
@@ -117,23 +136,37 @@ def unpack_sdf_samples_from_ram(data, subsample=None):
 
     return samples
 
+def get_surface_points(mesh_path, num_points=2048):
+    mesh = trimesh.load(mesh_path)
+    points = mesh.sample(num_points)
+    return points
 
 class SDFSamples(torch.utils.data.Dataset):
     def __init__(
         self,
         data_source,
+        data_source_mesh,
         split,
         subsample,
         load_ram=False,
         print_filename=False,
         num_files=1000000,
+        num_points=2048,
     ):
         self.subsample = subsample
 
         self.data_source = data_source
+        self.data_source_mesh = data_source_mesh
         self.npyfiles = get_instance_filenames(data_source, split)
+        self.mesh_paths = get_mesh_paths(data_source_mesh, split)
         self.labels = self.load_labels()
 
+        self.surface_points = []
+        for mesh_path in self.mesh_paths:
+            points = get_surface_points(mesh_path, num_points)
+            self.surface_points.append(points)
+
+        logging.debug(f"Loaded {len(self.surface_points)} surface points")
         logging.debug(
             "using "
             + str(len(self.npyfiles))
@@ -173,14 +206,15 @@ class SDFSamples(torch.utils.data.Dataset):
         
         label = self.labels[os.path.splitext(os.path.basename(self.npyfiles[idx]))[0]]
         label = torch.tensor(label)
+        surface_point = self.surface_points[idx]
         
         if self.load_ram:
             retval = (
                 unpack_sdf_samples_from_ram(self.loaded_data[idx], self.subsample),
-                idx, label,
+                idx, label, filename, surface_point
             )
         else:
-            retval = unpack_sdf_samples(filename, self.subsample), idx, label, filename
+            retval = unpack_sdf_samples(filename, self.subsample), idx, label, filename, surface_point
         
         logging.debug(f"Time for getting item: {(time.time() - TIME)*1000} ms"); TIME = time.time()
         return retval

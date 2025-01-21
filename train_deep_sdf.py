@@ -20,10 +20,10 @@ import deep_sdf
 from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils, loss
 import deep_sdf.workspace as ws
 import reconstruct
-
+import networks.sdf_vae as vae
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = True
+guided_contrastive_loss = False
 attribute_loss = False
 beta = 0.01
 temp = 181
@@ -202,6 +202,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     logging.info("Experiment description: \n" + str(specs["Description"]))
 
     data_source = specs["DataSource"]
+    data_source_mesh = specs["DataSourceMesh"]
     train_split_file = specs["TrainSplit"]
     test_split_file = specs["TestSplit"]
 
@@ -210,6 +211,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     logging.debug(specs["NetworkSpecs"])
 
     latent_size = specs["CodeLength"]
+    decoder_specs = specs["NetworkSpecs"]
 
     checkpoints = list(
         range(
@@ -270,11 +272,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     code_bound = get_spec_with_default(specs, "CodeBound", None)
 
-    decoder = arch.Decoder(latent_size, **specs["NetworkSpecs"]).cuda()
+    decoder_old = arch.Decoder(latent_size, **specs["NetworkSpecs"]).cuda()
+    decoder = vae.SDFVAE(latent_size, num_samp_per_scene, decoder_specs).cuda()
 
     logging.info("training with {} GPU(s)".format(torch.cuda.device_count()))
 
-    decoder = torch.nn.DataParallel(decoder)
+    #decoder = torch.nn.DataParallel(decoder)
 
     num_epochs = specs["NumEpochs"]
     log_frequency = get_spec_with_default(specs, "LogFrequency", 100)
@@ -291,7 +294,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     if load_ram:
         logging.info(f"Loading SDF samples into memory because LoadDatasetIntoRAM=true")
     sdf_dataset = deep_sdf.data.SDFSamples(
-        data_source, train_split, num_samp_per_scene, load_ram=load_ram
+        data_source, data_source_mesh, train_split, num_samp_per_scene, load_ram=load_ram
     )
 
     num_data_loader_threads = get_spec_with_default(specs, "DataLoaderThreads", 1)
@@ -443,7 +446,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             decoder.train()
 
             adjust_learning_rate(lr_schedules, optimizer_all, epoch, loss_log_epoch)
-            for sdf_data, indices, labels, filenames in sdf_loader:
+            for sdf_data, indices, labels, filenames, surface_points in sdf_loader:
                 # logging.debug(f"time for dataloading: {(time.time() - TIME)*1000:.3f} ms"); TIME = time.time()
                 # Process the input data
                 sdf_data = sdf_data.reshape(-1, 4)
@@ -481,6 +484,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     sdf_gt = torch.clamp(sdf_gt, minT, maxT)
 
                 xyz = torch.chunk(xyz, batch_split)
+                surface_points = torch.chunk(surface_points, batch_split)
 
                 indices_z = torch.chunk(indices, batch_split)
                 
@@ -524,12 +528,15 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     #logging.info(f"labels_cls shape: {labels_cls.shape}")
                     #logging.info(f"labels_cls: {labels_cls}")
                     #logging.info(f"filename: {filenames}")
-
+                    #logging.info(f"xyz shape: {xyz[i].shape}")
+                    #logging.info(f"surface_points shape: {surface_points[i].shape}")
+                    
                     input = torch.cat([batch_vecs, xyz[i]], dim=1)
                     #print(f"input device: {input.device}")
+                    #logging.info(f"input shape: {input.shape}")
                     
                     # NN optimization
-                    pred_sdf = decoder(input)
+                    pred_sdf, z = decoder(surface_points[i], xyz[i])
 
                     if enforce_minmax:
                         pred_sdf = torch.clamp(pred_sdf, minT, maxT)
