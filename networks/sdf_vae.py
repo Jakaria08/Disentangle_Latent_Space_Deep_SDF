@@ -16,7 +16,10 @@ class SDFVAE(nn.Module):
         
     def forward(self, points, queries):
         #print(f"Shape of queries: {queries.shape}")
-        z = self.encoder(points)
+        mu, logvar = self.encoder(points)
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        z = mu + eps * std
         #print(f"Shape of z: {z.shape}")
         z_expanded = z.unsqueeze(1).repeat(1, self.num_samp_per_scene, 1).view(-1, self.latent_size)
         #print(f"Shape of z_expanded: {z_expanded.shape}")
@@ -26,4 +29,4 @@ class SDFVAE(nn.Module):
         queries = queries.cuda()
         decoder_input = torch.cat([z_expanded, queries], dim=1)
         sdf = self.decoder(decoder_input)
-        return sdf, z
+        return sdf, mu, logvar
