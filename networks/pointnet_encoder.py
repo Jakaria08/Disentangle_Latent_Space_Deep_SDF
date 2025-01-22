@@ -25,7 +25,14 @@ class PointNetEncoder(nn.Module):
         
         self.max_pool = nn.AdaptiveAvgPool1d(1)
         
-        self.fc = nn.Sequential(
+        self.fc_mu = nn.Sequential(
+            nn.Linear(512, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Linear(256, latent_size)
+        )
+
+        self.fc_logvar = nn.Sequential(
             nn.Linear(512, 256),
             nn.BatchNorm1d(256),
             nn.ReLU(),
@@ -40,5 +47,7 @@ class PointNetEncoder(nn.Module):
         x = self.max_pool(x)
         x = x.view(x.size(0), -1)
         #print(f"Shape of x: {x.shape}")
-        z = self.fc(x)
-        return z
+        #z = self.fc(x)
+        mu = self.fc_mu(x)
+        logvar = self.fc_logvar(x)
+        return mu, logvar

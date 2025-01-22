@@ -17,7 +17,7 @@ import random
 import numpy as np
 
 import deep_sdf
-from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils, loss
+from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils, loss, data
 import deep_sdf.workspace as ws
 import reconstruct
 import networks.sdf_vae as vae
@@ -25,11 +25,15 @@ from torch.utils.tensorboard import SummaryWriter
 
 guided_contrastive_loss = False
 attribute_loss = False
+kl_div_loss = True
 beta = 0.01
 temp = 181
 temp_reg = 20 # change this?
 w_cls = 0.5
 threshold = 0.5
+
+def kl_divergence_loss(mu, logvar):
+    return torch.mean(-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1), dim=0)
 
 def save_model(experiment_directory, filename, decoder, epoch):
 
@@ -285,7 +289,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     with open(train_split_file, "r") as f:
         train_split = json.load(f) 
 
-    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria//torus_two_models_data/torus_two/obj_files")
+    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/scaled_obj_files")
     logging.info(f"Torus path: {torus_path}")
     if not os.path.exists(torus_path): 
         logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
@@ -311,14 +315,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 200)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 10)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 
     # Get test evaluation settings.
     with open(test_split_file, "r") as f:
         test_split = json.load(f)
-    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 200)
+    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 100)
     eval_test_scene_num = get_spec_with_default(specs, "EvalTestSceneNumber", 10)
     eval_test_optimization_steps = get_spec_with_default(specs, "EvalTestOptimizationSteps", 1000)
     eval_test_filenames = deep_sdf.data.get_instance_filenames(data_source, test_split)
@@ -439,6 +443,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_snnl_reg = []
             epoch_attr = []
             epoch_attr_reg = []
+            epoch_loss_kl = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -507,6 +512,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 snnl_reg = 0.0
                 attr_loss = 0.0
                 attr_loss_reg = 0.0
+                loss_kl = 0.0
 
                 optimizer_all.zero_grad()
 
@@ -536,7 +542,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     #logging.info(f"input shape: {input.shape}")
                     
                     # NN optimization
-                    pred_sdf, z = decoder(surface_points[i], xyz[i])
+                    pred_sdf, mu, logvar = decoder(surface_points[i], xyz[i])
 
                     if enforce_minmax:
                         pred_sdf = torch.clamp(pred_sdf, minT, maxT)
@@ -559,6 +565,11 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         eikonal_loss = 0.002 * ((1. - torch.linalg.vector_norm(gradients, dim=1))**2).mean()
                         chunk_loss += eikonal_loss
                         eikonal_loss_tb += eikonal_loss.item()
+
+                    if kl_div_loss:
+                        kl_loss = kl_divergence_loss(mu, logvar)
+                        chunk_loss += beta * kl_loss
+                        loss_kl += kl_loss.item()
 
                     if guided_contrastive_loss:
                         #Classification Loss
@@ -596,7 +607,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     batch_loss_tb += chunk_loss.item()
                     # Print batch loss
                 #print(f"SNNL Loss: {snnl}")
-                #print(f"Batch loss: {batch_loss_tb}")                    
+                #print(f"Batch loss: {batch_loss_tb}") 
+                #print(f"kl loss: {loss_kl}")                   
                 logging.debug("loss = {}".format(batch_loss_tb))
                 loss_log.append(batch_loss_tb)
                 epoch_losses.append(batch_loss_tb)
@@ -607,6 +619,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 epoch_attr.append(attr_loss)
                 epoch_snnl_reg.append(snnl_reg)
                 epoch_attr_reg.append(attr_loss_reg)
+                epoch_loss_kl.append(loss_kl)
 
                 if grad_clip is not None:
 
@@ -629,6 +642,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             if guided_contrastive_loss:
                 summary_writer.add_scalar("Loss/train_snnl", sum(epoch_snnl)/len(epoch_snnl), global_step=epoch)
                 summary_writer.add_scalar("Loss/train_snnl_reg", sum(epoch_snnl_reg)/len(epoch_snnl_reg), global_step=epoch)
+                summary_writer.add_scalar("Loss/train_kl", sum(epoch_loss_kl)/len(epoch_loss_kl), global_step=epoch)
             
             if attribute_loss:
                 summary_writer.add_scalar("Loss/train_attr", sum(epoch_attr)/len(epoch_attr), global_step=epoch)
@@ -651,6 +665,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             if attribute_loss:
                 print(f"Attribute Loss: {sum(epoch_attr)/len(epoch_attr)}")
                 print(f"Attribute Reg Loss: {sum(epoch_attr_reg)/len(epoch_attr_reg)}")
+            if kl_div_loss:
+                print(f"KL Loss: {sum(epoch_loss_kl)/len(epoch_loss_kl)}")
 
             # Log weights and gradient flow.
             grad_norms = []
@@ -694,15 +710,23 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     eval_train_time_start = time.time()
                     for index in eval_train_scene_idxs:
                         lat_vec = lat_vecs(torch.LongTensor([index])).cuda()
+                        
+                        # latent vector for the shapes are none for VAE
+                        lat_vec = None
+
                         save_name = os.path.basename(sdf_dataset.npyfiles[index]).split(".npz")[0]
+                        mesh_path = os.path.join(data_source_mesh, save_name + ".obj")
+                        train_surface_points = data.get_surface_points(mesh_path)
+
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_train_reconstructions, save_name)
                         if not os.path.exists(path):
                             os.makedirs(path)
 
                         start = time.time()
                         with torch.no_grad():
-                            train_mesh = mesh.create_mesh(
-                                decoder, 
+                            train_mesh, mu_train, logvar_train = mesh.create_mesh(
+                                decoder,
+                                train_surface_points, 
                                 lat_vec, 
                                 N=eval_grid_res, 
                                 max_batch=int(2 ** 18), 
