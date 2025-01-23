@@ -88,12 +88,12 @@ def decode_sdf(decoder, train_surface_points, latent_vector, queries):
 
     if latent_vector is None:
         inputs = queries
-        print("inputs shape for training: ", inputs.shape)
+        #print("inputs shape for training: ", inputs.shape)
     else:
         latent_repeat = latent_vector.expand(num_samples, -1)
         inputs = torch.cat([latent_repeat, queries], 1)
 
-    sdf, mu, logvar = decoder(train_surface_points, inputs)
+    sdf, mu, logvar = decoder(train_surface_points, inputs, train=False)
 
     return sdf, mu, logvar
 

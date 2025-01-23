@@ -14,14 +14,19 @@ class SDFVAE(nn.Module):
         self.num_samp_per_scene = num_samp_per_scene
         self.latent_size = latent_size
         
-    def forward(self, points, queries):
+    def forward(self, points, queries, train=True):
         #print(f"Shape of queries: {queries.shape}")
         mu, logvar = self.encoder(points)
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
-        z = mu + eps * std
         #print(f"Shape of z: {z.shape}")
-        z_expanded = z.unsqueeze(1).repeat(1, self.num_samp_per_scene, 1).view(-1, self.latent_size)
+        if train:
+            z = mu + eps * std
+            z_expanded = z.unsqueeze(1).repeat(1, self.num_samp_per_scene, 1).view(-1, self.latent_size)
+        else:
+            z = mu
+            num_samples = queries.shape[0]  
+            z_expanded = z.expand(num_samples, -1)
         #print(f"Shape of z_expanded: {z_expanded.shape}")
         #print(f"Shape of queries: {queries.shape}")
         #print(f"z_expanded device: {z_expanded.device}")

@@ -315,7 +315,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 10)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 100)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 
@@ -717,6 +717,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         save_name = os.path.basename(sdf_dataset.npyfiles[index]).split(".npz")[0]
                         mesh_path = os.path.join(data_source_mesh, save_name + ".obj")
                         train_surface_points = data.get_surface_points(mesh_path)
+                        print(f"Train surface points shape: {train_surface_points.shape}")
+                        print(f"Train surface points data type: {train_surface_points.dtype}")
+                        #print(f"Surface points: {train_surface_points}")
+                        train_surface_points = torch.from_numpy(train_surface_points)
+                        train_surface_points = train_surface_points.unsqueeze(0)
+                        print(f"Train surface points shape: {train_surface_points.shape}")
 
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_train_reconstructions, save_name)
                         if not os.path.exists(path):
