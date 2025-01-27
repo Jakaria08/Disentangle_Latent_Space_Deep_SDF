@@ -26,13 +26,16 @@ from torch.utils.tensorboard import SummaryWriter
 guided_contrastive_loss = False
 attribute_loss = False
 kl_div_loss = True
-beta = 0.01
+annealing_epochs = 100
+beta_final = 0.0001
 temp = 181
 temp_reg = 20 # change this?
 w_cls = 0.5
 threshold = 0.5
+w_code_reg = 0.5
 
 def kl_divergence_loss(mu, logvar):
+    logvar = torch.clamp(logvar, min=-10, max=10)  # Clamp logvar to prevent numerical issues
     return torch.mean(-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1), dim=0)
 
 def save_model(experiment_directory, filename, decoder, epoch):
@@ -233,7 +236,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     grad_clip = get_spec_with_default(specs, "GradientClipNorm", None)
     if grad_clip is not None:
-        logging.debug("clipping gradients to max norm {}".format(grad_clip))
+        logging.info("clipping gradients to max norm {}".format(grad_clip))
 
     def save_latest(epoch):
         save_model(experiment_directory, "latest.pth", decoder, epoch)
@@ -277,14 +280,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     code_bound = get_spec_with_default(specs, "CodeBound", None)
 
     decoder_old = arch.Decoder(latent_size, **specs["NetworkSpecs"]).cuda()
-    decoder = vae.SDFVAE(latent_size, num_samp_per_scene, decoder_specs).cuda()
+    decoder = vae.SDFVAE(latent_size, num_samp_per_scene, decoder_specs, kl_div_loss).cuda()
 
     logging.info("training with {} GPU(s)".format(torch.cuda.device_count()))
 
     #decoder = torch.nn.DataParallel(decoder)
 
     num_epochs = specs["NumEpochs"]
-    log_frequency = get_spec_with_default(specs, "LogFrequency", 100)
+    log_frequency = get_spec_with_default(specs, "LogFrequency", 1000)
     
     with open(train_split_file, "r") as f:
         train_split = json.load(f) 
@@ -315,14 +318,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 100)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 1000)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 
     # Get test evaluation settings.
     with open(test_split_file, "r") as f:
         test_split = json.load(f)
-    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 100)
+    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 1000)
     eval_test_scene_num = get_spec_with_default(specs, "EvalTestSceneNumber", 10)
     eval_test_optimization_steps = get_spec_with_default(specs, "EvalTestOptimizationSteps", 1000)
     eval_test_filenames = deep_sdf.data.get_instance_filenames(data_source, test_split)
@@ -433,6 +436,11 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         test_chamfer_dists_log = []
         for epoch in range(start_epoch, num_epochs + 1):
             
+            # Calculate current β
+            if epoch < annealing_epochs:
+                beta = beta_final * (epoch / annealing_epochs)  # Linear increase
+            else:
+                beta = beta_final  # After annealing, use final β
 
             epoch_time_start = time.time()
             epoch_losses = []
@@ -542,7 +550,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     #logging.info(f"input shape: {input.shape}")
                     
                     # NN optimization
-                    pred_sdf, mu, logvar = decoder(surface_points[i], xyz[i])
+                    if kl_div_loss:
+                        pred_sdf, mu, logvar = decoder(surface_points[i], xyz[i])
+                    else:
+                        pred_sdf, z = decoder(surface_points[i], xyz[i])
 
                     if enforce_minmax:
                         pred_sdf = torch.clamp(pred_sdf, minT, maxT)
@@ -555,7 +566,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             code_reg_lambda * min(1, epoch / 100) * l2_size_loss
                         ) / num_sdf_samples
                     
-                        chunk_loss = chunk_loss + reg_loss.cuda()
+                        chunk_loss = chunk_loss + w_code_reg * reg_loss.cuda()
                         reg_loss_tb += reg_loss.item()
                     
                     summary_writer.add_scalar("Loss/train_vanilla", chunk_loss, global_step=epoch)
@@ -679,7 +690,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     summary_writer.add_scalar(f"GradsNorm/{_name}.grad", grad_norm.item(), global_step=epoch)
                     grad_norms.append(grad_norm)
             summary_writer.add_scalar(f"GradsNorm/allNetParams.grad", torch.norm(torch.stack(grad_norms), p=2).item(), global_step=epoch)
-            summary_writer.add_scalar(f"GradsNorm/allLatParams.grad", torch.norm(lat_vecs.weight.grad.detach(), p=2).item(), global_step=epoch)
+            #summary_writer.add_scalar(f"GradsNorm/allLatParams.grad", torch.norm(lat_vecs.weight.grad.detach(), p=2).item(), global_step=epoch)
 
             # Save checkpoint.
             if epoch in checkpoints:
@@ -730,8 +741,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
                         start = time.time()
                         with torch.no_grad():
-                            train_mesh, mu_train, logvar_train = mesh.create_mesh(
+                            train_mesh = mesh.create_mesh(
                                 decoder,
+                                kl_div_loss,
                                 train_surface_points, 
                                 lat_vec, 
                                 N=eval_grid_res, 
