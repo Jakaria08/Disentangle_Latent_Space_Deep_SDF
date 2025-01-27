@@ -83,7 +83,7 @@ def configure_logging(args):
         logger.addHandler(file_logger_handler)
 
 
-def decode_sdf(decoder, train_surface_points, latent_vector, queries):
+def decode_sdf(decoder, kl_div_loss, train_surface_points, latent_vector, queries):
     num_samples = queries.shape[0]
 
     if latent_vector is None:
@@ -93,9 +93,12 @@ def decode_sdf(decoder, train_surface_points, latent_vector, queries):
         latent_repeat = latent_vector.expand(num_samples, -1)
         inputs = torch.cat([latent_repeat, queries], 1)
 
-    sdf, mu, logvar = decoder(train_surface_points, inputs, train=False)
+    if kl_div_loss:
+        sdf, mu, logvar = decoder(train_surface_points, inputs, train=False)
+    else:
+        sdf, z = decoder(train_surface_points, inputs, train=False)
 
-    return sdf, mu, logvar
+    return sdf
 
 
 def psnr(mse: Union[torch.Tensor, np.array]) -> Union[torch.Tensor, np.array]:

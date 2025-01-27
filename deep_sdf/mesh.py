@@ -18,7 +18,7 @@ import tempfile
 from deep_sdf import utils
 
 
-def create_mesh(decoder, train_surface_points, latent_vec, filename=None, N=256, max_batch=32 ** 3, offset=None, scale=None, return_trimesh=False) -> Optional[trimesh.Trimesh]:
+def create_mesh(decoder, kl_div_loss, train_surface_points, latent_vec, filename=None, N=256, max_batch=32 ** 3, offset=None, scale=None, return_trimesh=False) -> Optional[trimesh.Trimesh]:
     """Creates a mesh given the trained decoder and latent code by
     1. Sampling xyz query points
     2. Retrieving the SDF predictions
@@ -58,7 +58,7 @@ def create_mesh(decoder, train_surface_points, latent_vec, filename=None, N=256,
 
     while head < num_samples:
         sample_subset = samples[head : min(head + max_batch, num_samples), 0:3].cuda()
-        sdf, mu, logvar = utils.decode_sdf(decoder, train_surface_points, latent_vec, sample_subset)
+        sdf = utils.decode_sdf(decoder, kl_div_loss, train_surface_points, latent_vec, sample_subset)
 
         samples[head : min(head + max_batch, num_samples), 3] = (
             sdf
@@ -91,7 +91,7 @@ def create_mesh(decoder, train_surface_points, latent_vec, filename=None, N=256,
         mesh = utils.as_mesh(trimesh.load(ply_filename + ".ply"))
         if tmpdirname: 
             tmpdirname.cleanup()
-        return mesh, mu, logvar
+        return mesh
 
 
 def convert_sdf_samples_to_ply(
