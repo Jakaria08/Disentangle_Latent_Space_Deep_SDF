@@ -17,6 +17,7 @@ class SDFVAE(nn.Module):
         
     def forward(self, points, queries, train=True):
         #print(f"Shape of queries: {queries.shape}")
+        print(f"Points: {points}")
         if points is not None:
             if self.kl_div_loss:
                 mu, logvar = self.encoder(points)
@@ -42,6 +43,16 @@ class SDFVAE(nn.Module):
             queries = queries.cuda()
             decoder_input = torch.cat([z_expanded, queries], dim=1)
             sdf = self.decoder(decoder_input)
+            if self.kl_div_loss:
+                return sdf, mu, logvar, z
+            else:
+                return sdf, z
+            
+        else:
+            sdf = self.decoder(queries)
+            z = None
+            mu = None
+            logvar = None
             if self.kl_div_loss:
                 return sdf, mu, logvar, z
             else:
