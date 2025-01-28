@@ -24,18 +24,18 @@ import networks.sdf_vae as vae
 from torch.utils.tensorboard import SummaryWriter
 
 guided_contrastive_loss = False
-attribute_loss = False
+attribute_loss = True
 kl_div_loss = True
-annealing_epochs = 100
-beta_final = 0.0001
+annealing_epochs = 1
+beta_final = 0.001
 temp = 181
 temp_reg = 20 # change this?
-w_cls = 0.5
+w_cls = 0.25
 threshold = 0.5
-w_code_reg = 0.5
+w_code_reg = 0.8
 
 def kl_divergence_loss(mu, logvar):
-    logvar = torch.clamp(logvar, min=-10, max=10)  # Clamp logvar to prevent numerical issues
+    logvar = torch.clamp(logvar, min=-3, max=3)  # Clamp logvar to prevent numerical issues
     return torch.mean(-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1), dim=0)
 
 def save_model(experiment_directory, filename, decoder, epoch):
@@ -551,7 +551,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     
                     # NN optimization
                     if kl_div_loss:
-                        pred_sdf, mu, logvar = decoder(surface_points[i], xyz[i])
+                        pred_sdf, mu, logvar, z = decoder(surface_points[i], xyz[i])
                     else:
                         pred_sdf, z = decoder(surface_points[i], xyz[i])
 
@@ -561,7 +561,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     sdf_loss_tb += chunk_loss.item()
 
                     if do_code_regularization:
-                        l2_size_loss = torch.sum(torch.norm(batch_vecs, dim=1))
+                        l2_size_loss = torch.sum(torch.norm(z, dim=1))
                         reg_loss = (
                             code_reg_lambda * min(1, epoch / 100) * l2_size_loss
                         ) / num_sdf_samples

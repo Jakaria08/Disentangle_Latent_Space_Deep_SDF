@@ -94,7 +94,7 @@ def decode_sdf(decoder, kl_div_loss, train_surface_points, latent_vector, querie
         inputs = torch.cat([latent_repeat, queries], 1)
 
     if kl_div_loss:
-        sdf, mu, logvar = decoder(train_surface_points, inputs, train=False)
+        sdf, mu, logvar, z = decoder(train_surface_points, inputs, train=False)
     else:
         sdf, z = decoder(train_surface_points, inputs, train=False)
 
