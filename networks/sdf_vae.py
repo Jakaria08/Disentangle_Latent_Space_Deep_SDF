@@ -17,7 +17,7 @@ class SDFVAE(nn.Module):
         
     def forward(self, points, queries, train=True):
         #print(f"Shape of queries: {queries.shape}")
-        print(f"Points: {points}")
+        #print(f"Points: {points}")
         if points is not None:
             if self.kl_div_loss:
                 mu, logvar = self.encoder(points)

@@ -138,6 +138,10 @@ class ResnetPointnet(nn.Module):
         self.actvn = nn.ReLU()
         self.pool = maxpool
 
+        # Initialize z with standard Gaussian
+        nn.init.normal_(self.fc_c.weight, mean=0.0, std=1.0)
+        nn.init.constant_(self.fc_c.bias, 0.0)
+
         # Initialize mu with standard Gaussian
         nn.init.normal_(self.fc_mu.weight, mean=0.0, std=1.0)
         nn.init.constant_(self.fc_mu.bias, 0.0)
