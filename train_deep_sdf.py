@@ -15,6 +15,7 @@ import time
 import copy
 import random
 import numpy as np
+import torch.autograd as autograd
 
 import deep_sdf
 from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils, loss, data
@@ -24,8 +25,9 @@ import networks.sdf_vae as vae
 from torch.utils.tensorboard import SummaryWriter
 
 guided_contrastive_loss = False
-attribute_loss = True
-kl_div_loss = True
+attribute_loss = False
+kl_div_loss = False
+jacobian_loss = True
 annealing_epochs = 1
 beta_final = 0.001
 temp = 181
@@ -33,6 +35,51 @@ temp_reg = 20 # change this?
 w_cls = 0.25
 threshold = 0.5
 w_code_reg = 0.8
+w_jacobian = 1e-3
+
+def jacobian_penalty_JJT(surface_points, autoencoder):
+        
+        """
+        Computes the Jacobian penalty ||JJ^T - I||^2_F for a sample, encouraging
+        the encoder to preserve local geometry.
+        """
+        # Original shape info
+        num_of_shapes_to_sample = 3
+        batch_size, num_points, dims = surface_points.shape
+        # Compute Jacobian for first three shape
+        sample_pc = surface_points[0:num_of_shapes_to_sample].reshape(-1, 3)
+        sample_pc.requires_grad_(True)
+        # Wapper function that takes flattened input and returns latent vector
+        def encoder_wrapper(flat_input):
+            reshaped_input = flat_input.view(num_of_shapes_to_sample, num_points, dims)
+            logging.info(f"Surface points shape: {surface_points.shape}")
+            if kl_div_loss:
+                mu, _ = autoencoder.encoder(reshaped_input)
+                return mu
+            else:
+                z = autoencoder.encoder(reshaped_input)
+            return z
+        
+        # Compute the Jacobian: J = d(z)/d(x)
+        J = autograd.functional.jacobian(
+            encoder_wrapper, 
+            sample_pc, 
+            create_graph=True)
+ 
+        # Compute the Jacobian product JJT
+        JJT = J @ J.transpose(0, 1)
+        # Get the latent dimension from JJT's shape
+        latent_dim = JJT.shape[0]
+
+        # Create the identity matrix
+        I = torch.eye(latent_dim).to(JJT.device)
+
+        # Compute the Frobenius norm of ||JJ^T - I||^2_F
+        penalty = torch.norm(JJT - I, p='fro')**2
+
+        return penalty
+
+
 
 def kl_divergence_loss(mu, logvar):
     logvar = torch.clamp(logvar, min=-3, max=3)  # Clamp logvar to prevent numerical issues
@@ -275,7 +322,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     do_code_regularization = get_spec_with_default(specs, "CodeRegularization", True)
     code_reg_lambda = get_spec_with_default(specs, "CodeRegularizationLambda", 1e-4)
-    use_eikonal = get_spec_with_default(specs, "UseEikonal", False)
+    use_eikonal = get_spec_with_default(specs, "UseEikonal", True)
 
     code_bound = get_spec_with_default(specs, "CodeBound", None)
 
@@ -452,6 +499,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_attr = []
             epoch_attr_reg = []
             epoch_loss_kl = []
+            epoch_jacobian_loss = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -497,7 +545,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     sdf_gt = torch.clamp(sdf_gt, minT, maxT)
 
                 xyz = torch.chunk(xyz, batch_split)
+                logging.info(f"xyz[0] shape: {xyz[0].shape}")
                 surface_points = torch.chunk(surface_points, batch_split)
+                logging.info(f"Surface points[0] shape: {surface_points[0].shape}")
 
                 indices_z = torch.chunk(indices, batch_split)
                 
@@ -521,6 +571,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 attr_loss = 0.0
                 attr_loss_reg = 0.0
                 loss_kl = 0.0
+                jacobian_loss_val = 0.0
 
                 optimizer_all.zero_grad()
 
@@ -577,6 +628,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         chunk_loss += eikonal_loss
                         eikonal_loss_tb += eikonal_loss.item()
 
+                    if jacobian_loss:
+                        j_penalty = jacobian_penalty_JJT(surface_points[i], decoder)
+                        jacobian_loss_t = w_jacobian * j_penalty
+                        chunk_loss += jacobian_loss_t
+                        jacobian_loss_val += jacobian_loss_t.item()
+
+                        
                     if kl_div_loss:
                         kl_loss = kl_divergence_loss(mu, logvar)
                         chunk_loss += beta * kl_loss
@@ -631,6 +689,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 epoch_snnl_reg.append(snnl_reg)
                 epoch_attr_reg.append(attr_loss_reg)
                 epoch_loss_kl.append(loss_kl)
+                epoch_jacobian_loss.append(jacobian_loss_val)
 
                 if grad_clip is not None:
 
@@ -650,6 +709,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             if use_eikonal:
                 summary_writer.add_scalar("Loss/train_eikonal", sum(epoch_eikonal_losses)/len(epoch_eikonal_losses), global_step=epoch)
             
+            if jacobian_loss:
+                summary_writer.add_scalar("Loss/train_jacobian", sum(epoch_jacobian_loss)/len(epoch_jacobian_loss), global_step=epoch)
+
             if guided_contrastive_loss:
                 summary_writer.add_scalar("Loss/train_snnl", sum(epoch_snnl)/len(epoch_snnl), global_step=epoch)
                 summary_writer.add_scalar("Loss/train_snnl_reg", sum(epoch_snnl_reg)/len(epoch_snnl_reg), global_step=epoch)
@@ -678,6 +740,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 print(f"Attribute Reg Loss: {sum(epoch_attr_reg)/len(epoch_attr_reg)}")
             if kl_div_loss:
                 print(f"KL Loss: {sum(epoch_loss_kl)/len(epoch_loss_kl)}")
+            if jacobian_loss:
+                print(f"Jacobian Loss: {sum(epoch_jacobian_loss)/len(epoch_jacobian_loss)}")
+            if use_eikonal:
+                print(f"Eikonal Loss: {sum(epoch_eikonal_losses)/len(epoch_eikonal_losses)}")
 
             # Log weights and gradient flow.
             grad_norms = []
