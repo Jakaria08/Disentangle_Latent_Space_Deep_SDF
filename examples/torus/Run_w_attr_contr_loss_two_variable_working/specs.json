@@ -3,7 +3,7 @@
                     "using synthetic data." ],
   "DataSource" : "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/sdf_data/SdfSamples/scaled_obj_files",
   "DataSourceMesh" : "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/scaled_obj_files",
-  "TrainSplit" : "examples/splits/splits_new/test_split_torus_small.json",
+  "TrainSplit" : "examples/splits/splits_large/test_split_torus.json",
   "TestSplit" : "examples/splits/splits_new/val_split_torus_small.json",
   "TorusPath" : "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/scaled_obj_files",
   "NetworkArch" : "deep_sdf_decoder",
@@ -36,8 +36,7 @@
       "Factor" : 0.5
     }],
   "SamplesPerScene" : 16384,
-  "ScenesPerBatch" : 16,
-  "UseEikonal" : true,
+  "ScenesPerBatch" : 64,
   "DataLoaderThreads" : 16,
   "ClampingDistance" : 0.1,
   "CodeRegularization" : true,
