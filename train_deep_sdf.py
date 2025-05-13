@@ -27,7 +27,7 @@ from torch.utils.tensorboard import SummaryWriter
 guided_contrastive_loss = False
 attribute_loss = False
 kl_div_loss = False
-jacobian_loss = True
+jacobian_loss = False
 annealing_epochs = 1
 beta_final = 0.001
 temp = 181
@@ -38,47 +38,59 @@ w_code_reg = 0.8
 w_jacobian = 1e-3
 
 def jacobian_penalty_JJT(surface_points, autoencoder):
+    """
+    Computes the Jacobian penalty ||JJ^T - I||^2_F for all shapes in the batch,
+    encouraging the encoder to preserve local geometry.
+    """
+    # Get original shape info
+    batch_size, num_points, dims = surface_points.shape
+    
+    # For computational efficiency, we'll compute the Jacobian penalties per shape
+    # and then average them
+    total_penalty = 0.0
+    
+    # Loop through each shape in the batch
+    for i in range(batch_size):
+        # Take a single shape
+        single_shape = surface_points[i:i+1]  # Keep batch dimension: [1, 2048, 3]
+        single_shape.requires_grad_(True)
         
-        """
-        Computes the Jacobian penalty ||JJ^T - I||^2_F for a sample, encouraging
-        the encoder to preserve local geometry.
-        """
-        # Original shape info
-        num_of_shapes_to_sample = 3
-        batch_size, num_points, dims = surface_points.shape
-        # Compute Jacobian for first three shape
-        sample_pc = surface_points[0:num_of_shapes_to_sample].reshape(-1, 3)
-        sample_pc.requires_grad_(True)
-        # Wapper function that takes flattened input and returns latent vector
-        def encoder_wrapper(flat_input):
-            reshaped_input = flat_input.view(num_of_shapes_to_sample, num_points, dims)
-            logging.info(f"Surface points shape: {surface_points.shape}")
+        # Wrapper function for Jacobian calculation
+        def encoder_wrapper(shape_input):
+            # Shape_input has shape [1, 2048, 3]
             if kl_div_loss:
-                mu, _ = autoencoder.encoder(reshaped_input)
-                return mu
+                mu, _ = autoencoder.encoder(shape_input)
+                return mu[0]  # Remove batch dimension
             else:
-                z = autoencoder.encoder(reshaped_input)
-            return z
+                z = autoencoder.encoder(shape_input)
+                return z[0]  # Remove batch dimension
         
-        # Compute the Jacobian: J = d(z)/d(x)
+        # Compute the Jacobian: J = d(z)/d(x) for this shape
         J = autograd.functional.jacobian(
             encoder_wrapper, 
-            sample_pc, 
+            single_shape, 
             create_graph=True)
- 
-        # Compute the Jacobian product JJT
+        
+        # Reshape J to proper dimensions for matrix multiplication
+        # J will have shape [latent_dim, 1, 2048, 3]
+        # We want to flatten the last dimensions to [latent_dim, 2048*3]
+        J = J.reshape(J.shape[0], -1)
+        
+        # Compute JJ^T for this shape
         JJT = J @ J.transpose(0, 1)
-        # Get the latent dimension from JJT's shape
+        
+        # Create identity matrix of appropriate size
         latent_dim = JJT.shape[0]
-
-        # Create the identity matrix
         I = torch.eye(latent_dim).to(JJT.device)
-
-        # Compute the Frobenius norm of ||JJ^T - I||^2_F
-        penalty = torch.norm(JJT - I, p='fro')**2
-
-        return penalty
-
+        
+        # Calculate penalty for this shape
+        shape_penalty = torch.norm(JJT - I, p='fro')**2
+        
+        # Add to total
+        total_penalty += shape_penalty
+    
+    # Return average penalty across all shapes
+    return total_penalty / batch_size
 
 
 def kl_divergence_loss(mu, logvar):
