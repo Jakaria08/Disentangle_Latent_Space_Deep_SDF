@@ -194,12 +194,12 @@ if __name__ == "__main__":
     meshes_targets_and_specific_args = []
 
     for obj_file in object_files:
-        base_name = os.path.splitext(obj_file)[0]
-        for i in range(2):
-            transformed_obj_file = base_name + "_transformed_" + str(i) + ".obj"
-            shape_dir = os.path.join(args.source_dir, transformed_obj_file)
+        #base_name = os.path.splitext(obj_file)[0]
+        #for i in range(2):
+            #transformed_obj_file = base_name + "_transformed_" + str(i) + ".obj"
+            shape_dir = os.path.join(args.source_dir, obj_file)
 
-            processed_filepath = os.path.join(dest_dir, os.path.splitext(transformed_obj_file)[0] + extension)
+            processed_filepath = os.path.join(dest_dir, os.path.splitext(obj_file)[0] + extension)
             if args.skip and os.path.isfile(processed_filepath):
                 logging.debug("skipping " + processed_filepath)
                 continue
@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
                 if args.surface_sampling:
                     normalization_param_filename = os.path.join(
-                        normalization_param_dir, os.path.splitext(transformed_obj_file)[0] + ".npz"
+                        normalization_param_dir, os.path.splitext(obj_file)[0] + ".npz"
                     )
                     specific_args = ["-n", normalization_param_filename]
 
@@ -222,9 +222,9 @@ if __name__ == "__main__":
                 )
 
             except deep_sdf.data.NoMeshFileError:
-                logging.warning("No mesh found for instance " + transformed_obj_file)
+                logging.warning("No mesh found for instance " + obj_file)
             except deep_sdf.data.MultipleMeshFileError:
-                logging.warning("Multiple meshes found for instance " + transformed_obj_file)
+                logging.warning("Multiple meshes found for instance " + obj_file)
 
 
     with concurrent.futures.ThreadPoolExecutor(
