@@ -18,12 +18,14 @@ def reconstruct(
     num_iterations,
     latent_size,
     test_sdf,
+    test_surface_points,
     stat,
     clamp_dist,
     num_samples=30000,
     lr=5e-4,
     l2reg=False,
     return_loss_hist=False,
+    kl_div_loss=False
 ):
     def adjust_learning_rate(
         initial_lr, optimizer, num_iterations, decreased_by, adjust_lr_every
@@ -48,45 +50,56 @@ def reconstruct(
     all_losses = []
     loss_l1 = torch.nn.L1Loss()
 
-    for e in range(num_iterations):
+    #for e in range(num_iterations):
 
-        decoder.eval()
-        sdf_data = data.unpack_sdf_samples_from_ram(
-            test_sdf, num_samples
-        ).cuda()
-        xyz = sdf_data[:, 0:3]
-        sdf_gt = sdf_data[:, 3].unsqueeze(1)
+    decoder.eval()
+    sdf_data = data.unpack_sdf_samples_from_ram(
+        test_sdf, num_samples
+    ).cuda()
+    xyz = sdf_data[:, 0:3]
+    sdf_gt = sdf_data[:, 3].unsqueeze(1)
 
-        sdf_gt = torch.clamp(sdf_gt, -clamp_dist, clamp_dist)
+    sdf_gt = torch.clamp(sdf_gt, -clamp_dist, clamp_dist)
 
-        adjust_learning_rate(lr, optimizer, e, decreased_by, adjust_lr_every)
+    #adjust_learning_rate(lr, optimizer, e, decreased_by, adjust_lr_every)
 
-        optimizer.zero_grad()
+    #optimizer.zero_grad()
 
-        latent_inputs = latent.expand(num_samples, -1)
+    #latent_inputs = latent.expand(num_samples, -1)
 
-        inputs = torch.cat([latent_inputs, xyz], 1).cuda()
+    xyz = xyz.cuda()
 
-        pred_sdf = decoder(inputs)
+    # Check if decoder is SDFVAE instance
+    if hasattr(decoder, 'encoder') and hasattr(decoder, 'decoder'):
+        # SDFVAE interface requires separate points and queries
+        # During reconstruction, we have no surface points, only queries
+        if kl_div_loss:
+            pred_sdf, _, _, latent = decoder(test_surface_points, xyz, train=False)
+        else:
+            pred_sdf, latent = decoder(test_surface_points, xyz, train=False)
+    #else:
+        #inputs = torch.cat([latent_inputs, xyz], 1).cuda()
+
+        #pred_sdf = decoder(inputs)
 
         # TODO: why is this needed?
-        if e == 0:
-            pred_sdf = decoder(inputs)
+        #if e == 0:
+            #pred_sdf = decoder(inputs)
 
-        pred_sdf = torch.clamp(pred_sdf, -clamp_dist, clamp_dist)
+    pred_sdf = torch.clamp(pred_sdf, -clamp_dist, clamp_dist)
 
-        loss = loss_l1(pred_sdf, sdf_gt)
-        if l2reg:
-            loss += 1e-4 * torch.mean(latent.pow(2))
-        loss.backward()
-        optimizer.step()
+    #loss = loss_l1(pred_sdf, sdf_gt)
+    #if l2reg:
+        #loss += 1e-4 * torch.mean(latent.pow(2))
+    #loss.backward()
+    #optimizer.step()
 
-        if e % 50 == 0:
-            logging.debug(loss.cpu().data.numpy())
-            logging.debug(e)
-            logging.debug(latent.norm())
-        loss_num = loss.cpu().data.numpy()
-        all_losses.append(loss_num)
+    #if e % 50 == 0:
+        #logging.debug(loss.cpu().data.numpy())
+        #logging.debug(e)
+        #logging.debug(latent.norm())
+    #loss_num = loss.cpu().data.numpy()
+    #all_losses.append(loss_num)
 
     if return_loss_hist:
         return all_losses, latent

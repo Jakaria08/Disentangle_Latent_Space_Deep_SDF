@@ -25,7 +25,7 @@ import networks.sdf_vae as vae
 from torch.utils.tensorboard import SummaryWriter
 
 guided_contrastive_loss = False
-attribute_loss = False
+attribute_loss = True
 kl_div_loss = False
 jacobian_loss = False
 annealing_epochs = 1
@@ -334,7 +334,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     do_code_regularization = get_spec_with_default(specs, "CodeRegularization", True)
     code_reg_lambda = get_spec_with_default(specs, "CodeRegularizationLambda", 1e-4)
-    use_eikonal = get_spec_with_default(specs, "UseEikonal", True)
+    use_eikonal = get_spec_with_default(specs, "UseEikonal", False)
 
     code_bound = get_spec_with_default(specs, "CodeBound", None)
 
@@ -346,12 +346,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     #decoder = torch.nn.DataParallel(decoder)
 
     num_epochs = specs["NumEpochs"]
-    log_frequency = get_spec_with_default(specs, "LogFrequency", 1000)
+    log_frequency = get_spec_with_default(specs, "LogFrequency", 500)
     
     with open(train_split_file, "r") as f:
         train_split = json.load(f) 
 
-    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/scaled_obj_files")
+    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle_two_subgroup_bump/scaled_obj_files")
     logging.info(f"Torus path: {torus_path}")
     if not os.path.exists(torus_path): 
         logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
@@ -377,7 +377,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 1000)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 600)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 
@@ -557,9 +557,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     sdf_gt = torch.clamp(sdf_gt, minT, maxT)
 
                 xyz = torch.chunk(xyz, batch_split)
-                logging.info(f"xyz[0] shape: {xyz[0].shape}")
+                #logging.info(f"xyz[0] shape: {xyz[0].shape}")
                 surface_points = torch.chunk(surface_points, batch_split)
-                logging.info(f"Surface points[0] shape: {surface_points[0].shape}")
+                #logging.info(f"Surface points[0] shape: {surface_points[0].shape}")
 
                 indices_z = torch.chunk(indices, batch_split)
                 
@@ -738,9 +738,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             summary_writer.add_scalar("Learning Rate/Params", lr_log[-1][0], global_step=epoch)
             summary_writer.add_scalar("Learning Rate/Latent", lr_log[-1][1], global_step=epoch)
             # Log latent vector length.
-            mlm = get_mean_latent_vector_magnitude(lat_vecs)
-            lat_mag_log.append(mlm)
-            summary_writer.add_scalar("Mean Latent Magnitude/train", mlm, global_step=epoch)
+            #mlm = get_mean_latent_vector_magnitude(lat_vecs)
+            #lat_mag_log.append(mlm)
+            #summary_writer.add_scalar("Mean Latent Magnitude/train", mlm, global_step=epoch)
             append_parameter_magnitudes(param_mag_log, decoder)
 
             print(f"Epoch Loss: {epoch_loss}")
@@ -787,11 +787,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 )
             
             # EVALUATION 
-            logging.info(f"Torus path: {torus_path}")
+            #logging.info(f"Torus path: {torus_path}")
             if torus_path is not None:
-                logging.info(f"Starting evaluation at epoch {epoch}...")
+
                 # Only if the path to the GT meshes exists.
                 if epoch % eval_train_frequency == 0:
+                    logging.info(f"Starting evaluation at epoch {epoch}...")
                     logging.info(f"Train Evaluation Started...")
                     # Training-set evaluation: Reconstruct mesh from learned latent and compute metrics.
                     chamfer_dists = []
@@ -806,12 +807,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         save_name = os.path.basename(sdf_dataset.npyfiles[index]).split(".npz")[0]
                         mesh_path = os.path.join(data_source_mesh, save_name + ".obj")
                         train_surface_points = data.get_surface_points(mesh_path)
-                        print(f"Train surface points shape: {train_surface_points.shape}")
-                        print(f"Train surface points data type: {train_surface_points.dtype}")
+                        #print(f"Train surface points shape: {train_surface_points.shape}")
+                        #print(f"Train surface points data type: {train_surface_points.dtype}")
                         #print(f"Surface points: {train_surface_points}")
                         train_surface_points = torch.from_numpy(train_surface_points)
                         train_surface_points = train_surface_points.unsqueeze(0)
-                        print(f"Train surface points shape: {train_surface_points.shape}")
+                        #print(f"Train surface points shape: {train_surface_points.shape}")
 
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_train_reconstructions, save_name)
                         if not os.path.exists(path):
@@ -851,6 +852,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     # End of eval train.
                 
                 if epoch % eval_test_frequency == 0:
+                    logging.info(f"Starting evaluation at epoch {epoch}...")
                     logging.info(f"Test Evaluation Started...")
                     # Test-set evaluation: Reconstruct latent and mesh from GT sdf values and compute metrics.
                     eval_test_time_start = time.time()
@@ -862,6 +864,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     test_latents = []
                     for test_fname in eval_test_filenames:
                         save_name = os.path.basename(test_fname).split(".npz")[0]
+                        mesh_path = os.path.join(data_source_mesh, save_name + ".obj")
+                        test_surface_points = data.get_surface_points(mesh_path)
+                        #print(f"Train surface points shape: {train_surface_points.shape}")
+                        #print(f"Train surface points data type: {train_surface_points.dtype}")
+                        #print(f"Surface points: {train_surface_points}")
+                        test_surface_points = torch.from_numpy(test_surface_points)
+                        test_surface_points = test_surface_points.unsqueeze(0)
+                        #print(f"Train surface points shape: {train_surface_points.shape}")
                         mesh_label_names.append(save_name)
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_test_reconstructions, save_name)
                         if not os.path.exists(path):
@@ -872,28 +882,34 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         test_sdf_samples[1] = test_sdf_samples[1][torch.randperm(test_sdf_samples[1].shape[0])]
 
                         start = time.time()
+                        '''
                         test_loss_hist, test_latent = reconstruct.reconstruct(
                             decoder,
                             int(eval_test_optimization_steps),
                             latent_size,
                             test_sdf_samples,
+                            test_surface_points,
                             0.01,  # [emp_mean,emp_var],
                             0.1,
                             num_samples=8000,
                             lr=5e-3,
                             l2reg=True,
-                            return_loss_hist=True
+                            return_loss_hist=True,
+                            kl_div_loss=kl_div_loss
                         )
                         logging.debug("[Test eval] Total reconstruction time: {}".format(time.time() - start))
                         if not np.isnan(test_loss_hist[-1]):
                             test_err_sum += test_loss_hist[-1]
                         test_loss_hists.append(test_loss_hist)
                         test_latents.append(test_latent)
-
+                        '''
+                        test_latent = None
                         start = time.time()
                         with torch.no_grad():
                             test_mesh = mesh.create_mesh(
-                                decoder, 
+                                decoder,
+                                kl_div_loss,
+                                test_surface_points, 
                                 test_latent, 
                                 N=eval_grid_res, 
                                 max_batch=int(2 ** 18), 
@@ -914,10 +930,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         logging.debug(f"Test Chamfer distance mean: {sum(chamfer_dists)/len(chamfer_dists)} from {chamfer_dists}.")            
                         summary_writer.add_scalar("Mean Chamfer Dist/test", sum(chamfer_dists)/len(chamfer_dists), epoch)
                         summary_writer.add_scalar("Loss/test", test_err_sum/len(eval_test_filenames), epoch)
-                        mlm = torch.mean(torch.norm(torch.cat(test_latents, dim=0), dim=1))
-                        summary_writer.add_scalar("Mean Latent Magnitude/test", mlm, global_step=epoch)
-                        fig = plotting.plot_train_stats(loss_hists=test_loss_hists, labels=mesh_label_names)
-                        summary_writer.add_figure("Loss/test optimization curves", fig, epoch)
+                        #mlm = torch.mean(torch.norm(torch.cat(test_latents, dim=0), dim=1))
+                        #summary_writer.add_scalar("Mean Latent Magnitude/test", mlm, global_step=epoch)
+                        #fig = plotting.plot_train_stats(loss_hists=test_loss_hists, labels=mesh_label_names)
+                        #summary_writer.add_figure("Loss/test optimization curves", fig, epoch)
                         fig, percentiles = plotting.plot_dist_violin(np.concatenate(chamfer_dists_all, axis=0))
                         summary_writer.add_figure("CD Percentiles/test dists", fig, global_step=epoch)
                         for p in [75, 90, 99]:
@@ -970,7 +986,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             "best_test_cd" : min(test_chamfer_dists_log) if len(test_chamfer_dists_log) else -1,
         }
         summary_writer.add_hparams(writer_hparams, train_results, run_name='.')
-        summary_writer.add_graph(decoder, input)        
+        #summary_writer.add_graph(decoder, input)        
         summary_writer.flush()    
         summary_writer.close()
         # End of training.
