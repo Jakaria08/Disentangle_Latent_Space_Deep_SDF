@@ -24,7 +24,7 @@ import reconstruct
 import networks.sdf_vae as vae
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = True
+guided_contrastive_loss = False
 attribute_loss = False
 kl_div_loss = True
 jacobian_loss = False
@@ -95,7 +95,7 @@ def jacobian_penalty_JJT(surface_points, autoencoder):
 
 def kl_divergence_loss(mu, logvar):
     logvar = torch.clamp(logvar, min=-3, max=3)  # Clamp logvar to prevent numerical issues
-    mu = torch.clamp(mu, min=-3, max=3)  # Clamp mu to prevent numerical issues
+    #mu = torch.clamp(mu, min=-3, max=3)  # Clamp mu to prevent numerical issues
     return torch.mean(-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1), dim=0)
 
 def save_model(experiment_directory, filename, decoder, epoch):
