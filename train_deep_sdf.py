@@ -24,16 +24,16 @@ import reconstruct
 import networks.sdf_vae as vae
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = False
-attribute_loss = True
-kl_div_loss = False
+guided_contrastive_loss = True
+attribute_loss = False
+kl_div_loss = True
 jacobian_loss = False
 annealing_epochs = 1
 beta_final = 0.001
 temp = 181
 temp_reg = 20 # change this?
 w_cls = 0.25
-threshold = 0.5
+threshold = 0.1
 w_code_reg = 0.8
 w_jacobian = 1e-3
 
@@ -95,6 +95,7 @@ def jacobian_penalty_JJT(surface_points, autoencoder):
 
 def kl_divergence_loss(mu, logvar):
     logvar = torch.clamp(logvar, min=-3, max=3)  # Clamp logvar to prevent numerical issues
+    mu = torch.clamp(mu, min=-3, max=3)  # Clamp mu to prevent numerical issues
     return torch.mean(-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1), dim=0)
 
 def save_model(experiment_directory, filename, decoder, epoch):
@@ -259,8 +260,7 @@ def append_parameter_magnitudes(param_mag_log, model):
 
 def main_function(experiment_directory: str, continue_from, batch_split: int):
 
-   
-    
+
     logging.debug("running experiment " + experiment_directory)
 
     specs = ws.load_experiment_specifications(experiment_directory)
@@ -377,7 +377,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 600)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 200)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 
