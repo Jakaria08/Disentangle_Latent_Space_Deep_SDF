@@ -202,3 +202,63 @@ def get_mesh_from_SDFGen_voxels(voxels, voxel_size, centroid, scale):
     recon = utils.scale_to_unit_cube(recon)
     recon = utils.rescale_unit_mesh(recon, shift=centroid, scale=scale)
     return recon, voxel_size/2
+
+def create_mesh_ram(decoder, kl_div_loss, train_surface_points, latent_vec, N=256, max_batch=32 ** 3) -> trimesh.Trimesh:
+    """Creates a mesh directly in RAM without saving to disk.
+    
+    Returns a trimesh object directly for faster interactive visualization.
+    """
+    start = time.time()
+    decoder.eval()
+
+    # NOTE: the voxel_origin is actually the (bottom, left, down) corner, not the middle
+    voxel_origin = [-1, -1, -1]
+    voxel_size = 2.0 / (N - 1)
+
+    overall_index = torch.arange(0, N ** 3, 1, out=torch.LongTensor())
+    samples = torch.zeros(N ** 3, 4)
+    
+    # transform first 3 columns to be the x, y, z index
+    samples[:, 2] = overall_index % N
+    samples[:, 1] = (overall_index.long() / N) % N
+    samples[:, 0] = ((overall_index.long() / N) / N) % N
+
+    # transform first 3 columns to be the x, y, z coordinate
+    samples[:, 0] = (samples[:, 0] * voxel_size) + voxel_origin[2]
+    samples[:, 1] = (samples[:, 1] * voxel_size) + voxel_origin[1]
+    samples[:, 2] = (samples[:, 2] * voxel_size) + voxel_origin[0]
+
+    num_samples = N ** 3
+    samples.requires_grad = False
+    head = 0
+
+    while head < num_samples:
+        sample_subset = samples[head : min(head + max_batch, num_samples), 0:3].cuda()
+        sdf = utils.decode_sdf(decoder, kl_div_loss, train_surface_points, latent_vec, sample_subset)
+        samples[head : min(head + max_batch, num_samples), 3] = sdf.squeeze(1).detach().cpu()
+        head += max_batch
+
+    sdf_values = samples[:, 3].reshape(N, N, N)
+    
+    # Use marching cubes to generate the mesh
+    try:
+        verts, faces, normals, values = skimage.measure.marching_cubes(
+            sdf_values.numpy(), level=0.0, spacing=[voxel_size] * 3, method="lewiner"
+        )
+        
+        # Transform verts to correct coordinate system
+        mesh_points = np.zeros_like(verts)
+        mesh_points[:, 0] = voxel_origin[0] + verts[:, 0]
+        mesh_points[:, 1] = voxel_origin[1] + verts[:, 1]
+        mesh_points[:, 2] = voxel_origin[2] + verts[:, 2]
+        
+        # Create trimesh object directly
+        mesh = trimesh.Trimesh(vertices=mesh_points, faces=faces, process=False)
+        
+        logging.debug(f"[create_mesh_ram] Mesh created in {time.time() - start:.2f}s")
+        return mesh
+        
+    except ValueError as e:
+        logging.error(f"[create_mesh_ram] Marching cubes error: {e}")
+        # Return an empty mesh on error
+        return trimesh.Trimesh()
