@@ -98,7 +98,7 @@ def decode_sdf(decoder, kl_div_loss, train_surface_points, latent_vector, querie
     else:
         sdf, z = decoder(train_surface_points, inputs, train=False)
 
-    return sdf
+    return sdf, z
 
 
 def psnr(mse: Union[torch.Tensor, np.array]) -> Union[torch.Tensor, np.array]:
