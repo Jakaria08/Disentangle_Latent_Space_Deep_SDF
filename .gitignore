@@ -12,6 +12,7 @@ data/*
 *.npz
 *.pdf
 *.jpg
+*.png
 
 # Log files, reconstructions
 **/LatentCodes
