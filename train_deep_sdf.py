@@ -24,7 +24,8 @@ import reconstruct
 import networks.sdf_vae as vae
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = False
+guided_contrastive_loss = True
+guided_contrastive_loss_cls = False
 attribute_loss = False
 kl_div_loss = True
 jacobian_loss = False
@@ -653,12 +654,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         loss_kl += kl_loss.item()
 
                     if guided_contrastive_loss:
-                        #Classification Loss
-                        SNN_Loss = loss.SNNLoss(temp)
-                        loss_snn = SNN_Loss(z, labels_cls)
-                        chunk_loss += loss_snn * w_cls
-                        #print(loss_snn.item())
-                        snnl += loss_snn.item()
+                        if guided_contrastive_loss_cls:
+                                #Classification Loss
+                                SNN_Loss = loss.SNNLoss(temp)
+                                loss_snn = SNN_Loss(z, labels_cls)
+                                chunk_loss += loss_snn * w_cls
+                                #print(loss_snn.item())
+                                snnl += loss_snn.item()
                         
                         #Regression Loss
                         SNN_Loss_Reg = loss.SNNRegLoss(temp_reg, threshold)
@@ -725,7 +727,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 summary_writer.add_scalar("Loss/train_jacobian", sum(epoch_jacobian_loss)/len(epoch_jacobian_loss), global_step=epoch)
 
             if guided_contrastive_loss:
-                summary_writer.add_scalar("Loss/train_snnl", sum(epoch_snnl)/len(epoch_snnl), global_step=epoch)
+                if guided_contrastive_loss_cls:
+                    summary_writer.add_scalar("Loss/train_snnl", sum(epoch_snnl)/len(epoch_snnl), global_step=epoch)
                 summary_writer.add_scalar("Loss/train_snnl_reg", sum(epoch_snnl_reg)/len(epoch_snnl_reg), global_step=epoch)
                 summary_writer.add_scalar("Loss/train_kl", sum(epoch_loss_kl)/len(epoch_loss_kl), global_step=epoch)
             
@@ -745,7 +748,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
             print(f"Epoch Loss: {epoch_loss}")
             if guided_contrastive_loss:
-                print(f"SNNL Loss: {sum(epoch_snnl)/len(epoch_snnl)}")
+                if guided_contrastive_loss_cls:
+                    print(f"SNNL Loss: {sum(epoch_snnl)/len(epoch_snnl)}")
                 print(f"SNNL Reg Loss: {sum(epoch_snnl_reg)/len(epoch_snnl_reg)}")
             if attribute_loss:
                 print(f"Attribute Loss: {sum(epoch_attr)/len(epoch_attr)}")
