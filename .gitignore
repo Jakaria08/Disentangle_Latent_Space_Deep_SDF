@@ -10,6 +10,7 @@ data/*
 .DS_store
 .idea
 *.npz
+*.npy
 *.pdf
 *.jpg
 *.png
