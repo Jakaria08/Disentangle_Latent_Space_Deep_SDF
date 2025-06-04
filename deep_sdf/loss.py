@@ -345,3 +345,53 @@ class SNNLCrossEntropy():
         """
         summed_masked_pick_prob = SNNLCrossEntropy.masked_pick_probability(x, y, temp, cos_distance).sum(axis=1)
         return -torch.log(SNNLCrossEntropy.STABILITY_EPS + summed_masked_pick_prob).mean()
+    
+# DIP VAE II Loss
+# Add this to your loss.py file
+
+class DIPVAEIILoss(nn.Module):
+    def __init__(self, lambda_off=1.0, lambda_diag=1.0, lambda_mean=0.1, beta=0.05):
+        """
+        DIP-VAE II loss with overall weighting factor
+        
+        Args:
+            lambda_off: Weight for off-diagonal covariance penalty (reduce from 10.0)
+            lambda_diag: Weight for diagonal covariance penalty (reduce from 5.0)  
+            lambda_mean: Weight for mean regularization penalty
+            beta: Overall weighting factor for the entire DIP loss
+        """
+        super(DIPVAEIILoss, self).__init__()
+        self.lambda_off = lambda_off
+        self.lambda_diag = lambda_diag
+        self.lambda_mean = lambda_mean
+        self.beta = beta  # Overall scaling factor
+        
+    def forward(self, mu, logvar):
+        B, d = mu.size()
+        
+        # Sample from posterior using reparameterization trick
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        z = mu + eps * std
+        
+        # Mean regularization (encourage zero mean)
+        z_mean = torch.mean(z, dim=0)
+        loss_mean = self.lambda_mean * torch.sum(z_mean.pow(2))
+        
+        # Center the samples
+        z_centered = z - z_mean.unsqueeze(0)
+        
+        # Compute covariance matrix
+        C_z = torch.matmul(z_centered.t(), z_centered) / max(B - 1, 1)
+        
+        # Off-diagonal penalty (encourage independence between dimensions)
+        mask = torch.eye(d, device=C_z.device)
+        loss_off = self.lambda_off * torch.sum((C_z * (1 - mask)).pow(2))
+        
+        # Diagonal penalty (encourage unit variance)
+        loss_diag = self.lambda_diag * torch.sum((torch.diag(C_z) - 1).pow(2))
+        
+        # Apply overall scaling
+        total_dip_loss = self.beta * (loss_mean + loss_off + loss_diag)
+        
+        return total_dip_loss

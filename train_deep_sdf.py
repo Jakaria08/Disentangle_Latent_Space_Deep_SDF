@@ -24,11 +24,12 @@ import reconstruct
 import networks.sdf_vae as vae
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = True
+guided_contrastive_loss = False
 guided_contrastive_loss_cls = False
 attribute_loss = False
 kl_div_loss = True
 jacobian_loss = False
+dip_vae_loss = True
 annealing_epochs = 1
 beta_final = 0.001
 temp = 181
@@ -513,6 +514,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_attr_reg = []
             epoch_loss_kl = []
             epoch_jacobian_loss = []
+            epoch_dip_vae_loss = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -585,6 +587,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 attr_loss_reg = 0.0
                 loss_kl = 0.0
                 jacobian_loss_val = 0.0
+                dip_vae_loss_val = 0.0
 
                 optimizer_all.zero_grad()
 
@@ -684,6 +687,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         #loss_attribute_cls += loss_attr_cls.item()
                         #loss_attribute_reg += loss_attr_reg.item()
                         attr_loss_reg += loss_attr_reg.item()
+
+                    if dip_vae_loss == True:
+                        dip_vae_loss_II = loss.DIPVAEIILoss()
+                        loss_dip_vae_II = dip_vae_loss_II(mu, logvar)
+                        chunk_loss += loss_dip_vae_II
+                        dip_vae_loss_val += loss_dip_vae_II.item()
                         
                     chunk_loss.backward()
 
@@ -704,6 +713,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 epoch_attr_reg.append(attr_loss_reg)
                 epoch_loss_kl.append(loss_kl)
                 epoch_jacobian_loss.append(jacobian_loss_val)
+                epoch_dip_vae_loss.append(dip_vae_loss_val)
 
                 if grad_clip is not None:
 
@@ -736,6 +746,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 summary_writer.add_scalar("Loss/train_attr", sum(epoch_attr)/len(epoch_attr), global_step=epoch)
                 summary_writer.add_scalar("Loss/train_attr_reg", sum(epoch_attr_reg)/len(epoch_attr_reg), global_step=epoch)
 
+            if dip_vae_loss:
+                summary_writer.add_scalar("Loss/train_dip_vae", sum(epoch_dip_vae_loss)/len(epoch_dip_vae_loss), global_step=epoch)
+
             # Log learning rate.
             lr_log.append([schedule.get_learning_rate(epoch) for schedule in lr_schedules])
             summary_writer.add_scalar("Learning Rate/Params", lr_log[-1][0], global_step=epoch)
@@ -760,6 +773,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 print(f"Jacobian Loss: {sum(epoch_jacobian_loss)/len(epoch_jacobian_loss)}")
             if use_eikonal:
                 print(f"Eikonal Loss: {sum(epoch_eikonal_losses)/len(epoch_eikonal_losses)}")
+            if dip_vae_loss:
+                print(f"DIP VAE Loss: {sum(epoch_dip_vae_loss)/len(epoch_dip_vae_loss)}")
 
             # Log weights and gradient flow.
             grad_norms = []
