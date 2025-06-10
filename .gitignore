@@ -14,6 +14,8 @@ data/*
 *.pdf
 *.jpg
 *.png
+*.pth
+*.pt
 
 # Log files, reconstructions
 **/LatentCodes
