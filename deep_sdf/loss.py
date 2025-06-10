@@ -350,7 +350,7 @@ class SNNLCrossEntropy():
 # Add this to your loss.py file
 
 class DIPVAEIILoss(nn.Module):
-    def __init__(self, lambda_off=1.0, lambda_diag=1.0, lambda_mean=0.1, beta=0.05):
+    def __init__(self, lambda_off=1.0, lambda_diag=1.0, beta=0.01):
         """
         DIP-VAE II loss with overall weighting factor
         
@@ -363,7 +363,6 @@ class DIPVAEIILoss(nn.Module):
         super(DIPVAEIILoss, self).__init__()
         self.lambda_off = lambda_off
         self.lambda_diag = lambda_diag
-        self.lambda_mean = lambda_mean
         self.beta = beta  # Overall scaling factor
         
     def forward(self, mu, logvar):
@@ -376,7 +375,6 @@ class DIPVAEIILoss(nn.Module):
         
         # Mean regularization (encourage zero mean)
         z_mean = torch.mean(z, dim=0)
-        loss_mean = self.lambda_mean * torch.sum(z_mean.pow(2))
         
         # Center the samples
         z_centered = z - z_mean.unsqueeze(0)
@@ -392,6 +390,6 @@ class DIPVAEIILoss(nn.Module):
         loss_diag = self.lambda_diag * torch.sum((torch.diag(C_z) - 1).pow(2))
         
         # Apply overall scaling
-        total_dip_loss = self.beta * (loss_mean + loss_off + loss_diag)
+        total_dip_loss = self.beta * (loss_off + loss_diag)
         
         return total_dip_loss
