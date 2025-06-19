@@ -27,9 +27,9 @@ from torch.utils.tensorboard import SummaryWriter
 guided_contrastive_loss = False
 guided_contrastive_loss_cls = False
 attribute_loss = False
-kl_div_loss = True
+kl_div_loss = False
 jacobian_loss = False
-dip_vae_loss = True
+dip_vae_loss = False
 annealing_epochs = 1
 beta_final = 0.001
 temp = 181
