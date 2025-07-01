@@ -26,6 +26,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 guided_contrastive_loss = False
 guided_contrastive_loss_cls = False
+unsupervised_contrastive_loss = False
 attribute_loss = False
 kl_div_loss = False
 jacobian_loss = False
@@ -353,7 +354,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     with open(train_split_file, "r") as f:
         train_split = json.load(f) 
 
-    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle_two_subgroup_bump/scaled_obj_files")
+    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/obj_files")
     logging.info(f"Torus path: {torus_path}")
     if not os.path.exists(torus_path): 
         logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
@@ -538,8 +539,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 xyz = sdf_data[:, 0:3]
                 xyz.requires_grad = True
 
-                labels_cls = labels[:,0] # bump or no bump binary label
-                labels_reg = labels[:,2] # torus scale
+                #labels for torus bump
+
+                #labels_cls = labels[:,0] # bump or no bump binary label
+                #labels_reg = labels[:,2] # torus scale
+
+                #labels for hippocampus
+                labels_cls = labels[:, 1]  # disease label
+                labels_reg = labels[:, 0]  # age
 
                 labels_cls = labels_cls.to(torch.float32)
                 labels_reg = labels_reg.to(torch.float32)

@@ -58,9 +58,9 @@ def main(data_dir, source_dir, splits_dir, debug=False):
 
 if __name__ == "__main__":
 
-    data_dir = "../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle_two_subgroup_bump/sdf_data"      
-    source_dir = "../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle_two_subgroup_bump/scaled_obj_files"
-    splits_dir = "examples/splits/splits_torus_subgroup"
+    data_dir = "../../final_classification_dataset_femur/all_mesh/sdf_data"      
+    source_dir = "../../final_classification_dataset_femur/all_mesh/scaled_obj_files"
+    splits_dir = "examples/splits/splits_OAI-ZIB"
 
     arg_parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     deep_sdf.add_common_args(arg_parser)
