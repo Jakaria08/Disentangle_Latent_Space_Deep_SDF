@@ -3,7 +3,7 @@ import json
 import random
 
 # Directory containing .obj files
-obj_files_directory = '../../../final_classification_dataset_femur/all_mesh/obj_files'
+obj_files_directory = '../../../final_classification_dataset_femur_original/all_mesh/obj_files'
 
 # Get list of .obj files and rename them
 obj_files = [f for f in os.listdir(obj_files_directory) if f.endswith('.obj')]

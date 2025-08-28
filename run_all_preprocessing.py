@@ -58,8 +58,8 @@ def main(data_dir, source_dir, splits_dir, debug=False):
 
 if __name__ == "__main__":
 
-    data_dir = "../../final_classification_dataset_femur/all_mesh/sdf_data"      
-    source_dir = "../../final_classification_dataset_femur/all_mesh/scaled_obj_files"
+    data_dir = "../../final_classification_dataset_femur_original/all_mesh/sdf_data"      
+    source_dir = "../../final_classification_dataset_femur_original/all_mesh/scaled_obj_files"
     splits_dir = "examples/splits/splits_OAI-ZIB"
 
     arg_parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)

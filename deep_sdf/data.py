@@ -32,16 +32,26 @@ def get_instance_filenames(data_source, split):
                 "Requested non-existent file '{}'".format(instance_filename)
             )
         npzfiles += [instance_filename]
+
+        # Add 5 augmented versions of the npz file
+        '''
+        for i in range(0, 5, 2):
+            augmented_filename = instance_name_without_extension + f"_transformed_{i}.npz"
+            if os.path.isfile(os.path.join(data_source, augmented_filename)):
+                npzfiles.append(augmented_filename)
+            else:
+                logging.warning(f"Augmented file not found: '{augmented_filename}'")
+        '''
     return npzfiles
 
 def get_mesh_paths(data_source, split):
     mesh_paths = []
     for instance_name in split:
-
+        instance_name_without_extension = os.path.splitext(instance_name)[0]
         instance_filename = os.path.join(data_source, instance_name)
 
         if not os.path.isfile(
-            os.path.join(data_source, instance_filename)
+            os.path.join(data_source, instance_name)
         ):
             # raise RuntimeError(
             #     'Requested non-existent file "' + instance_filename + "'"
@@ -50,6 +60,16 @@ def get_mesh_paths(data_source, split):
                 "Requested non-existent file '{}'".format(instance_filename)
             )
         mesh_paths += [instance_filename]
+        '''
+        for i in range(0, 5, 2):
+            augmented_filename = instance_name_without_extension + f"_transformed_{i}.obj"
+            augmented_filename_full = os.path.join(data_source, augmented_filename)
+            if os.path.isfile(os.path.join(data_source, augmented_filename)):
+                mesh_paths.append(augmented_filename_full)
+            else:
+                logging.warning(f"Augmented file not found: '{augmented_filename}'")
+                print(data_source, augmented_filename)
+        '''
     return mesh_paths
 
 
@@ -193,7 +213,17 @@ class SDFSamples(torch.utils.data.Dataset):
 
     def load_labels(self):
         labels = torch.load(self.data_source + "/labels.pt")
-        return labels
+
+        expanded_labels = {}
+        for key, value in labels.items():
+            expanded_labels[key] = value
+            '''
+            # Add augmented labels
+            for i in range(0, 5, 2):
+                augmented_key = f"{key}_transformed_{i}"
+                expanded_labels[augmented_key] = value
+            '''
+        return expanded_labels
     
     def __len__(self):
         return len(self.npyfiles)

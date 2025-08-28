@@ -2,8 +2,8 @@ import os
 import trimesh
 
 #Directory containing the .ply files
-input_directory = '../../../final_classification_dataset_femur/all_mesh'
-output_directory = '../../../final_classification_dataset_femur/all_mesh/obj_files'
+input_directory = '../../../final_classification_dataset_femur_original/all_mesh'
+output_directory = '../../../final_classification_dataset_femur_original/all_mesh/obj_files'
 #input_directory = '../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle_two_subgroup_bump'
 #output_directory = '../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle_two_subgroup_bump/obj_files'
 

@@ -143,6 +143,15 @@ if __name__ == "__main__":
         + "Otherwise, the script will produce SDF samples for training.",
     )
 
+    # Add this argument to the argument parser (after the --surface argument)
+    arg_parser.add_argument(
+        "--aug",
+        dest="use_augmented",
+        default=False,
+        action="store_true",
+        help="If set, the script will process augmented files (original + transformed versions)",
+   )
+
     deep_sdf.add_common_args(arg_parser)
 
     args = arg_parser.parse_args()
@@ -192,6 +201,19 @@ if __name__ == "__main__":
     append_data_source_map(args.data_dir, args.source_name, args.source_dir)
 
     meshes_targets_and_specific_args = []
+
+    # If augmentation is enabled, append transformed files to the list
+    if args.use_augmented:
+        original_files = object_files.copy()
+        for obj_file in original_files:
+            base_name = os.path.splitext(obj_file)[0]
+            for i in range(5):
+                transformed_obj_file = base_name + "_transformed_" + str(i) + ".obj"
+                object_files.append(transformed_obj_file)
+    
+        logging.info(f"Augmentation enabled: processing {len(original_files)} original files + {len(original_files) * 5} augmented files")
+    else:
+        logging.info(f"Processing {len(object_files)} original files only")
 
     for obj_file in object_files:
         #base_name = os.path.splitext(obj_file)[0]

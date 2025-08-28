@@ -37,7 +37,7 @@ temp = 181
 temp_reg = 20 # change this?
 w_cls = 0.25
 threshold = 0.1
-w_code_reg = 0.8
+w_code_reg = 1
 w_jacobian = 1e-3
 
 def jacobian_penalty_JJT(surface_points, autoencoder):
@@ -354,7 +354,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     with open(train_split_file, "r") as f:
         train_split = json.load(f) 
 
-    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/obj_files")
+    #torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/obj_files")
+    torus_path =  get_spec_with_default(specs, "TorusPath", "/home/jakaria/final_classification_dataset_femur_original/all_mesh/scaled_obj_files")
     logging.info(f"Torus path: {torus_path}")
     if not os.path.exists(torus_path): 
         logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
@@ -545,8 +546,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 #labels_reg = labels[:,2] # torus scale
 
                 #labels for hippocampus
-                labels_cls = labels[:, 1]  # disease label
-                labels_reg = labels[:, 0]  # age
+                #labels_cls = labels[:, 1]  # disease label
+                #labels_reg = labels[:, 0]  # age
+
+                #labels for femur
+                labels_cls = labels  # disease label
+                labels_reg = labels  # dummy regression label
 
                 labels_cls = labels_cls.to(torch.float32)
                 labels_reg = labels_reg.to(torch.float32)
