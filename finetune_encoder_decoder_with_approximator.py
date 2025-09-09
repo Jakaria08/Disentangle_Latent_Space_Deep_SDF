@@ -353,7 +353,7 @@ def test_finetuned_model(experiment_directory, checkpoint_name="final_finetuned_
     
     print("✅ Model loaded successfully!")
     
-    # Create a wrapper that returns only sdf and latent (compatible with mesh.create_mesh)
+    # FIXED: Create a wrapper that includes all necessary methods
     class MeshCompatibleWrapper:
         def __init__(self, model, kl_div_loss):
             self.model = model
@@ -367,6 +367,28 @@ def test_finetuned_model(experiment_directory, checkpoint_name="final_finetuned_
                 else:
                     sdf, z_original, z_reconstructed, hlle_ica_embedding = self.model(points, queries, train)
                     return sdf, z_original  # Return only sdf and original latent
+        
+        # Add missing methods that mesh.create_mesh expects
+        def eval(self):
+            self.model.eval()
+            return self
+        
+        def train(self, mode=True):
+            self.model.train(mode)
+            return self
+        
+        def cuda(self):
+            self.model.cuda()
+            return self
+        
+        def parameters(self):
+            return self.model.parameters()
+        
+        def state_dict(self):
+            return self.model.state_dict()
+        
+        def load_state_dict(self, state_dict):
+            return self.model.load_state_dict(state_dict)
     
     mesh_compatible_model = MeshCompatibleWrapper(combined_model, kl_div_loss)
     
@@ -532,6 +554,7 @@ if __name__ == "__main__":
     print("STARTING FINE-TUNING")
     print("="*60)
     
+    '''
     # Fine-tune the model
     finetuned_model = finetune_with_approximator_pipeline(
         experiment_directory,
@@ -544,7 +567,7 @@ if __name__ == "__main__":
         cycle_loss_weight=0.01,
         latent_consistency_weight=0.01
     )
-    
+    '''
     # Test the fine-tuned model
     print("\n" + "="*60)
     print("TESTING FINE-TUNED MODEL")
