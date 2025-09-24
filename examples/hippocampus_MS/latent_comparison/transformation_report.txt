@@ -1,0 +1,62 @@
+
+UNSUPERVISED TO SUPERVISED LATENT SPACE TRANSFORMATION REPORT
+======================================================================
+
+DATA OVERVIEW:
+- Samples: 196
+- Latent dimensions: 16
+- Age range: 0.3 - 0.8
+- Disease distribution: 161 healthy, 35 diseased
+
+CORRELATION ANALYSIS:
+Unsupervised Model:
+- Best age correlation: 0.343 (dim 0)
+- Best disease correlation: 0.187 (dim 7)
+
+Supervised Model:
+- Best age correlation: 0.956 (dim 1)
+- Best disease correlation: 0.980 (dim 0)
+
+TRANSFORMATION ANALYSIS:
+Procrustes (Linear) Component:
+- Orthogonality error: 0.000000
+- Alignment error: 0.7578
+- Mean per-sample error: 2.9293
+
+MLP (Nonlinear) Component:
+- Final MSE factor loss: 0.012274
+- Final cosine factor loss: 0.006653
+- Final MMD residual loss: 0.007115
+- Final orthogonality loss: 0.007522
+- Mean residual magnitude: 2.229393
+
+TRANSFORMATION QUALITY:
+Distance Preservation:
+- Procrustes only: 0.8605
+- MLP transformed: 0.8915
+
+Neighborhood Preservation:
+- Procrustes only: 0.2918
+- MLP transformed: 0.5015
+
+Trustworthiness:
+- Procrustes only: 0.8424
+- MLP transformed: 0.9160
+
+FACTOR ALIGNMENT IMPROVEMENTS:
+Age Dimension 0: +157.1%
+Age Dimension 1: +122.8%
+Disease Dimension 0: +745.1%
+Disease Dimension 1: +287.0%
+
+SUMMARY:
+The transformation from unsupervised to supervised latent space shows:
+1. Linear component (Procrustes) provides the main alignment structure
+2. Nonlinear component (MLP) adds fine-grained corrections
+3. Factor correlations improve significantly
+4. Near-isometry is well preserved
+
+INTERPRETATION:
+The unsupervised latent space already contains significant factor structure.
+The learned transformation demonstrates that a combination of linear and nonlinear components 
+is needed to align the latent spaces effectively.

@@ -24,21 +24,39 @@ import reconstruct
 import networks.sdf_vae as vae
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = False
-guided_contrastive_loss_cls = False
+guided_contrastive_loss = True
+guided_contrastive_loss_cls = True
 unsupervised_contrastive_loss = False
 attribute_loss = False
 kl_div_loss = False
 jacobian_loss = False
 dip_vae_loss = False
+PretrainedModel = True
 annealing_epochs = 1
 beta_final = 0.001
-temp = 181
-temp_reg = 20 # change this?
-w_cls = 0.25
-threshold = 0.1
-w_code_reg = 1
+temp = 5
+temp_reg = 5 # change this?
+w_cls = 0.05
+threshold = 0.05
+w_code_reg = 0.8
 w_jacobian = 1e-3
+
+def calculate_correlations(latent_vectors, labels_cls, labels_reg):
+    """
+    Calculate Pearson correlation between latent dimensions and labels
+    """
+    import torch
+    
+    # Ensure tensors are on CPU and detached
+    z = latent_vectors.detach().cpu()
+    labels_cls = labels_cls.detach().cpu().flatten()
+    labels_reg = labels_reg.detach().cpu().flatten()
+    
+    # Calculate correlations
+    z0_disease_corr = torch.corrcoef(torch.stack([z[:, 0], labels_cls]))[0, 1]
+    z1_age_corr = torch.corrcoef(torch.stack([z[:, 1], labels_reg]))[0, 1]
+    
+    return z0_disease_corr.item(), z1_age_corr.item()
 
 def jacobian_penalty_JJT(surface_points, autoencoder):
     """
@@ -346,16 +364,27 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     logging.info("training with {} GPU(s)".format(torch.cuda.device_count()))
 
+    # Load pre-trained model if specified
+    if PretrainedModel == True:
+        pretrained_model_path = "/home/jakaria/INR/Deep3DComp/examples/hippocampus_MS/all_unsupervised_hippo_saved_models/ModelParameters/latest.pth"
+        if os.path.exists(pretrained_model_path):
+            logging.info(f"Loading pre-trained model from: {pretrained_model_path}")
+            saved_model_state = torch.load(pretrained_model_path)
+            decoder.load_state_dict(saved_model_state["model_state_dict"])
+            logging.info("Pre-trained model loaded successfully!")
+        else:
+            logging.info("No pre-trained model found, starting from scratch")
+
     #decoder = torch.nn.DataParallel(decoder)
 
     num_epochs = specs["NumEpochs"]
-    log_frequency = get_spec_with_default(specs, "LogFrequency", 500)
+    log_frequency = get_spec_with_default(specs, "LogFrequency", 200)
     
     with open(train_split_file, "r") as f:
         train_split = json.load(f) 
 
-    #torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/obj_files")
-    torus_path =  get_spec_with_default(specs, "TorusPath", "/home/jakaria/final_classification_dataset_femur_original/all_mesh/scaled_obj_files")
+    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/obj_files")
+    #torus_path =  get_spec_with_default(specs, "TorusPath", "/home/jakaria/final_classification_dataset_femur_original/all_mesh/scaled_obj_files")
     logging.info(f"Torus path: {torus_path}")
     if not os.path.exists(torus_path): 
         logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
@@ -388,7 +417,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get test evaluation settings.
     with open(test_split_file, "r") as f:
         test_split = json.load(f)
-    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 1000)
+    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 500)
     eval_test_scene_num = get_spec_with_default(specs, "EvalTestSceneNumber", 10)
     eval_test_optimization_steps = get_spec_with_default(specs, "EvalTestOptimizationSteps", 1000)
     eval_test_filenames = deep_sdf.data.get_instance_filenames(data_source, test_split)
@@ -546,12 +575,15 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 #labels_reg = labels[:,2] # torus scale
 
                 #labels for hippocampus
-                #labels_cls = labels[:, 1]  # disease label
-                #labels_reg = labels[:, 0]  # age
+                labels_cls = labels[:, 1]  # disease label
+                labels_reg = labels[:, 0]  # age
+
+                #logging.info(f"labels: {labels}")
+                #logging.info(f"filename: {filenames}")
 
                 #labels for femur
-                labels_cls = labels  # disease label
-                labels_reg = labels  # dummy regression label
+                #labels_cls = labels  # disease label
+                #labels_reg = labels  # dummy regression label
 
                 labels_cls = labels_cls.to(torch.float32)
                 labels_reg = labels_reg.to(torch.float32)
@@ -619,8 +651,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     #logging.info(f"indices shape: {indices[i].shape}")
                     #logging.info(f"indices: {indices[i]}")
                     #logging.info(f"labels_cls shape: {labels_cls.shape}")
+                    #logging.info(f"labels_reg: {labels_reg}")
                     #logging.info(f"labels_cls: {labels_cls}")
-                    #logging.info(f"filename: {filenames}")
                     #logging.info(f"xyz shape: {xyz[i].shape}")
                     #logging.info(f"surface_points shape: {surface_points[i].shape}")
                     
@@ -772,6 +804,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             append_parameter_magnitudes(param_mag_log, decoder)
 
             print(f"Epoch Loss: {epoch_loss}")
+            print(f"Epoch SDF Loss: {sum(epoch_sdf_losses)/len(epoch_sdf_losses)}")
             if guided_contrastive_loss:
                 if guided_contrastive_loss_cls:
                     print(f"SNNL Loss: {sum(epoch_snnl)/len(epoch_snnl)}")
@@ -787,6 +820,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 print(f"Eikonal Loss: {sum(epoch_eikonal_losses)/len(epoch_eikonal_losses)}")
             if dip_vae_loss:
                 print(f"DIP VAE Loss: {sum(epoch_dip_vae_loss)/len(epoch_dip_vae_loss)}")
+            if do_code_regularization:
+                print(f"Reg Loss: {sum(epoch_reg_losses)/len(epoch_reg_losses)}")
+            
 
             # Log weights and gradient flow.
             grad_norms = []
@@ -825,6 +861,50 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 if epoch % eval_train_frequency == 0:
                     logging.info(f"Starting evaluation at epoch {epoch}...")
                     logging.info(f"Train Evaluation Started...")
+
+                    # Calculate correlations between latent dimensions and labels
+                    decoder.eval()
+                    all_z = []
+                    all_labels_cls = []
+                    all_labels_reg = []
+                    
+                    with torch.no_grad():
+                        for sdf_data, indices, labels, filenames, surface_points in sdf_loader:
+                            # Process labels same as in training
+                            labels_cls_batch = labels[:, 1].to(torch.float32).cuda()  # disease label
+                            labels_reg_batch = labels[:, 0].to(torch.float32).cuda()  # age
+                            
+                            # Get surface points for encoder
+                            surface_points_batch = surface_points.cuda()
+                            
+                            # Get latent representations from encoder
+                            if kl_div_loss:
+                                mu, logvar = decoder.encoder(surface_points_batch)
+                                z_batch = mu
+                            else:
+                                z_batch = decoder.encoder(surface_points_batch)
+
+                            all_z.append(z_batch)
+                            all_labels_cls.append(labels_cls_batch)
+                            all_labels_reg.append(labels_reg_batch)
+                    
+                    # Concatenate all batches
+                    all_z = torch.cat(all_z, dim=0)
+                    all_labels_cls = torch.cat(all_labels_cls, dim=0)
+                    all_labels_reg = torch.cat(all_labels_reg, dim=0)
+                    
+                    # Calculate correlations
+                    z0_disease_corr, z1_age_corr = calculate_correlations(all_z, all_labels_cls, all_labels_reg)
+                    
+                    # Log correlations
+                    summary_writer.add_scalar("Correlation/z0_disease", z0_disease_corr, global_step=epoch)
+                    summary_writer.add_scalar("Correlation/z1_age", z1_age_corr, global_step=epoch)
+                    
+                    logging.info(f"Epoch {epoch} Correlations:")
+                    logging.info(f"  z[0] ↔ Disease: {z0_disease_corr:.4f}")
+                    logging.info(f"  z[1] ↔ Age: {z1_age_corr:.4f}")
+ 
+
                     # Training-set evaluation: Reconstruct mesh from learned latent and compute metrics.
                     chamfer_dists = []
                     chamfer_dists_all = []
