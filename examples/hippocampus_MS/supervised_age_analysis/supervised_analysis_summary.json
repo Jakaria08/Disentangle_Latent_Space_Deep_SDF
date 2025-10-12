@@ -1,0 +1,20 @@
+{
+  "age_supervision": {
+    "dimension": 1,
+    "age_correlation": -0.8987288265518584,
+    "disease_correlation": 0.05632470466780572,
+    "is_best_age_predictor": true
+  },
+  "disease_analysis": {
+    "best_single_dimension": 7,
+    "best_single_correlation": 0.14932113729779517,
+    "best_manifold_method": "Spectral",
+    "best_sap_score": 0.07651242331906837,
+    "clustering_improvement": -0.5980290855528564
+  },
+  "overall_metrics": {
+    "disentanglement_ratio": 15.956207356795666,
+    "age_effectiveness": 0.8987288265518584,
+    "disease_separation": 0.05632470466780572
+  }
+}

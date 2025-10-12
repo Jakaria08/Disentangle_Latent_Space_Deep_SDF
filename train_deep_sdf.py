@@ -34,18 +34,47 @@ dip_vae_loss = False
 PretrainedModel = True
 annealing_epochs = 1
 beta_final = 0.001
-temp = 5
-temp_reg = 5 # change this?
-w_cls = 0.05
-threshold = 0.05
+temp = 2
+temp_reg = 2 # change this?
+w_cls = 0.005
+threshold = 0.1
 w_code_reg = 0.8
 w_jacobian = 1e-3
+
+def calculate_correlations_all(latent_vectors, labels_cls, labels_reg):
+    z = latent_vectors.detach().cpu().to(torch.float64)
+    y_cls = labels_cls.detach().cpu().flatten().to(torch.float64)
+    y_age = labels_reg.detach().cpu().flatten().to(torch.float64)
+
+    # Direct correlations for supervised dimensions
+    z0_disease_corr = torch.corrcoef(torch.stack([z[:, 0], y_cls]))[0, 1]
+    z1_age_corr = torch.corrcoef(torch.stack([z[:, 1], y_age]))[0, 1]
+
+    # Other dimensions (excluding supervised ones)
+    other_idx = list(range(2, z.shape[1]))  # [2, 3, 4, ..., D-1]
+    
+    # Calculate correlations for all other dimensions
+    age_corr_others = {}
+    disease_corr_others = {}
+    
+    for d in other_idx:
+        age_corr_others[int(d)] = torch.corrcoef(torch.stack([z[:, d], y_age]))[0, 1].item()
+        disease_corr_others[int(d)] = torch.corrcoef(torch.stack([z[:, d], y_cls]))[0, 1].item()
+    
+    # Find second highest correlations (by absolute value)
+    age_corrs_abs = sorted(age_corr_others.values(), key=abs, reverse=True)
+    disease_corrs_abs = sorted(disease_corr_others.values(), key=abs, reverse=True)
+    
+    # Get second highest (or first if only one dimension exists)
+    second_highest_age_corr = age_corrs_abs[1] if len(age_corrs_abs) > 1 else age_corrs_abs[0] if age_corrs_abs else 0.0
+    second_highest_disease_corr = disease_corrs_abs[1] if len(disease_corrs_abs) > 1 else disease_corrs_abs[0] if disease_corrs_abs else 0.0
+
+    return z1_age_corr.item(), z0_disease_corr.item(), second_highest_age_corr, second_highest_disease_corr
 
 def calculate_correlations(latent_vectors, labels_cls, labels_reg):
     """
     Calculate Pearson correlation between latent dimensions and labels
     """
-    import torch
     
     # Ensure tensors are on CPU and detached
     z = latent_vectors.detach().cpu()
@@ -410,7 +439,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 200)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 50)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 
@@ -704,13 +733,22 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         if guided_contrastive_loss_cls:
                                 #Classification Loss
                                 SNN_Loss = loss.SNNLoss(temp)
+                                #SNN_Loss = loss.SNNLossCls(T=temp, lam1=1.0, lam2=2.0,)
                                 loss_snn = SNN_Loss(z, labels_cls)
                                 chunk_loss += loss_snn * w_cls
                                 #print(loss_snn.item())
                                 snnl += loss_snn.item()
                         
                         #Regression Loss
-                        SNN_Loss_Reg = loss.SNNRegLoss(temp_reg, threshold)
+                        #SNN_Loss_Reg = loss.SNNRegLoss(temp_reg, threshold)
+                        SNN_Loss_Reg = loss.SNNRegLossExact(
+                                            T=temp_reg, lam1=1, lam2=2.0,
+                                            threshold=threshold,          # ~5% of full age range
+                                            target_dim=1,            # your z2 index
+                                            normalize_z=True,        # recommended
+                                            use_adaptive_T=True,    # you can set True later if needed
+                                            pos_mode='topk'     # or 'topk' with topk_frac=0.1
+                                            )
                         loss_snn_reg = SNN_Loss_Reg(z, labels_reg)
                         chunk_loss += loss_snn_reg * w_cls
                         #print(loss_snn.item())
@@ -894,16 +932,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     all_labels_reg = torch.cat(all_labels_reg, dim=0)
                     
                     # Calculate correlations
-                    z0_disease_corr, z1_age_corr = calculate_correlations(all_z, all_labels_cls, all_labels_reg)
+                    z1_age_corr, z0_disease_corr, second_age_corr, second_disease_corr = calculate_correlations_all(all_z, all_labels_cls, all_labels_reg)
                     
                     # Log correlations
-                    summary_writer.add_scalar("Correlation/z0_disease", z0_disease_corr, global_step=epoch)
+
                     summary_writer.add_scalar("Correlation/z1_age", z1_age_corr, global_step=epoch)
-                    
+                    summary_writer.add_scalar("Correlation/z0_disease", z0_disease_corr, global_step=epoch)
+                    summary_writer.add_scalar("Correlation/second_age", second_age_corr, global_step=epoch)
+                    summary_writer.add_scalar("Correlation/second_disease", second_disease_corr, global_step=epoch)
+
                     logging.info(f"Epoch {epoch} Correlations:")
-                    logging.info(f"  z[0] ↔ Disease: {z0_disease_corr:.4f}")
                     logging.info(f"  z[1] ↔ Age: {z1_age_corr:.4f}")
- 
+                    logging.info(f"  z[0] ↔ Disease: {z0_disease_corr:.4f}")
+                    logging.info(f"  second_age ↔ Age: {second_age_corr:.4f}")
+                    logging.info(f"  second_disease ↔ Disease: {second_disease_corr:.4f}")
+
 
                     # Training-set evaluation: Reconstruct mesh from learned latent and compute metrics.
                     chamfer_dists = []

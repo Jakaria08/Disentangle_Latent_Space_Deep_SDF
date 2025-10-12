@@ -1,11 +1,11 @@
 {
   "Description" : [ "This experiment learns a shape representation for torus ",
                     "using synthetic data." ],
-  "DataSource" : "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/sdf_data_MS_healthy/SdfSamples/scaled_obj_files",
-  "DataSourceMesh" : "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/scaled_obj_files",
+  "DataSource" : "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/sdf_data/SdfSamples/obj_files",
+  "DataSourceMesh" : "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/obj_files",
   "TrainSplit" : "examples/splits/splits_hippocampus_ms/train_split_hippocampus.json",
   "TestSplit" : "examples/splits/splits_hippocampus_ms/test_split_hippocampus.json",
-  "TorusPath" : "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/scaled_obj_files",
+  "TorusPath" : "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/obj_files",
   "NetworkArch" : "deep_sdf_decoder",
   "NetworkSpecs" : {
     "dims" : [ 512, 512, 512, 512, 512, 512, 512, 512 ],

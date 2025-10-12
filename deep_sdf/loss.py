@@ -49,6 +49,95 @@ class SNNLoss(nn.Module):
 
         return lsn_loss
     
+
+class SNNLossCls(nn.Module):
+    """
+    Classification SNNL:
+      - Forces z[:, target_dim] to align with binary labels (0/1).
+      - Penalizes disease similarity in non-target dims.
+      - Matches the unified-SNNL form (classification variant with same-class positives).
+    """
+    def __init__(self,
+                 T: float = 2.0,
+                 lam1: float = 1.0,
+                 lam2: float = 2.0,
+                 target_dim: int = 0,
+                 normalize_z: bool = True,
+                 use_adaptive_T: bool = True,
+                 eps: float = 1e-8,
+                 clamp_ratio: bool = True):
+        super().__init__()
+        self.T = float(T)
+        self.lam1 = float(lam1)
+        self.lam2 = float(lam2)
+        self.target_dim = int(target_dim)
+        self.normalize_z = bool(normalize_z)
+        self.use_adaptive_T = bool(use_adaptive_T)
+        self.eps = float(eps)
+        self.clamp_ratio = bool(clamp_ratio)
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        """
+        x: [B, D] latents
+        y: [B] or [B,1] binary labels {0,1}
+        """
+        device, dtype = x.device, x.dtype
+        B, D = x.shape
+        y = y.view(-1, 1).to(device=device, dtype=torch.long)
+
+        # optional per-dim batch standardization (stabilizes distances/temperature)
+        if self.normalize_z:
+            with torch.no_grad():
+                m = x.mean(dim=0, keepdim=True)
+                s = x.std(dim=0, keepdim=True).clamp_min(1e-6)
+            x = (x - m) / s
+
+        offdiag = ~torch.eye(B, dtype=torch.bool, device=device)
+        same = (y == y.t()) & offdiag  # positives: same class pairs
+
+        # --- target dimension distances (numerator + denom term 1)
+        zt = x[:, self.target_dim:self.target_dim+1]     # [B,1]
+        d2_t = (zt - zt.t()).pow(2)                      # [B,B]
+
+        # adaptive temperature (median of positive distances) or fixed T
+        if self.use_adaptive_T and same.any():
+            T_eff = d2_t[same].median().clamp_min(1e-6).detach()
+        else:
+            T_eff = torch.tensor(self.T, device=device, dtype=dtype)
+
+        Kt = torch.exp(-d2_t / T_eff)
+        num  = (Kt * same).sum(dim=1)            # sum over positives on target dim
+        den1 = (Kt * offdiag).sum(dim=1)         # sum over all off-diagonals on target dim
+
+        # --- other dims term: exp( mean_{d != target} ||z_d^i - z_d^j||^2 / T )
+        if D > 1:
+            other_idx = torch.tensor([d for d in range(D) if d != self.target_dim],
+                                     device=device)
+        else:
+            other_idx = torch.empty(0, dtype=torch.long, device=device)
+
+        if other_idx.numel() > 0 and same.any():
+            xo = x[:, other_idx]                               # [B, D-1]
+            diff = xo.unsqueeze(1) - xo.unsqueeze(0)           # [B,B,D-1]
+            sq_mean = diff.pow(2).mean(dim=2)                  # [B,B]
+            K_other = torch.exp(-sq_mean / T_eff)
+            den2 = (K_other * same).sum(dim=1)
+        else:
+            den2 = torch.zeros(B, device=device, dtype=dtype)
+
+        denom = self.lam1 * den1 + self.lam2 * den2 + self.eps
+        frac = num / denom
+        if self.clamp_ratio:
+            frac = torch.clamp(frac, min=1e-12, max=1.0 - 1e-7)
+
+        has_pos = same.any(dim=1)
+        if has_pos.any():
+            loss = -torch.log(frac[has_pos]).mean()
+        else:
+            loss = torch.zeros((), device=device, dtype=dtype)
+        return loss
+
+    
 # SNNL loss reg modified fast
 class SNNRegLoss(nn.Module):
     def __init__(self, T, threshold):
@@ -98,6 +187,113 @@ class SNNRegLoss(nn.Module):
         lsn_loss = -torch.log(self.STABILITY_EPS + (numerator.sum(dim=1) / (self.STABILITY_EPS + (0.5*denominator.sum(dim=1)) + (0.5*denominator1.sum(dim=1))))).mean()
 
         return lsn_loss
+    
+
+class SNNRegLossExact(nn.Module):
+ 
+    def __init__(self,
+                 T=2.0, lam1=1.0, lam2=0.5,
+                 threshold=0.05, target_dim=1,
+                 normalize_z=True, use_adaptive_T=True,
+                 pos_mode='threshold', topk_frac=0.1,
+                 eps=1e-8, clamp_ratio=True):
+        super().__init__()
+        self.T = float(T)
+        self.lam1 = float(lam1)
+        self.lam2 = float(lam2)
+        self.threshold = float(threshold)
+        self.target_dim = int(target_dim)
+        self.normalize_z = bool(normalize_z)
+        self.use_adaptive_T = bool(use_adaptive_T)
+        self.pos_mode = str(pos_mode)
+        self.topk_frac = float(topk_frac)
+        self.eps = float(eps)
+        self.clamp_ratio = bool(clamp_ratio)
+
+    def _build_positive_mask(self, y, offdiag):
+        B = y.shape[0]
+        abs_dy = torch.abs(y - y.t())  # [B,B]
+        if self.pos_mode == 'topk':
+            # row-wise K nearest in age (exclude self)
+            abs_dy = abs_dy.masked_fill(~offdiag, float('inf'))
+            K = max(1, int(round(self.topk_frac * (B-1))))
+            thr_i = abs_dy.kthvalue(K, dim=1).values.unsqueeze(1)  # [B,1]
+            same_age = (abs_dy <= thr_i)
+        else:
+            # fixed band in [0,1] space
+            same_age = (abs_dy <= self.threshold)
+        same_age = same_age & offdiag
+        return same_age
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        """
+        x: [B, D] latent codes (dim `target_dim` is z2)
+        y: [B] or [B,1] age in [0,1]
+        """
+        device, dtype = x.device, x.dtype
+        B, D = x.shape
+        assert D >= 2 and 0 <= self.target_dim < D
+
+        # optional per-dim standardization (stabilizes T and training)
+        if self.normalize_z:
+            with torch.no_grad():
+                m = x.mean(dim=0, keepdim=True)
+                s = x.std(dim=0, keepdim=True).clamp_min(1e-6)
+            x = (x - m) / s
+
+        y = y.view(-1, 1).to(device=device, dtype=dtype)
+        offdiag = ~torch.eye(B, dtype=torch.bool, device=device)
+
+        # positives based on age
+        same_age = self._build_positive_mask(y, offdiag)
+
+        # --- z2 distances (numerator + denom term 1) ---
+        z2 = x[:, self.target_dim:self.target_dim+1]           # [B,1]
+        d2 = (z2 - z2.t()).pow(2)                              # [B,B]
+
+        # adaptive T on z2 (optional)
+        if self.use_adaptive_T and same_age.any():
+            T_eff = d2[same_age].median().clamp_min(1e-6).detach()
+        else:
+            T_eff = torch.tensor(self.T, device=device, dtype=dtype)
+
+        K2 = torch.exp(-d2 / T_eff)
+        num_sum  = (K2 * same_age).sum(dim=1)                  # positives on z2
+        den1_sum = (K2 * offdiag).sum(dim=1)                   # all pairs on z2
+
+        # --- other dims term: exp( mean_{d != z2} ||z_d^i - z_d^j||^2 / T ) ---
+        if D > 1:
+            idx_left  = torch.arange(0, self.target_dim, device=device)
+            idx_right = torch.arange(self.target_dim+1, D, device=device)
+            other_idx = torch.cat([idx_left, idx_right], dim=0)
+        else:
+            other_idx = torch.empty(0, dtype=torch.long, device=device)
+
+        if other_idx.numel() > 0:
+            x_other = x[:, other_idx]                          # [B, D-1]
+            diff = x_other.unsqueeze(1) - x_other.unsqueeze(0) # [B,B,D-1]
+            sq_mean = diff.pow(2).mean(dim=2)                  # mean across other dims
+            K_other = torch.exp(-sq_mean / T_eff)
+            den2_sum = (K_other * same_age).sum(dim=1)
+        else:
+            den2_sum = torch.zeros(B, device=device, dtype=dtype)
+
+        # combine denominators
+        denom = self.lam1 * den1_sum + self.lam2 * den2_sum + self.eps
+
+        # ratio and loss
+        frac = num_sum / denom
+        if self.clamp_ratio:
+            frac = torch.clamp(frac, min=1e-12, max=1-1e-7)
+
+        has_pos = same_age.any(dim=1)
+        if has_pos.any():
+            loss = -torch.log(frac[has_pos]).mean()
+        else:
+            # no positives in batch; return 0 (or resample)
+            loss = torch.zeros((), device=device, dtype=dtype)
+
+        return loss
 
     
 # Attribute VAE loss
