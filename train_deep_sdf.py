@@ -36,7 +36,8 @@ annealing_epochs = 1
 beta_final = 0.001
 temp = 2
 temp_reg = 2 # change this?
-w_cls = 0.005
+w_cls = 0.01
+w_reg = 0.005
 threshold = 0.1
 w_code_reg = 0.8
 w_jacobian = 1e-3
@@ -732,8 +733,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     if guided_contrastive_loss:
                         if guided_contrastive_loss_cls:
                                 #Classification Loss
-                                SNN_Loss = loss.SNNLoss(temp)
-                                #SNN_Loss = loss.SNNLossCls(T=temp, lam1=1.0, lam2=2.0,)
+                                #SNN_Loss = loss.SNNLoss(temp)
+                                SNN_Loss = loss.SNNLossCls(T=temp, lam1=1.0, lam2=2.0)
                                 loss_snn = SNN_Loss(z, labels_cls)
                                 chunk_loss += loss_snn * w_cls
                                 #print(loss_snn.item())
@@ -750,7 +751,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                                             pos_mode='topk'     # or 'topk' with topk_frac=0.1
                                             )
                         loss_snn_reg = SNN_Loss_Reg(z, labels_reg)
-                        chunk_loss += loss_snn_reg * w_cls
+                        chunk_loss += loss_snn_reg * w_reg
                         #print(loss_snn.item())
                         snnl_reg += loss_snn_reg.item()
                         
