@@ -24,14 +24,14 @@ import reconstruct
 import networks.sdf_vae as vae
 from torch.utils.tensorboard import SummaryWriter
 
-guided_contrastive_loss = True
-guided_contrastive_loss_cls = True
+guided_contrastive_loss = False
+guided_contrastive_loss_cls = False
 unsupervised_contrastive_loss = False
 attribute_loss = False
 kl_div_loss = False
 jacobian_loss = False
 dip_vae_loss = False
-PretrainedModel = True
+PretrainedModel = False
 annealing_epochs = 1
 beta_final = 0.001
 temp = 2
@@ -396,7 +396,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     # Load pre-trained model if specified
     if PretrainedModel == True:
-        pretrained_model_path = "/home/jakaria/INR/Deep3DComp/examples/hippocampus_MS/all_unsupervised_hippo_saved_models/ModelParameters/latest.pth"
+        pretrained_model_path = "/home/jakaria/INR/Deep3DComp/examples/CALSNIC_Control/control_saved_models/ModelParameters/latest.pth"
         if os.path.exists(pretrained_model_path):
             logging.info(f"Loading pre-trained model from: {pretrained_model_path}")
             saved_model_state = torch.load(pretrained_model_path)
@@ -413,7 +413,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     with open(train_split_file, "r") as f:
         train_split = json.load(f) 
 
-    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/hippocampus_data_tle_ms_age_and_0_1/hippoData_regstrd_disease_reconstrct_ply/obj_files")
+    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface/scaled_obj_files")
     #torus_path =  get_spec_with_default(specs, "TorusPath", "/home/jakaria/final_classification_dataset_femur_original/all_mesh/scaled_obj_files")
     logging.info(f"Torus path: {torus_path}")
     if not os.path.exists(torus_path): 
