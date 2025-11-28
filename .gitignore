@@ -80,3 +80,6 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+# Parameter Tuning
+examples/CALSNIC_control_L/optuna_reconstruction_search/
