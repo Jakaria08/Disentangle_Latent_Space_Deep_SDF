@@ -58,9 +58,9 @@ def main(data_dir, source_dir, splits_dir, debug=False):
 
 if __name__ == "__main__":
 
-    data_dir = "../../CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface/sdf_data_control"      
-    source_dir = "../../CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface/scaled_obj_files"
-    splits_dir = "examples/splits/split_CALSNIC_control"
+    data_dir = "../../CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface_R/sdf_data_control"      
+    source_dir = "../../CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface_R/scaled_obj_files"
+    splits_dir = "examples/splits/split_CALSNIC_control_R"
 
     arg_parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     deep_sdf.add_common_args(arg_parser)

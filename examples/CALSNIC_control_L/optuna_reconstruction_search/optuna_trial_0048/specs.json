@@ -1,0 +1,76 @@
+{
+  "Description": [
+    "This experiment learns a shape representation for torus ",
+    "using synthetic data."
+  ],
+  "DataSource": "/home/jakaria/CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface_L/sdf_data_control/SdfSamples/scaled_obj_files",
+  "DataSourceMesh": "/home/jakaria/CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface_L/scaled_obj_files",
+  "TrainSplit": "examples/splits/split_CALSNIC_control_L/train_split_calsnic.json",
+  "TestSplit": "examples/splits/split_CALSNIC_control_L/test_split_calsnic.json",
+  "TorusPath": "/home/jakaria/CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface_L/scaled_obj_files",
+  "NetworkArch": "deep_sdf_decoder",
+  "NetworkSpecs": {
+    "dims": [
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024
+    ],
+    "dropout": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "dropout_prob": 0.05000000000000002,
+    "norm_layers": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "latent_in": [
+      2
+    ],
+    "xyz_in_all": false,
+    "use_tanh": false,
+    "latent_dropout": false,
+    "weight_norm": true
+  },
+  "CodeLength": 16,
+  "NumEpochs": 150,
+  "SnapshotFrequency": 150,
+  "AdditionalSnapshots": [],
+  "LearningRateSchedule": [
+    {
+      "Type": "Step",
+      "Initial": 0.002273726970786126,
+      "Interval": 25,
+      "Factor": 0.5
+    },
+    {
+      "Type": "Step",
+      "Initial": 0.0056742698777896275,
+      "Interval": 25,
+      "Factor": 0.5
+    }
+  ],
+  "SamplesPerScene": 16384,
+  "ScenesPerBatch": 128,
+  "UseEikonal": false,
+  "DataLoaderThreads": 16,
+  "ClampingDistance": 0.05,
+  "CodeRegularization": true,
+  "CodeRegularizationLambda": 0.0005262865643230358,
+  "CodeBound": 1.0,
+  "GradientClipNorm": 1.0
+}

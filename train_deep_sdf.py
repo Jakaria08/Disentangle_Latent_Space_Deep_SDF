@@ -389,7 +389,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     code_bound = get_spec_with_default(specs, "CodeBound", None)
 
-    decoder_old = arch.Decoder(latent_size, **specs["NetworkSpecs"]).cuda()
+    #decoder_old = arch.Decoder(latent_size, **specs["NetworkSpecs"]).cuda()
     decoder = vae.SDFVAE(latent_size, num_samp_per_scene, decoder_specs, kl_div_loss).cuda()
 
     logging.info("training with {} GPU(s)".format(torch.cuda.device_count()))
@@ -440,7 +440,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 50)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 200)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 

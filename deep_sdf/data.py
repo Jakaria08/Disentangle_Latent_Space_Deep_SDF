@@ -156,7 +156,7 @@ def unpack_sdf_samples_from_ram(data, subsample=None):
 
     return samples
 
-def get_surface_points(mesh_path, num_points=2048):
+def get_surface_points(mesh_path, num_points=4096):
     mesh = trimesh.load(mesh_path)
     points = mesh.sample(num_points)
     return points
