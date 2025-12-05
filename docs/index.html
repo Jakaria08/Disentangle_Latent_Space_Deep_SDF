@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Deep 3D-shape compression of SDF using shape-coded auto-decoders.">
+  <meta name="keywords" content="Deep3DComp, DeepSDF, SDF, Signed-distance-field">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deep3DComp: 3D-Shape Compression using Deep Neural Networks</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script> -->
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.svg">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+      <a class="navbar-item" href="https://philippwulff.github.io">
+      <span class="icon">
+          <i class="fas fa-home"></i>
+      </span>
+      </a>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">
+          More Research
+        </a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="https://philippwulff.github.io/DGD-NeRF/">
+            DGD-NeRF
+          </a>
+          <a class="navbar-item" href="https://roboy.github.io/rollbody/">
+            Rollbody
+          </a>
+          <!-- <a class="navbar-item" href="https://philippwulff.github.io/Deep3DComp/">
+            Deep3DComp
+          </a> -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Deep 3D-Shape Compression</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://www.linkedin.com/in/leonard-freissmuth/">Leonard Freißmuth</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://www.linkedin.com/in/philippwulff/">Philipp Wulff</a><sup>1</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>Technical University of Munich</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="https://github.com/philippwulff/Deep3DComp/blob/main/docs/Deep3DComp_report.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/philippwulff/Deep3DComp"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <!-- <video id="teaser" autoplay muted loop playsinline height="100%">
+        <source src="./static/videos/teaser.mp4"
+                type="video/mp4">
+      </video> -->
+      <img src="./static/images/arch.png" alt="Deep3DComp Architecture."/>
+      <h2 class="subtitle has-text-centered">
+        We represent 3D shapes by encoding their <span class="dnerf">signed-distance-field (SDF)</span> with a 
+        shape-coded auto-decoder and sinusoidal activations.
+      </h2>
+    </div>
+  </div>
+</section>
+
+
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item item-planes">
+          <video poster="" id="planes" autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/planes_1.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-planes">
+          <video poster="" id="planes" autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/planes_2.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-planes">
+          <video poster="" id="planes" autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/planes_3.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-planes">
+          <video poster="" id="planes" autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/planes_4.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-planes">
+          <video poster="" id="planes" autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/lamps_1.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-planes">
+          <video poster="" id="planes" autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/lamps_2.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-planes">
+          <video poster="" id="planes" autoplay controls muted loop playsinline width="100%">
+            <source src="./static/videos/lamps_3.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Implicit shape representations describe 3D-geometry in a differentiable manner, 
+            which is useful for downstream deep learning applications. An interesting property 
+            of these methods is their applicability as efficient compression tools. 
+          </p>
+          <p>
+            We experiment with periodic activations to improve key compression-properties of current 
+            implicit neural representations. Herein, we specifically compare memory-use and 
+            compression speed with the expressive power of the method. 
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+
+    <!-- Results. -->
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+
+        <!-- LatVsExpressiveness. -->
+        <h2 class="title is-3">Storage Cost vs. Expressiveness</h2>
+        <p>
+          Increasing the latent code dimensionality improves the quality with which the auto-decoder 
+          represents shapes at test time. Comparisons against 16- to 320-cubed sparse and dense voxel grids 
+          show that our latent representation greatly reduces storage cost at comparable reconstruction 
+          quality. Voxel grids of resolutions greater than 128 outperformed our best latent representations.
+        </p>
+        <img src="./static/images/paramsVquality_lat_vox.svg" alt="Difference in reconstruction quality 
+        when changing the latent code dimensionality." style="width: 700px; display: block; margin-left: auto; margin-right: auto;"/>
+        <!--/ LatVsExpressiveness. -->
+
+        <!-- Imgs. -->
+        <h2 class="title is-3">Qualitative Results</h2>
+        <p>
+          We compare selected reconstructions from our sinusoidal representation network 
+          (<span class="dnerf">SIREN</span>) against 
+          <span class="dnerf"><a href="https://arxiv.org/abs/1901.05103">DeepSDF</a></span>, 
+          as well as sparse and dense voxel grids. We point out that our model learns high-detail features
+          on the surface with greater detail than <span class="dnerf">DeepSDF</span>.
+        </p>
+        <img src="./static/images/reconstruction_comparison_web.svg" alt="Comparison of reconstructions from 
+        different models." style="width: 1000px; display: block; margin-left: auto; margin-right: auto;"/>
+        <!--/ Imgs. -->
+
+        <h2 class="title is-3">Interpolating Shapes</h2>
+
+        <!-- Interpolating. -->
+        <!-- <h3 class="title is-4"></h3> -->
+        <div class="content has-text-justified">
+          <p>
+            We are also able to interpolate the latent codes of two shapes to produce a novel shape.
+          </p>
+        </div>
+        <div class="columns is-vcentered interpolation-panel">
+          <div class="column is-3 has-text-centered">
+            <img src="./static/interpolation/stacked/000000.jpg"
+                 class="interpolation-image"
+                 alt="Interpolate start reference image."/>
+            <p>Start Frame</p>
+          </div>
+          <div class="column interpolation-video-column">
+            <div id="interpolation-image-wrapper">
+              Loading...
+            </div>
+            <input class="slider is-fullwidth is-large is-info"
+                   id="interpolation-slider"
+                   step="1" min="0" max="100" value="0" type="range">
+          </div>
+          <div class="column is-3 has-text-centered">
+            <img src="./static/interpolation/stacked/000029.jpg"
+                 class="interpolation-image"
+                 alt="Interpolation end reference image."/>
+            <p class="is-bold">End Frame</p>
+          </div>
+        </div>
+        <br/>
+        <!--/ Interpolating. -->
+
+      </div>
+    </div>
+    <!--/ Results. -->
+
+
+    <!-- Concurrent Work. -->
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">Acknowledgements</h2>
+
+        <div class="content has-text-justified">
+          <p>
+            There's a lot of excellent work that ours is based on.
+          </p>
+          <p>
+            <a href="https://arxiv.org/abs/1901.05103">DeepSDF: Learning Continuous Signed Distance 
+            Functions for Shape Representation</a> first showed shape-coded auto-decoders are well-suited
+            to learning SDFs. <a href="https://arxiv.org/abs/2006.09661">Implicit Neural Representations 
+            with Periodic Activation Functions</a> proposed an activation scheme for sine activations and 
+            showed good results when overfitting on single scenes.
+          </p>
+          <p>
+            We thank <a href="https://niessnerlab.org/members/matthias_niessner/profile.html">Prof. Matthias Niessner</a> for supervising our semester project.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Concurrent Work. -->
+
+  </div>
+</section>
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{freissmuth2023deep3dcomp,
+  author    = {Freissmuth, Leonard and Wulff, Philipp},
+  title     = {Deep 3D-Shape Compression},
+  year      = {2023},
+  month     = {Mar},
+  url       = {https://philippwulff.github.io/Deep3DComp/}
+}</code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+            Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+          <p>
+            We steal the <a href="https://github.com/nerfies/nerfies.github.io">source code</a> of this website from 
+            <a href="https://nerfies.github.io">Nerfies</a>. 
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
