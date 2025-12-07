@@ -1,0 +1,69 @@
+{
+  "Description" : [ "Hybrid Global+Local approach for disentangled brain surface reconstruction",
+                    "Global code (256D) for disentangled features + Local codes (8x8x8 grid of 16D) for quality" ],
+  "DataSource" : "/home/jakaria/CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface_L/sdf_data_control/SdfSamples/scaled_obj_files",
+  "DataSourceMesh" : "/home/jakaria/CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface_L/scaled_obj_files",
+  "TrainSplit" : "examples/splits/split_CALSNIC_control_L/train_split_calsnic.json",
+  "TestSplit" : "examples/splits/split_CALSNIC_control_L/test_split_calsnic.json",
+  "TorusPath" : "/home/jakaria/CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface_L/scaled_obj_files",
+  
+  "NetworkArch" : "local_decoder",
+  "NetworkSpecs" : {
+    "dims" : [ 512, 512, 512, 512, 512, 512, 512, 512 ],
+    "dropout" : null,
+    "dropout_prob" : 0.0,
+    "norm_layers" : [],
+    "latent_in" : [4],
+    "weight_norm" : false,
+    "xyz_in_all" : false,
+    "xyz_in" : [],
+    "use_tanh" : false,
+    "latent_dropout" : false,
+    "grid_size" : 16,
+    "global_latent_size" : 256
+    },
+  
+  "GlobalCodeSize" : 256,
+  "LocalCodeSize" : 32,
+
+  "GridSize" : 16,
+  "LocalSparsityWeight" : 10.0,
+  
+  "NumEpochs" : 5001,
+  "SnapshotFrequency" : 1000,
+  "AdditionalSnapshots" : [ 100, 500 ],
+  
+  "LearningRateSchedule" : [
+    {
+      "Type" : "Step",
+      "Initial" : 0.0005,
+      "Interval" : 500,
+      "Factor" : 0.5
+    },
+    {
+      "Type" : "Step",
+      "Initial" : 0.001,
+      "Interval" : 500,
+      "Factor" : 0.5
+    },
+    {
+      "Type" : "Step",
+      "Initial" : 0.0001,
+      "Interval" : 500,
+      "Factor" : 0.5
+    }],
+  
+  "SamplesPerScene" : 65536,
+  "ScenesPerBatch" : 12,
+  "UseEikonal" : false,
+  "DataLoaderThreads" : 16,
+  "ClampingDistance" : 0.1,
+  
+  "CodeRegularization" : true,
+  "CodeRegularizationLambda" : 1e-4,
+  "CodeBound" : 1.0,
+  "CodeInitStdDev" : 1.0,
+  
+  "GradientClipNorm" : 1.0,
+  "LogFrequency" : 10
+}
