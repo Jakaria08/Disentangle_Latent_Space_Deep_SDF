@@ -232,6 +232,7 @@ def main_function(experiment_directory, continue_from, batch_split):
     loss_l1 = torch.nn.L1Loss(reduction="sum")
     
     # Optimizer with 3 parameter groups: decoder, global codes, local codes
+    # Each group uses its own LR schedule from specs
     optimizer_all = torch.optim.Adam(
         [{
             "params": decoder.parameters(),
@@ -243,7 +244,7 @@ def main_function(experiment_directory, continue_from, batch_split):
         },
         {
             "params": local_lat_vecs.parameters(),
-            "lr": lr_schedules[1].get_learning_rate(0) * 0.1,  # Lower LR for local codes
+            "lr": lr_schedules[2].get_learning_rate(0),  # Uses third schedule from specs
         }]
     )
     

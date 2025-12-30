@@ -143,6 +143,15 @@ if __name__ == "__main__":
         + "Otherwise, the script will produce SDF samples for training.",
     )
 
+    # Add this argument to the argument parser (after the --surface argument)
+    arg_parser.add_argument(
+        "--aug",
+        dest="use_augmented",
+        default=False,
+        action="store_true",
+        help="If set, the script will process augmented files (original + transformed versions)",
+   )
+
     deep_sdf.add_common_args(arg_parser)
 
     args = arg_parser.parse_args()
@@ -193,35 +202,51 @@ if __name__ == "__main__":
 
     meshes_targets_and_specific_args = []
 
+    # If augmentation is enabled, append transformed files to the list
+    if args.use_augmented:
+        original_files = object_files.copy()
+        for obj_file in original_files:
+            base_name = os.path.splitext(obj_file)[0]
+            for i in range(5):
+                transformed_obj_file = base_name + "_transformed_" + str(i) + ".obj"
+                object_files.append(transformed_obj_file)
+    
+        logging.info(f"Augmentation enabled: processing {len(original_files)} original files + {len(original_files) * 5} augmented files")
+    else:
+        logging.info(f"Processing {len(object_files)} original files only")
+
     for obj_file in object_files:
-        shape_dir = os.path.join(args.source_dir, obj_file)
+        #base_name = os.path.splitext(obj_file)[0]
+        #for i in range(2):
+            #transformed_obj_file = base_name + "_transformed_" + str(i) + ".obj"
+            shape_dir = os.path.join(args.source_dir, obj_file)
 
-        processed_filepath = os.path.join(dest_dir, os.path.splitext(obj_file)[0] + extension)
-        if args.skip and os.path.isfile(processed_filepath):
-            logging.debug("skipping " + processed_filepath)
-            continue
+            processed_filepath = os.path.join(dest_dir, os.path.splitext(obj_file)[0] + extension)
+            if args.skip and os.path.isfile(processed_filepath):
+                logging.debug("skipping " + processed_filepath)
+                continue
 
-        try:
-            specific_args = []
+            try:
+                specific_args = []
 
-            if args.surface_sampling:
-                normalization_param_filename = os.path.join(
-                    normalization_param_dir, os.path.splitext(obj_file)[0] + ".npz"
+                if args.surface_sampling:
+                    normalization_param_filename = os.path.join(
+                        normalization_param_dir, os.path.splitext(obj_file)[0] + ".npz"
+                    )
+                    specific_args = ["-n", normalization_param_filename]
+
+                meshes_targets_and_specific_args.append(
+                    (
+                        shape_dir,
+                        processed_filepath,
+                        specific_args,
+                    )
                 )
-                specific_args = ["-n", normalization_param_filename]
 
-            meshes_targets_and_specific_args.append(
-                (
-                    shape_dir,
-                    processed_filepath,
-                    specific_args,
-                )
-            )
-
-        except deep_sdf.data.NoMeshFileError:
-            logging.warning("No mesh found for instance " + obj_file)
-        except deep_sdf.data.MultipleMeshFileError:
-            logging.warning("Multiple meshes found for instance " + obj_file)
+            except deep_sdf.data.NoMeshFileError:
+                logging.warning("No mesh found for instance " + obj_file)
+            except deep_sdf.data.MultipleMeshFileError:
+                logging.warning("Multiple meshes found for instance " + obj_file)
 
 
     with concurrent.futures.ThreadPoolExecutor(

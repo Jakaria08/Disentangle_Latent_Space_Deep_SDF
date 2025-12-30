@@ -50,9 +50,10 @@ def reconstruct_local_global(
         (loss, global_code, local_codes)
     """
     
-    def adjust_learning_rate(initial_lr, optimizer, num_iterations, decreased_by, adjust_lr_every):
-        lr = initial_lr * ((1 / decreased_by) ** (num_iterations // adjust_lr_every))
-        for param_group in optimizer.param_groups:
+    def adjust_learning_rate(initial_lrs, optimizer, num_iterations, decreased_by, adjust_lr_every):
+        """Decay each parameter group independently with its own initial LR."""
+        for i, param_group in enumerate(optimizer.param_groups):
+            lr = initial_lrs[i] * ((1 / decreased_by) ** (num_iterations // adjust_lr_every))
             param_group["lr"] = lr
     
     decreased_by = 10
@@ -87,7 +88,7 @@ def reconstruct_local_global(
         sdf_gt = sdf_data[:, 3].unsqueeze(1)
         sdf_gt = torch.clamp(sdf_gt, -clamp_dist, clamp_dist)
         
-        adjust_learning_rate(global_lr, optimizer, e, decreased_by, adjust_lr_every)
+        adjust_learning_rate([global_lr, local_lr], optimizer, e, decreased_by, adjust_lr_every)
         
         optimizer.zero_grad()
         
@@ -237,6 +238,9 @@ if __name__ == "__main__":
     with open(args.split_filename, "r") as f:
         split = json.load(f)
     
+    # Also load train split for matching if using trained codes
+    train_split_file = specs.get('TrainSplit', '')
+    
     npz_filenames = deep_sdf.data.get_instance_filenames(args.data_source, split)
     
     logging.debug(decoder)
@@ -267,7 +271,13 @@ if __name__ == "__main__":
         if "npz" not in npz:
             continue
         
-        full_filename = os.path.join(args.data_source, ws.sdf_samples_subdir, npz)
+        # Check if data_source already points to SdfSamples directory
+        if ws.sdf_samples_subdir in args.data_source or args.data_source.endswith('SdfSamples'):
+            # Path already includes SdfSamples, don't append it again
+            full_filename = os.path.join(args.data_source, npz)
+        else:
+            # Need to append SdfSamples subdirectory
+            full_filename = os.path.join(args.data_source, ws.sdf_samples_subdir, npz)
         
         logging.info(f"\n{'='*60}")
         logging.info(f"Reconstructing {npz} ({ii+1}/{len(npz_filenames)})")
@@ -296,15 +306,26 @@ if __name__ == "__main__":
         data_sdf[0] = data_sdf[0][torch.randperm(data_sdf[0].shape[0])]
         data_sdf[1] = data_sdf[1][torch.randperm(data_sdf[1].shape[0])]
         
-        # Try to find initialization for global code
+        # Try to find initialization for global code from trained codes
         init_global = None
         if trained_global_codes is not None and args.use_trained_codes:
-            # Try to match by filename in the training set
-            # This is a heuristic - you may need to adjust based on your dataset structure
+            # Try to match by shape index in the training set
+            # If the test shape exists in training, use its global code as initialization
             shape_name = npz[:-4]
-            # You would need to implement proper matching here
-            # For now, just use random initialization
-            pass
+            
+            # Try to find this shape in the training split
+            with open(train_split_file, 'r') as f:
+                train_split = json.load(f)
+            
+            train_names = [os.path.basename(x).replace('.npz', '') for x in train_split.get(specs['DataSource'].split('/')[-1], [])]
+            if shape_name in train_names:
+                train_idx = train_names.index(shape_name)
+                if train_idx < trained_global_codes.shape[0]:
+                    init_global = trained_global_codes[train_idx]
+                    logging.info(f"Initializing from trained global code (index {train_idx})")
+            
+            if init_global is None:
+                logging.debug(f"Shape {shape_name} not in training set, using random initialization")
         
         import time
         start = time.time()
