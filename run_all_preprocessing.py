@@ -58,9 +58,11 @@ def main(data_dir, source_dir, splits_dir, debug=False):
 
 if __name__ == "__main__":
 
-    data_dir = "../../CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface_R/sdf_data_control"      
-    source_dir = "../../CALSNIC/calsnic_pial_surface/mesh_dataset/pial_surface_R/scaled_obj_files"
-    splits_dir = "examples/splits/split_CALSNIC_control_R"
+    data_dir = "../../ADNI/ADNI_1/adni_processed/combined_hippocampus_correspondence/sdf_data_smooth"      
+    source_dir = "../../ADNI/ADNI_1/adni_processed/combined_hippocampus_correspondence/minimal_smooth_scaled_obj_files"
+    splits_dir = "examples/splits/splits_combined_hippocampus_ADNI_smooth"
+
+    os.makedirs(data_dir, exist_ok=True)
 
     arg_parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     deep_sdf.add_common_args(arg_parser)

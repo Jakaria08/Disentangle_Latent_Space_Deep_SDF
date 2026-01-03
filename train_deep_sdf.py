@@ -268,7 +268,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     decoder = torch.nn.DataParallel(decoder)
 
     num_epochs = specs["NumEpochs"]
-    log_frequency = get_spec_with_default(specs, "LogFrequency", 100)
+    log_frequency = get_spec_with_default(specs, "LogFrequency", 200)
     
     with open(train_split_file, "r") as f:
         train_split = json.load(f)
@@ -299,14 +299,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     # Get train evaluation settings.
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 10)
-    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 100)
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 300)
     eval_train_scene_idxs = random.sample(range(len(sdf_dataset)), min(eval_train_scene_num, len(sdf_dataset)))
     logging.debug(f"Plotting {eval_train_scene_num} shapes with indices {eval_train_scene_idxs}")
 
     # Get test evaluation settings.
     with open(test_split_file, "r") as f:
         test_split = json.load(f)
-    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 100)
+    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 500)
     eval_test_scene_num = get_spec_with_default(specs, "EvalTestSceneNumber", 10)
     eval_test_optimization_steps = get_spec_with_default(specs, "EvalTestOptimizationSteps", 1000)
     eval_test_filenames = deep_sdf.data.get_instance_filenames(data_source, test_split)
@@ -495,7 +495,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
                     batch_loss_tb += chunk_loss.item()
                     # Print batch loss
-                print(f"Batch loss: {batch_loss_tb}")                    
+                #print(f"Batch loss: {batch_loss_tb}")                    
                 logging.debug("loss = {}".format(batch_loss_tb))
                 loss_log.append(batch_loss_tb)
                 epoch_losses.append(batch_loss_tb)
@@ -514,6 +514,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             timing_log.append(seconds_elapsed)
             # Log epoch losses.
             epoch_loss = sum(epoch_losses)/len(epoch_losses)
+            print(f"Epoch {epoch} loss: {epoch_loss}")
             loss_log_epoch.append(epoch_loss)
             summary_writer.add_scalar("Loss/train", epoch_loss, global_step=epoch)
             summary_writer.add_scalar("Loss/train_sdf", sum(epoch_sdf_losses)/len(epoch_sdf_losses), global_step=epoch)
@@ -636,7 +637,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             test_sdf_samples,
                             0.01,  # [emp_mean,emp_var],
                             0.1,
-                            num_samples=32000,
+                            num_samples=16384,
                             lr=5e-3,
                             l2reg=True,
                             return_loss_hist=True
