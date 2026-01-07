@@ -17,7 +17,7 @@ import numpy as np
 
 import deep_sdf
 from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils
-from deep_sdf.loss import CovarianceLoss
+from deep_sdf.loss import CovarianceLoss, IsometryLoss, select_near_surface_points
 import deep_sdf.workspace as ws
 import reconstruct
 
@@ -263,6 +263,18 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     lambda_cov = get_spec_with_default(specs, "CovarianceLossLambda", 1e-3)
     covariance_loss_fn = CovarianceLoss().cuda()
 
+    # Isometry loss configuration
+    use_isometry = get_spec_with_default(specs, "UseIsometryLoss", False)
+    lambda_iso = get_spec_with_default(specs, "IsometryLossLambda", 1e-3)
+    iso_num_points = get_spec_with_default(specs, "IsometryNumPoints", 256)
+    iso_num_probes = get_spec_with_default(specs, "IsometryNumProbes", 1)
+    iso_compute_frequency = get_spec_with_default(specs, "IsometryComputeFrequency", 1)
+    isometry_loss_fn = IsometryLoss(num_hutchinson_probes=iso_num_probes).cuda()
+    
+    if use_isometry:
+        logging.info(f"Isometry loss enabled: lambda={lambda_iso}, num_points={iso_num_points}, "
+                     f"num_probes={iso_num_probes}, compute_freq={iso_compute_frequency}")
+
     code_bound = get_spec_with_default(specs, "CodeBound", None)
 
     decoder = arch.Decoder(latent_size, **specs["NetworkSpecs"]).cuda()
@@ -416,6 +428,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         )
     )
     
+    # Global batch counter for iso compute frequency
+    global_batch_idx = 0
+    
     try:
         train_chamfer_dists_log = []
         test_chamfer_dists_log = []
@@ -428,6 +443,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_reg_losses = []
             epoch_eikonal_losses = []
             epoch_cov_losses = []
+            epoch_iso_losses = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -436,6 +452,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
             adjust_learning_rate(lr_schedules, optimizer_all, epoch, loss_log_epoch)
             for sdf_data, indices in sdf_loader:
+                global_batch_idx += 1
                 # logging.debug(f"time for dataloading: {(time.time() - TIME)*1000:.3f} ms"); TIME = time.time()
                 # Process the input data
                 sdf_data = sdf_data.reshape(-1, 4)
@@ -464,6 +481,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 reg_loss_tb = 0.0
                 eikonal_loss_tb = 0.0
                 cov_loss_tb = 0.0
+                iso_loss_tb = 0.0
 
                 optimizer_all.zero_grad()
 
@@ -494,6 +512,31 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         chunk_loss = chunk_loss + cov_loss
                         cov_loss_tb += cov_loss.item()
                     
+                    # Isometry loss computation
+                    if use_isometry and (global_batch_idx % iso_compute_frequency == 0):
+                        # Select near-surface points for isometry computation
+                        iso_points = select_near_surface_points(
+                            xyz[i].detach(), sdf_gt[i].detach(), clamp_dist, iso_num_points
+                        ).cuda()
+                        
+                        # Get unique shape indices and sample one for iso computation
+                        unique_indices = torch.unique(indices[i])
+                        sample_idx = unique_indices[0]
+                        sample_latent = lat_vecs(sample_idx.unsqueeze(0).cuda())  # [1, m]
+                        iso_latent_expanded = sample_latent.expand(iso_num_points, -1)  # [K, m]
+                        
+                        # Use the underlying decoder (unwrap DataParallel if needed)
+                        decoder_for_iso = decoder.module if hasattr(decoder, 'module') else decoder
+                        
+                        iso_loss = lambda_iso * isometry_loss_fn(
+                            decoder_for_iso,
+                            iso_latent_expanded,
+                            iso_points,
+                            latent_size,
+                        )
+                        chunk_loss = chunk_loss + iso_loss
+                        iso_loss_tb += iso_loss.item()
+                    
                     summary_writer.add_scalar("Loss/train_vanilla", chunk_loss, global_step=epoch)
                     if use_eikonal:
                         grad_outputs = torch.ones_like(pred_sdf, requires_grad=True)
@@ -514,6 +557,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 epoch_reg_losses.append(reg_loss_tb)
                 epoch_eikonal_losses.append(eikonal_loss_tb)
                 epoch_cov_losses.append(cov_loss_tb)
+                epoch_iso_losses.append(iso_loss_tb)
 
                 if grad_clip is not None:
 
@@ -530,6 +574,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             if use_covariance:
                 epoch_cov_loss = sum(epoch_cov_losses)/len(epoch_cov_losses)
                 print(f"Epoch {epoch} covariance loss: {epoch_cov_loss}")
+            if use_isometry and sum(epoch_iso_losses) > 0:
+                epoch_iso_loss = sum(epoch_iso_losses)/max(1, sum(1 for x in epoch_iso_losses if x > 0))
+                print(f"Epoch {epoch} isometry loss: {epoch_iso_loss}")
             loss_log_epoch.append(epoch_loss)
             summary_writer.add_scalar("Loss/train", epoch_loss, global_step=epoch)
             summary_writer.add_scalar("Loss/train_sdf", sum(epoch_sdf_losses)/len(epoch_sdf_losses), global_step=epoch)
@@ -538,6 +585,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 summary_writer.add_scalar("Loss/train_eikonal", sum(epoch_eikonal_losses)/len(epoch_eikonal_losses), global_step=epoch)
             if use_covariance:
                 summary_writer.add_scalar("Loss/train_covariance", sum(epoch_cov_losses)/len(epoch_cov_losses), global_step=epoch)
+            if use_isometry and sum(epoch_iso_losses) > 0:
+                summary_writer.add_scalar("Loss/train_isometry", sum(epoch_iso_losses)/max(1, sum(1 for x in epoch_iso_losses if x > 0)), global_step=epoch)
             # Log learning rate.
             lr_log.append([schedule.get_learning_rate(epoch) for schedule in lr_schedules])
             summary_writer.add_scalar("Learning Rate/Params", lr_log[-1][0], global_step=epoch)

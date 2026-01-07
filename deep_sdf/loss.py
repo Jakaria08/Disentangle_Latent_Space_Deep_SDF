@@ -26,6 +26,157 @@ class CovarianceLoss(nn.Module):
         # D*(D-1) is the number of off-diagonal elements
         return (offdiag ** 2).sum() / (D * (D - 1))
 
+
+class IsometryLoss(nn.Module):
+    """
+    Isometric regularization loss from "Isometric Regularization for 
+    Manifolds of Functional Data" (ICLR 2025).
+    
+    Encourages the latent→function map to be locally distance/angle preserving
+    by regularizing the latent Jacobian metric H(z) = E_x[J(x,z)^T J(x,z)].
+    
+    Uses Hutchinson trace estimator with JVP + VJP for efficient computation.
+    """
+    
+    def __init__(self, num_hutchinson_probes: int = 1, eps: float = 1e-8):
+        """
+        Args:
+            num_hutchinson_probes: Number of random probe vectors for Hutchinson estimator.
+                                   1 is usually sufficient, 2 if noisy.
+            eps: Small constant for numerical stability in division.
+        """
+        super(IsometryLoss, self).__init__()
+        self.num_hutchinson_probes = num_hutchinson_probes
+        self.eps = eps
+    
+    def forward(
+        self,
+        decoder: nn.Module,
+        latent_codes: torch.Tensor,
+        iso_points: torch.Tensor,
+        latent_size: int,
+    ) -> torch.Tensor:
+        """
+        Compute isometry loss using Algorithm 1 from the paper.
+        
+        Args:
+            decoder: The SDF decoder network (expects input [latent, xyz] concatenated)
+            latent_codes: [N, m] latent codes (already expanded per point)
+            iso_points: [N, 3] xyz coordinates
+            latent_size: Dimension of latent code (m)
+            
+        Returns:
+            Scalar isometry loss (G2 / G1 ratio)
+        """
+        N = iso_points.shape[0]
+        m = latent_size
+        device = iso_points.device
+        
+        G1_accum = 0.0
+        G2_accum = 0.0
+        
+        for _ in range(self.num_hutchinson_probes):
+            # Sample probe vector v ~ N(0, I_m)
+            # Use same probe for all points (per-batch Hutchinson)
+            v = torch.randn(1, m, device=device).expand(N, m)  # [N, m]
+            
+            # Build input: [latent, xyz]
+            inp = torch.cat([latent_codes, iso_points], dim=-1)  # [N, m+3]
+            inp.requires_grad_(True)
+            
+            # Build tangent: [v, 0_xyz] - perturb only latent part
+            tangent = torch.cat([
+                v,  # Perturbation in latent (first m dims)
+                torch.zeros(N, 3, device=device)  # No perturbation in xyz
+            ], dim=-1)  # [N, m+3]
+            
+            with torch.enable_grad():
+                outputs = decoder(inp)  # [N, 1]
+                
+                # Full gradient w.r.t. input
+                G = torch.autograd.grad(
+                    outputs=outputs,
+                    inputs=inp,
+                    grad_outputs=torch.ones_like(outputs),
+                    create_graph=True,
+                    retain_graph=True
+                )[0]  # [N, m+3]
+                
+                # JVP result
+                jvp_result = (G * tangent).sum(dim=-1)  # [N]
+                
+                # G1: E[G^2]
+                G1 = (jvp_result ** 2).mean()
+                G1_accum += G1
+                
+                # VJP
+                grad_inp = torch.autograd.grad(
+                    outputs=jvp_result,
+                    inputs=inp,
+                    grad_outputs=torch.ones_like(jvp_result),
+                    create_graph=True,
+                    retain_graph=True
+                )[0]  # [N, m+3]
+                
+                # Get z-part gradients (first m components since input is [z, x])
+                Dz = grad_inp[:, :m]  # [N, m]
+                
+                # E_x[D_z] then ||.||^2
+                Dz_mean = Dz.mean(dim=0)  # [m]
+                G2 = (Dz_mean ** 2).sum()  # scalar
+                G2_accum += G2
+        
+        G1_avg = G1_accum / self.num_hutchinson_probes
+        G2_avg = G2_accum / self.num_hutchinson_probes
+        
+        return G2_avg / (G1_avg + self.eps)
+
+
+def select_near_surface_points(xyz, sdf_gt, clamp_dist, num_iso_points):
+    """
+    Select near-surface points for isometry loss computation.
+    Prioritizes points with |SDF| < clamp_dist (near surface).
+    
+    Args:
+        xyz: [N, 3] point coordinates
+        sdf_gt: [N, 1] ground truth SDF values
+        clamp_dist: Truncation distance (points with |SDF| < this are near-surface)
+        num_iso_points: Number of points to select
+        
+    Returns:
+        [num_iso_points, 3] selected points
+    """
+    sdf_abs = sdf_gt.abs().squeeze()
+    
+    # Find near-surface points (|SDF| < clamp_dist)
+    near_surface_mask = sdf_abs < clamp_dist
+    near_surface_indices = torch.where(near_surface_mask)[0]
+    
+    if len(near_surface_indices) >= num_iso_points:
+        # Sample from near-surface points
+        perm = torch.randperm(len(near_surface_indices), device=xyz.device)[:num_iso_points]
+        selected_indices = near_surface_indices[perm]
+    else:
+        # Use all near-surface points + some random points
+        num_random = num_iso_points - len(near_surface_indices)
+        far_indices = torch.where(~near_surface_mask)[0]
+        
+        if len(far_indices) >= num_random:
+            perm = torch.randperm(len(far_indices), device=xyz.device)[:num_random]
+            random_indices = far_indices[perm]
+        else:
+            random_indices = far_indices
+        
+        selected_indices = torch.cat([near_surface_indices, random_indices])
+        
+        # If still not enough, pad by repeating
+        if len(selected_indices) < num_iso_points:
+            repeat_times = (num_iso_points // len(selected_indices)) + 1
+            selected_indices = selected_indices.repeat(repeat_times)[:num_iso_points]
+    
+    return xyz[selected_indices]
+
+
 # SNNL loss modified fast
 class SNNLoss(nn.Module):
     def __init__(self, T):
