@@ -1,16 +1,17 @@
 {
   "Description" : [ "This experiment learns a shape representation for torus ",
                     "using synthetic data." ],
-  "DataSource" : "/home/jakaria/torus_two_models_data/torus_two/sdf_data/SdfSamples/obj_files",
-  "TrainSplit" : "examples/splits/splits_torus_rotate_bump/train_split_torus.json",
-  "TestSplit" : "examples/splits/splits_torus_rotate_bump/test_split_torus.json",
-  "TorusPath" : "/home/jakaria/torus_two_models_data/torus_two/obj_files'",
+  "DataSource" : "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/sdf_data/SdfSamples/minimal_scaled_obj_files",
+  "DataSourceMesh" : "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/minimal_scaled_obj_files",
+  "TrainSplit" : "examples/splits/splits_left_hippocampus_ADNI_No_MCI/train_split_left_hippocampus_adni_no_mci.json",
+  "TestSplit" : "examples/splits/splits_left_hippocampus_ADNI_No_MCI/test_split_left_hippocampus_adni_no_mci.json",
+  "TorusPath" : "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/minimal_scaled_obj_files",
   "NetworkArch" : "deep_sdf_decoder",
   "NetworkSpecs" : {
     "dims" : [ 512, 512, 512, 512, 512, 512, 512, 512 ],
-    "dropout" : [0, 1, 2, 3, 4, 5, 6, 7],
+    "dropout" : [],
     "dropout_prob" : 0.2,
-    "norm_layers" : [0, 1, 2, 3, 4, 5, 6, 7],
+    "norm_layers" : [],
     "latent_in" : [4],
     "xyz_in_all" : false,
     "use_tanh" : false,
@@ -35,13 +36,14 @@
       "Factor" : 0.5
     }],
   "SamplesPerScene" : 16384,
-  "ScenesPerBatch" : 64,
+  "ScenesPerBatch" : 32,
+  "UseEikonal" : false,
   "DataLoaderThreads" : 16,
   "ClampingDistance" : 0.1,
   "CodeRegularization" : true,
   "CodeRegularizationLambda" : 1e-4,
   "CodeBound" : 1.0,
-  "UseCovarianceLoss" : false,
+  "GradientClipNorm" : 1.0,
+  "UseCovarianceLoss" : true,
   "CovarianceLossLambda" : 0.001
 }
-

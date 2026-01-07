@@ -5,7 +5,27 @@ import math
 import scipy.optimize
 import logging
 from scipy.spatial.distance import cdist
-    
+
+class CovarianceLoss(nn.Module):
+    def __init__(self, eps: float = 1e-12):
+        super().__init__()
+        self.eps = float(eps)
+
+    def forward(self, z: torch.Tensor) -> torch.Tensor:
+        if z.dim() != 2:
+            z = z.view(z.size(0), -1)
+        B, D = z.shape
+        if B <= 1 or D <= 1:
+            return z.new_tensor(0.0)
+
+        z = z - z.mean(dim=0, keepdim=True)
+        denom = float(B - 1)
+        cov = (z.t() @ z) / (denom + self.eps)
+        offdiag = cov - torch.diag_embed(torch.diagonal(cov))
+        # Normalize by 1/(D*(D-1)) where D is latent dimension
+        # D*(D-1) is the number of off-diagonal elements
+        return (offdiag ** 2).sum() / (D * (D - 1))
+
 # SNNL loss modified fast
 class SNNLoss(nn.Module):
     def __init__(self, T):
