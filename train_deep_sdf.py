@@ -23,6 +23,16 @@ import reconstruct
 
 from torch.utils.tensorboard import SummaryWriter
 
+PretrainedModel = True
+pretrained_model_path = "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/minimal_eikonal/ModelParameters/latest.pth"
+
+def _strip_module_prefix(state_dict):
+    if not state_dict:
+        return state_dict
+    if all(key.startswith("module.") for key in state_dict.keys()):
+        return {key[len("module."):]: value for key, value in state_dict.items()}
+    return state_dict
+
 def save_model(experiment_directory, filename, decoder, epoch):
 
     model_params_dir = ws.get_model_params_dir(experiment_directory, True)
@@ -268,6 +278,20 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     decoder = arch.Decoder(latent_size, **specs["NetworkSpecs"]).cuda()
 
     logging.info("training with {} GPU(s)".format(torch.cuda.device_count()))
+
+        # Load pre-trained model if specified
+    if PretrainedModel == True:
+        
+        if os.path.exists(pretrained_model_path):
+            logging.info(f"Loading pre-trained model from: {pretrained_model_path}")
+            saved_model_state = torch.load(pretrained_model_path)
+            model_state = saved_model_state.get("model_state_dict", saved_model_state)
+            model_state = _strip_module_prefix(model_state)
+            decoder.load_state_dict(model_state)
+            logging.info("Pre-trained model loaded successfully!")
+        else:
+            logging.info("No pre-trained model found, starting from scratch")
+
 
     decoder = torch.nn.DataParallel(decoder)
 
