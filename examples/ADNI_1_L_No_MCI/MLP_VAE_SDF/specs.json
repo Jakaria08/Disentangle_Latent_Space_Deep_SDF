@@ -1,0 +1,64 @@
+{
+  "Description" : [
+    "Residual MLP VAE + DeepSDF latent distillation.",
+    "Teacher latents come from a pretrained DeepSDF experiment."
+  ],
+  "DataSource" : "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/sdf_data/SdfSamples/minimal_scaled_obj_files",
+  "TrainSplit" : "examples/splits/splits_left_hippocampus_ADNI_No_MCI/train_split_left_hippocampus_adni_no_mci.json",
+  "NetworkArch" : "deep_sdf_decoder",
+  "NetworkSpecs" : {
+    "dims" : [ 512, 512, 512, 512, 512, 512, 512, 512 ],
+    "dropout" : [],
+    "dropout_prob" : 0.2,
+    "norm_layers" : [],
+    "latent_in" : [4],
+    "xyz_in_all" : false,
+    "use_tanh" : false,
+    "latent_dropout" : false,
+    "weight_norm" : true
+  },
+  "CodeLength" : 256,
+  "NumEpochs" : 2001,
+  "SnapshotFrequency" : 1000,
+  "AdditionalSnapshots" : [ 100, 500 ],
+  "LearningRateSchedule" : [
+    {
+      "Type" : "Step",
+      "Initial" : 0.0005,
+      "Interval" : 500,
+      "Factor" : 0.5
+    },
+    {
+      "Type" : "Step",
+      "Initial" : 0.0001,
+      "Interval" : 500,
+      "Factor" : 0.5
+    }
+  ],
+  "SamplesPerScene" : 16384,
+  "ScenesPerBatch" : 32,
+  "DataLoaderThreads" : 16,
+  "ClampingDistance" : 0.1,
+  "GradientClipNorm" : 1.0,
+  "LoadDatasetIntoRAM" : false,
+  "PretrainedLatentPath" : "../minimal_eikonal/LatentCodes/latest.pth",
+  "PretrainedSDFDecoderPath" : "../minimal_eikonal/ModelParameters/latest.pth",
+  "TrainSDFDecoder" : false,
+  "SDFLossWeight" : 1.0,
+  "CodeRegularization" : true,
+  "CodeRegularizationLambda" : 1e-4,
+  "CodeRegularizationWarmupEpochs" : 100,
+  "VAEInputDim" : 256,
+  "VAELatentDim" : 16,
+  "VAEEncoderHiddenDims" : [ 256, 128 ],
+  "VAEDecoderHiddenDims" : [ 128, 256, 256 ],
+  "VAEBlocks" : 1,
+  "VAEActivation" : "gelu",
+  "VAEDropout" : 0.0,
+  "VAELayerNorm" : true,
+  "VAEReconLoss" : "mse",
+  "VAEReconWeight" : 1.0,
+  "VAEKLWeight" : 1.0,
+  "KLWarmupEpochs" : 100,
+  "LatentExportBatchSize" : 1024
+}
