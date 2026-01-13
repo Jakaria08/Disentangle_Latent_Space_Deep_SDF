@@ -16,7 +16,7 @@ import random
 import numpy as np
 
 import deep_sdf
-from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils
+from deep_sdf import mesh, metrics_n, lr_scheduling, plotting, utils
 from deep_sdf.loss import CovarianceLoss
 import deep_sdf.workspace as ws
 import reconstruct
@@ -632,7 +632,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
                         if train_mesh is not None:
                             gt_mesh_path = f"{torus_path}/{save_name}.obj"
-                            cd, cd_all = metrics.compute_metric(gt_mesh=gt_mesh_path, gen_mesh=train_mesh, metric="chamfer")
+                            cd, cd_all = metrics_n.compute_metric(gt_mesh=gt_mesh_path, gen_mesh=train_mesh, metric="chamfer")
                             chamfer_dists.append(cd)
                             chamfer_dists_all.append(cd_all)
                         
@@ -703,7 +703,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
                         if test_mesh is not None:
                             gt_mesh_path = f"{torus_path}/{save_name}.obj"
-                            cd, cd_all = metrics.compute_metric(gt_mesh=gt_mesh_path, gen_mesh=test_mesh, metric="chamfer")
+                            cd, cd_all = metrics_n.compute_metric(gt_mesh=gt_mesh_path, gen_mesh=test_mesh, metric="chamfer")
                             chamfer_dists.append(cd)
                             chamfer_dists_all.append(cd_all)
 

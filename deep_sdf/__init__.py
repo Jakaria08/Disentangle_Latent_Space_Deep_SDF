@@ -4,7 +4,7 @@
 import os
 from deep_sdf.data import *
 from deep_sdf.mesh import *
-from deep_sdf.metrics.chamfer import *
+from deep_sdf.metrics_n.chamfer import *
 from deep_sdf.utils import *
 from deep_sdf.workspace import *
 from deep_sdf.lr_scheduling import *
