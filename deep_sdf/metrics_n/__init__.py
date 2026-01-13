@@ -1,7 +1,7 @@
 import os
 import trimesh
-from deep_sdf.metrics.chamfer import compute_chamfer
-from deep_sdf.metrics.mesh_normal_consistency import compute_mesh_normal_consistency
+from deep_sdf.metrics_n.chamfer import compute_chamfer
+from deep_sdf.metrics_n.mesh_normal_consistency import compute_mesh_normal_consistency
 from deep_sdf.utils import as_mesh
 import point_cloud_utils as pcu
 
