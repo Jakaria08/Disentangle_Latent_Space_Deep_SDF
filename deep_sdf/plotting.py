@@ -22,6 +22,7 @@ from matplotlib.lines import Line2D
 from matplotlib.gridspec import GridSpec
 import matplotlib.collections as mcol
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib
 import torch
 from itertools import chain
@@ -46,10 +47,6 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 # mpl.rcParams['ps.fonttype'] = 42
 
 import json
-if not os.name == "nt":
-    # We do not import this on Windows.
-    import pyrender
-    os.environ['PYOPENGL_PLATFORM'] = 'egl'
 
 
 def plot_train_stats(loss_hists: list, psnr_hist=None, step_hist=None, labels=None, save_path="") -> plt.figure:
@@ -124,25 +121,61 @@ def plot_dist_violin(data: np.ndarray, percentile_keys: list=[50, 75, 90, 99]) -
     return fig, percentiles
 
 
+def _set_3d_limits(ax, points):
+    bounds = np.array([points.min(axis=0), points.max(axis=0)])
+    center = bounds.mean(axis=0)
+    max_range = (bounds[1] - bounds[0]).max() / 2.0
+    ax.set_xlim(center[0] - max_range, center[0] + max_range)
+    ax.set_ylim(center[1] - max_range, center[1] + max_range)
+    ax.set_zlim(center[2] - max_range, center[2] + max_range)
+    try:
+        ax.set_box_aspect([1, 1, 1])
+    except AttributeError:
+        pass
+
+
+def _render_trimesh_matplotlib(points, faces=None, colors=None, angles=(0.0, 0.0, 0.0), resolution=(1000, 1000)):
+    width, height = resolution
+    fig = plt.figure(figsize=(width / 100.0, height / 100.0), dpi=100)
+    ax = fig.add_subplot(111, projection="3d")
+    ax.set_axis_off()
+
+    alpha, beta, gamma = angles
+    ax.view_init(elev=np.degrees(alpha), azim=np.degrees(beta))
+
+    if faces is not None:
+        ax.plot_trisurf(
+            points[:, 0],
+            points[:, 1],
+            faces,
+            points[:, 2],
+            linewidth=0.0,
+            antialiased=False,
+            color="#cfcfcf",
+        )
+    else:
+        ax.scatter(
+            points[:, 0],
+            points[:, 1],
+            points[:, 2],
+            c=colors,
+            s=1.0,
+            depthshade=False,
+        )
+
+    _set_3d_limits(ax, points)
+    fig.canvas.draw()
+    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    image = image.reshape((height, width, 3))
+    plt.close(fig)
+    return image, None
+
+
 def pyrender_helper(mesh: trimesh.Trimesh, alpha=0, beta=0, gamma=0):
     """Renders a Trimesh and returns the color and depth image numpy arrays."""
-    mesh = pyrender.Mesh.from_trimesh(mesh, smooth=False)
-    scene = pyrender.Scene()
-    scene.add(mesh)
-    camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
-    camera_pose = np.eye(4)
-    camera_pose[2, 3] = 2      # move in z-dir
-    camera_pose = utils.rotate(camera_pose, alpha=alpha, beta=beta, gamma=gamma)
-    scene.add(camera, pose=camera_pose)
-    light = pyrender.SpotLight(color=np.ones(3), intensity=10.0,
-                                innerConeAngle=np.pi/2.0,
-                                outerConeAngle=np.pi/2.0)
-    # light = pyrender.DirectionalLight(color=[1, 1, 1], intensity=500.)
-    # light = pyrender.PointLight(color=[1, 1, 1], intensity=1000.0)
-    scene.add(light, pose=camera_pose)
-    r = pyrender.OffscreenRenderer(1000, 1000)
-    color, depth = r.render(scene)
-    return color, depth
+    points = np.asarray(mesh.vertices)
+    faces = np.asarray(mesh.faces)
+    return _render_trimesh_matplotlib(points, faces=faces, angles=(alpha, beta, gamma), resolution=(1000, 1000))
 
 
 def plot_reconstruction_comparison(
@@ -292,46 +325,24 @@ def render_sdf(points: np.array, sdf: np.array, cam_angles=(-np.pi/7, np.pi/4, 0
     colors = np.zeros(points.shape)
     colors[sdf < 0, 2] = 1      # inside -> Blue
     colors[sdf > 0, 0] = 1      # outside -> Red
-    cloud = pyrender.Mesh.from_points(points, colors=colors)
-    scene = pyrender.Scene()
-    # cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.414)
-
-    scene.add(cloud)
-    # cam looks in neg z dir: https://pyrender.readthedocs.io/en/latest/examples/cameras.html
-    camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0)
-    camera_pose = np.eye(4)
-    camera_pose[2,3] = 2.0      # in z dir
-    camera_pose = utils.rotate(camera_pose, *cam_angles)
-    scene.add(camera, pose=camera_pose)
-
-    light = pyrender.SpotLight(color=np.ones(3), intensity=10.0, innerConeAngle=np.pi/4.0)
-    scene.add(light, pose=camera_pose)
-
-    # viewer = pyrender.Viewer(scene, use_raymond_lighting=True, point_size=2)
-    r = pyrender.OffscreenRenderer(viewport_width=480, viewport_height=480, point_size=1.0)
-    color, depth = r.render(scene)
-    r.delete()
-
-    return color, depth
+    return _render_trimesh_matplotlib(
+        points,
+        faces=None,
+        colors=colors,
+        angles=cam_angles,
+        resolution=(480, 480),
+    )
 
 
 def render_mesh(mesh: trimesh.Trimesh, cam_angles=(-np.pi/7, np.pi/4, 0)):
-    mesh = pyrender.Mesh.from_trimesh(mesh)
-    scene = pyrender.Scene()
-    scene.add(mesh)
-    # cam looks in neg z dir: https://pyrender.readthedocs.io/en/latest/examples/cameras.html
-    camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0)
-    camera_pose = np.eye(4)
-    camera_pose[2,3] = 2      # in z dir
-    camera_pose = utils.rotate(camera_pose, *cam_angles)
-    scene.add(camera, pose=camera_pose)
-    light = pyrender.SpotLight(color=np.ones(3), intensity=10.0, innerConeAngle=np.pi/4.0)
-    scene.add(light, pose=camera_pose)
-
-    r = pyrender.OffscreenRenderer(viewport_width=480, viewport_height=480, point_size=1.0)
-    color, depth = r.render(scene)
-    r.delete()
-    return color, depth
+    points = np.asarray(mesh.vertices)
+    faces = np.asarray(mesh.faces)
+    return _render_trimesh_matplotlib(
+        points,
+        faces=faces,
+        angles=cam_angles,
+        resolution=(480, 480),
+    )
 
 
 def render_sdf_vid(points: np.array, sdf: np.array, fps=2, n_seconds=5, save_filepath=""):
