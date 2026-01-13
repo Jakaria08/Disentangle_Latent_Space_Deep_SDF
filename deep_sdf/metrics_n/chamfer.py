@@ -5,8 +5,42 @@ import numpy as np
 import scipy
 from scipy.spatial import cKDTree as KDTree
 import trimesh
-import robust_laplacian
 from deep_sdf.utils import scale_to_unit_sphere
+
+
+def _cotangent_laplacian(verts, faces):
+    verts = np.asarray(verts)
+    faces = np.asarray(faces)
+    if faces.size == 0 or verts.size == 0:
+        raise ValueError("Empty mesh provided for Laplacian computation")
+
+    v0 = verts[faces[:, 0]]
+    v1 = verts[faces[:, 1]]
+    v2 = verts[faces[:, 2]]
+
+    def cotangent(a, b):
+        cross = np.cross(a, b)
+        denom = np.linalg.norm(cross, axis=1)
+        denom = np.maximum(denom, 1e-12)
+        return (a * b).sum(axis=1) / denom
+
+    cot0 = cotangent(v1 - v0, v2 - v0)
+    cot1 = cotangent(v0 - v1, v2 - v1)
+    cot2 = cotangent(v0 - v2, v1 - v2)
+
+    i = np.concatenate([faces[:, 1], faces[:, 2], faces[:, 0], faces[:, 2], faces[:, 0], faces[:, 1]])
+    j = np.concatenate([faces[:, 2], faces[:, 1], faces[:, 2], faces[:, 0], faces[:, 1], faces[:, 0]])
+    w = 0.5 * np.concatenate([cot0, cot0, cot1, cot1, cot2, cot2])
+
+    w_mat = scipy.sparse.coo_matrix((w, (i, j)), shape=(verts.shape[0], verts.shape[0])).tocsr()
+    laplacian = scipy.sparse.diags(np.array(w_mat.sum(axis=1)).ravel()) - w_mat
+
+    face_areas = trimesh.triangles.area(verts[faces])
+    mass = np.zeros(verts.shape[0], dtype=np.float64)
+    for k in range(3):
+        np.add.at(mass, faces[:, k], face_areas / 3.0)
+    minv = scipy.sparse.diags(1.0 / np.maximum(mass, 1e-12))
+    return minv.dot(laplacian)
 
 
 def compute_trimesh_chamfer(gt_points, gen_mesh, offset, scale, num_mesh_samples=30000, curvature_sampling=0.):
@@ -18,10 +52,8 @@ def compute_trimesh_chamfer(gt_points, gen_mesh, offset, scale, num_mesh_samples
               method (see compute_metrics.py for more)
     """
     try:
-        # compute laplacian 
-        l, m = robust_laplacian.mesh_laplacian(np.array(gen_mesh.vertices), np.array(gen_mesh.faces))
-        minv = scipy.sparse.diags(1 / m.diagonal())
-        Lap = -minv.dot(l)
+        # compute cotangent laplacian
+        Lap = _cotangent_laplacian(np.array(gen_mesh.vertices), np.array(gen_mesh.faces))
         
         # compute mean curvature for vertices. Clip at median
         curvatures = np.linalg.norm(Lap.dot(gen_mesh.vertices), axis=1)
