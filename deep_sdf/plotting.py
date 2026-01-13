@@ -5,7 +5,7 @@ import time
 from typing import Union, List, Dict
 import os
 import deep_sdf.workspace as ws
-from deep_sdf import utils, metrics
+from deep_sdf import utils, metrics_n
 import deep_sdf
 import sklearn
 from sklearn.manifold import TSNE
@@ -246,7 +246,7 @@ def plot_reconstruction_comparison(
                 mesh = utils.scale_to_unit_sphere(trimesh.load(mesh_path))
             except ValueError as e:
                 logging.error(f"File does not exist as path {mesh_path}")
-            cd, cd_all = metrics.compute_metric(gt_mesh, mesh, metric="chamfer")        
+            cd, cd_all = metrics_n.compute_metric(gt_mesh, mesh, metric="chamfer")        
             ax[r, c].annotate(f"CD={cd:.6f}", (0, 0), va="top", ha="left", fontsize=MEDIUM_SIZE)
             ax[r, c].set(zorder=999)
             
