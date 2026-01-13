@@ -5,6 +5,9 @@
   ],
   "DataSource" : "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/sdf_data/SdfSamples/minimal_scaled_obj_files",
   "TrainSplit" : "examples/splits/splits_left_hippocampus_ADNI_No_MCI/train_split_left_hippocampus_adni_no_mci.json",
+  "TestSplit" : "examples/splits/splits_left_hippocampus_ADNI_No_MCI/test_split_left_hippocampus_adni_no_mci.json",
+  "EvalTrainFrequency" : 300,
+  "EvalTestFrequency" : 500,
   "NetworkArch" : "deep_sdf_decoder",
   "NetworkSpecs" : {
     "dims" : [ 512, 512, 512, 512, 512, 512, 512, 512 ],
@@ -57,8 +60,9 @@
   "VAEDropout" : 0.0,
   "VAELayerNorm" : true,
   "VAEReconLoss" : "mse",
-  "VAEReconWeight" : 1.0,
+  "VAEReconWeight" : 0.1,
   "VAEKLWeight" : 1.0,
+  "UseKLLoss" : false,
   "KLWarmupEpochs" : 100,
   "LatentExportBatchSize" : 1024
 }

@@ -8,6 +8,7 @@ import os
 import json
 import time
 import logging
+import random
 
 import deep_sdf
 from deep_sdf import lr_scheduling
@@ -254,6 +255,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     data_source = specs["DataSource"]
     train_split_file = specs["TrainSplit"]
+    test_split_file = get_spec_with_default(specs, "TestSplit", None)
 
     arch = __import__("networks." + specs["NetworkArch"], fromlist=["Decoder"])
 
@@ -314,6 +316,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     vae_activation = get_spec_with_default(specs, "VAEActivation", "gelu")
     vae_dropout = get_spec_with_default(specs, "VAEDropout", 0.0)
     vae_layernorm = get_spec_with_default(specs, "VAELayerNorm", True)
+    use_kl = get_spec_with_default(specs, "UseKLLoss", True)
 
     vae = residual_mlp_vae.ResidualMLPVAE(
         input_dim=vae_input_dim,
@@ -324,6 +327,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         activation=vae_activation,
         dropout=vae_dropout,
         use_layernorm=vae_layernorm,
+        use_kl=use_kl,
     ).cuda()
 
     if torch.cuda.device_count() > 1:
@@ -337,6 +341,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     with open(train_split_file, "r") as f:
         train_split = json.load(f)
+    test_split = None
+    if test_split_file is not None:
+        with open(test_split_file, "r") as f:
+            test_split = json.load(f)
 
     load_ram = get_spec_with_default(specs, "LoadDatasetIntoRAM", False)
     if load_ram:
@@ -354,6 +362,27 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             )
         )
 
+    test_dataset = None
+    test_latents = None
+    if test_split is not None:
+        test_dataset = deep_sdf.data.SDFSamples(
+            data_source, test_split, num_samp_per_scene, load_ram=load_ram
+        )
+        test_latents_path = get_spec_with_default(specs, "TestLatentPath", None)
+        test_latents_path = resolve_spec_path(experiment_directory, test_latents_path)
+        if test_latents_path is None:
+            logging.warning(
+                "TestSplit provided but TestLatentPath not set; skipping test evaluation."
+            )
+        else:
+            test_latents = load_latent_codes_from_file(test_latents_path).float()
+            if test_latents.shape[0] != len(test_dataset):
+                raise Exception(
+                    "Test latent count does not match number of test scenes: {} vs {}".format(
+                        test_latents.shape[0], len(test_dataset)
+                    )
+                )
+
     num_data_loader_threads = get_spec_with_default(specs, "DataLoaderThreads", 1)
     logging.debug("loading data with {} threads".format(num_data_loader_threads))
 
@@ -364,6 +393,48 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         num_workers=num_data_loader_threads,
         drop_last=True,
     )
+
+    eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 0)
+    eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 0)
+    eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 0)
+    eval_test_scene_num = get_spec_with_default(specs, "EvalTestSceneNumber", 0)
+
+    def build_eval_loader(dataset, scene_count, split_name):
+        if dataset is None:
+            return None
+        if scene_count is None or scene_count <= 0:
+            scene_count = len(dataset)
+        scene_count = min(scene_count, len(dataset))
+        if scene_count == len(dataset):
+            indices = list(range(len(dataset)))
+        else:
+            indices = random.sample(range(len(dataset)), scene_count)
+        logging.debug("Eval {} scene indices: {}".format(split_name, indices))
+        subset = data_utils.Subset(dataset, indices)
+        return data_utils.DataLoader(
+            subset,
+            batch_size=scene_per_batch,
+            shuffle=False,
+            num_workers=num_data_loader_threads,
+            drop_last=False,
+        )
+
+    eval_train_loader = None
+    if eval_train_frequency is not None and eval_train_frequency > 0:
+        eval_train_loader = build_eval_loader(
+            sdf_dataset, eval_train_scene_num, "train"
+        )
+
+    eval_test_loader = None
+    if eval_test_frequency is not None and eval_test_frequency > 0:
+        if test_dataset is None or test_latents is None:
+            logging.warning(
+                "EvalTestFrequency set but test data or latents missing; skipping test evaluation."
+            )
+        else:
+            eval_test_loader = build_eval_loader(
+                test_dataset, eval_test_scene_num, "test"
+            )
 
     lr_schedules = lr_scheduling.get_learning_rate_schedules(specs)
 
@@ -509,6 +580,144 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     code_reg_lambda = get_spec_with_default(specs, "CodeRegularizationLambda", 1e-4)
     code_reg_warmup_epochs = get_spec_with_default(specs, "CodeRegularizationWarmupEpochs", 100)
 
+    def run_eval(eval_loader, eval_latents, epoch, split_label, kl_weight, code_reg_weight):
+        if eval_loader is None or eval_latents is None:
+            return
+
+        vae_was_training = vae.training
+        sdf_was_training = sdf_decoder.training
+        vae.eval()
+        sdf_decoder.eval()
+
+        device = next(vae.parameters()).device
+        eval_losses = []
+        eval_sdf_losses = []
+        eval_sdf_reg_losses = []
+        eval_vae_recon = []
+        eval_vae_kl = []
+        eval_vae_lat_mag = []
+
+        with torch.no_grad():
+            for sdf_data, indices in eval_loader:
+                sdf_data = sdf_data.reshape(sdf_data.shape[0], -1, 4)
+
+                xyz = sdf_data[:, :, 0:3].to(device)
+                sdf_gt = sdf_data[:, :, 3].unsqueeze(-1).to(device)
+
+                if enforce_minmax:
+                    sdf_gt = torch.clamp(sdf_gt, minT, maxT)
+
+                indices = indices.long()
+                teacher_batch = eval_latents[indices].to(device)
+
+                vae_out = vae(teacher_batch)
+                mu = vae_out["mu"]
+                logvar = vae_out["logvar"]
+                z_hat = vae_out["z_hat"]
+
+                vae_total, vae_recon, vae_kl = residual_mlp_vae.vae_loss(
+                    z_hat,
+                    teacher_batch,
+                    mu,
+                    logvar,
+                    recon_weight=vae_recon_weight,
+                    kl_weight=kl_weight,
+                    recon_loss=recon_loss_type,
+                )
+
+                latent_per_sample, xyz_flat = residual_mlp_vae.expand_latent_to_points(
+                    z_hat, xyz
+                )
+                sdf_gt_flat = sdf_gt.reshape(-1, 1)
+
+                num_sdf_samples = float(sdf_gt_flat.shape[0])
+
+                latent_chunks = torch.chunk(latent_per_sample, batch_split)
+                xyz_chunks = torch.chunk(xyz_flat, batch_split)
+                sdf_gt_chunks = torch.chunk(sdf_gt_flat, batch_split)
+
+                batch_sdf_loss = 0.0
+                batch_sdf_reg = 0.0
+
+                for i in range(batch_split):
+                    sdf_input = torch.cat([latent_chunks[i], xyz_chunks[i]], dim=1)
+                    pred_sdf = sdf_decoder(sdf_input)
+
+                    if enforce_minmax:
+                        pred_sdf = torch.clamp(pred_sdf, minT, maxT)
+
+                    chunk_total, chunk_sdf, chunk_reg = residual_mlp_vae.deep_sdf_loss(
+                        pred_sdf,
+                        sdf_gt_chunks[i],
+                        latent_chunks[i],
+                        code_reg_lambda=code_reg_lambda,
+                        code_reg_weight=code_reg_weight,
+                    )
+
+                    chunk_scale = float(pred_sdf.shape[0]) / num_sdf_samples
+                    chunk_sdf = chunk_sdf * chunk_scale
+                    chunk_reg = chunk_reg * chunk_scale
+
+                    batch_sdf_loss += chunk_sdf.item()
+                    batch_sdf_reg += chunk_reg.item()
+
+                batch_total_loss = (
+                    sdf_loss_weight * (batch_sdf_loss + batch_sdf_reg) + vae_total.item()
+                )
+                eval_losses.append(batch_total_loss)
+                eval_sdf_losses.append(batch_sdf_loss)
+                eval_sdf_reg_losses.append(batch_sdf_reg)
+                eval_vae_recon.append(vae_recon.item())
+                eval_vae_kl.append(vae_kl.item())
+                eval_vae_lat_mag.append(torch.mean(torch.norm(mu, dim=1)).item())
+
+        if eval_losses:
+            eval_loss = sum(eval_losses) / len(eval_losses)
+            eval_sdf_loss = sum(eval_sdf_losses) / len(eval_sdf_losses)
+            eval_sdf_reg = sum(eval_sdf_reg_losses) / len(eval_sdf_reg_losses)
+            eval_vae_recon_loss = sum(eval_vae_recon) / len(eval_vae_recon)
+            eval_vae_kl_loss = sum(eval_vae_kl) / len(eval_vae_kl)
+            eval_vae_lat_mag = sum(eval_vae_lat_mag) / len(eval_vae_lat_mag)
+
+            logging.info(
+                "{} eval loss: {:.6f} | sdf: {:.6f} | sdf_reg: {:.6f} | "
+                "vae_recon: {:.6f} | vae_kl: {:.6f}".format(
+                    split_label,
+                    eval_loss,
+                    eval_sdf_loss,
+                    eval_sdf_reg,
+                    eval_vae_recon_loss,
+                    eval_vae_kl_loss,
+                )
+            )
+
+            summary_writer.add_scalar(f"Loss/{split_label}", eval_loss, global_step=epoch)
+            summary_writer.add_scalar(
+                f"Loss/{split_label}_sdf", eval_sdf_loss, global_step=epoch
+            )
+            summary_writer.add_scalar(
+                f"Loss/{split_label}_reg", eval_sdf_reg, global_step=epoch
+            )
+            summary_writer.add_scalar(
+                f"Loss/{split_label}_vae_recon", eval_vae_recon_loss, global_step=epoch
+            )
+            summary_writer.add_scalar(
+                f"Loss/{split_label}_vae_kl", eval_vae_kl_loss, global_step=epoch
+            )
+            summary_writer.add_scalar(
+                f"Mean Latent Magnitude/{split_label}", eval_vae_lat_mag, global_step=epoch
+            )
+
+        if vae_was_training:
+            vae.train()
+        else:
+            vae.eval()
+
+        if sdf_was_training:
+            sdf_decoder.train()
+        else:
+            sdf_decoder.eval()
+
     try:
         for epoch in range(start_epoch, num_epochs + 1):
             epoch_time_start = time.time()
@@ -530,9 +739,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
             adjust_learning_rate(lr_schedules, optimizer, epoch, loss_log_epoch)
 
-            kl_weight = vae_kl_weight * residual_mlp_vae.linear_warmup(
-                epoch, vae_kl_warmup_epochs
-            )
+            if use_kl:
+                kl_weight = vae_kl_weight * residual_mlp_vae.linear_warmup(
+                    epoch, vae_kl_warmup_epochs
+                )
+            else:
+                kl_weight = 0.0
             if do_code_regularization:
                 if code_reg_warmup_epochs <= 0:
                     code_reg_weight = 1.0
@@ -638,8 +850,25 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_vae_recon_loss = sum(epoch_vae_recon) / len(epoch_vae_recon)
             epoch_vae_kl_loss = sum(epoch_vae_kl) / len(epoch_vae_kl)
             epoch_vae_lat_mag = sum(epoch_vae_lat_mag) / len(epoch_vae_lat_mag)
+            epoch_sdf_weighted = sdf_loss_weight * (epoch_sdf_loss + epoch_sdf_reg)
+            epoch_vae_recon_weighted = vae_recon_weight * epoch_vae_recon_loss
+            epoch_vae_kl_weighted = kl_weight * epoch_vae_kl_loss
 
-            logging.info("Epoch {} loss: {}".format(epoch, epoch_loss))
+            logging.info(
+                "Epoch {} loss: {:.6f} | sdf: {:.6f} | sdf_reg: {:.6f} | "
+                "vae_recon: {:.6f} | vae_kl: {:.6f} | "
+                "weighted -> sdf: {:.6f} | vae_recon: {:.6f} | vae_kl: {:.6f}".format(
+                    epoch,
+                    epoch_loss,
+                    epoch_sdf_loss,
+                    epoch_sdf_reg,
+                    epoch_vae_recon_loss,
+                    epoch_vae_kl_loss,
+                    epoch_sdf_weighted,
+                    epoch_vae_recon_weighted,
+                    epoch_vae_kl_weighted,
+                )
+            )
 
             loss_log_epoch.append(epoch_loss)
             sdf_loss_log_epoch.append(epoch_sdf_loss)
@@ -679,6 +908,36 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     lr_log,
                     timing_log,
                     epoch,
+                )
+
+            if (
+                eval_train_loader is not None
+                and eval_train_frequency is not None
+                and eval_train_frequency > 0
+                and epoch % eval_train_frequency == 0
+            ):
+                run_eval(
+                    eval_train_loader,
+                    teacher_latents,
+                    epoch,
+                    "eval_train",
+                    kl_weight,
+                    code_reg_weight,
+                )
+
+            if (
+                eval_test_loader is not None
+                and eval_test_frequency is not None
+                and eval_test_frequency > 0
+                and epoch % eval_test_frequency == 0
+            ):
+                run_eval(
+                    eval_test_loader,
+                    test_latents,
+                    epoch,
+                    "eval_test",
+                    kl_weight,
+                    code_reg_weight,
                 )
 
             summary_writer.add_scalar("Time/epoch (min)", (time.time() - epoch_time_start) / 60, epoch)

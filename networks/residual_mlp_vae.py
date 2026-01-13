@@ -174,6 +174,7 @@ class ResidualMLPVAE(nn.Module):
         activation="gelu",
         dropout=0.0,
         use_layernorm=True,
+        use_kl=True,
     ):
         super().__init__()
         self.encoder = ResidualMLPEncoder(
@@ -185,6 +186,7 @@ class ResidualMLPVAE(nn.Module):
             dropout=dropout,
             use_layernorm=use_layernorm,
         )
+        self.use_kl = bool(use_kl)
         self.decoder = ResidualMLPDecoder(
             latent_dim=latent_dim,
             output_dim=input_dim,
@@ -203,7 +205,10 @@ class ResidualMLPVAE(nn.Module):
 
     def forward(self, x):
         mu, logvar = self.encoder(x)
-        z = self.reparameterize(mu, logvar)
+        if self.use_kl:
+            z = self.reparameterize(mu, logvar)
+        else:
+            z = mu
         z_hat = self.decoder(z)
         return {
             "mu": mu,
@@ -235,6 +240,7 @@ class ResidualMLPVAEWithDeepSDF(nn.Module):
         activation="gelu",
         dropout=0.0,
         use_layernorm=True,
+        use_kl=True,
         sdf_decoder=None,
         sdf_decoder_kwargs=None,
     ):
@@ -248,6 +254,7 @@ class ResidualMLPVAEWithDeepSDF(nn.Module):
             activation=activation,
             dropout=dropout,
             use_layernorm=use_layernorm,
+            use_kl=use_kl,
         )
         if sdf_decoder is None:
             if sdf_decoder_kwargs is None:
