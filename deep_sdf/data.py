@@ -127,11 +127,26 @@ class SDFSamples(torch.utils.data.Dataset):
         load_ram=False,
         print_filename=False,
         num_files=1000000,
+        return_labels=False,
+        labels_filename="labels.pt",
     ):
         self.subsample = subsample
 
         self.data_source = data_source
         self.npyfiles = get_instance_filenames(data_source, split)
+        self.return_labels = return_labels
+        self.labels_filename = labels_filename
+        self.labels = self.load_labels() if self.return_labels else {}
+        self.label_len = None
+        self.missing_label_warned = set()
+        if self.return_labels:
+            if not self.labels:
+                raise RuntimeError(
+                    f"No labels found in {self.labels_filename} for data source {self.data_source}"
+                )
+            first_label = next(iter(self.labels.values()))
+            first_label = torch.as_tensor(first_label).view(-1)
+            self.label_len = int(first_label.numel())
 
         logging.debug(
             "using "
@@ -157,6 +172,25 @@ class SDFSamples(torch.utils.data.Dataset):
                 )
         logging.debug(f"Time for loading into RAM: {(time.time() - TIME)*1000} ms"); TIME = time.time()
 
+    def _build_label_map(self, labels):
+        if isinstance(labels, dict):
+            return labels
+        if hasattr(labels, "__len__") and len(labels) == len(self.npyfiles):
+            label_map = {}
+            for idx, npy_path in enumerate(self.npyfiles):
+                base_name = os.path.splitext(os.path.basename(npy_path))[0]
+                label_map[base_name] = labels[idx]
+            return label_map
+        logging.warning("labels are not a dict and length does not match filenames.")
+        return {}
+
+    def load_labels(self):
+        labels_path = os.path.join(self.data_source, self.labels_filename)
+        if not os.path.isfile(labels_path):
+            raise FileNotFoundError(f"labels file not found: {labels_path}")
+        labels = torch.load(labels_path, map_location="cpu")
+        return self._build_label_map(labels)
+
     def __len__(self):
         return len(self.npyfiles)
 
@@ -165,13 +199,36 @@ class SDFSamples(torch.utils.data.Dataset):
         filename = os.path.join(
             self.data_source, self.npyfiles[idx]
         )
+        label = None
+        if self.return_labels:
+            base_name = os.path.splitext(os.path.basename(self.npyfiles[idx]))[0]
+            if base_name not in self.labels:
+                if base_name not in self.missing_label_warned:
+                    logging.warning("Missing label for %s", base_name)
+                    self.missing_label_warned.add(base_name)
+                if self.label_len is None:
+                    raise RuntimeError("Label length is unknown; cannot fill missing label.")
+                label = torch.full((self.label_len,), float("nan"))
+            else:
+                label = torch.as_tensor(self.labels[base_name])
         if self.load_ram:
             retval = (
                 unpack_sdf_samples_from_ram(self.loaded_data[idx], self.subsample),
                 idx,
+                label,
+            ) if self.return_labels else (
+                unpack_sdf_samples_from_ram(self.loaded_data[idx], self.subsample),
+                idx,
             )
         else:
-            retval = unpack_sdf_samples(filename, self.subsample), idx
+            retval = (
+                unpack_sdf_samples(filename, self.subsample),
+                idx,
+                label,
+            ) if self.return_labels else (
+                unpack_sdf_samples(filename, self.subsample),
+                idx,
+            )
         
         logging.debug(f"Time for getting item: {(time.time() - TIME)*1000} ms"); TIME = time.time()
         return retval
