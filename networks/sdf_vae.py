@@ -1,13 +1,21 @@
 import torch
 import torch.nn as nn
 from .pointnet_encoder import PointNetEncoder, ResnetPointnet
+from .pointnet2_encoder import PointNet2Encoder
 from .deep_sdf_decoder import Decoder as SdfDecoder
 
 class SDFVAE(nn.Module):
-    def __init__(self, latent_size, num_samp_per_scene, decoder_specs, kl_div_loss):
+    def __init__(self, latent_size, num_samp_per_scene, decoder_specs, kl_div_loss, encoder_type="resnet_pointnet"):
         super(SDFVAE, self).__init__()
         
-        self.encoder = ResnetPointnet(latent_size=latent_size, kl_div_loss=kl_div_loss)
+        if encoder_type in ("resnet_pointnet", "pointnet"):
+            self.encoder = ResnetPointnet(latent_size=latent_size, kl_div_loss=kl_div_loss)
+        elif encoder_type in ("pointnet2", "pointnet++"):
+            self.encoder = PointNet2Encoder(latent_size=latent_size, kl_div_loss=kl_div_loss)
+        elif encoder_type in ("pointnet_encoder",):
+            self.encoder = PointNetEncoder(latent_size=latent_size, kl_div_loss=kl_div_loss)
+        else:
+            raise ValueError(f"Unsupported encoder_type: {encoder_type}")
         self.encoder = nn.DataParallel(self.encoder)
         self.decoder = SdfDecoder(latent_size, **decoder_specs)
         self.decoder = nn.DataParallel(self.decoder)

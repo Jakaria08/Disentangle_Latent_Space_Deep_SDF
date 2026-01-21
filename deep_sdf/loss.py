@@ -5,6 +5,105 @@ import math
 import scipy.optimize
 import logging
 from scipy.spatial.distance import cdist
+
+def corr_leakage_penalty(x: torch.Tensor, y: torch.Tensor, target_dim: int, eps: float = 1e-6) -> torch.Tensor:
+    """
+    L_leak = sum_{d != target_dim} corr(x[:, d], y)^2
+
+    Args:
+        x: [B, D] latent tensor
+        y: [B] (or [B,1]) binary labels {0,1}
+        target_dim: the dimension that is allowed to carry label info
+        eps: numerical stability
+
+    Returns:
+        scalar tensor (keeps gradients)
+    """
+    if x.dim() != 2:
+        x = x.view(x.size(0), -1)
+    B, D = x.shape
+    if B <= 1 or D <= 1:
+        return x.new_tensor(0.0)
+    if target_dim < 0 or target_dim >= D:
+        raise ValueError(f"target_dim {target_dim} out of range for D={D}")
+
+    y = y.view(-1).float()
+    if y.numel() != B:
+        raise ValueError("y must have the same batch size as x")
+
+    # standardize y
+    y = (y - y.mean()) / (y.std().clamp_min(eps))
+    y = y.view(B, 1)
+
+    # standardize x per-dimension
+    xz = (x - x.mean(dim=0, keepdim=True)) / (x.std(dim=0, keepdim=True).clamp_min(eps))
+
+    mask = torch.ones(D, dtype=torch.bool, device=x.device)
+    mask[target_dim] = False
+    if mask.sum() == 0:
+        return x.new_tensor(0.0)
+
+    xr = xz[:, mask]
+
+    # Pearson corr for standardized variables: corr = mean(x*y)
+    corr = (xr * y).mean(dim=0)
+    return (corr ** 2).sum()
+
+
+def cross_cov_penalty(x: torch.Tensor, target_dim: int, eps: float = 1e-6) -> torch.Tensor:
+    """
+    L_cross = sum_j cov(x_target, x_rest_j)^2
+
+    Args:
+        x: [B, D] latent tensor
+        target_dim: target dimension index
+        eps: numerical stability
+
+    Returns:
+        scalar tensor (keeps gradients)
+    """
+    if x.dim() != 2:
+        x = x.view(x.size(0), -1)
+    B, D = x.shape
+    if B <= 1 or D <= 1:
+        return x.new_tensor(0.0)
+    if target_dim < 0 or target_dim >= D:
+        raise ValueError(f"target_dim {target_dim} out of range for D={D}")
+
+    x0 = x - x.mean(dim=0, keepdim=True)
+    xt = x0[:, target_dim:target_dim + 1]
+
+    mask = torch.ones(D, dtype=torch.bool, device=x.device)
+    mask[target_dim] = False
+    if mask.sum() == 0:
+        return x.new_tensor(0.0)
+
+    xr = x0[:, mask]
+
+    # covariance for zero-mean variables: cov = mean(x*y)
+    cov = (xt * xr).mean(dim=0)
+    return (cov ** 2).sum()
+
+
+class CovarianceLoss(nn.Module):
+    def __init__(self, eps: float = 1e-12):
+        super().__init__()
+        self.eps = float(eps)
+
+    def forward(self, z: torch.Tensor) -> torch.Tensor:
+        if z.dim() != 2:
+            z = z.view(z.size(0), -1)
+        B, D = z.shape
+        if B <= 1 or D <= 1:
+            return z.new_tensor(0.0)
+
+        z = z - z.mean(dim=0, keepdim=True)
+        denom = float(B - 1)
+        cov = (z.t() @ z) / (denom + self.eps)
+        offdiag = cov - torch.diag_embed(torch.diagonal(cov))
+        # Normalize by 1/(D*(D-1)) where D is latent dimension
+        # D*(D-1) is the number of off-diagonal elements
+        return (offdiag ** 2).sum() / (D * (D - 1))
     
 # SNNL loss modified fast
 class SNNLoss(nn.Module):
