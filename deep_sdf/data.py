@@ -12,6 +12,7 @@ import torch.utils.data
 
 import deep_sdf.workspace as ws
 from typing import Tuple, List
+import trimesh
 
 
 def get_instance_filenames(data_source, split):
@@ -32,6 +33,23 @@ def get_instance_filenames(data_source, split):
             )
         npzfiles += [instance_filename]
     return npzfiles
+
+
+def get_mesh_paths(data_source_mesh, split):
+    mesh_paths = []
+    for instance_name in split:
+        base_name = os.path.splitext(instance_name)[0]
+        candidate = os.path.join(data_source_mesh, base_name + ".obj")
+        if os.path.isfile(candidate):
+            mesh_paths.append(candidate)
+        else:
+            candidate = os.path.join(data_source_mesh, instance_name)
+            if os.path.isfile(candidate):
+                mesh_paths.append(candidate)
+            else:
+                logging.warning("Requested non-existent mesh file '%s'", candidate)
+                mesh_paths.append(candidate)
+    return mesh_paths
 
 
 class NoMeshFileError(RuntimeError):
@@ -118,6 +136,12 @@ def unpack_sdf_samples_from_ram(data, subsample=None):
     return samples
 
 
+def get_surface_points(mesh_path, num_points=2048):
+    mesh = trimesh.load(mesh_path)
+    points = mesh.sample(num_points)
+    return points
+
+
 class SDFSamples(torch.utils.data.Dataset):
     def __init__(
         self,
@@ -129,6 +153,9 @@ class SDFSamples(torch.utils.data.Dataset):
         num_files=1000000,
         return_labels=False,
         labels_filename="labels.pt",
+        data_source_mesh=None,
+        return_surface_points=False,
+        surface_point_count=2048,
     ):
         self.subsample = subsample
 
@@ -139,6 +166,11 @@ class SDFSamples(torch.utils.data.Dataset):
         self.labels = self.load_labels() if self.return_labels else {}
         self.label_len = None
         self.missing_label_warned = set()
+        self.return_surface_points = return_surface_points
+        self.surface_point_count = surface_point_count
+        self.data_source_mesh = data_source_mesh
+        self.mesh_paths = []
+        self.surface_points = []
         if self.return_labels:
             if not self.labels:
                 raise RuntimeError(
@@ -171,6 +203,16 @@ class SDFSamples(torch.utils.data.Dataset):
                     ]
                 )
         logging.debug(f"Time for loading into RAM: {(time.time() - TIME)*1000} ms"); TIME = time.time()
+
+        if self.return_surface_points:
+            if not self.data_source_mesh:
+                raise RuntimeError("data_source_mesh must be set when return_surface_points=True")
+            self.mesh_paths = get_mesh_paths(self.data_source_mesh, split)
+            for mesh_path in self.mesh_paths:
+                self.surface_points.append(
+                    get_surface_points(mesh_path, self.surface_point_count)
+                )
+            logging.debug("Loaded %d surface point clouds", len(self.surface_points))
 
     def _build_label_map(self, labels):
         if isinstance(labels, dict):
@@ -211,24 +253,23 @@ class SDFSamples(torch.utils.data.Dataset):
                 label = torch.full((self.label_len,), float("nan"))
             else:
                 label = torch.as_tensor(self.labels[base_name])
+        surface_points = None
+        if self.return_surface_points:
+            surface_points = self.surface_points[idx]
+
         if self.load_ram:
-            retval = (
-                unpack_sdf_samples_from_ram(self.loaded_data[idx], self.subsample),
-                idx,
-                label,
-            ) if self.return_labels else (
-                unpack_sdf_samples_from_ram(self.loaded_data[idx], self.subsample),
-                idx,
-            )
+            base = unpack_sdf_samples_from_ram(self.loaded_data[idx], self.subsample)
         else:
-            retval = (
-                unpack_sdf_samples(filename, self.subsample),
-                idx,
-                label,
-            ) if self.return_labels else (
-                unpack_sdf_samples(filename, self.subsample),
-                idx,
-            )
+            base = unpack_sdf_samples(filename, self.subsample)
+
+        if self.return_labels and self.return_surface_points:
+            retval = (base, idx, label, surface_points)
+        elif self.return_labels:
+            retval = (base, idx, label)
+        elif self.return_surface_points:
+            retval = (base, idx, surface_points)
+        else:
+            retval = (base, idx)
         
         logging.debug(f"Time for getting item: {(time.time() - TIME)*1000} ms"); TIME = time.time()
         return retval

@@ -4,6 +4,7 @@
     "Teacher latents come from a pretrained DeepSDF experiment."
   ],
   "DataSource": "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/sdf_data/SdfSamples/minimal_scaled_obj_files",
+  "DataSourceMesh": "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/minimal_scaled_obj_files",
   "TrainSplit": "examples/splits/splits_left_hippocampus_ADNI_No_MCI/train_split_left_hippocampus_adni_no_mci.json",
   "TestSplit": "examples/splits/splits_left_hippocampus_ADNI_No_MCI/test_split_left_hippocampus_adni_no_mci.json",
   "EvalTrainFrequency": 10,
@@ -58,6 +59,8 @@
   "ClampingDistance": 0.1,
   "GradientClipNorm": 1.0,
   "LoadDatasetIntoRAM": false,
+  "ReturnSurfacePoints": true,
+  "SurfacePointCount": 3000,
   "PretrainedLatentPath": "../minimal_eikonal/LatentCodes/latest.pth",
   "PretrainedSDFDecoderPath": "../MLP_VAE_SDF/ModelParameters/latest.pth",
   "TrainSDFDecoder": false,
@@ -67,6 +70,7 @@
   "CodeRegularizationWarmupEpochs": 100,
   "VAEInputDim": 256,
   "VAELatentDim": 16,
+  "EncoderType": "pointnet2",
   "VAEEncoderHiddenDims": [
     256,
     128

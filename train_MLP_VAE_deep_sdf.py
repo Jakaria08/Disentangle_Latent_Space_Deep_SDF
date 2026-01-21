@@ -18,7 +18,7 @@ from sdf_utils import sap as sap_metric
 from sdf_utils import dci as dci_metric
 from sdf_utils import mig as mig_metric
 
-from networks import residual_mlp_vae
+from networks import residual_mlp_vae, pointnet_vae
 import reconstruct
 
 
@@ -275,13 +275,18 @@ def set_requires_grad(module, requires_grad):
         param.requires_grad = requires_grad
 
 
-def compute_vae_latents(vae, teacher_latents, batch_size, device):
+def compute_vae_latents(vae, surface_points, batch_size, device):
     was_training = vae.training
     vae.eval()
     latent_chunks = []
     with torch.no_grad():
-        for start in range(0, teacher_latents.shape[0], batch_size):
-            chunk = teacher_latents[start : start + batch_size].to(device)
+        total = surface_points.shape[0] if isinstance(surface_points, torch.Tensor) else len(surface_points)
+        for start in range(0, total, batch_size):
+            if isinstance(surface_points, torch.Tensor):
+                chunk = surface_points[start : start + batch_size].to(device)
+            else:
+                chunk_np = np.stack(surface_points[start : start + batch_size], axis=0)
+                chunk = torch.as_tensor(chunk_np).to(device)
             out = vae(chunk)
             latent_chunks.append(out["mu"].detach().cpu())
     if was_training:
@@ -353,12 +358,16 @@ def reconstruct_latents_for_dataset(
 def _unpack_batch(batch):
     if len(batch) == 3:
         sdf_data, indices, labels = batch
+        surface_points = None
+    elif len(batch) == 4:
+        sdf_data, indices, labels, surface_points = batch
     elif len(batch) == 2:
         sdf_data, indices = batch
         labels = None
+        surface_points = None
     else:
         raise ValueError("Unexpected batch structure from DataLoader")
-    return sdf_data, indices, labels
+    return sdf_data, indices, labels, surface_points
 
 
 def _resolve_labels_path(data_source, labels_file):
@@ -576,15 +585,16 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         )
     labels_filename = get_spec_with_default(specs, "LabelsFile", "labels.pt")
 
-    vae = residual_mlp_vae.ResidualMLPVAE(
-        input_dim=vae_input_dim,
+    encoder_type = get_spec_with_default(specs, "EncoderType", "pointnet2")
+    vae = pointnet_vae.PointNetLatentVAE(
         latent_dim=vae_latent_dim,
-        encoder_hidden_dims=vae_encoder_dims,
+        output_dim=vae_input_dim,
+        encoder_type=encoder_type,
         decoder_hidden_dims=vae_decoder_dims,
-        num_blocks=vae_blocks,
-        activation=vae_activation,
-        dropout=vae_dropout,
-        use_layernorm=vae_layernorm,
+        decoder_blocks=vae_blocks,
+        decoder_activation=vae_activation,
+        decoder_dropout=vae_dropout,
+        decoder_layernorm=vae_layernorm,
         use_kl=use_kl,
     ).cuda()
 
@@ -608,6 +618,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     if load_ram:
         logging.info("Loading SDF samples into memory because LoadDatasetIntoRAM=true")
 
+    data_source_mesh = get_spec_with_default(specs, "DataSourceMesh", None)
+    surface_point_count = get_spec_with_default(specs, "SurfacePointCount", 2048)
+    return_surface_points = get_spec_with_default(specs, "ReturnSurfacePoints", True)
+    if not return_surface_points:
+        raise RuntimeError("ReturnSurfacePoints must be True for point-based encoders.")
+
     sdf_dataset = deep_sdf.data.SDFSamples(
         data_source,
         train_split,
@@ -615,6 +631,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         load_ram=load_ram,
         return_labels=use_labels,
         labels_filename=labels_filename,
+        data_source_mesh=data_source_mesh,
+        return_surface_points=return_surface_points,
+        surface_point_count=surface_point_count,
     )
 
     num_scenes = len(sdf_dataset)
@@ -635,13 +654,16 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             load_ram=load_ram,
             return_labels=use_labels,
             labels_filename=labels_filename,
+            data_source_mesh=data_source_mesh,
+            return_surface_points=return_surface_points,
+            surface_point_count=surface_point_count,
         )
         test_latents_path = get_spec_with_default(specs, "TestLatentPath", None)
         test_latents_path = resolve_spec_path(experiment_directory, test_latents_path)
         if test_latents_path is None:
             if not eval_test_reconstruct:
-                logging.warning(
-                    "TestSplit provided but TestLatentPath not set; skipping test evaluation."
+                logging.info(
+                    "TestSplit provided without TestLatentPath; test eval will run without VAE recon loss."
                 )
         else:
             if eval_test_reconstruct:
@@ -789,9 +811,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     eval_test_scene_idxs = select_eval_indices(test_dataset, eval_test_scene_num)
     eval_test_loader = None
     if eval_test_frequency is not None and eval_test_frequency > 0:
-        if test_dataset is None or (test_latents is None and not eval_test_reconstruct):
+        if test_dataset is None:
             logging.warning(
-                "EvalTestFrequency set but test data or latents missing; skipping test evaluation."
+                "EvalTestFrequency set but test dataset missing; skipping test evaluation."
             )
         elif eval_test_scene_idxs:
             eval_test_loader = build_eval_loader_from_indices(
@@ -809,7 +831,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     sap_test_loader = None
     if compute_sap and sap_corr_extra_frequency is not None and sap_corr_extra_frequency > 0:
         sap_train_loader = build_eval_loader(sdf_dataset, 0, "train_sap")
-        if test_dataset is not None and test_latents is not None:
+        if test_dataset is not None:
             sap_test_loader = build_eval_loader(test_dataset, 0, "test_sap")
 
     lr_schedules = lr_scheduling.get_learning_rate_schedules(specs)
@@ -963,7 +985,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         save_optimizer(experiment_directory, "latest.pth", optimizer, epoch)
         latent_batch = get_spec_with_default(specs, "LatentExportBatchSize", 1024)
         device = next(vae.parameters()).device
-        vae_latents = compute_vae_latents(vae, teacher_latents, latent_batch, device)
+        vae_latents = compute_vae_latents(vae, sdf_dataset.surface_points, latent_batch, device)
         save_latent_vectors(experiment_directory, "latest.pth", vae_latents, epoch)
 
     def save_checkpoints(epoch):
@@ -972,7 +994,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         save_optimizer(experiment_directory, filename, optimizer, epoch)
         latent_batch = get_spec_with_default(specs, "LatentExportBatchSize", 1024)
         device = next(vae.parameters()).device
-        vae_latents = compute_vae_latents(vae, teacher_latents, latent_batch, device)
+        vae_latents = compute_vae_latents(vae, sdf_dataset.surface_points, latent_batch, device)
         save_latent_vectors(experiment_directory, filename, vae_latents, epoch)
 
     checkpoints = list(
@@ -999,7 +1021,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
 
     def run_eval(eval_loader, eval_latents, epoch, split_label, kl_weight, code_reg_weight):
-        if eval_loader is None or eval_latents is None:
+        if eval_loader is None:
             return
 
         vae_was_training = vae.training
@@ -1017,32 +1039,39 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
         with torch.no_grad():
             for batch in eval_loader:
-                sdf_data, indices, _labels = _unpack_batch(batch)
+                sdf_data, indices, _labels, surface_points = _unpack_batch(batch)
                 sdf_data = sdf_data.reshape(sdf_data.shape[0], -1, 4)
 
                 xyz = sdf_data[:, :, 0:3].to(device)
                 sdf_gt = sdf_data[:, :, 3].unsqueeze(-1).to(device)
+                if surface_points is None:
+                    raise RuntimeError("Surface points required for PointNet encoder.")
+                surface_points = surface_points.to(device)
 
                 if enforce_minmax:
                     sdf_gt = torch.clamp(sdf_gt, minT, maxT)
 
                 indices = indices.long()
-                teacher_batch = eval_latents[indices].to(device)
+                teacher_batch = eval_latents[indices].to(device) if eval_latents is not None else None
 
-                vae_out = vae(teacher_batch)
+                vae_out = vae(surface_points)
                 mu = vae_out["mu"]
                 logvar = vae_out["logvar"]
                 z_hat = vae_out["z_hat"]
-
-                vae_total, vae_recon, vae_kl = residual_mlp_vae.vae_loss(
-                    z_hat,
-                    teacher_batch,
-                    mu,
-                    logvar,
-                    recon_weight=vae_recon_weight,
-                    kl_weight=kl_weight,
-                    recon_loss=recon_loss_type,
-                )
+                if teacher_batch is not None:
+                    vae_total, vae_recon, vae_kl = residual_mlp_vae.vae_loss(
+                        z_hat,
+                        teacher_batch,
+                        mu,
+                        logvar,
+                        recon_weight=vae_recon_weight,
+                        kl_weight=kl_weight,
+                        recon_loss=recon_loss_type,
+                    )
+                else:
+                    vae_total = torch.tensor(0.0, device=device)
+                    vae_recon = torch.tensor(float("nan"), device=device)
+                    vae_kl = torch.tensor(float("nan"), device=device)
 
                 latent_per_sample, xyz_flat = residual_mlp_vae.expand_latent_to_points(
                     z_hat, xyz
@@ -1080,14 +1109,15 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     batch_sdf_loss += chunk_sdf.item()
                     batch_sdf_reg += chunk_reg.item()
 
-                batch_total_loss = (
-                    sdf_loss_weight * (batch_sdf_loss + batch_sdf_reg) + vae_total.item()
-                )
+                batch_total_loss = sdf_loss_weight * (batch_sdf_loss + batch_sdf_reg)
+                if teacher_batch is not None:
+                    batch_total_loss += vae_total.item()
                 eval_losses.append(batch_total_loss)
                 eval_sdf_losses.append(batch_sdf_loss)
                 eval_sdf_reg_losses.append(batch_sdf_reg)
-                eval_vae_recon.append(vae_recon.item())
-                eval_vae_kl.append(vae_kl.item())
+                if teacher_batch is not None:
+                    eval_vae_recon.append(vae_recon.item())
+                    eval_vae_kl.append(vae_kl.item())
                 eval_vae_lat_mag.append(torch.mean(torch.norm(mu, dim=1)).item())
 
         eval_metrics = None
@@ -1095,8 +1125,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             eval_loss = sum(eval_losses) / len(eval_losses)
             eval_sdf_loss = sum(eval_sdf_losses) / len(eval_sdf_losses)
             eval_sdf_reg = sum(eval_sdf_reg_losses) / len(eval_sdf_reg_losses)
-            eval_vae_recon_loss = sum(eval_vae_recon) / len(eval_vae_recon)
-            eval_vae_kl_loss = sum(eval_vae_kl) / len(eval_vae_kl)
+            eval_vae_recon_loss = sum(eval_vae_recon) / len(eval_vae_recon) if eval_vae_recon else float("nan")
+            eval_vae_kl_loss = sum(eval_vae_kl) / len(eval_vae_kl) if eval_vae_kl else float("nan")
             eval_vae_lat_mag = sum(eval_vae_lat_mag) / len(eval_vae_lat_mag)
             eval_metrics = {
                 "eval_loss": eval_loss,
@@ -1148,8 +1178,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
         return eval_metrics
 
-    def _collect_factors_codes(eval_loader, eval_latents, split_label, label_map, npyfiles):
-        if eval_loader is None or eval_latents is None:
+    def _collect_factors_codes(eval_loader, split_label, label_map, npyfiles):
+        if eval_loader is None:
             return None, None
         if label_map is None:
             logging.warning("Metrics skipped for {}: SAPCORRLabelsFile is missing.".format(split_label))
@@ -1163,14 +1193,16 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         vae.eval()
         with torch.no_grad():
             for batch in eval_loader:
-                _sdf_data, indices, _labels = _unpack_batch(batch)
+                _sdf_data, indices, _labels, surface_points = _unpack_batch(batch)
                 labels = _labels_for_indices(npyfiles, label_map, indices)
                 if labels is None:
                     continue
                 indices = indices.long()
                 labels = labels.view(labels.shape[0], -1)
-                teacher_batch = eval_latents[indices].to(device)
-                vae_out = vae(teacher_batch)
+                if surface_points is None:
+                    raise RuntimeError("Surface points required for PointNet encoder.")
+                surface_points = surface_points.to(device)
+                vae_out = vae(surface_points)
                 mu = vae_out["mu"]
 
                 codes_vae.append(mu.detach().cpu())
@@ -1202,13 +1234,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         return factors_np[mask], codes_vae_np[mask]
 
     def compute_disentanglement_metrics(
-        eval_loader, eval_latents, epoch, split_label, label_map, npyfiles
+        eval_loader, epoch, split_label, label_map, npyfiles
     ):
-        if eval_loader is None or eval_latents is None or not compute_sap:
+        if eval_loader is None or not compute_sap:
             return {}
 
         factors_np, codes_vae_np = _collect_factors_codes(
-            eval_loader, eval_latents, split_label, label_map, npyfiles
+            eval_loader, split_label, label_map, npyfiles
         )
         if factors_np is None:
             return {}
@@ -1272,8 +1304,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             "mig": mig_scores,
         }
 
-    def generate_eval_meshes(dataset, eval_latents, scene_indices, split_label, epoch):
-        if dataset is None or eval_latents is None or not scene_indices:
+    def generate_eval_meshes(dataset, scene_indices, split_label, epoch):
+        if dataset is None or not scene_indices:
             return
 
         vae_was_training = vae.training
@@ -1289,8 +1321,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
         with torch.no_grad():
             for scene_idx in scene_indices:
-                teacher_latent = eval_latents[scene_idx : scene_idx + 1].to(device)
-                vae_out = vae(teacher_latent)
+                surface_points = dataset.surface_points[scene_idx]
+                surface_points = torch.as_tensor(surface_points).unsqueeze(0).to(device)
+                vae_out = vae(surface_points)
                 z_hat = vae_out["z_hat"]
 
                 save_name = os.path.basename(dataset.npyfiles[scene_idx]).split(".npz")[0]
@@ -1318,10 +1351,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         else:
             sdf_decoder.eval()
 
-    def compute_chamfer_for_scenes(dataset, eval_latents, scene_indices, split_label, epoch):
+    def compute_chamfer_for_scenes(dataset, scene_indices, split_label, epoch):
         if (
             dataset is None
-            or eval_latents is None
             or not scene_indices
             or eval_gt_mesh_dir is None
         ):
@@ -1340,9 +1372,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             if not os.path.isfile(gt_path):
                 logging.warning("GT mesh missing for chamfer: %s", gt_path)
                 continue
-            teacher_latent = eval_latents[scene_idx : scene_idx + 1].to(device)
+            surface_points = dataset.surface_points[scene_idx]
+            surface_points = torch.as_tensor(surface_points).unsqueeze(0).to(device)
             with torch.no_grad():
-                vae_out = vae(teacher_latent)
+                vae_out = vae(surface_points)
                 z_hat = vae_out["z_hat"]
             gen_mesh = mesh.create_mesh(
                 sdf_decoder,
@@ -1379,22 +1412,33 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         return mean_cd
 
     def compute_latent_label_correlation(
-        dataset, eval_latents, epoch, split_label, label_map, scene_indices=None
+        dataset, epoch, split_label, label_map, scene_indices=None
     ):
-        if dataset is None or eval_latents is None:
+        if dataset is None:
             return
         labels_np = _collect_label_values(dataset.npyfiles, label_map, label_index)
         if labels_np is None:
             return
+        if not getattr(dataset, "surface_points", None):
+            logging.warning(
+                "Correlation skipped ({}): surface points not available.".format(
+                    split_label
+                )
+            )
+            return
+
+        if scene_indices is not None:
+            scene_indices = [int(idx) for idx in scene_indices]
+            labels_np = labels_np[scene_indices]
+            surface_points = [dataset.surface_points[idx] for idx in scene_indices]
+        else:
+            surface_points = dataset.surface_points
 
         latent_batch = get_spec_with_default(specs, "LatentExportBatchSize", 1024)
         device = next(vae.parameters()).device
-        vae_latents = compute_vae_latents(vae, eval_latents, latent_batch, device).cpu().numpy()
-
-        if scene_indices is not None:
-            scene_indices = np.asarray(scene_indices, dtype=int)
-            labels_np = labels_np[scene_indices]
-            vae_latents = vae_latents[scene_indices]
+        vae_latents = compute_vae_latents(
+            vae, surface_points, latent_batch, device
+        ).cpu().numpy()
 
         if vae_latents.shape[0] != labels_np.shape[0]:
             logging.warning(
@@ -1429,22 +1473,33 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         )
 
     def print_latent_diagnosis_table(
-        dataset, eval_latents, epoch, split_label, label_map, scene_indices=None
+        dataset, epoch, split_label, label_map, scene_indices=None
     ):
-        if dataset is None or eval_latents is None:
+        if dataset is None:
             return
         labels_np = _collect_label_values(dataset.npyfiles, label_map, label_index)
         if labels_np is None:
             return
+        if not getattr(dataset, "surface_points", None):
+            logging.warning(
+                "Latent table skipped ({}): surface points not available.".format(
+                    split_label
+                )
+            )
+            return
+
+        if scene_indices is not None:
+            scene_indices = [int(idx) for idx in scene_indices]
+            labels_np = labels_np[scene_indices]
+            surface_points = [dataset.surface_points[idx] for idx in scene_indices]
+        else:
+            surface_points = dataset.surface_points
 
         latent_batch = get_spec_with_default(specs, "LatentExportBatchSize", 1024)
         device = next(vae.parameters()).device
-        vae_latents = compute_vae_latents(vae, eval_latents, latent_batch, device).cpu().numpy()
-
-        if scene_indices is not None:
-            scene_indices = np.asarray(scene_indices, dtype=int)
-            labels_np = labels_np[scene_indices]
-            vae_latents = vae_latents[scene_indices]
+        vae_latents = compute_vae_latents(
+            vae, surface_points, latent_batch, device
+        ).cpu().numpy()
 
         if vae_latents.shape[0] != labels_np.shape[0]:
             logging.warning(
@@ -1501,6 +1556,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             else:
                 sdf_decoder.eval()
 
+            device = next(vae.parameters()).device
+
             adjust_learning_rate(lr_schedules, optimizer, epoch, loss_log_epoch)
 
             if use_kl:
@@ -1518,21 +1575,25 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 code_reg_weight = 0.0
 
             for batch in sdf_loader:
-                sdf_data, indices, labels = _unpack_batch(batch)
+                sdf_data, indices, labels, surface_points = _unpack_batch(batch)
                 sdf_data = sdf_data.reshape(sdf_data.shape[0], -1, 4)
 
                 sdf_data.requires_grad = False
 
-                xyz = sdf_data[:, :, 0:3].cuda()
-                sdf_gt = sdf_data[:, :, 3].unsqueeze(-1).cuda()
+                xyz = sdf_data[:, :, 0:3].to(device)
+                sdf_gt = sdf_data[:, :, 3].unsqueeze(-1).to(device)
 
                 if enforce_minmax:
                     sdf_gt = torch.clamp(sdf_gt, minT, maxT)
 
                 indices = indices.long()
-                teacher_batch = teacher_latents[indices].cuda()
+                teacher_batch = teacher_latents[indices].to(device)
 
-                vae_out = vae(teacher_batch)
+                if surface_points is None:
+                    raise RuntimeError("Surface points required for PointNet encoder.")
+                surface_points = torch.as_tensor(surface_points).to(device)
+
+                vae_out = vae(surface_points)
                 mu = vae_out["mu"]
                 logvar = vae_out["logvar"]
                 z_hat = vae_out["z_hat"]
@@ -1906,7 +1967,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     last_train_eval_epoch = epoch
                 train_metrics = compute_disentanglement_metrics(
                     eval_train_loader,
-                    teacher_latents,
                     epoch,
                     "train",
                     sap_corr_label_map,
@@ -1919,7 +1979,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     train_eval_indices = eval_train_loader.dataset.indices
                 compute_latent_label_correlation(
                     sdf_dataset,
-                    teacher_latents,
                     epoch,
                     "train",
                     sap_corr_label_map,
@@ -1927,7 +1986,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 )
                 print_latent_diagnosis_table(
                     sdf_dataset,
-                    teacher_latents,
                     epoch,
                     "train",
                     sap_corr_label_map,
@@ -1935,7 +1993,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 )
                 generate_eval_meshes(
                     sdf_dataset,
-                    teacher_latents,
                     eval_train_scene_idxs,
                     "train",
                     epoch,
@@ -1945,7 +2002,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 else:
                     train_cd = compute_chamfer_for_scenes(
                         sdf_dataset,
-                        teacher_latents,
                         eval_train_scene_idxs,
                         "train",
                         epoch,
@@ -1962,7 +2018,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     if sap_train_loader is not None:
                         train_metrics_extra = compute_disentanglement_metrics(
                             sap_train_loader,
-                            teacher_latents,
                             epoch,
                             "train_extra",
                             sap_corr_label_map,
@@ -2064,101 +2119,93 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             "Loss/test_latent_recon", test_latent_recon, global_step=epoch
                         )
 
-                    if test_latents is None:
-                        logging.error("Test latents unavailable; skipping test eval.")
+                    if test_latents is not None:
+                        logging.info("Test latents shape: %s", tuple(test_latents.shape))
                     else:
                         logging.info(
-                            "Test latents shape: %s",
-                            tuple(test_latents.shape),
+                            "Test latents not provided; skipping VAE recon loss on test."
                         )
-                        try:
-                            if test_latents.shape[0] > 0:
-                                sample_idx = (
-                                    eval_test_scene_idxs[0]
-                                    if eval_test_scene_idxs
-                                    else 0
-                                )
-                                device = next(vae.parameters()).device
-                                sample_latent = test_latents[
-                                    sample_idx : sample_idx + 1
-                                ].to(device)
-                                with torch.no_grad():
-                                    vae_out = vae(sample_latent)
-                                logging.info(
-                                    "Test VAE shapes: teacher=%s mu=%s z_hat=%s",
-                                    tuple(sample_latent.shape),
-                                    tuple(vae_out["mu"].shape),
-                                    tuple(vae_out["z_hat"].shape),
-                                )
-                        except Exception as exc:
-                            logging.warning(
-                                "Test VAE shape logging failed: %s", exc
+
+                    try:
+                        if test_dataset is not None and getattr(test_dataset, "surface_points", None):
+                            sample_idx = (
+                                eval_test_scene_idxs[0] if eval_test_scene_idxs else 0
                             )
-                        subset_indices = (
-                            eval_test_scene_idxs if eval_test_scene_idxs else None
-                        )
-                        compute_latent_label_correlation(
-                            test_dataset,
-                            test_latents,
-                            epoch,
-                            "test",
-                            sap_corr_label_map,
-                            scene_indices=subset_indices,
-                        )
-                        print_latent_diagnosis_table(
-                            test_dataset,
-                            test_latents,
-                            epoch,
-                            "test",
-                            sap_corr_label_map,
-                            scene_indices=subset_indices,
-                        )
-                        eval_metrics = run_eval(
-                            eval_test_loader,
-                            test_latents,
-                            epoch,
-                            "eval_test",
-                            kl_weight,
-                            code_reg_weight,
-                        )
-                        if eval_metrics is not None:
-                            last_test_eval_sdf = eval_metrics.get("eval_sdf_loss")
-                            last_test_eval_epoch = epoch
-                            test_sdf_loss = last_test_eval_sdf
-                        test_metrics = compute_disentanglement_metrics(
-                            eval_test_loader,
-                            test_latents,
-                            epoch,
-                            "test",
-                            sap_corr_label_map,
-                            test_dataset.npyfiles if test_dataset is not None else [],
-                        )
-                        if test_metrics and test_metrics.get("sap") is not None:
-                            last_test_sap = test_metrics["sap"]
-                            test_sap = test_metrics["sap"]
-                        elif compute_sap:
-                            logging.error(
-                                "Test SAP unavailable; check SAPCORRLabelsFile or LabelIndex."
+                            device = next(vae.parameters()).device
+                            sample_points = torch.as_tensor(
+                                test_dataset.surface_points[sample_idx]
+                            ).unsqueeze(0).to(device)
+                            with torch.no_grad():
+                                vae_out = vae(sample_points)
+                            logging.info(
+                                "Test VAE shapes: points=%s mu=%s z_hat=%s",
+                                tuple(sample_points.shape),
+                                tuple(vae_out["mu"].shape),
+                                tuple(vae_out["z_hat"].shape),
                             )
-                        generate_eval_meshes(
+                    except Exception as exc:
+                        logging.warning("Test VAE shape logging failed: %s", exc)
+
+                    subset_indices = (
+                        eval_test_scene_idxs if eval_test_scene_idxs else None
+                    )
+                    compute_latent_label_correlation(
+                        test_dataset,
+                        epoch,
+                        "test",
+                        sap_corr_label_map,
+                        scene_indices=subset_indices,
+                    )
+                    print_latent_diagnosis_table(
+                        test_dataset,
+                        epoch,
+                        "test",
+                        sap_corr_label_map,
+                        scene_indices=subset_indices,
+                    )
+                    eval_metrics = run_eval(
+                        eval_test_loader,
+                        test_latents,
+                        epoch,
+                        "eval_test",
+                        kl_weight,
+                        code_reg_weight,
+                    )
+                    if eval_metrics is not None:
+                        last_test_eval_sdf = eval_metrics.get("eval_sdf_loss")
+                        last_test_eval_epoch = epoch
+                        test_sdf_loss = last_test_eval_sdf
+                    test_metrics = compute_disentanglement_metrics(
+                        eval_test_loader,
+                        epoch,
+                        "test",
+                        sap_corr_label_map,
+                        test_dataset.npyfiles if test_dataset is not None else [],
+                    )
+                    if test_metrics and test_metrics.get("sap") is not None:
+                        last_test_sap = test_metrics["sap"]
+                        test_sap = test_metrics["sap"]
+                    elif compute_sap:
+                        logging.error(
+                            "Test SAP unavailable; check SAPCORRLabelsFile or LabelIndex."
+                        )
+                    generate_eval_meshes(
+                        test_dataset,
+                        mesh_test_scene_idxs,
+                        "test",
+                        epoch,
+                    )
+                    if eval_gt_mesh_dir is None:
+                        logging.error("EvalGTMeshDir not set; skipping test Chamfer.")
+                    else:
+                        test_cd = compute_chamfer_for_scenes(
                             test_dataset,
-                            test_latents,
                             mesh_test_scene_idxs,
                             "test",
                             epoch,
                         )
-                        if eval_gt_mesh_dir is None:
-                            logging.error("EvalGTMeshDir not set; skipping test Chamfer.")
-                        else:
-                            test_cd = compute_chamfer_for_scenes(
-                                test_dataset,
-                                test_latents,
-                                mesh_test_scene_idxs,
-                                "test",
-                                epoch,
-                            )
-                            if test_cd is not None:
-                                last_test_cd = test_cd
+                        if test_cd is not None:
+                            last_test_cd = test_cd
 
                     def _fmt_metric(val):
                         return "n/a" if val is None else "{:.6f}".format(val)
