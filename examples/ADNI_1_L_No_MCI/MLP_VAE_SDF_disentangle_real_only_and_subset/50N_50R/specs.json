@@ -112,5 +112,10 @@
   "EvalTestStartEpoch": 100,
   "CovarianceLoss": true,
   "CovarianceLossLambda": 0.01,
-  "LabelMixUnlabeledRatioStart": 0.0
+  "LabelMixUnlabeledRatioStart": 0.0,
+  "CorrLeakageLoss": true,
+  "CorrLeakageLambda": 1.0,
+  "CrossCovLoss": true,
+  "CrossCovLambda": 1.0,
+  "LeakageTargetDim": 0
 }

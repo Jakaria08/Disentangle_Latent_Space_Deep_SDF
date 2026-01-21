@@ -15,6 +15,8 @@ import deep_sdf
 from deep_sdf import lr_scheduling, loss as deep_sdf_loss, mesh, metrics
 import deep_sdf.workspace as ws
 from sdf_utils import sap as sap_metric
+from sdf_utils import dci as dci_metric
+from sdf_utils import mig as mig_metric
 
 from networks import residual_mlp_vae
 import reconstruct
@@ -120,6 +122,8 @@ def save_logs(
     snnl_log_epoch,
     attr_log_epoch,
     cov_log_epoch,
+    corr_leak_log_epoch,
+    cross_cov_log_epoch,
     lr_log,
     timing_log,
     epoch,
@@ -137,6 +141,8 @@ def save_logs(
             "snnl_epoch": snnl_log_epoch,
             "attr_epoch": attr_log_epoch,
             "cov_epoch": cov_log_epoch,
+            "corr_leak_epoch": corr_leak_log_epoch,
+            "cross_cov_epoch": cross_cov_log_epoch,
             "learning_rate": lr_log,
             "timing": timing_log,
         },
@@ -161,6 +167,8 @@ def load_logs(experiment_directory):
         data.get("snnl_epoch", []),
         data.get("attr_epoch", []),
         data.get("cov_epoch", []),
+        data.get("corr_leak_epoch", []),
+        data.get("cross_cov_epoch", []),
         data["learning_rate"],
         data["timing"],
         data["epoch"],
@@ -178,6 +186,8 @@ def clip_logs(
     snnl_log_epoch,
     attr_log_epoch,
     cov_log_epoch,
+    corr_leak_log_epoch,
+    cross_cov_log_epoch,
     lr_log,
     timing_log,
     epoch,
@@ -194,6 +204,8 @@ def clip_logs(
     snnl_log_epoch = snnl_log_epoch[:epoch]
     attr_log_epoch = attr_log_epoch[:epoch]
     cov_log_epoch = cov_log_epoch[:epoch]
+    corr_leak_log_epoch = corr_leak_log_epoch[:epoch]
+    cross_cov_log_epoch = cross_cov_log_epoch[:epoch]
     lr_log = lr_log[:epoch]
     timing_log = timing_log[:epoch]
 
@@ -208,6 +220,8 @@ def clip_logs(
         snnl_log_epoch,
         attr_log_epoch,
         cov_log_epoch,
+        corr_leak_log_epoch,
+        cross_cov_log_epoch,
         lr_log,
         timing_log,
     )
@@ -519,6 +533,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     label_index = get_spec_with_default(specs, "LabelIndex", 0)
     attribute_latent_index = get_spec_with_default(specs, "AttributeLatentIndex", 0)
     snnl_target_dim = get_spec_with_default(specs, "SNNLTargetDim", 0)
+    corr_leakage_loss = get_spec_with_default(specs, "CorrLeakageLoss", False)
+    corr_leakage_lambda = get_spec_with_default(specs, "CorrLeakageLambda", 1.0)
+    cross_cov_loss = get_spec_with_default(specs, "CrossCovLoss", False)
+    cross_cov_lambda = get_spec_with_default(specs, "CrossCovLambda", 1.0)
+    leakage_target_dim = get_spec_with_default(
+        specs, "LeakageTargetDim", attribute_latent_index
+    )
     label_mix_enabled = get_spec_with_default(specs, "LabelMixing", False)
     pseudo_labels_file = get_spec_with_default(specs, "PseudoLabelsFile", "pseudo_label.pt")
     real_labels_file = get_spec_with_default(specs, "RealLabelsFile", "labels.pt")
@@ -547,7 +568,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     use_labels = get_spec_with_default(specs, "ReturnLabels", None)
     if use_labels is None:
-        use_labels = guided_contrastive_loss or attribute_loss or compute_sap
+        use_labels = (
+            guided_contrastive_loss
+            or attribute_loss
+            or corr_leakage_loss
+            or compute_sap
+        )
     labels_filename = get_spec_with_default(specs, "LabelsFile", "labels.pt")
 
     vae = residual_mlp_vae.ResidualMLPVAE(
@@ -658,7 +684,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     num_data_loader_threads = get_spec_with_default(specs, "DataLoaderThreads", 1)
     logging.debug("loading data with {} threads".format(num_data_loader_threads))
 
-    if (guided_contrastive_loss or attribute_loss or compute_sap) and not use_labels:
+    if (
+        guided_contrastive_loss
+        or attribute_loss
+        or corr_leakage_loss
+        or compute_sap
+    ) and not use_labels:
         raise Exception("Label-based losses/SAP requested but ReturnLabels is disabled.")
 
     sap_corr_label_map = None
@@ -816,6 +847,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     snnl_log_epoch = []
     attr_log_epoch = []
     cov_log_epoch = []
+    corr_leak_log_epoch = []
+    cross_cov_log_epoch = []
     lr_log = []
     timing_log = []
     last_test_eval_sdf = None
@@ -855,6 +888,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             snnl_log_epoch,
             attr_log_epoch,
             cov_log_epoch,
+            corr_leak_log_epoch,
+            cross_cov_log_epoch,
             lr_log,
             timing_log,
             log_epoch,
@@ -879,6 +914,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 snnl_log_epoch,
                 attr_log_epoch,
                 cov_log_epoch,
+                corr_leak_log_epoch,
+                cross_cov_log_epoch,
                 lr_log,
                 timing_log,
             ) = clip_logs(
@@ -892,6 +929,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 snnl_log_epoch,
                 attr_log_epoch,
                 cov_log_epoch,
+                corr_leak_log_epoch,
+                cross_cov_log_epoch,
                 lr_log,
                 timing_log,
                 model_epoch,
@@ -1109,12 +1148,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
         return eval_metrics
 
-    def compute_sap_scores(eval_loader, eval_latents, epoch, split_label, label_map, npyfiles):
-        if eval_loader is None or eval_latents is None or not compute_sap:
-            return None
+    def _collect_factors_codes(eval_loader, eval_latents, split_label, label_map, npyfiles):
+        if eval_loader is None or eval_latents is None:
+            return None, None
         if label_map is None:
-            logging.warning("SAP requested but SAPCORRLabelsFile is missing.")
-            return None
+            logging.warning("Metrics skipped for {}: SAPCORRLabelsFile is missing.".format(split_label))
+            return None, None
 
         device = next(vae.parameters()).device
         codes_vae = []
@@ -1141,8 +1180,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             vae.train()
 
         if not factors:
-            logging.warning("SAP skipped for {}: no labels found.".format(split_label))
-            return None
+            logging.warning("Metrics skipped for {}: no labels found.".format(split_label))
+            return None, None
 
         factors_np = torch.cat(factors, dim=0).numpy()
         codes_vae_np = torch.cat(codes_vae, dim=0).numpy()
@@ -1155,11 +1194,25 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         mask = np.all(np.isfinite(factors_np), axis=1)
         mask &= np.all(factors_np != -1, axis=1)
         if mask.sum() < 2:
-            logging.warning("SAP skipped for {}: insufficient valid labels.".format(split_label))
-            return None
+            logging.warning(
+                "Metrics skipped for {}: insufficient valid labels.".format(split_label)
+            )
+            return None, None
 
-        factors_np = factors_np[mask]
-        codes_vae_np = codes_vae_np[mask]
+        return factors_np[mask], codes_vae_np[mask]
+
+    def compute_disentanglement_metrics(
+        eval_loader, eval_latents, epoch, split_label, label_map, npyfiles
+    ):
+        if eval_loader is None or eval_latents is None or not compute_sap:
+            return {}
+
+        factors_np, codes_vae_np = _collect_factors_codes(
+            eval_loader, eval_latents, split_label, label_map, npyfiles
+        )
+        if factors_np is None:
+            return {}
+
         sap_vae = sap_metric.sap(
             factors_np,
             codes_vae_np,
@@ -1167,12 +1220,57 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             nb_bins=sap_nb_bins,
             regression=sap_regression,
         )
+        dci_scores = dci_metric.dci(
+            factors_np,
+            codes_vae_np,
+            continuous_factors=sap_continuous,
+        )
+        mig_scores = mig_metric.mig(
+            factors_np,
+            codes_vae_np,
+            continuous_factors=sap_continuous,
+            continuous_codes=True,
+            nb_bins=sap_nb_bins,
+        )
 
         summary_writer.add_scalar(f"SAP/vae_{split_label}", sap_vae, global_step=epoch)
-        logging.info(
-            "Epoch {} SAP ({}): vae={:.6f}".format(epoch, split_label, sap_vae)
+        summary_writer.add_scalar(
+            f"DCI/vae_{split_label}_disentanglement",
+            dci_scores["disentanglement"],
+            global_step=epoch,
         )
-        return sap_vae
+        summary_writer.add_scalar(
+            f"DCI/vae_{split_label}_completeness",
+            dci_scores["completeness"],
+            global_step=epoch,
+        )
+        summary_writer.add_scalar(
+            f"DCI/vae_{split_label}_informativeness",
+            dci_scores["informativeness"],
+            global_step=epoch,
+        )
+        summary_writer.add_scalar(
+            f"MIG/vae_{split_label}",
+            mig_scores["mig"],
+            global_step=epoch,
+        )
+
+        logging.info(
+            "Epoch {} metrics ({}): SAP={:.6f} DCI(d,c,i)=({:.6f},{:.6f},{:.6f}) MIG={:.6f}".format(
+                epoch,
+                split_label,
+                sap_vae,
+                dci_scores["disentanglement"],
+                dci_scores["completeness"],
+                dci_scores["informativeness"],
+                mig_scores["mig"],
+            )
+        )
+        return {
+            "sap": sap_vae,
+            "dci": dci_scores,
+            "mig": mig_scores,
+        }
 
     def generate_eval_meshes(dataset, eval_latents, scene_indices, split_label, epoch):
         if dataset is None or eval_latents is None or not scene_indices:
@@ -1392,6 +1490,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_snnl = []
             epoch_attr = []
             epoch_cov = []
+            epoch_corr_leak = []
+            epoch_cross_cov = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -1450,6 +1550,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 snnl_loss_val = 0.0
                 attr_loss_val = 0.0
                 cov_loss_val = 0.0
+                corr_leak_loss_val = 0.0
+                cross_cov_loss_val = 0.0
                 if use_labels:
                     label_values = None
                     if label_mix_enabled:
@@ -1566,6 +1668,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             )
                             vae_total = vae_total + (attr_weight * attr_loss)
                             attr_loss_val = attr_loss.item()
+                        if corr_leakage_loss:
+                            leak_loss = deep_sdf_loss.corr_leakage_penalty(
+                                mu[valid_mask],
+                                label_values[valid_mask],
+                                leakage_target_dim,
+                            )
+                            vae_total = vae_total + (corr_leakage_lambda * leak_loss)
+                            corr_leak_loss_val = leak_loss.item()
+                        if cross_cov_loss:
+                            cross_loss = deep_sdf_loss.cross_cov_penalty(
+                                mu[valid_mask],
+                                leakage_target_dim,
+                            )
+                            vae_total = vae_total + (cross_cov_lambda * cross_loss)
+                            cross_cov_loss_val = cross_loss.item()
 
                 if covariance_loss:
                     cov_loss = cov_loss_fn(mu, logvar)
@@ -1636,6 +1753,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     epoch_attr.append(attr_loss_val)
                 if covariance_loss:
                     epoch_cov.append(cov_loss_val)
+                if corr_leakage_loss:
+                    epoch_corr_leak.append(corr_leak_loss_val)
+                if cross_cov_loss:
+                    epoch_cross_cov.append(cross_cov_loss_val)
 
             seconds_elapsed = time.time() - epoch_time_start
             timing_log.append(seconds_elapsed)
@@ -1649,6 +1770,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_snnl_loss = sum(epoch_snnl) / len(epoch_snnl) if epoch_snnl else 0.0
             epoch_attr_loss = sum(epoch_attr) / len(epoch_attr) if epoch_attr else 0.0
             epoch_cov_loss = sum(epoch_cov) / len(epoch_cov) if epoch_cov else 0.0
+            epoch_corr_leak_loss = (
+                sum(epoch_corr_leak) / len(epoch_corr_leak) if epoch_corr_leak else 0.0
+            )
+            epoch_cross_cov_loss = (
+                sum(epoch_cross_cov) / len(epoch_cross_cov) if epoch_cross_cov else 0.0
+            )
             epoch_sdf_weighted = sdf_loss_weight * (epoch_sdf_loss + epoch_sdf_reg)
             epoch_vae_recon_weighted = vae_recon_weight * epoch_vae_recon_loss
             epoch_vae_kl_weighted = kl_weight * epoch_vae_kl_loss
@@ -1682,10 +1809,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         epoch_vae_recon_weighted,
                     )
                 )
-            if guided_contrastive_loss or attribute_loss or covariance_loss:
+            if (
+                guided_contrastive_loss
+                or attribute_loss
+                or covariance_loss
+                or corr_leakage_loss
+                or cross_cov_loss
+            ):
                 logging.info(
-                    "Epoch {} extra losses: snnl: {:.6f} | attr: {:.6f} | cov: {:.6f}".format(
-                        epoch, epoch_snnl_loss, epoch_attr_loss, epoch_cov_loss
+                    "Epoch {} extra losses: snnl: {:.6f} | attr: {:.6f} | cov: {:.6f} | leak: {:.6f} | cross_cov: {:.6f}".format(
+                        epoch,
+                        epoch_snnl_loss,
+                        epoch_attr_loss,
+                        epoch_cov_loss,
+                        epoch_corr_leak_loss,
+                        epoch_cross_cov_loss,
                     )
                 )
 
@@ -1698,6 +1836,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             snnl_log_epoch.append(epoch_snnl_loss)
             attr_log_epoch.append(epoch_attr_loss)
             cov_log_epoch.append(epoch_cov_loss)
+            corr_leak_log_epoch.append(epoch_corr_leak_loss)
+            cross_cov_log_epoch.append(epoch_cross_cov_loss)
 
             summary_writer.add_scalar("Loss/train", epoch_loss, global_step=epoch)
             summary_writer.add_scalar("Loss/train_sdf", epoch_sdf_loss, global_step=epoch)
@@ -1713,6 +1853,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 summary_writer.add_scalar("Loss/train_attr", epoch_attr_loss, global_step=epoch)
             if covariance_loss:
                 summary_writer.add_scalar("Loss/train_cov", epoch_cov_loss, global_step=epoch)
+            if corr_leakage_loss:
+                summary_writer.add_scalar("Loss/train_leak", epoch_corr_leak_loss, global_step=epoch)
+            if cross_cov_loss:
+                summary_writer.add_scalar("Loss/train_cross_cov", epoch_cross_cov_loss, global_step=epoch)
 
             lr_log.append([group["lr"] for group in optimizer.param_groups])
             summary_writer.add_scalar("Learning Rate/VAE", optimizer.param_groups[0]["lr"], global_step=epoch)
@@ -1736,6 +1880,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     snnl_log_epoch,
                     attr_log_epoch,
                     cov_log_epoch,
+                    corr_leak_log_epoch,
+                    cross_cov_log_epoch,
                     lr_log,
                     timing_log,
                     epoch,
@@ -1758,7 +1904,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 if eval_metrics is not None:
                     last_train_eval_sdf = eval_metrics.get("eval_sdf_loss")
                     last_train_eval_epoch = epoch
-                train_sap = compute_sap_scores(
+                train_metrics = compute_disentanglement_metrics(
                     eval_train_loader,
                     teacher_latents,
                     epoch,
@@ -1766,8 +1912,27 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     sap_corr_label_map,
                     sdf_dataset.npyfiles,
                 )
-                if train_sap is not None:
-                    last_train_sap = train_sap
+                if train_metrics and train_metrics.get("sap") is not None:
+                    last_train_sap = train_metrics["sap"]
+                train_eval_indices = None
+                if hasattr(eval_train_loader.dataset, "indices"):
+                    train_eval_indices = eval_train_loader.dataset.indices
+                compute_latent_label_correlation(
+                    sdf_dataset,
+                    teacher_latents,
+                    epoch,
+                    "train",
+                    sap_corr_label_map,
+                    scene_indices=train_eval_indices,
+                )
+                print_latent_diagnosis_table(
+                    sdf_dataset,
+                    teacher_latents,
+                    epoch,
+                    "train",
+                    sap_corr_label_map,
+                    scene_indices=train_eval_indices,
+                )
                 generate_eval_meshes(
                     sdf_dataset,
                     teacher_latents,
@@ -1775,49 +1940,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     "train",
                     epoch,
                 )
-
-            if (
-                sap_corr_extra_frequency is not None
-                and sap_corr_extra_frequency > 0
-                and epoch % sap_corr_extra_frequency == 0
-            ):
-                compute_latent_label_correlation(
-                    sdf_dataset, teacher_latents, epoch, "train", sap_corr_label_map
-                )
-                print_latent_diagnosis_table(
-                    sdf_dataset, teacher_latents, epoch, "train", sap_corr_label_map
-                )
-                if test_dataset is not None and test_latents is not None:
-                    compute_latent_label_correlation(
-                        test_dataset, test_latents, epoch, "test", sap_corr_label_map
-                    )
-                    print_latent_diagnosis_table(
-                        test_dataset, test_latents, epoch, "test", sap_corr_label_map
-                    )
-                if compute_sap:
-                    if sap_train_loader is not None:
-                        train_sap_extra = compute_sap_scores(
-                            sap_train_loader,
-                            teacher_latents,
-                            epoch,
-                            "train_extra",
-                            sap_corr_label_map,
-                            sdf_dataset.npyfiles,
-                        )
-                        if train_sap_extra is not None:
-                            last_train_sap = train_sap_extra
-                    if sap_test_loader is not None:
-                        test_sap_extra = compute_sap_scores(
-                            sap_test_loader,
-                            test_latents,
-                            epoch,
-                            "test_extra",
-                            sap_corr_label_map,
-                            test_dataset.npyfiles if test_dataset is not None else [],
-                        )
-                        if test_sap_extra is not None:
-                            last_test_sap = test_sap_extra
-                if eval_gt_mesh_dir is not None:
+                if eval_gt_mesh_dir is None:
+                    logging.error("EvalGTMeshDir not set; skipping train Chamfer.")
+                else:
                     train_cd = compute_chamfer_for_scenes(
                         sdf_dataset,
                         teacher_latents,
@@ -1827,6 +1952,24 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     )
                     if train_cd is not None:
                         last_train_cd = train_cd
+
+            if (
+                sap_corr_extra_frequency is not None
+                and sap_corr_extra_frequency > 0
+                and epoch % sap_corr_extra_frequency == 0
+            ):
+                if compute_sap:
+                    if sap_train_loader is not None:
+                        train_metrics_extra = compute_disentanglement_metrics(
+                            sap_train_loader,
+                            teacher_latents,
+                            epoch,
+                            "train_extra",
+                            sap_corr_label_map,
+                            sdf_dataset.npyfiles,
+                        )
+                        if train_metrics_extra and train_metrics_extra.get("sap") is not None:
+                            last_train_sap = train_metrics_extra["sap"]
                 if (
                     eval_train_loader is not None
                     and last_train_eval_epoch != epoch
@@ -1982,7 +2125,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             last_test_eval_sdf = eval_metrics.get("eval_sdf_loss")
                             last_test_eval_epoch = epoch
                             test_sdf_loss = last_test_eval_sdf
-                        test_sap = compute_sap_scores(
+                        test_metrics = compute_disentanglement_metrics(
                             eval_test_loader,
                             test_latents,
                             epoch,
@@ -1990,8 +2133,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             sap_corr_label_map,
                             test_dataset.npyfiles if test_dataset is not None else [],
                         )
-                        if test_sap is not None:
-                            last_test_sap = test_sap
+                        if test_metrics and test_metrics.get("sap") is not None:
+                            last_test_sap = test_metrics["sap"]
+                            test_sap = test_metrics["sap"]
                         elif compute_sap:
                             logging.error(
                                 "Test SAP unavailable; check SAPCORRLabelsFile or LabelIndex."

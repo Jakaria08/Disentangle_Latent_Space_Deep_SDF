@@ -112,5 +112,10 @@
   "SAPCORRLabelsFile": "labels.pt",
   "SAPCORRExtraFrequency": 10,
   "LatentExportBatchSize": 1024,
-  "EvalTestSceneNumber": 10
+  "EvalTestSceneNumber": 10,
+  "CorrLeakageLoss": true,
+  "CorrLeakageLambda": 1.0,
+  "CrossCovLoss": true,
+  "CrossCovLambda": 1.0,
+  "LeakageTargetDim": 0
 }
