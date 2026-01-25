@@ -105,7 +105,7 @@ class CovarianceLoss(nn.Module):
         # D*(D-1) is the number of off-diagonal elements
         return (offdiag ** 2).sum() / (D * (D - 1))
 
-'''
+
 class IsometryLoss(nn.Module):
     """
     Isometric regularization loss from "Isometric Regularization for 
@@ -254,7 +254,7 @@ def select_near_surface_points(xyz, sdf_gt, clamp_dist, num_iso_points):
             selected_indices = selected_indices.repeat(repeat_times)[:num_iso_points]
     
     return xyz[selected_indices]
-'''
+
 
 # SNNL loss modified fast
 class SNNLoss(nn.Module):

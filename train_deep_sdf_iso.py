@@ -106,6 +106,25 @@ def load_latent_vectors(experiment_directory, filename, lat_vecs):
 
     return data["epoch"]
 
+def load_pretrained_decoder(decoder, pretrained_dir, checkpoint):
+    filename = os.path.join(pretrained_dir, ws.model_params_subdir, checkpoint + ".pth")
+    if not os.path.isfile(filename):
+        raise RuntimeError(f'pretrained model state dict "{filename}" does not exist')
+
+    data = torch.load(filename)
+    state_dict = data["model_state_dict"]
+
+    model_is_dp = isinstance(decoder, torch.nn.DataParallel)
+    state_has_module = any(k.startswith("module.") for k in state_dict.keys())
+
+    if model_is_dp and not state_has_module:
+        state_dict = {f"module.{k}": v for k, v in state_dict.items()}
+    elif (not model_is_dp) and state_has_module:
+        state_dict = {k[len("module."):]: v for k, v in state_dict.items()}
+
+    decoder.load_state_dict(state_dict)
+    return data.get("epoch", None)
+
 
 def save_logs(
     experiment_directory,
@@ -282,6 +301,27 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     logging.info("training with {} GPU(s)".format(torch.cuda.device_count()))
 
     decoder = torch.nn.DataParallel(decoder)
+
+    use_pretrained_sdf = get_spec_with_default(specs, "UsePretrainedSDFDecoder", False)
+    pretrained_sdf_dir = get_spec_with_default(specs, "PretrainedSDFDecoderDir", None)
+    pretrained_sdf_ckpt = get_spec_with_default(specs, "PretrainedSDFDecoderCheckpoint", "latest")
+    if use_pretrained_sdf:
+        if continue_from is not None:
+            logging.info(
+                f"Skipping pretrained SDF load because continuing from checkpoint {continue_from}."
+            )
+        else:
+            if pretrained_sdf_dir is None:
+                raise RuntimeError(
+                    "UsePretrainedSDFDecoder=true but PretrainedSDFDecoderDir is not set."
+                )
+            pretrained_epoch = load_pretrained_decoder(
+                decoder, pretrained_sdf_dir, pretrained_sdf_ckpt
+            )
+            logging.info(
+                f"Loaded pretrained SDF decoder from {pretrained_sdf_dir} "
+                f"(checkpoint {pretrained_sdf_ckpt}, epoch {pretrained_epoch})."
+            )
 
     num_epochs = specs["NumEpochs"]
     log_frequency = get_spec_with_default(specs, "LogFrequency", 200)
@@ -468,6 +508,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 if enforce_minmax:
                     sdf_gt = torch.clamp(sdf_gt, minT, maxT)
 
+                indices_batch = indices
+
                 xyz = torch.chunk(xyz, batch_split)
                 indices = torch.chunk(
                     indices.unsqueeze(-1).repeat(1, num_samp_per_scene).view(-1),
@@ -486,6 +528,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 optimizer_all.zero_grad()
 
                 for i in range(batch_split):
+
+                    unique_indices = torch.unique(indices[i])
+                    if unique_indices.numel() != 1:
+                        raise RuntimeError(
+                            f"Expected one scene index per split; got {unique_indices.numel()}."
+                        )
 
                     batch_vecs = lat_vecs(indices[i])
                     input = torch.cat([batch_vecs, xyz[i]], dim=1)
@@ -507,26 +555,20 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         chunk_loss = chunk_loss + reg_loss.cuda()
                         reg_loss_tb += reg_loss.item()
                     
-                    if use_covariance:
-                        cov_loss = lambda_cov * covariance_loss_fn(batch_vecs)
-                        chunk_loss = chunk_loss + cov_loss
-                        cov_loss_tb += cov_loss.item()
-                    
                     # Isometry loss computation
                     if use_isometry and (global_batch_idx % iso_compute_frequency == 0):
+                        # Use the underlying decoder (unwrap DataParallel if needed)
+                        decoder_for_iso = decoder.module if hasattr(decoder, 'module') else decoder
+                        iso_device = next(decoder_for_iso.parameters()).device
+
                         # Select near-surface points for isometry computation
                         iso_points = select_near_surface_points(
                             xyz[i].detach(), sdf_gt[i].detach(), clamp_dist, iso_num_points
-                        ).cuda()
+                        ).to(iso_device)
                         
                         # Get unique shape indices and sample one for iso computation
-                        unique_indices = torch.unique(indices[i])
-                        sample_idx = unique_indices[0]
-                        sample_latent = lat_vecs(sample_idx.unsqueeze(0).cuda())  # [1, m]
-                        iso_latent_expanded = sample_latent.expand(iso_num_points, -1)  # [K, m]
-                        
-                        # Use the underlying decoder (unwrap DataParallel if needed)
-                        decoder_for_iso = decoder.module if hasattr(decoder, 'module') else decoder
+                        sample_latent = batch_vecs[:1]
+                        iso_latent_expanded = sample_latent.expand(iso_num_points, -1).to(iso_device)  # [K, m]
                         
                         iso_loss = lambda_iso * isometry_loss_fn(
                             decoder_for_iso,
@@ -551,6 +593,17 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     # Print batch loss
                 #print(f"Batch loss: {batch_loss_tb}")                    
                 logging.debug("loss = {}".format(batch_loss_tb))
+                if use_covariance:
+                    cov_indices = indices_batch
+                    if cov_indices.device != lat_vecs.weight.device:
+                        cov_indices = cov_indices.to(lat_vecs.weight.device)
+                    cov_indices = torch.unique(cov_indices)
+                    cov_latents = lat_vecs(cov_indices)
+                    cov_loss = lambda_cov * covariance_loss_fn(cov_latents)
+                    cov_loss.backward()
+                    cov_loss_tb = cov_loss.item()
+                    batch_loss_tb += cov_loss_tb
+
                 loss_log.append(batch_loss_tb)
                 epoch_losses.append(batch_loss_tb)
                 epoch_sdf_losses.append(sdf_loss_tb)
@@ -826,7 +879,7 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "--batch_split",
         dest="batch_split",
-        default=1,
+        default=32,
         help="This splits the batch into separate subbatches which are "
         + "processed separately, with gradients accumulated across all "
         + "subbatches. This allows for training with large effective batch "

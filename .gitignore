@@ -26,7 +26,6 @@ data/*
 **/ReconstructionsTrain
 **/ReconstructionsTest
 **/Evaluation
-**/metrics
 Logs.pth
 
 

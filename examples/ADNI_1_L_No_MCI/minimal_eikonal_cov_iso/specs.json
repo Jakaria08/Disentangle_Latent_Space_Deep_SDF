@@ -44,11 +44,14 @@
   "CodeRegularizationLambda" : 1e-4,
   "CodeBound" : 1.0,
   "GradientClipNorm" : 1.0,
-  "UseCovarianceLoss" : true,
+  "UseCovarianceLoss" : false,
   "CovarianceLossLambda" : 1e-3,
   "UseIsometryLoss" : true,
-  "IsometryLossLambda" : 1e-3,
+  "IsometryLossLambda" : 1,
   "IsometryNumPoints" : 256,
   "IsometryNumProbes" : 1,
-  "IsometryComputeFrequency" : 1
+  "IsometryComputeFrequency" : 1,
+  "UsePretrainedSDFDecoder" : true,
+  "PretrainedSDFDecoderDir" : "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/minimal_eikonal",
+  "PretrainedSDFDecoderCheckpoint" : "latest"
 }

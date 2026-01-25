@@ -17,8 +17,9 @@ import numpy as np
 from sklearn import tree
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score, r2_score
-from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import minmax_scale
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.preprocessing import minmax_scale, StandardScaler
+from sklearn.svm import LinearSVC
 
 #from disentanglementmetrics.src.utils import get_bin_index
 
@@ -73,7 +74,7 @@ def sap(factors, codes, continuous_factors=True, nb_bins=10, regression=True):
         return _sap_classification(factors, codes, nb_factors, nb_codes)
 
 
-def _sap_regression(factors, codes, nb_factors, nb_codes):
+def _sap_regression_matrix(factors, codes, nb_factors, nb_codes):
     ''' Compute SAP score using regression algorithms
     
     :param factors:         factors dataset
@@ -96,7 +97,20 @@ def _sap_regression(factors, codes, nb_factors, nb_codes):
 
             # compute R2 score
             r2 = r2_score(factors[:, f], y_pred)
-            s_matrix[f, c] = max(0, r2) 
+            s_matrix[f, c] = max(0, r2)
+
+    return s_matrix
+
+
+def _sap_regression(factors, codes, nb_factors, nb_codes):
+    ''' Compute SAP score using regression algorithms
+
+    :param factors:         factors dataset
+    :param codes:           latent codes dataset
+    :param nb_factors:      number of factors in the factors dataset
+    :param nb_codes:        number of codes in the latent codes dataset
+    '''
+    s_matrix = _sap_regression_matrix(factors, codes, nb_factors, nb_codes)
 
     # compute the mean gap for all factors
     sum_gap = 0
@@ -111,7 +125,7 @@ def _sap_regression(factors, codes, nb_factors, nb_codes):
     return sap_score
 
 
-def _sap_classification(factors, codes, nb_factors, nb_codes):
+def _sap_classification_matrix(factors, codes, nb_factors, nb_codes):
     ''' Compute SAP score using classification algorithms
     
     :param factors:         factors dataset
@@ -128,13 +142,18 @@ def _sap_classification(factors, codes, nb_factors, nb_codes):
             for sp in range(1, 10):
                 # perform cross validation on the tree classifiers
                 clf = tree.DecisionTreeClassifier(max_depth=sp)
-                scores = cross_val_score(clf, codes[:, c].reshape(-1, 1), factors[:, f].reshape(-1, 1), cv=5)
+                scores = cross_val_score(
+                    clf,
+                    codes[:, c].reshape(-1, 1),
+                    factors[:, f].reshape(-1, 1),
+                    cv=5,
+                )
                 scores = scores.mean()
-                
+
                 if scores > best_score:
                     best_score = scores
                     best_sp = sp
-            
+
             # train the model using the best performing parameter
             clf = tree.DecisionTreeClassifier(max_depth=best_sp)
             clf.fit(codes[:, c].reshape(-1, 1), factors[:, f].reshape(-1, 1))
@@ -144,6 +163,19 @@ def _sap_classification(factors, codes, nb_factors, nb_codes):
 
             # compute accuracy
             s_matrix[f, c] = accuracy_score(y_pred, factors[:, f])
+
+    return s_matrix
+
+
+def _sap_classification(factors, codes, nb_factors, nb_codes):
+    ''' Compute SAP score using classification algorithms
+
+    :param factors:         factors dataset
+    :param codes:           latent codes dataset
+    :param nb_factors:      number of factors in the factors dataset
+    :param nb_codes:        number of codes in the latent codes dataset
+    '''
+    s_matrix = _sap_classification_matrix(factors, codes, nb_factors, nb_codes)
 
     # compute the mean gap for all factors
     sum_gap = 0
@@ -156,3 +188,116 @@ def _sap_classification(factors, codes, nb_factors, nb_codes):
     sap_score = sum_gap / nb_factors
     
     return sap_score
+
+
+def sap_score_matrix(factors, codes, continuous_factors=True, nb_bins=10, regression=True):
+    ''' Return SAP score matrix for per-latent reporting.
+
+    :param factors:                         dataset of factors
+    :param codes:                           latent codes associated to the dataset of factors
+    :param continuous_factors:              True if factors are continuous
+    :param nb_bins:                         number of bins to use for discretization
+    :param regression:                      True for regression, False for classification
+    '''
+    nb_factors = factors.shape[1]
+    nb_codes = codes.shape[1]
+
+    if regression:
+        assert continuous_factors, "Cannot perform SAP regression with discrete factors."
+        return _sap_regression_matrix(factors, codes, nb_factors, nb_codes)
+
+    if continuous_factors:
+        factors = minmax_scale(factors)
+        factors = get_bin_index(factors, nb_bins)
+
+    codes = minmax_scale(codes)
+    return _sap_classification_matrix(factors, codes, nb_factors, nb_codes)
+
+
+def sap_binary_classification_locatello(
+    factors,
+    codes,
+    train_frac=0.8,
+    C=0.01,
+    random_state=0,
+):
+    ''' SAP binary classification using Locatello-style protocol.
+
+    For each factor and each single latent dimension, train a linear SVM
+    and store test-set prediction error. SAP is the mean (over factors)
+    of the gap between the lowest and second-lowest errors.
+    '''
+    factors = np.asarray(factors)
+    codes = np.asarray(codes)
+    if factors.ndim == 1:
+        factors = factors.reshape(-1, 1)
+    if codes.ndim != 2:
+        raise ValueError("codes must be 2D [N, D]")
+
+    n_samples = factors.shape[0]
+    nb_factors = factors.shape[1]
+    nb_codes = codes.shape[1]
+    error_matrix = np.full((nb_factors, nb_codes), np.nan, dtype=float)
+
+    if n_samples < 4:
+        return float("nan"), error_matrix
+
+    test_size = max(1, int(round((1.0 - train_frac) * n_samples)))
+    train_size = n_samples - test_size
+    if train_size < 2:
+        return float("nan"), error_matrix
+
+    for f in range(nb_factors):
+        y = factors[:, f].reshape(-1)
+        for c in range(nb_codes):
+            x = codes[:, c].reshape(-1, 1)
+            mask = np.isfinite(y) & np.isfinite(x).reshape(-1)
+            y_valid = y[mask]
+            x_valid = x[mask]
+
+            if y_valid.size < 4:
+                continue
+            if np.unique(y_valid).size < 2:
+                continue
+
+            stratify = y_valid if np.unique(y_valid).size > 1 else None
+            try:
+                x_train, x_test, y_train, y_test = train_test_split(
+                    x_valid,
+                    y_valid,
+                    test_size=test_size,
+                    train_size=train_size,
+                    random_state=random_state,
+                    stratify=stratify,
+                )
+            except ValueError:
+                x_train, x_test, y_train, y_test = train_test_split(
+                    x_valid,
+                    y_valid,
+                    test_size=test_size,
+                    train_size=train_size,
+                    random_state=random_state,
+                    stratify=None,
+                )
+
+            scaler = StandardScaler()
+            x_train = scaler.fit_transform(x_train)
+            x_test = scaler.transform(x_test)
+
+            clf = LinearSVC(C=C, max_iter=5000)
+            clf.fit(x_train, y_train)
+            y_pred = clf.predict(x_test)
+            error = 1.0 - accuracy_score(y_test, y_pred)
+            error_matrix[f, c] = error
+
+    gaps = []
+    for f in range(nb_factors):
+        vals = error_matrix[f, :]
+        vals = vals[np.isfinite(vals)]
+        if vals.size < 2:
+            continue
+        vals_sorted = np.sort(vals)
+        gaps.append(vals_sorted[1] - vals_sorted[0])
+
+    sap_score = float(np.mean(gaps)) if gaps else float("nan")
+    return sap_score, error_matrix
