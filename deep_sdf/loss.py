@@ -1,6 +1,7 @@
 import numpy as np 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import math
 import scipy.optimize
 import logging
@@ -106,6 +107,145 @@ class CovarianceLoss(nn.Module):
         return (offdiag ** 2).sum() / (D * (D - 1))
 
 
+class GMMPriorLoss(nn.Module):
+    """
+    Unsupervised GMM prior on deterministic latents z:
+
+      p(z) = sum_k pi_k * N(z | mu_k, Sigma_k)
+      L_gmm = -(1/B) * sum_i log p(z_i)
+
+    Uses diagonal covariance for stability.
+    """
+
+    def __init__(
+        self,
+        K: int,
+        latent_dim: int,
+        learn_pi: bool = True,
+        init_sigma: float = 0.5,
+        min_sigma: float = 0.05,
+        eps: float = 1e-6,
+    ):
+        super().__init__()
+        self.K = int(K)
+        self.D = int(latent_dim)
+        self.learn_pi = bool(learn_pi)
+        self.eps = float(eps)
+
+        # mixture parameters
+        self.mu = nn.Parameter(torch.randn(self.K, self.D) * 0.01)
+        init_log_sigma = math.log(float(init_sigma))
+        self.log_sigma = nn.Parameter(torch.full((self.K, self.D), init_log_sigma))
+        self.min_sigma = float(min_sigma)
+
+        # pi_k stored as logits -> softmax
+        self.logits = nn.Parameter(torch.zeros(self.K), requires_grad=self.learn_pi)
+
+        # logging helpers
+        self.last_nll = None
+        self.last_avg_entropy = None
+
+    def _log_gaussian_diag(self, z: torch.Tensor) -> torch.Tensor:
+        """
+        Returns log N(z | mu_k, diag(sigma_k^2)) for all i,k:
+          output: [B, K]
+        """
+        if z.dim() != 2:
+            z = z.view(z.size(0), -1)
+        B, D = z.shape
+        assert D == self.D
+
+        sigma = self.min_sigma + F.softplus(self.log_sigma)  # [K, D]
+        var = sigma * sigma  # [K, D]
+
+        z_ = z.unsqueeze(1)   # [B, 1, D]
+        mu_ = self.mu.unsqueeze(0)   # [1, K, D]
+        var_ = var.unsqueeze(0)      # [1, K, D]
+
+        mahal = ((z_ - mu_) ** 2 / (var_ + self.eps)).sum(dim=2)  # [B, K]
+        log_det = torch.log(var_ + self.eps).sum(dim=2)           # [1, K] -> [B, K]
+        const = self.D * math.log(2.0 * math.pi)
+
+        return -0.5 * (mahal + log_det + const)
+
+    def responsibilities(self, z: torch.Tensor) -> torch.Tensor:
+        """
+        Soft assignments r_{ik} = p(k|z_i).
+        """
+        logN = self._log_gaussian_diag(z)  # [B, K]
+
+        if self.learn_pi:
+            log_pi = F.log_softmax(self.logits, dim=0)  # [K]
+        else:
+            log_pi = z.new_tensor([-math.log(self.K)] * self.K)
+
+        log_num = logN + log_pi.unsqueeze(0)           # [B, K]
+        log_den = torch.logsumexp(log_num, dim=1, keepdim=True)  # [B, 1]
+        return torch.exp(log_num - log_den)
+
+    def forward(self, z: torch.Tensor) -> torch.Tensor:
+        if z.dim() != 2:
+            z = z.view(z.size(0), -1)
+        B, D = z.shape
+        assert D == self.D
+        if B == 0:
+            return z.new_tensor(0.0)
+
+        logN = self._log_gaussian_diag(z)  # [B, K]
+        if self.learn_pi:
+            log_pi = F.log_softmax(self.logits, dim=0)
+        else:
+            log_pi = z.new_tensor([-math.log(self.K)] * self.K)
+
+        logp = torch.logsumexp(logN + log_pi.unsqueeze(0), dim=1)  # [B]
+        nll = -logp.mean()
+
+        with torch.no_grad():
+            r = self.responsibilities(z)
+            entropy = -(r * torch.log(r + self.eps)).sum(dim=1).mean()
+            self.last_avg_entropy = entropy
+            self.last_nll = nll.detach()
+
+        return nll
+
+
+class SensitivityLoss(nn.Module):
+    """
+    Hinge-floor sensitivity loss on a latent dimension.
+
+    For z in R^{B x D}, perturb z[:, target_dim] by +/- eps,
+    compute delta = mean ||g(z+) - g(z-)||_2, and penalize if
+    delta < eta: loss = max(0, eta - delta)^2.
+    """
+
+    def __init__(self, eps: float = 0.02, eta: float = 0.0025, target_dim: int = 0):
+        super().__init__()
+        self.eps = float(eps)
+        self.eta = float(eta)
+        self.target_dim = int(target_dim)
+
+    def forward(self, z: torch.Tensor, decoder: nn.Module):
+        if z.dim() != 2:
+            z = z.view(z.size(0), -1)
+        if z.size(0) == 0:
+            return z.new_tensor(0.0), z.new_tensor(0.0)
+        if self.target_dim < 0 or self.target_dim >= z.size(1):
+            raise ValueError(
+                f"target_dim {self.target_dim} out of range for D={z.size(1)}"
+            )
+
+        z_plus = z.clone()
+        z_minus = z.clone()
+        z_plus[:, self.target_dim] += self.eps
+        z_minus[:, self.target_dim] -= self.eps
+
+        c_plus = decoder(z_plus)
+        c_minus = decoder(z_minus)
+        delta = torch.norm(c_plus - c_minus, dim=1).mean()
+        loss = F.relu(self.eta - delta) ** 2
+        return loss, delta
+
+
 class IsometryLoss(nn.Module):
     """
     Isometric regularization loss from "Isometric Regularization for 
@@ -188,17 +328,11 @@ class IsometryLoss(nn.Module):
                 G1 = (jvp_result ** 2).mean()
                 G1_accum += G1
                 
-                # VJP
-                grad_inp = torch.autograd.grad(
-                    outputs=jvp_result,
-                    inputs=inp,
-                    grad_outputs=torch.ones_like(jvp_result),
-                    create_graph=True,
-                    retain_graph=True
-                )[0]  # [N, m+3]
+                # VJP for scalar output: J^T (J v) = (J v) * J
+                D_full = jvp_result.unsqueeze(-1) * G  # [N, m+3]
                 
-                # Get z-part gradients (first m components since input is [z, x])
-                Dz = grad_inp[:, :m]  # [N, m]
+                # Get z-part (first m components since input is [z, x])
+                Dz = D_full[:, :m]  # [N, m]
                 
                 # E_x[D_z] then ||.||^2
                 Dz_mean = Dz.mean(dim=0)  # [m]
@@ -207,8 +341,89 @@ class IsometryLoss(nn.Module):
         
         G1_avg = G1_accum / self.num_hutchinson_probes
         G2_avg = G2_accum / self.num_hutchinson_probes
+
+        # Expose for logging without changing the return signature
+        self.last_g1 = G1_avg.detach()
+        self.last_g2 = G2_avg.detach()
         
         return G2_avg / (G1_avg + self.eps)
+
+
+class GradientMetricIsotropyLoss(nn.Module):
+    """
+    L = ||offdiag(H)||_F^2 + alpha * Var(diag(H))
+
+    where:
+      g_i = grad_z f(z, x_i) in R^m
+      H   = (1/N) sum_i g_i g_i^T = (G^T G)/N in R^{m x m}
+    """
+
+    def __init__(self, alpha: float = 1.0, eps: float = 1e-12, normalize: bool = True):
+        super().__init__()
+        self.alpha = float(alpha)
+        self.eps = float(eps)
+        self.normalize = bool(normalize)
+
+        # for logging/debug
+        self.last_offdiag = None
+        self.last_diag_var = None
+        self.last_diag_mean = None
+
+    def forward(
+        self,
+        decoder: nn.Module,
+        latent_codes: torch.Tensor,  # [N, m] (expanded per point)
+        iso_points: torch.Tensor,    # [N, 3]
+        latent_size: int,
+    ) -> torch.Tensor:
+        N = iso_points.shape[0]
+        m = latent_size
+
+        assert latent_codes.shape[0] == N, "latent_codes and iso_points must have same N"
+        assert latent_codes.shape[1] == m, "latent_codes dim must match latent_size"
+        assert iso_points.shape[1] == 3, "iso_points must be [N,3]"
+
+        # Build input [z, x]
+        inp = torch.cat([latent_codes, iso_points], dim=-1)  # [N, m+3]
+        inp.requires_grad_(True)
+
+        # Forward
+        out = decoder(inp)  # [N,1] or [N]
+        if out.dim() == 2 and out.shape[1] == 1:
+            out = out[:, 0]  # [N]
+
+        # Gradient wrt input (then slice z-part)
+        grad_inp = torch.autograd.grad(
+            outputs=out,
+            inputs=inp,
+            grad_outputs=torch.ones_like(out),
+            create_graph=True,   # needed so this loss trains the decoder
+            retain_graph=True,
+        )[0]  # [N, m+3]
+
+        G = grad_inp[:, :m]  # [N, m] = grad_z f(z, x_i)
+
+        # H = (G^T G)/N (metric estimate)
+        H = (G.transpose(0, 1) @ G) / (float(N) + self.eps)  # [m, m]
+
+        diag = torch.diagonal(H)  # [m]
+        offdiag = H - torch.diag_embed(diag)
+
+        off_loss = (offdiag ** 2).sum()
+        diag_var = diag.var(unbiased=False)
+
+        if self.normalize:
+            # keeps magnitude somewhat stable across latent sizes
+            off_loss = off_loss / (m * (m - 1) + self.eps)
+
+        loss = off_loss + self.alpha * diag_var
+
+        # stash for logging
+        self.last_offdiag = off_loss.detach()
+        self.last_diag_var = diag_var.detach()
+        self.last_diag_mean = diag.mean().detach()
+
+        return loss
 
 
 def select_near_surface_points(xyz, sdf_gt, clamp_dist, num_iso_points):

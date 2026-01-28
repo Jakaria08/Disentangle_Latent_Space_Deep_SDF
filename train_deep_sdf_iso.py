@@ -17,7 +17,13 @@ import numpy as np
 
 import deep_sdf
 from deep_sdf import mesh, metrics, lr_scheduling, plotting, utils
-from deep_sdf.loss import CovarianceLoss, IsometryLoss, select_near_surface_points
+from deep_sdf.loss import (
+    CovarianceLoss,
+    GradientMetricIsotropyLoss,
+    IsometryLoss,
+    GMMPriorLoss,
+    select_near_surface_points,
+)
 import deep_sdf.workspace as ws
 import reconstruct
 
@@ -282,17 +288,60 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     lambda_cov = get_spec_with_default(specs, "CovarianceLossLambda", 1e-3)
     covariance_loss_fn = CovarianceLoss().cuda()
 
+    use_gmm_prior = get_spec_with_default(specs, "UseGMMPriorLoss", False)
+    gmm_lambda = get_spec_with_default(specs, "GMMLambda", 1e-4)
+    gmm_k = get_spec_with_default(specs, "GMMK", 2)
+    gmm_init_sigma = get_spec_with_default(specs, "GMMInitSigma", 0.5)
+    gmm_min_sigma = get_spec_with_default(specs, "GMMMinSigma", 0.05)
+    gmm_learn_pi = get_spec_with_default(specs, "GMMLearnPi", False)
+    gmm_prior_loss_fn = None
+    if use_gmm_prior:
+        gmm_prior_loss_fn = GMMPriorLoss(
+            K=gmm_k,
+            latent_dim=latent_size,
+            learn_pi=gmm_learn_pi,
+            init_sigma=gmm_init_sigma,
+            min_sigma=gmm_min_sigma,
+        ).cuda()
+
     # Isometry loss configuration
     use_isometry = get_spec_with_default(specs, "UseIsometryLoss", False)
     lambda_iso = get_spec_with_default(specs, "IsometryLossLambda", 1e-3)
     iso_num_points = get_spec_with_default(specs, "IsometryNumPoints", 256)
     iso_num_probes = get_spec_with_default(specs, "IsometryNumProbes", 1)
     iso_compute_frequency = get_spec_with_default(specs, "IsometryComputeFrequency", 1)
+    iso_scenes_per_batch = get_spec_with_default(specs, "IsometryScenesPerBatch", None)
+    use_isometry_mixup = get_spec_with_default(specs, "UseIsometryMixup", False)
+    iso_mixup_alpha = get_spec_with_default(specs, "IsometryMixupAlpha", 0.2)
+    iso_mixup_prob = get_spec_with_default(specs, "IsometryMixupProb", 0.0)
     isometry_loss_fn = IsometryLoss(num_hutchinson_probes=iso_num_probes).cuda()
+
+    use_grad_metric_iso = get_spec_with_default(specs, "UseGradMetricIsotropyLoss", False)
+    grad_metric_iso_lambda = get_spec_with_default(specs, "GradMetricIsoLossLambda", 1.0)
+    grad_metric_iso_alpha = get_spec_with_default(specs, "GradMetricIsoAlpha", 1.0)
+    grad_metric_iso_normalize = get_spec_with_default(specs, "GradMetricIsoNormalize", True)
+    grad_metric_iso_fn = None
+    if use_grad_metric_iso:
+        grad_metric_iso_fn = GradientMetricIsotropyLoss(
+            alpha=grad_metric_iso_alpha, normalize=grad_metric_iso_normalize
+        ).cuda()
     
     if use_isometry:
         logging.info(f"Isometry loss enabled: lambda={lambda_iso}, num_points={iso_num_points}, "
                      f"num_probes={iso_num_probes}, compute_freq={iso_compute_frequency}")
+    if use_grad_metric_iso:
+        logging.info(
+            "Gradient metric isotropy enabled: "
+            f"lambda={grad_metric_iso_lambda}, alpha={grad_metric_iso_alpha}, "
+            f"normalize={grad_metric_iso_normalize}, num_points={iso_num_points}, "
+            f"compute_freq={iso_compute_frequency}"
+        )
+    if use_gmm_prior:
+        logging.info(
+            "GMM prior enabled: "
+            f"lambda={gmm_lambda}, K={gmm_k}, learn_pi={gmm_learn_pi}, "
+            f"init_sigma={gmm_init_sigma}, min_sigma={gmm_min_sigma}"
+        )
 
     code_bound = get_spec_with_default(specs, "CodeBound", None)
 
@@ -301,6 +350,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     logging.info("training with {} GPU(s)".format(torch.cuda.device_count()))
 
     decoder = torch.nn.DataParallel(decoder)
+    train_device = next(decoder.parameters()).device
 
     use_pretrained_sdf = get_spec_with_default(specs, "UsePretrainedSDFDecoder", False)
     pretrained_sdf_dir = get_spec_with_default(specs, "PretrainedSDFDecoderDir", None)
@@ -377,6 +427,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     logging.debug(decoder)
 
     lat_vecs = torch.nn.Embedding(num_scenes, latent_size, max_norm=code_bound)
+    lat_vecs = lat_vecs.cuda()
     torch.nn.init.normal_(
         lat_vecs.weight.data,
         0.0,
@@ -397,7 +448,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             "lr": lr_schedules[0].get_learning_rate(0),
         },
         {
-            "params": lat_vecs.parameters(),
+            "params": list(lat_vecs.parameters()) + (list(gmm_prior_loss_fn.parameters()) if use_gmm_prior else []),
             "lr": lr_schedules[1].get_learning_rate(0),
         }]
     )
@@ -483,7 +534,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_reg_losses = []
             epoch_eikonal_losses = []
             epoch_cov_losses = []
+            epoch_gmm_losses = []
+            epoch_gmm_nlls = []
+            epoch_gmm_entropies = []
             epoch_iso_losses = []
+            epoch_grad_metric_iso_losses = []
+            epoch_iso_g1_losses = []
+            epoch_iso_g2_losses = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -495,7 +552,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 global_batch_idx += 1
                 # logging.debug(f"time for dataloading: {(time.time() - TIME)*1000:.3f} ms"); TIME = time.time()
                 # Process the input data
-                sdf_data = sdf_data.reshape(-1, 4)
+                sdf_data = sdf_data.reshape(-1, 4).to(train_device, non_blocking=True)
+                indices = indices.to(train_device, non_blocking=True)
 
                 num_sdf_samples = sdf_data.shape[0]
 
@@ -523,17 +581,19 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 reg_loss_tb = 0.0
                 eikonal_loss_tb = 0.0
                 cov_loss_tb = 0.0
+                gmm_loss_tb = 0.0
+                gmm_nll_tb = 0.0
+                gmm_entropy_tb = 0.0
                 iso_loss_tb = 0.0
+                grad_metric_iso_loss_tb = 0.0
+                iso_g1_tb = 0.0
+                iso_g2_tb = 0.0
 
                 optimizer_all.zero_grad()
 
                 for i in range(batch_split):
 
                     unique_indices = torch.unique(indices[i])
-                    if unique_indices.numel() != 1:
-                        raise RuntimeError(
-                            f"Expected one scene index per split; got {unique_indices.numel()}."
-                        )
 
                     batch_vecs = lat_vecs(indices[i])
                     input = torch.cat([batch_vecs, xyz[i]], dim=1)
@@ -555,29 +615,110 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         chunk_loss = chunk_loss + reg_loss.cuda()
                         reg_loss_tb += reg_loss.item()
                     
-                    # Isometry loss computation
-                    if use_isometry and (global_batch_idx % iso_compute_frequency == 0):
+                    # Isometry/metric losses computation
+                    if (use_isometry or use_grad_metric_iso) and (global_batch_idx % iso_compute_frequency == 0):
                         # Use the underlying decoder (unwrap DataParallel if needed)
                         decoder_for_iso = decoder.module if hasattr(decoder, 'module') else decoder
                         iso_device = next(decoder_for_iso.parameters()).device
+                        iso_loss_sum = 0.0
+                        iso_g1_sum = 0.0
+                        iso_g2_sum = 0.0
+                        grad_metric_iso_loss_sum = 0.0
+                        iso_scene_count = 0
 
-                        # Select near-surface points for isometry computation
-                        iso_points = select_near_surface_points(
-                            xyz[i].detach(), sdf_gt[i].detach(), clamp_dist, iso_num_points
-                        ).to(iso_device)
-                        
-                        # Get unique shape indices and sample one for iso computation
-                        sample_latent = batch_vecs[:1]
-                        iso_latent_expanded = sample_latent.expand(iso_num_points, -1).to(iso_device)  # [K, m]
-                        
-                        iso_loss = lambda_iso * isometry_loss_fn(
-                            decoder_for_iso,
-                            iso_latent_expanded,
-                            iso_points,
-                            latent_size,
-                        )
-                        chunk_loss = chunk_loss + iso_loss
-                        iso_loss_tb += iso_loss.item()
+                        iso_indices = unique_indices
+                        if (
+                            iso_scenes_per_batch is not None
+                            and iso_scenes_per_batch > 0
+                            and unique_indices.numel() > iso_scenes_per_batch
+                        ):
+                            perm = torch.randperm(
+                                unique_indices.numel(), device=unique_indices.device
+                            )
+                            iso_indices = unique_indices[perm[:iso_scenes_per_batch]]
+
+                        for scene_idx in iso_indices:
+                            mask = indices[i] == scene_idx
+                            if mask.sum() == 0:
+                                continue
+
+                            xyz_scene = xyz[i][mask]
+                            sdf_scene = sdf_gt[i][mask]
+
+                            # Select near-surface points for isometry computation
+                            iso_points = select_near_surface_points(
+                                xyz_scene.detach(),
+                                sdf_scene.detach(),
+                                clamp_dist,
+                                iso_num_points,
+                            ).to(iso_device)
+
+                            # Latent for this scene (all entries are identical)
+                            sample_latent = batch_vecs[mask][:1]
+                            if use_isometry_mixup and unique_indices.numel() > 1:
+                                if torch.rand(1).item() < iso_mixup_prob:
+                                    idx_pool = unique_indices
+                                    if (idx_pool == scene_idx).any():
+                                        idx_pool = idx_pool[idx_pool != scene_idx]
+                                    if idx_pool.numel() > 0:
+                                        rand_idx = idx_pool[
+                                            torch.randint(
+                                                0,
+                                                idx_pool.numel(),
+                                                (1,),
+                                                device=idx_pool.device,
+                                            )
+                                        ]
+                                        mix_latent = lat_vecs.weight.index_select(0, rand_idx)
+                                        mix_latent = mix_latent.to(sample_latent.device)
+                                        mix_alpha = torch.distributions.Beta(
+                                            iso_mixup_alpha, iso_mixup_alpha
+                                        ).sample((1,)).to(sample_latent.device)
+                                        sample_latent = (
+                                            mix_alpha * sample_latent + (1.0 - mix_alpha) * mix_latent
+                                        )
+
+                            sample_latent = sample_latent.to(iso_device)
+                            iso_latent_expanded = sample_latent.expand(iso_num_points, -1).to(iso_device)  # [K, m]
+
+                            if use_isometry:
+                                iso_loss = lambda_iso * isometry_loss_fn(
+                                    decoder_for_iso,
+                                    iso_latent_expanded,
+                                    iso_points,
+                                    latent_size,
+                                )
+                                iso_g1 = getattr(isometry_loss_fn, "last_g1", None)
+                                iso_g2 = getattr(isometry_loss_fn, "last_g2", None)
+                                if iso_g1 is not None:
+                                    iso_g1_sum += iso_g1.item()
+                                if iso_g2 is not None:
+                                    iso_g2_sum += iso_g2.item()
+                                iso_loss_sum = iso_loss_sum + iso_loss
+
+                            if use_grad_metric_iso:
+                                grad_metric_iso_loss = grad_metric_iso_lambda * grad_metric_iso_fn(
+                                    decoder_for_iso,
+                                    iso_latent_expanded,
+                                    iso_points,
+                                    latent_size,
+                                )
+                                grad_metric_iso_loss_sum = (
+                                    grad_metric_iso_loss_sum + grad_metric_iso_loss
+                                )
+                            iso_scene_count += 1
+
+                        if iso_scene_count > 0:
+                            if use_isometry:
+                                iso_loss = iso_loss_sum / iso_scene_count
+                                chunk_loss = chunk_loss + iso_loss
+                                iso_loss_tb += iso_loss.item()
+                                iso_g1_tb += iso_g1_sum / iso_scene_count
+                                iso_g2_tb += iso_g2_sum / iso_scene_count
+                            if use_grad_metric_iso:
+                                grad_metric_iso_loss = grad_metric_iso_loss_sum / iso_scene_count
+                                chunk_loss = chunk_loss + grad_metric_iso_loss
+                                grad_metric_iso_loss_tb += grad_metric_iso_loss.item()
                     
                     summary_writer.add_scalar("Loss/train_vanilla", chunk_loss, global_step=epoch)
                     if use_eikonal:
@@ -598,11 +739,29 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     if cov_indices.device != lat_vecs.weight.device:
                         cov_indices = cov_indices.to(lat_vecs.weight.device)
                     cov_indices = torch.unique(cov_indices)
-                    cov_latents = lat_vecs(cov_indices)
+                    cov_latents = lat_vecs.weight.index_select(0, cov_indices)
                     cov_loss = lambda_cov * covariance_loss_fn(cov_latents)
                     cov_loss.backward()
                     cov_loss_tb = cov_loss.item()
                     batch_loss_tb += cov_loss_tb
+                if use_gmm_prior:
+                    gmm_indices = indices_batch
+                    if gmm_indices.device != lat_vecs.weight.device:
+                        gmm_indices = gmm_indices.to(lat_vecs.weight.device)
+                    gmm_indices = torch.unique(gmm_indices)
+                    if gmm_indices.numel() > 0:
+                        gmm_latents = lat_vecs.weight.index_select(0, gmm_indices)
+                        gmm_loss_raw = gmm_prior_loss_fn(gmm_latents)
+                        gmm_loss = gmm_lambda * gmm_loss_raw
+                        gmm_loss.backward()
+                        gmm_loss_tb = gmm_loss.item()
+                        batch_loss_tb += gmm_loss_tb
+                        gmm_nll = getattr(gmm_prior_loss_fn, "last_nll", None)
+                        gmm_entropy = getattr(gmm_prior_loss_fn, "last_avg_entropy", None)
+                        if gmm_nll is not None:
+                            gmm_nll_tb = gmm_nll.item()
+                        if gmm_entropy is not None:
+                            gmm_entropy_tb = gmm_entropy.item()
 
                 loss_log.append(batch_loss_tb)
                 epoch_losses.append(batch_loss_tb)
@@ -610,7 +769,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 epoch_reg_losses.append(reg_loss_tb)
                 epoch_eikonal_losses.append(eikonal_loss_tb)
                 epoch_cov_losses.append(cov_loss_tb)
+                epoch_gmm_losses.append(gmm_loss_tb)
+                epoch_gmm_nlls.append(gmm_nll_tb)
+                epoch_gmm_entropies.append(gmm_entropy_tb)
                 epoch_iso_losses.append(iso_loss_tb)
+                epoch_grad_metric_iso_losses.append(grad_metric_iso_loss_tb)
+                epoch_iso_g1_losses.append(iso_g1_tb)
+                epoch_iso_g2_losses.append(iso_g2_tb)
 
                 if grad_clip is not None:
 
@@ -622,24 +787,84 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             seconds_elapsed = time.time() - epoch_time_start
             timing_log.append(seconds_elapsed)
             # Log epoch losses.
-            epoch_loss = sum(epoch_losses)/len(epoch_losses)
-            print(f"Epoch {epoch} loss: {epoch_loss}")
+            epoch_loss = sum(epoch_losses) / len(epoch_losses)
+            epoch_sdf_loss = sum(epoch_sdf_losses) / len(epoch_sdf_losses)
+            epoch_reg_loss = sum(epoch_reg_losses) / len(epoch_reg_losses)
+            epoch_eikonal_loss = sum(epoch_eikonal_losses) / len(epoch_eikonal_losses)
+            epoch_cov_loss = sum(epoch_cov_losses) / len(epoch_cov_losses)
+            epoch_gmm_loss = sum(epoch_gmm_losses) / len(epoch_gmm_losses)
+            epoch_gmm_nll = sum(epoch_gmm_nlls) / len(epoch_gmm_nlls)
+            epoch_gmm_entropy = sum(epoch_gmm_entropies) / len(epoch_gmm_entropies)
+            epoch_iso_loss_contrib = sum(epoch_iso_losses) / len(epoch_iso_losses)
+            epoch_grad_metric_iso_loss = (
+                sum(epoch_grad_metric_iso_losses) / len(epoch_grad_metric_iso_losses)
+            )
+
+            print(f"Epoch {epoch} total loss: {epoch_loss}")
+            print(f"Epoch {epoch} sdf loss (weighted): {epoch_sdf_loss}")
+            if do_code_regularization:
+                print(f"Epoch {epoch} code regularizer loss (weighted): {epoch_reg_loss}")
+            if use_eikonal:
+                print(f"Epoch {epoch} eikonal loss (weighted): {epoch_eikonal_loss}")
             if use_covariance:
-                epoch_cov_loss = sum(epoch_cov_losses)/len(epoch_cov_losses)
-                print(f"Epoch {epoch} covariance loss: {epoch_cov_loss}")
-            if use_isometry and sum(epoch_iso_losses) > 0:
-                epoch_iso_loss = sum(epoch_iso_losses)/max(1, sum(1 for x in epoch_iso_losses if x > 0))
-                print(f"Epoch {epoch} isometry loss: {epoch_iso_loss}")
+                print(f"Epoch {epoch} covariance loss (weighted): {epoch_cov_loss}")
+            if use_gmm_prior:
+                print(f"Epoch {epoch} gmm loss (weighted): {epoch_gmm_loss}")
+                print(f"Epoch {epoch} gmm nll (raw): {epoch_gmm_nll}")
+                print(f"Epoch {epoch} gmm assign entropy: {epoch_gmm_entropy}")
+                with torch.no_grad():
+                    gmm_sigma = torch.exp(gmm_prior_loss_fn.log_sigma).clamp_min(gmm_min_sigma)
+                    print(f"Epoch {epoch} gmm sigma mean: {gmm_sigma.mean().item()}")
+                    print(f"Epoch {epoch} gmm sigma min: {gmm_sigma.min().item()}")
+            if use_isometry:
+                print(f"Epoch {epoch} isometry loss (weighted): {epoch_iso_loss_contrib}")
+                iso_count = sum(1 for x in epoch_iso_losses if x > 0)
+                epoch_iso_g1 = sum(epoch_iso_g1_losses) / max(1, iso_count)
+                epoch_iso_g2 = sum(epoch_iso_g2_losses) / max(1, iso_count)
+                print(f"Epoch {epoch} isometry G1: {epoch_iso_g1}")
+                print(f"Epoch {epoch} isometry G2: {epoch_iso_g2}")
+            if use_grad_metric_iso:
+                print(
+                    f"Epoch {epoch} grad metric iso loss (weighted): "
+                    f"{epoch_grad_metric_iso_loss}"
+                )
+
+            print(f"Epoch {epoch} time (s): {seconds_elapsed:.2f}")
             loss_log_epoch.append(epoch_loss)
             summary_writer.add_scalar("Loss/train", epoch_loss, global_step=epoch)
-            summary_writer.add_scalar("Loss/train_sdf", sum(epoch_sdf_losses)/len(epoch_sdf_losses), global_step=epoch)
-            summary_writer.add_scalar("Loss/train_reg", sum(epoch_reg_losses)/len(epoch_reg_losses), global_step=epoch)
+            summary_writer.add_scalar("Loss/train_sdf", epoch_sdf_loss, global_step=epoch)
+            summary_writer.add_scalar("Loss/train_reg", epoch_reg_loss, global_step=epoch)
             if use_eikonal:
-                summary_writer.add_scalar("Loss/train_eikonal", sum(epoch_eikonal_losses)/len(epoch_eikonal_losses), global_step=epoch)
+                summary_writer.add_scalar("Loss/train_eikonal", epoch_eikonal_loss, global_step=epoch)
             if use_covariance:
-                summary_writer.add_scalar("Loss/train_covariance", sum(epoch_cov_losses)/len(epoch_cov_losses), global_step=epoch)
-            if use_isometry and sum(epoch_iso_losses) > 0:
-                summary_writer.add_scalar("Loss/train_isometry", sum(epoch_iso_losses)/max(1, sum(1 for x in epoch_iso_losses if x > 0)), global_step=epoch)
+                summary_writer.add_scalar("Loss/train_covariance", epoch_cov_loss, global_step=epoch)
+            if use_gmm_prior:
+                summary_writer.add_scalar("Loss/train_gmm", epoch_gmm_loss, global_step=epoch)
+                summary_writer.add_scalar("Loss/train_gmm_nll", epoch_gmm_nll, global_step=epoch)
+                summary_writer.add_scalar("Loss/train_gmm_entropy", epoch_gmm_entropy, global_step=epoch)
+            if use_isometry:
+                iso_count = sum(1 for x in epoch_iso_losses if x > 0)
+                summary_writer.add_scalar(
+                    "Loss/train_isometry",
+                    sum(epoch_iso_losses) / max(1, iso_count),
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "Loss/train_isometry_G1",
+                    sum(epoch_iso_g1_losses) / max(1, iso_count),
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "Loss/train_isometry_G2",
+                    sum(epoch_iso_g2_losses) / max(1, iso_count),
+                    global_step=epoch,
+                )
+            if use_grad_metric_iso:
+                summary_writer.add_scalar(
+                    "Loss/train_grad_metric_iso",
+                    epoch_grad_metric_iso_loss,
+                    global_step=epoch,
+                )
             # Log learning rate.
             lr_log.append([schedule.get_learning_rate(epoch) for schedule in lr_schedules])
             summary_writer.add_scalar("Learning Rate/Params", lr_log[-1][0], global_step=epoch)
@@ -690,7 +915,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     chamfer_dists_all = []
                     eval_train_time_start = time.time()
                     for index in eval_train_scene_idxs:
-                        lat_vec = lat_vecs(torch.LongTensor([index])).cuda()
+                        index_tensor = torch.tensor(
+                            [index], dtype=torch.long, device=lat_vecs.weight.device
+                        )
+                        lat_vec = lat_vecs(index_tensor)
                         save_name = os.path.basename(sdf_dataset.npyfiles[index]).split(".npz")[0]
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_train_reconstructions, save_name)
                         if not os.path.exists(path):
@@ -879,7 +1107,7 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "--batch_split",
         dest="batch_split",
-        default=32,
+        default=1,
         help="This splits the batch into separate subbatches which are "
         + "processed separately, with gradients accumulated across all "
         + "subbatches. This allows for training with large effective batch "

@@ -156,6 +156,7 @@ class SDFSamples(torch.utils.data.Dataset):
         data_source_mesh=None,
         return_surface_points=False,
         surface_point_count=2048,
+        warn_missing_labels=True,
     ):
         self.subsample = subsample
 
@@ -166,6 +167,7 @@ class SDFSamples(torch.utils.data.Dataset):
         self.labels = self.load_labels() if self.return_labels else {}
         self.label_len = None
         self.missing_label_warned = set()
+        self.warn_missing_labels = warn_missing_labels
         self.return_surface_points = return_surface_points
         self.surface_point_count = surface_point_count
         self.data_source_mesh = data_source_mesh
@@ -245,7 +247,7 @@ class SDFSamples(torch.utils.data.Dataset):
         if self.return_labels:
             base_name = os.path.splitext(os.path.basename(self.npyfiles[idx]))[0]
             if base_name not in self.labels:
-                if base_name not in self.missing_label_warned:
+                if self.warn_missing_labels and base_name not in self.missing_label_warned:
                     logging.warning("Missing label for %s", base_name)
                     self.missing_label_warned.add(base_name)
                 if self.label_len is None:

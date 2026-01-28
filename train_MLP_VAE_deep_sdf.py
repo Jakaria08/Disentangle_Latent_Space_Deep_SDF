@@ -41,6 +41,12 @@ def _load_module_state(module, state_dict):
     module.load_state_dict(_strip_module_prefix(state_dict))
 
 
+def _get_vae_decoder(vae_module):
+    if isinstance(vae_module, torch.nn.DataParallel):
+        return vae_module.module.decoder
+    return vae_module.decoder
+
+
 def get_spec_with_default(specs, key, default):
     try:
         return specs[key]
@@ -605,6 +611,11 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     corr_leakage_lambda = get_spec_with_default(specs, "CorrLeakageLambda", 1.0)
     cross_cov_loss = get_spec_with_default(specs, "CrossCovLoss", False)
     cross_cov_lambda = get_spec_with_default(specs, "CrossCovLambda", 1.0)
+    sensitivity_loss = get_spec_with_default(specs, "SensitivityLoss", False)
+    sensitivity_eps = get_spec_with_default(specs, "SensitivityEps", 0.02)
+    sensitivity_eta = get_spec_with_default(specs, "SensitivityEta", 0.0025)
+    sensitivity_weight = get_spec_with_default(specs, "SensitivityWeight", 0.1)
+    sensitivity_target_dim = get_spec_with_default(specs, "SensitivityLatentIndex", 0)
     leakage_target_dim = get_spec_with_default(
         specs, "LeakageTargetDim", attribute_latent_index
     )
@@ -623,6 +634,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         )
     eval_test_reconstruct = get_spec_with_default(specs, "EvalTestReconstructLatents", False)
     eval_test_start_epoch = get_spec_with_default(specs, "EvalTestStartEpoch", 1)
+    train_latent_holdout_frac = float(
+        get_spec_with_default(specs, "TrainLatentHoldoutFraction", 0.0)
+    )
+    train_latent_holdout_seed = get_spec_with_default(specs, "TrainLatentHoldoutSeed", 0)
 
     compute_sap = get_spec_with_default(specs, "ComputeSAP", False)
     compute_dci = get_spec_with_default(specs, "ComputeDCI", True)
@@ -647,6 +662,11 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     sap_label_indices = get_spec_with_default(specs, "SAPLabelIndices", None)
     sap_corr_extra_frequency = get_spec_with_default(specs, "SAPCORRExtraFrequency", 0)
     sap_corr_labels_file = get_spec_with_default(specs, "SAPCORRLabelsFile", "labels.pt")
+    sap_debug_predictions = get_spec_with_default(specs, "SAPDebugPredictions", False)
+    sap_debug_pred_samples = int(get_spec_with_default(specs, "SAPDebugPredSamples", 0))
+    sap_kumar_holdout = get_spec_with_default(specs, "SAPKumarHoldout", False)
+    sap_kumar_holdout_frac = float(get_spec_with_default(specs, "SAPKumarHoldoutFrac", 0.8))
+    sap_kumar_holdout_seed = get_spec_with_default(specs, "SAPKumarHoldoutSeed", 0)
 
 
 
@@ -659,6 +679,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             or compute_sap
         )
     labels_filename = get_spec_with_default(specs, "LabelsFile", "labels.pt")
+    warn_missing_labels = get_spec_with_default(specs, "WarnMissingLabels", True)
 
     encoder_type = get_spec_with_default(specs, "EncoderType", "pointnet2")
     encoder_type_norm = str(encoder_type).lower()
@@ -694,6 +715,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         sdf_decoder = torch.nn.DataParallel(sdf_decoder)
 
     logging.info("training with {} GPU(s)".format(torch.cuda.device_count()))
+    if sensitivity_loss:
+        logging.info(
+            "SensitivityLoss enabled: eps=%.6f eta=%.6f weight=%.6f target_dim=%d (debug: target Δcode >= eta)",
+            float(sensitivity_eps),
+            float(sensitivity_eta),
+            float(sensitivity_weight),
+            int(sensitivity_target_dim),
+        )
 
     num_epochs = specs["NumEpochs"]
     log_frequency = get_spec_with_default(specs, "LogFrequency", 200)
@@ -727,6 +756,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         data_source_mesh=data_source_mesh,
         return_surface_points=return_surface_points,
         surface_point_count=surface_point_count,
+        warn_missing_labels=warn_missing_labels,
     )
 
     num_scenes = len(sdf_dataset)
@@ -735,6 +765,28 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             "Pretrained latent count does not match number of scenes: {} vs {}".format(
                 teacher_latents.shape[0], num_scenes
             )
+        )
+    train_indices = list(range(num_scenes))
+    holdout_indices = []
+    if train_latent_holdout_frac > 0.0:
+        if train_latent_holdout_frac >= 1.0:
+            raise RuntimeError("TrainLatentHoldoutFraction must be < 1.0.")
+        holdout_count = int(round(num_scenes * train_latent_holdout_frac))
+        if holdout_count <= 0 or holdout_count >= num_scenes:
+            raise RuntimeError(
+                "TrainLatentHoldoutFraction yields empty train/holdout split."
+            )
+        rng = random.Random(train_latent_holdout_seed)
+        shuffled = list(range(num_scenes))
+        rng.shuffle(shuffled)
+        holdout_indices = sorted(shuffled[:holdout_count])
+        train_indices = sorted(shuffled[holdout_count:])
+        logging.info(
+            "Using train latent holdout split: train=%d holdout=%d (frac=%.3f seed=%s)",
+            len(train_indices),
+            len(holdout_indices),
+            train_latent_holdout_frac,
+            str(train_latent_holdout_seed),
         )
 
     test_dataset = None
@@ -750,6 +802,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             data_source_mesh=data_source_mesh,
             return_surface_points=return_surface_points,
             surface_point_count=surface_point_count,
+            warn_missing_labels=warn_missing_labels,
         )
         test_latents_path = get_spec_with_default(specs, "TestLatentPath", None)
         test_latents_path = resolve_spec_path(experiment_directory, test_latents_path)
@@ -846,8 +899,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         if mix_real_start > 0.0:
             real_label_map = _load_label_map(real_path, sdf_dataset.npyfiles)
 
+    train_dataset = sdf_dataset
+    if holdout_indices:
+        train_dataset = data_utils.Subset(sdf_dataset, train_indices)
+
     sdf_loader = data_utils.DataLoader(
-        sdf_dataset,
+        train_dataset,
         batch_size=scene_per_batch,
         shuffle=True,
         num_workers=num_data_loader_threads,
@@ -913,6 +970,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             drop_last=False,
         )
 
+    def select_indices_from_pool(index_pool, scene_count):
+        if not index_pool:
+            return []
+        if scene_count is None or scene_count <= 0 or scene_count >= len(index_pool):
+            return list(index_pool)
+        return random.sample(index_pool, scene_count)
+
     def select_mesh_indices(dataset, scene_count):
         if dataset is None or scene_count is None or scene_count <= 0:
             return []
@@ -920,12 +984,32 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         return random.sample(range(len(dataset)), count)
 
     eval_train_loader = None
+    eval_train_holdout_loader = None
+    train_holdout_eval_indices = None
+    train_eval_indices = None
     if eval_train_frequency is not None and eval_train_frequency > 0:
-        eval_train_loader = build_eval_loader(
-            sdf_dataset, eval_train_scene_num, "train"
-        )
+        if holdout_indices:
+            train_eval_indices = select_indices_from_pool(
+                train_indices, eval_train_scene_num
+            )
+            eval_train_loader = build_eval_loader_from_indices(
+                sdf_dataset, train_eval_indices, "train"
+            )
+            train_holdout_eval_indices = select_indices_from_pool(
+                holdout_indices, eval_train_scene_num
+            )
+            eval_train_holdout_loader = build_eval_loader_from_indices(
+                sdf_dataset, train_holdout_eval_indices, "train_holdout_eval"
+            )
+        else:
+            eval_train_loader = build_eval_loader(
+                sdf_dataset, eval_train_scene_num, "train"
+            )
 
     eval_test_scene_idxs = select_eval_indices(test_dataset, eval_test_scene_num)
+    holdout_eval_scene_idxs = select_indices_from_pool(
+        holdout_indices, eval_test_scene_num
+    )
     eval_test_loader = None
     if eval_test_frequency is not None and eval_test_frequency > 0:
         if test_dataset is None:
@@ -940,14 +1024,27 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             logging.warning(
                 "EvalTestFrequency set but no eval test indices; skipping test evaluation."
             )
+    eval_holdout_loader = None
 
-    eval_train_scene_idxs = select_mesh_indices(sdf_dataset, mesh_train_scene_num)
+    eval_train_scene_idxs = (
+        select_indices_from_pool(train_indices, mesh_train_scene_num)
+        if holdout_indices
+        else select_mesh_indices(sdf_dataset, mesh_train_scene_num)
+    )
     mesh_test_scene_idxs = select_mesh_indices(test_dataset, mesh_test_scene_num)
+    holdout_mesh_scene_idxs = select_indices_from_pool(
+        holdout_indices, mesh_test_scene_num
+    )
 
     sap_train_loader = None
     sap_test_loader = None
     if compute_sap and sap_corr_extra_frequency is not None and sap_corr_extra_frequency > 0:
-        sap_train_loader = build_eval_loader(sdf_dataset, 0, "train_sap")
+        if holdout_indices:
+            sap_train_loader = build_eval_loader_from_indices(
+                sdf_dataset, train_indices, "train_sap"
+            )
+        else:
+            sap_train_loader = build_eval_loader(sdf_dataset, 0, "train_sap")
         if test_dataset is not None:
             sap_test_loader = build_eval_loader(test_dataset, 0, "test_sap")
 
@@ -990,6 +1087,15 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         else:
             raise ValueError(f"Unsupported SNNLType: {snnl_type}")
     attr_loss_fn = deep_sdf_loss.AttributeLoss() if attribute_loss else None
+    sens_loss_fn = (
+        deep_sdf_loss.SensitivityLoss(
+            eps=sensitivity_eps,
+            eta=sensitivity_eta,
+            target_dim=sensitivity_target_dim,
+        )
+        if sensitivity_loss
+        else None
+    )
     cov_loss_fn = (
         deep_sdf_loss.DIPVAEIILoss(beta=covariance_lambda)
         if covariance_loss
@@ -1737,6 +1843,26 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 logging.warning(
                     "SAP per-latent scores unavailable ({}): {}".format(split_label, exc)
                 )
+        sap_pred_info = None
+        if sap_debug_predictions:
+            try:
+                factors = labels_np.reshape(-1, 1)
+                if is_regression:
+                    sap_pred_info = sap_metric.sap_regression_predictions(
+                        factors, latents, pred_sample_n=sap_debug_pred_samples
+                    )
+                else:
+                    sap_pred_info = sap_metric.sap_classification_predictions(
+                        factors,
+                        latents,
+                        continuous_factors=sap_continuous,
+                        nb_bins=sap_nb_bins,
+                        pred_sample_n=sap_debug_pred_samples,
+                    )
+            except Exception as exc:
+                logging.warning(
+                    "SAP prediction debug unavailable ({}): {}".format(split_label, exc)
+                )
 
         if is_regression:
             logging.info(
@@ -1753,15 +1879,42 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 if sap_scores is not None:
                     sap_val = float(sap_scores[dim])
                 logging.info("  {:>3d} | {:>6.3f} | {:>6.3f}".format(dim, corr, sap_val))
+            if sap_debug_predictions and sap_pred_info is not None:
+                logging.info("  dim | sap_pred_mean | sap_pred_std | sap_pred_sample")
+                for dim in range(latents.shape[1]):
+                    info = sap_pred_info[0][dim] if sap_pred_info else None
+                    pred_mean = info.get("pred_mean") if info else None
+                    pred_std = info.get("pred_std") if info else None
+                    pred_sample = info.get("pred_sample") if info else None
+                    logging.info(
+                        "  {:>3d} | {:>12} | {:>12} | {}".format(
+                            dim,
+                            "n/a" if pred_mean is None else "{:.4f}".format(pred_mean),
+                            "n/a" if pred_std is None else "{:.4f}".format(pred_std),
+                            "n/a" if pred_sample is None else pred_sample,
+                        )
+                    )
             return
 
         labels_np = labels_np.astype(int)
         loc_scores = None
+        loc_pred_info = None
+        sap_holdout_acc = None
+        sap_holdout_pred_info = None
+        sap_holdout_gap = float("nan")
         try:
-            loc_sap, loc_err_matrix = sap_metric.sap_binary_classification_locatello(
-                labels_np.reshape(-1, 1),
-                latents,
-            )
+            if sap_debug_predictions:
+                loc_sap, loc_err_matrix, loc_pred_info = sap_metric.sap_binary_classification_locatello(
+                    labels_np.reshape(-1, 1),
+                    latents,
+                    return_predictions=True,
+                    pred_sample_n=sap_debug_pred_samples,
+                )
+            else:
+                loc_sap, loc_err_matrix = sap_metric.sap_binary_classification_locatello(
+                    labels_np.reshape(-1, 1),
+                    latents,
+                )
             if loc_err_matrix is not None and loc_err_matrix.shape[0] > 0:
                 loc_scores = 1.0 - loc_err_matrix[0]
         except Exception as exc:
@@ -1770,10 +1923,36 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     split_label, exc
                 )
             )
+        if sap_kumar_holdout:
+            try:
+                sap_holdout_acc, sap_holdout_test_acc, sap_holdout_pred_info = (
+                    sap_metric.sap_classification_holdout_predictions(
+                        labels_np.reshape(-1, 1),
+                        latents,
+                        continuous_factors=sap_continuous,
+                        nb_bins=sap_nb_bins,
+                        train_frac=sap_kumar_holdout_frac,
+                        random_state=sap_kumar_holdout_seed,
+                        pred_sample_n=sap_debug_pred_samples if sap_debug_predictions else 0,
+                    )
+                )
+                if sap_holdout_test_acc is not None and sap_holdout_test_acc.shape[0] > 0:
+                    vals = sap_holdout_test_acc[0]
+                    vals = vals[np.isfinite(vals)]
+                    if vals.size >= 2:
+                        vals_sorted = np.sort(vals)
+                        sap_holdout_gap = float(vals_sorted[-1] - vals_sorted[-2])
+            except Exception as exc:
+                logging.warning(
+                    "Kumar holdout SAP unavailable ({}): {}".format(split_label, exc)
+                )
         logging.info(
             "Epoch {} latent vs diagnosis table ({}):".format(epoch, split_label)
         )
-        logging.info("  dim | corr | sap_acc | loc_acc")
+        if sap_kumar_holdout:
+            logging.info("  dim | corr | sap_acc | sap_err | sap_hold_acc | sap_hold_err | loc_acc | loc_err")
+        else:
+            logging.info("  dim | corr | sap_acc | sap_err | loc_acc | loc_err")
         for dim in range(latents.shape[1]):
             x = latents[:, dim]
             if np.std(x) == 0 or np.std(labels_np) == 0:
@@ -1783,14 +1962,84 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             sap_val = float("nan")
             if sap_scores is not None:
                 sap_val = float(sap_scores[dim])
+            sap_err = float("nan")
+            if np.isfinite(sap_val):
+                sap_err = 1.0 - sap_val
+            sap_hold_val = float("nan")
+            sap_hold_err = float("nan")
+            if sap_kumar_holdout and sap_holdout_test_acc is not None:
+                sap_hold_val = float(sap_holdout_test_acc[0][dim])
+                if np.isfinite(sap_hold_val):
+                    sap_hold_err = 1.0 - sap_hold_val
             loc_val = float("nan")
             if loc_scores is not None:
                 loc_val = float(loc_scores[dim])
+            loc_err = float("nan")
+            if loc_err_matrix is not None and loc_err_matrix.shape[0] > 0:
+                loc_err = float(loc_err_matrix[0][dim])
+            if sap_kumar_holdout:
+                logging.info(
+                    "  {:>3d} | {:>6.3f} | {:>7.3f} | {:>7.3f} | {:>12.3f} | {:>12.3f} | {:>7.3f} | {:>7.3f}".format(
+                        dim, corr, sap_val, sap_err, sap_hold_val, sap_hold_err, loc_val, loc_err
+                    )
+                )
+            else:
+                logging.info(
+                    "  {:>3d} | {:>6.3f} | {:>7.3f} | {:>7.3f} | {:>7.3f} | {:>7.3f}".format(
+                        dim, corr, sap_val, sap_err, loc_val, loc_err
+                    )
+                )
+        if sap_kumar_holdout and np.isfinite(sap_holdout_gap):
             logging.info(
-                "  {:>3d} | {:>6.3f} | {:>6.3f} | {:>7.3f}".format(
-                    dim, corr, sap_val, loc_val
+                "Epoch {} Kumar SAP holdout gap ({}): {:.6f}".format(
+                    epoch, split_label, sap_holdout_gap
                 )
             )
+        if sap_debug_predictions:
+            if sap_kumar_holdout:
+                logging.info(
+                    "  dim | sap_pred_counts | sap_hold_pred_counts | loc_pred_counts | sap_pred_sample | sap_hold_pred_sample | loc_pred_sample"
+                )
+            else:
+                logging.info(
+                    "  dim | sap_pred_counts | loc_pred_counts | sap_pred_sample | loc_pred_sample"
+                )
+            for dim in range(latents.shape[1]):
+                sap_info = sap_pred_info[0][dim] if sap_pred_info else None
+                loc_info = loc_pred_info[0][dim] if loc_pred_info else None
+                sap_counts = sap_info.get("pred_counts") if sap_info else None
+                sap_hold_counts = None
+                sap_hold_sample = None
+                if sap_kumar_holdout and sap_holdout_pred_info:
+                    hold_info = sap_holdout_pred_info[0][dim]
+                    if hold_info:
+                        sap_hold_counts = hold_info.get("test_pred_counts")
+                        sap_hold_sample = hold_info.get("test_pred_sample")
+                loc_counts = loc_info.get("pred_counts") if loc_info else None
+                sap_sample = sap_info.get("pred_sample") if sap_info else None
+                loc_sample = loc_info.get("pred_sample") if loc_info else None
+                if sap_kumar_holdout:
+                    logging.info(
+                        "  {:>3d} | {} | {} | {} | {} | {} | {}".format(
+                            dim,
+                            "n/a" if sap_counts is None else sap_counts,
+                            "n/a" if sap_hold_counts is None else sap_hold_counts,
+                            "n/a" if loc_counts is None else loc_counts,
+                            "n/a" if sap_sample is None else sap_sample,
+                            "n/a" if sap_hold_sample is None else sap_hold_sample,
+                            "n/a" if loc_sample is None else loc_sample,
+                        )
+                    )
+                else:
+                    logging.info(
+                        "  {:>3d} | {} | {} | {} | {}".format(
+                            dim,
+                            "n/a" if sap_counts is None else sap_counts,
+                            "n/a" if loc_counts is None else loc_counts,
+                            "n/a" if sap_sample is None else sap_sample,
+                            "n/a" if loc_sample is None else loc_sample,
+                        )
+                    )
 
     def log_eval_debug(eval_loader, dataset, eval_latents, epoch, split_label, label_map):
         if eval_loader is None or dataset is None:
@@ -1993,6 +2242,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_cov = []
             epoch_corr_leak = []
             epoch_cross_cov = []
+            epoch_sens = []
+            epoch_sens_delta = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -2064,6 +2315,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 cov_loss_val = 0.0
                 corr_leak_loss_val = 0.0
                 cross_cov_loss_val = 0.0
+                sens_loss_val = 0.0
+                sens_delta_val = 0.0
                 if use_labels:
                     label_values = None
                     if label_mix_enabled:
@@ -2196,6 +2449,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             vae_total = vae_total + (cross_cov_lambda * cross_loss)
                             cross_cov_loss_val = cross_loss.item()
 
+                if sensitivity_loss:
+                    decoder = _get_vae_decoder(vae)
+                    sens_loss, sens_delta = sens_loss_fn(mu, decoder)
+                    vae_total = vae_total + (sensitivity_weight * sens_loss)
+                    sens_loss_val = sens_loss.item()
+                    sens_delta_val = sens_delta.item()
+
                 if covariance_loss:
                     cov_loss = cov_loss_fn(mu, logvar)
                     vae_total = vae_total + cov_loss
@@ -2269,6 +2529,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     epoch_corr_leak.append(corr_leak_loss_val)
                 if cross_cov_loss:
                     epoch_cross_cov.append(cross_cov_loss_val)
+                if sensitivity_loss:
+                    epoch_sens.append(sens_loss_val)
+                    epoch_sens_delta.append(sens_delta_val)
 
             seconds_elapsed = time.time() - epoch_time_start
             timing_log.append(seconds_elapsed)
@@ -2288,15 +2551,31 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_cross_cov_loss = (
                 sum(epoch_cross_cov) / len(epoch_cross_cov) if epoch_cross_cov else 0.0
             )
+            epoch_sens_loss = sum(epoch_sens) / len(epoch_sens) if epoch_sens else 0.0
+            epoch_sens_delta = (
+                sum(epoch_sens_delta) / len(epoch_sens_delta) if epoch_sens_delta else 0.0
+            )
             epoch_sdf_weighted = sdf_loss_weight * (epoch_sdf_loss + epoch_sdf_reg)
             epoch_vae_recon_weighted = vae_recon_weight * epoch_vae_recon_loss
             epoch_vae_kl_weighted = kl_weight * epoch_vae_kl_loss
+
+            sens_log = ""
+            if sensitivity_loss:
+                sens_log = " | sens: {:.6f} | sens_delta: {:.6f}".format(
+                    epoch_sens_loss, epoch_sens_delta
+                )
+                logging.info(
+                    "Sensitivity debug (epoch %d): delta=%.6f target_eta=%.6f",
+                    epoch,
+                    epoch_sens_delta,
+                    float(sensitivity_eta),
+                )
 
             if use_kl:
                 logging.info(
                     "Epoch {} loss: {:.6f} | sdf: {:.6f} | sdf_reg: {:.6f} | "
                     "vae_recon: {:.6f} | vae_kl: {:.6f} | "
-                    "weighted -> sdf: {:.6f} | vae_recon: {:.6f} | vae_kl: {:.6f}".format(
+                    "weighted -> sdf: {:.6f} | vae_recon: {:.6f} | vae_kl: {:.6f}{}".format(
                         epoch,
                         epoch_loss,
                         epoch_sdf_loss,
@@ -2306,12 +2585,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         epoch_sdf_weighted,
                         epoch_vae_recon_weighted,
                         epoch_vae_kl_weighted,
+                        sens_log,
                     )
                 )
             else:
                 logging.info(
                     "Epoch {} loss: {:.6f} | sdf: {:.6f} | sdf_reg: {:.6f} | "
-                    "vae_recon: {:.6f} | weighted -> sdf: {:.6f} | vae_recon: {:.6f}".format(
+                    "vae_recon: {:.6f} | weighted -> sdf: {:.6f} | vae_recon: {:.6f}{}".format(
                         epoch,
                         epoch_loss,
                         epoch_sdf_loss,
@@ -2319,6 +2599,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         epoch_vae_recon_loss,
                         epoch_sdf_weighted,
                         epoch_vae_recon_weighted,
+                        sens_log,
                     )
                 )
             if (
@@ -2376,6 +2657,11 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 summary_writer.add_scalar("Loss/train_leak", epoch_corr_leak_loss, global_step=epoch)
             if cross_cov_loss:
                 summary_writer.add_scalar("Loss/train_cross_cov", epoch_cross_cov_loss, global_step=epoch)
+            if sensitivity_loss:
+                summary_writer.add_scalar("Loss/train_sensitivity", epoch_sens_loss, global_step=epoch)
+                summary_writer.add_scalar(
+                    "Metric/train_sensitivity_delta", epoch_sens_delta, global_step=epoch
+                )
 
             lr_log.append([group["lr"] for group in optimizer.param_groups])
             summary_writer.add_scalar("Learning Rate/VAE", optimizer.param_groups[0]["lr"], global_step=epoch)
@@ -2423,43 +2709,59 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 if eval_metrics is not None:
                     last_train_eval_sdf = eval_metrics.get("eval_sdf_loss")
                     last_train_eval_epoch = epoch
-                train_metrics = compute_disentanglement_metrics(
-                    eval_train_loader,
-                    teacher_latents,
-                    epoch,
-                    "train",
-                    sap_corr_label_map,
-                    sdf_dataset.npyfiles,
+                def _run_label_metrics(eval_loader, split_label, scene_indices):
+                    if eval_loader is None:
+                        return None
+                    metrics = compute_disentanglement_metrics(
+                        eval_loader,
+                        teacher_latents,
+                        epoch,
+                        split_label,
+                        sap_corr_label_map,
+                        sdf_dataset.npyfiles,
+                    )
+                    compute_latent_label_correlation(
+                        sdf_dataset,
+                        teacher_latents,
+                        epoch,
+                        split_label,
+                        sap_corr_label_map,
+                        scene_indices=scene_indices,
+                    )
+                    print_latent_diagnosis_table(
+                        sdf_dataset,
+                        teacher_latents,
+                        epoch,
+                        split_label,
+                        sap_corr_label_map,
+                        scene_indices=scene_indices,
+                    )
+                    log_eval_debug(
+                        eval_loader,
+                        sdf_dataset,
+                        teacher_latents,
+                        epoch,
+                        split_label,
+                        sap_corr_label_map,
+                    )
+                    return metrics
+
+                train_eval_indices_use = None
+                if train_eval_indices is not None:
+                    train_eval_indices_use = train_eval_indices
+                elif hasattr(eval_train_loader.dataset, "indices"):
+                    train_eval_indices_use = eval_train_loader.dataset.indices
+                train_metrics = _run_label_metrics(
+                    eval_train_loader, "train", train_eval_indices_use
                 )
                 if train_metrics and train_metrics.get("sap") is not None:
                     last_train_sap = train_metrics["sap"]
-                train_eval_indices = None
-                if hasattr(eval_train_loader.dataset, "indices"):
-                    train_eval_indices = eval_train_loader.dataset.indices
-                compute_latent_label_correlation(
-                    sdf_dataset,
-                    teacher_latents,
-                    epoch,
-                    "train",
-                    sap_corr_label_map,
-                    scene_indices=train_eval_indices,
-                )
-                print_latent_diagnosis_table(
-                    sdf_dataset,
-                    teacher_latents,
-                    epoch,
-                    "train",
-                    sap_corr_label_map,
-                    scene_indices=train_eval_indices,
-                )
-                log_eval_debug(
-                    eval_train_loader,
-                    sdf_dataset,
-                    teacher_latents,
-                    epoch,
-                    "train",
-                    sap_corr_label_map,
-                )
+                if eval_train_holdout_loader is not None:
+                    _run_label_metrics(
+                        eval_train_holdout_loader,
+                        "train_holdout",
+                        train_holdout_eval_indices,
+                    )
                 generate_eval_meshes(
                     sdf_dataset,
                     teacher_latents,
@@ -2560,178 +2862,182 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     )
 
             if (
-                eval_test_loader is not None
-                and eval_test_frequency is not None
+                eval_test_frequency is not None
                 and eval_test_frequency > 0
                 and epoch % eval_test_frequency == 0
             ):
-                logging.info(
-                    "Test eval status: dataset=%s latents=%s gt_mesh_dir=%s",
-                    "ok" if test_dataset is not None else "missing",
-                    "set" if test_latents is not None else "none",
-                    eval_gt_mesh_dir if eval_gt_mesh_dir is not None else "missing",
-                )
-                if epoch < eval_test_start_epoch:
+                if eval_test_loader is None:
+                    logging.warning(
+                        "EvalTestFrequency set but no test eval loader; skipping eval."
+                    )
+                elif epoch < eval_test_start_epoch:
                     logging.info(
                         "Skipping test eval at epoch %d (start epoch %d).",
                         epoch,
                         eval_test_start_epoch,
                     )
                 else:
-                    test_sdf_loss = None
-                    test_sap = None
-                    test_cd = None
-                    if eval_test_reconstruct:
+                    if eval_test_loader is not None:
+                        logging.info(
+                            "Test eval status: dataset=%s latents=%s gt_mesh_dir=%s",
+                            "ok" if test_dataset is not None else "missing",
+                            "set" if test_latents is not None else "none",
+                            eval_gt_mesh_dir if eval_gt_mesh_dir is not None else "missing",
+                        )
+                        test_sdf_loss = None
+                        test_sap = None
+                        test_cd = None
+                        if eval_test_reconstruct:
+                            subset_indices = (
+                                eval_test_scene_idxs if eval_test_scene_idxs else None
+                            )
+                            test_latents, test_latent_recon = reconstruct_latents_for_dataset(
+                                test_dataset,
+                                sdf_decoder,
+                                data_source,
+                                latent_size,
+                                clamp_dist,
+                                eval_test_num_samples,
+                                eval_test_optimization_steps,
+                                eval_test_latent_lr,
+                                eval_test_latent_l2reg,
+                                eval_test_latent_init_std,
+                                scene_indices=subset_indices,
+                            )
+                            last_test_latent_recon = test_latent_recon
+                            summary_writer.add_scalar(
+                                "Loss/test_latent_recon", test_latent_recon, global_step=epoch
+                            )
+
+                        if test_latents is not None:
+                            logging.info("Test latents shape: %s", tuple(test_latents.shape))
+                        else:
+                            logging.info(
+                                "Test latents not provided; skipping VAE recon loss on test."
+                            )
+
+                        try:
+                            sample_idx = (
+                                eval_test_scene_idxs[0] if eval_test_scene_idxs else 0
+                            )
+                            device = next(vae.parameters()).device
+                            if vae_input_mode == "points":
+                                if test_dataset is not None and getattr(test_dataset, "surface_points", None):
+                                    sample_points = torch.as_tensor(
+                                        test_dataset.surface_points[sample_idx]
+                                    ).unsqueeze(0).to(device)
+                                    with torch.no_grad():
+                                        vae_out = vae(sample_points)
+                                    logging.info(
+                                        "Test VAE shapes: points=%s mu=%s z_hat=%s",
+                                        tuple(sample_points.shape),
+                                        tuple(vae_out["mu"].shape),
+                                        tuple(vae_out["z_hat"].shape),
+                                    )
+                            else:
+                                if test_latents is not None:
+                                    sample_latent = test_latents[sample_idx : sample_idx + 1].to(device)
+                                    with torch.no_grad():
+                                        vae_out = vae(sample_latent)
+                                    logging.info(
+                                        "Test VAE shapes: latent_in=%s mu=%s z_hat=%s",
+                                        tuple(sample_latent.shape),
+                                        tuple(vae_out["mu"].shape),
+                                        tuple(vae_out["z_hat"].shape),
+                                    )
+                        except Exception as exc:
+                            logging.warning("Test VAE shape logging failed: %s", exc)
+
                         subset_indices = (
                             eval_test_scene_idxs if eval_test_scene_idxs else None
                         )
-                        test_latents, test_latent_recon = reconstruct_latents_for_dataset(
-                            test_dataset,
-                            sdf_decoder,
-                            data_source,
-                            latent_size,
-                            clamp_dist,
-                            eval_test_num_samples,
-                            eval_test_optimization_steps,
-                            eval_test_latent_lr,
-                            eval_test_latent_l2reg,
-                            eval_test_latent_init_std,
-                            scene_indices=subset_indices,
-                        )
-                        last_test_latent_recon = test_latent_recon
-                        summary_writer.add_scalar(
-                            "Loss/test_latent_recon", test_latent_recon, global_step=epoch
-                        )
-
-                    if test_latents is not None:
-                        logging.info("Test latents shape: %s", tuple(test_latents.shape))
-                    else:
-                        logging.info(
-                            "Test latents not provided; skipping VAE recon loss on test."
-                        )
-
-                    try:
-                        sample_idx = (
-                            eval_test_scene_idxs[0] if eval_test_scene_idxs else 0
-                        )
-                        device = next(vae.parameters()).device
-                        if vae_input_mode == "points":
-                            if test_dataset is not None and getattr(test_dataset, "surface_points", None):
-                                sample_points = torch.as_tensor(
-                                    test_dataset.surface_points[sample_idx]
-                                ).unsqueeze(0).to(device)
-                                with torch.no_grad():
-                                    vae_out = vae(sample_points)
-                                logging.info(
-                                    "Test VAE shapes: points=%s mu=%s z_hat=%s",
-                                    tuple(sample_points.shape),
-                                    tuple(vae_out["mu"].shape),
-                                    tuple(vae_out["z_hat"].shape),
-                                )
-                        else:
-                            if test_latents is not None:
-                                sample_latent = test_latents[sample_idx : sample_idx + 1].to(device)
-                                with torch.no_grad():
-                                    vae_out = vae(sample_latent)
-                                logging.info(
-                                    "Test VAE shapes: latent_in=%s mu=%s z_hat=%s",
-                                    tuple(sample_latent.shape),
-                                    tuple(vae_out["mu"].shape),
-                                    tuple(vae_out["z_hat"].shape),
-                                )
-                    except Exception as exc:
-                        logging.warning("Test VAE shape logging failed: %s", exc)
-
-                    subset_indices = (
-                        eval_test_scene_idxs if eval_test_scene_idxs else None
-                    )
-                    compute_latent_label_correlation(
-                        test_dataset,
-                        test_latents,
-                        epoch,
-                        "test",
-                        sap_corr_label_map,
-                        scene_indices=subset_indices,
-                    )
-                    print_latent_diagnosis_table(
-                        test_dataset,
-                        test_latents,
-                        epoch,
-                        "test",
-                        sap_corr_label_map,
-                        scene_indices=subset_indices,
-                    )
-                    eval_metrics = run_eval(
-                        eval_test_loader,
-                        test_latents,
-                        epoch,
-                        "eval_test",
-                        kl_weight,
-                        code_reg_weight,
-                    )
-                    if eval_metrics is not None:
-                        last_test_eval_sdf = eval_metrics.get("eval_sdf_loss")
-                        last_test_eval_epoch = epoch
-                        test_sdf_loss = last_test_eval_sdf
-                    test_metrics = compute_disentanglement_metrics(
-                        eval_test_loader,
-                        test_latents,
-                        epoch,
-                        "test",
-                        sap_corr_label_map,
-                        test_dataset.npyfiles if test_dataset is not None else [],
-                    )
-                    if test_metrics and test_metrics.get("sap") is not None:
-                        last_test_sap = test_metrics["sap"]
-                        test_sap = test_metrics["sap"]
-                    elif compute_sap:
-                        logging.error(
-                            "Test SAP unavailable; check SAPCORRLabelsFile or LabelIndex."
-                        )
-                    if vae_input_mode == "latent" and test_latents is None:
-                        logging.error(
-                            "Test latents missing; skipping test mesh generation."
-                        )
-                    else:
-                        generate_eval_meshes(
+                        compute_latent_label_correlation(
                             test_dataset,
                             test_latents,
-                            mesh_test_scene_idxs,
-                            "test",
                             epoch,
+                            "test",
+                            sap_corr_label_map,
+                            scene_indices=subset_indices,
                         )
-                    if eval_gt_mesh_dir is None:
-                        logging.error("EvalGTMeshDir not set; skipping test Chamfer.")
-                    else:
+                        print_latent_diagnosis_table(
+                            test_dataset,
+                            test_latents,
+                            epoch,
+                            "test",
+                            sap_corr_label_map,
+                            scene_indices=subset_indices,
+                        )
+                        eval_metrics = run_eval(
+                            eval_test_loader,
+                            test_latents,
+                            epoch,
+                            "eval_test",
+                            kl_weight,
+                            code_reg_weight,
+                        )
+                        if eval_metrics is not None:
+                            last_test_eval_sdf = eval_metrics.get("eval_sdf_loss")
+                            last_test_eval_epoch = epoch
+                            test_sdf_loss = last_test_eval_sdf
+                        test_metrics = compute_disentanglement_metrics(
+                            eval_test_loader,
+                            test_latents,
+                            epoch,
+                            "test",
+                            sap_corr_label_map,
+                            test_dataset.npyfiles if test_dataset is not None else [],
+                        )
+                        if test_metrics and test_metrics.get("sap") is not None:
+                            last_test_sap = test_metrics["sap"]
+                            test_sap = test_metrics["sap"]
+                        elif compute_sap:
+                            logging.error(
+                                "Test SAP unavailable; check SAPCORRLabelsFile or LabelIndex."
+                            )
                         if vae_input_mode == "latent" and test_latents is None:
                             logging.error(
-                                "Test latents missing; skipping test Chamfer."
+                                "Test latents missing; skipping test mesh generation."
                             )
                         else:
-                            test_cd = compute_chamfer_for_scenes(
+                            generate_eval_meshes(
                                 test_dataset,
                                 test_latents,
                                 mesh_test_scene_idxs,
                                 "test",
                                 epoch,
                             )
-                        if test_cd is not None:
-                            last_test_cd = test_cd
+                        if eval_gt_mesh_dir is None:
+                            logging.error("EvalGTMeshDir not set; skipping test Chamfer.")
+                        else:
+                            if vae_input_mode == "latent" and test_latents is None:
+                                logging.error(
+                                    "Test latents missing; skipping test Chamfer."
+                                )
+                            else:
+                                test_cd = compute_chamfer_for_scenes(
+                                    test_dataset,
+                                    test_latents,
+                                    mesh_test_scene_idxs,
+                                    "test",
+                                    epoch,
+                                )
+                            if test_cd is not None:
+                                last_test_cd = test_cd
 
-                    def _fmt_metric(val):
-                        return "n/a" if val is None else "{:.6f}".format(val)
+                        def _fmt_metric(val):
+                            return "n/a" if val is None else "{:.6f}".format(val)
 
-                    logging.info(
-                        "Epoch %d test summary: eval_count=%d mesh_count=%d "
-                        "test_sdf_loss=%s test_sap=%s test_cd=%s test_latent_recon=%s",
-                        epoch,
-                        len(eval_test_scene_idxs) if eval_test_scene_idxs else 0,
-                        len(mesh_test_scene_idxs) if mesh_test_scene_idxs else 0,
-                        _fmt_metric(test_sdf_loss),
-                        _fmt_metric(test_sap),
-                        _fmt_metric(test_cd),
-                        _fmt_metric(last_test_latent_recon),
-                    )
+                        logging.info(
+                            "Epoch %d test summary: eval_count=%d mesh_count=%d "
+                            "test_sdf_loss=%s test_sap=%s test_cd=%s test_latent_recon=%s",
+                            epoch,
+                            len(eval_test_scene_idxs) if eval_test_scene_idxs else 0,
+                            len(mesh_test_scene_idxs) if mesh_test_scene_idxs else 0,
+                            _fmt_metric(test_sdf_loss),
+                            _fmt_metric(test_sap),
+                            _fmt_metric(test_cd),
+                            _fmt_metric(last_test_latent_recon),
+                        )
 
             summary_writer.add_scalar("Time/epoch (min)", (time.time() - epoch_time_start) / 60, epoch)
             summary_writer.flush()

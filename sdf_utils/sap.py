@@ -34,6 +34,13 @@ def get_bin_index(x, nb_bins):
 
     # discretize input variable
     return np.digitize(x, bins[:-1], right=False).astype(int)
+
+
+def _value_counts(values):
+    if values is None:
+        return {}
+    uniques, counts = np.unique(values, return_counts=True)
+    return {float(u): int(c) for u, c in zip(uniques, counts)}
     
     
 def sap(factors, codes, continuous_factors=True, nb_bins=10, regression=True):
@@ -167,6 +174,43 @@ def _sap_classification_matrix(factors, codes, nb_factors, nb_codes):
     return s_matrix
 
 
+def _sap_classification_predictions(
+    factors, codes, nb_factors, nb_codes, pred_sample_n=0
+):
+    ''' Return prediction summaries for SAP classification. '''
+    pred_info = [[None for _ in range(nb_codes)] for _ in range(nb_factors)]
+    for f in range(nb_factors):
+        for c in range(nb_codes):
+            best_score, best_sp = 0, 0
+            for sp in range(1, 10):
+                clf = tree.DecisionTreeClassifier(max_depth=sp)
+                scores = cross_val_score(
+                    clf,
+                    codes[:, c].reshape(-1, 1),
+                    factors[:, f].reshape(-1, 1),
+                    cv=5,
+                )
+                scores = scores.mean()
+
+                if scores > best_score:
+                    best_score = scores
+                    best_sp = sp
+
+            clf = tree.DecisionTreeClassifier(max_depth=best_sp)
+            clf.fit(codes[:, c].reshape(-1, 1), factors[:, f].reshape(-1, 1))
+            y_pred = clf.predict(codes[:, c].reshape(-1, 1))
+
+            info = {
+                "pred_counts": _value_counts(y_pred),
+                "true_counts": _value_counts(factors[:, f]),
+            }
+            if pred_sample_n and pred_sample_n > 0:
+                info["pred_sample"] = y_pred[:pred_sample_n].tolist()
+            pred_info[f][c] = info
+
+    return pred_info
+
+
 def _sap_classification(factors, codes, nb_factors, nb_codes):
     ''' Compute SAP score using classification algorithms
 
@@ -214,12 +258,176 @@ def sap_score_matrix(factors, codes, continuous_factors=True, nb_bins=10, regres
     return _sap_classification_matrix(factors, codes, nb_factors, nb_codes)
 
 
+def sap_classification_predictions(
+    factors, codes, continuous_factors=True, nb_bins=10, pred_sample_n=0
+):
+    ''' Return prediction summaries for SAP classification (Kumar et al.). '''
+    factors = np.asarray(factors)
+    codes = np.asarray(codes)
+    if factors.ndim == 1:
+        factors = factors.reshape(-1, 1)
+    if codes.ndim != 2:
+        raise ValueError("codes must be 2D [N, D]")
+
+    nb_factors = factors.shape[1]
+    nb_codes = codes.shape[1]
+
+    if continuous_factors:
+        factors = minmax_scale(factors)
+        factors = get_bin_index(factors, nb_bins)
+
+    codes = minmax_scale(codes)
+    return _sap_classification_predictions(
+        factors, codes, nb_factors, nb_codes, pred_sample_n=pred_sample_n
+    )
+
+
+def sap_classification_holdout_predictions(
+    factors,
+    codes,
+    continuous_factors=True,
+    nb_bins=10,
+    train_frac=0.8,
+    random_state=0,
+    pred_sample_n=0,
+):
+    ''' Return train/test prediction summaries for SAP classification. '''
+    factors = np.asarray(factors)
+    codes = np.asarray(codes)
+    if factors.ndim == 1:
+        factors = factors.reshape(-1, 1)
+    if codes.ndim != 2:
+        raise ValueError("codes must be 2D [N, D]")
+
+    n_samples = factors.shape[0]
+    nb_factors = factors.shape[1]
+    nb_codes = codes.shape[1]
+    train_acc = np.full((nb_factors, nb_codes), np.nan, dtype=float)
+    test_acc = np.full((nb_factors, nb_codes), np.nan, dtype=float)
+    pred_info = [[None for _ in range(nb_codes)] for _ in range(nb_factors)]
+
+    if n_samples < 4:
+        return train_acc, test_acc, pred_info
+
+    if continuous_factors:
+        factors = minmax_scale(factors)
+        factors = get_bin_index(factors, nb_bins)
+
+    codes = minmax_scale(codes)
+
+    for f in range(nb_factors):
+        y = factors[:, f].reshape(-1)
+        for c in range(nb_codes):
+            x = codes[:, c].reshape(-1, 1)
+            mask = np.isfinite(y) & np.isfinite(x).reshape(-1)
+            y_valid = y[mask]
+            x_valid = x[mask]
+
+            if y_valid.size < 4:
+                continue
+            if np.unique(y_valid).size < 2:
+                continue
+
+            test_size = max(1, int(round((1.0 - train_frac) * y_valid.size)))
+            train_size = y_valid.size - test_size
+            if train_size < 2:
+                continue
+
+            stratify = y_valid if np.unique(y_valid).size > 1 else None
+            try:
+                x_train, x_test, y_train, y_test = train_test_split(
+                    x_valid,
+                    y_valid,
+                    test_size=test_size,
+                    train_size=train_size,
+                    random_state=random_state,
+                    stratify=stratify,
+                )
+            except ValueError:
+                x_train, x_test, y_train, y_test = train_test_split(
+                    x_valid,
+                    y_valid,
+                    test_size=test_size,
+                    train_size=train_size,
+                    random_state=random_state,
+                    stratify=None,
+                )
+
+            best_score, best_sp = 0, 0
+            for sp in range(1, 10):
+                clf = tree.DecisionTreeClassifier(max_depth=sp)
+                try:
+                    scores = cross_val_score(
+                        clf,
+                        x_train,
+                        y_train,
+                        cv=5,
+                    )
+                    scores = scores.mean()
+                except ValueError:
+                    scores = 0
+
+                if scores > best_score:
+                    best_score = scores
+                    best_sp = sp
+
+            clf = tree.DecisionTreeClassifier(max_depth=best_sp)
+            clf.fit(x_train, y_train)
+
+            y_pred_train = clf.predict(x_train)
+            y_pred_test = clf.predict(x_test)
+            train_acc[f, c] = accuracy_score(y_train, y_pred_train)
+            test_acc[f, c] = accuracy_score(y_test, y_pred_test)
+
+            info = {
+                "train_pred_counts": _value_counts(y_pred_train),
+                "train_true_counts": _value_counts(y_train),
+                "test_pred_counts": _value_counts(y_pred_test),
+                "test_true_counts": _value_counts(y_test),
+            }
+            if pred_sample_n and pred_sample_n > 0:
+                info["train_pred_sample"] = y_pred_train[:pred_sample_n].tolist()
+                info["test_pred_sample"] = y_pred_test[:pred_sample_n].tolist()
+            pred_info[f][c] = info
+
+    return train_acc, test_acc, pred_info
+
+
+def sap_regression_predictions(factors, codes, pred_sample_n=0):
+    ''' Return prediction summaries for SAP regression (Kumar et al.). '''
+    factors = np.asarray(factors)
+    codes = np.asarray(codes)
+    if factors.ndim == 1:
+        factors = factors.reshape(-1, 1)
+    if codes.ndim != 2:
+        raise ValueError("codes must be 2D [N, D]")
+
+    nb_factors = factors.shape[1]
+    nb_codes = codes.shape[1]
+    pred_info = [[None for _ in range(nb_codes)] for _ in range(nb_factors)]
+    for f in range(nb_factors):
+        for c in range(nb_codes):
+            regr = LinearRegression()
+            regr.fit(codes[:, c].reshape(-1, 1), factors[:, f].reshape(-1, 1))
+            y_pred = regr.predict(codes[:, c].reshape(-1, 1)).reshape(-1)
+            info = {
+                "pred_mean": float(np.mean(y_pred)) if y_pred.size else float("nan"),
+                "pred_std": float(np.std(y_pred)) if y_pred.size else float("nan"),
+            }
+            if pred_sample_n and pred_sample_n > 0:
+                info["pred_sample"] = y_pred[:pred_sample_n].tolist()
+            pred_info[f][c] = info
+    return pred_info
+
+
 def sap_binary_classification_locatello(
     factors,
     codes,
     train_frac=0.8,
     C=0.01,
     random_state=0,
+    return_predictions=False,
+    pred_sample_n=0,
 ):
     ''' SAP binary classification using Locatello-style protocol.
 
@@ -238,6 +446,9 @@ def sap_binary_classification_locatello(
     nb_factors = factors.shape[1]
     nb_codes = codes.shape[1]
     error_matrix = np.full((nb_factors, nb_codes), np.nan, dtype=float)
+    pred_info = None
+    if return_predictions:
+        pred_info = [[None for _ in range(nb_codes)] for _ in range(nb_factors)]
 
     if n_samples < 4:
         return float("nan"), error_matrix
@@ -289,6 +500,15 @@ def sap_binary_classification_locatello(
             y_pred = clf.predict(x_test)
             error = 1.0 - accuracy_score(y_test, y_pred)
             error_matrix[f, c] = error
+            if return_predictions:
+                info = {
+                    "pred_counts": _value_counts(y_pred),
+                    "true_counts": _value_counts(y_test),
+                }
+                if pred_sample_n and pred_sample_n > 0:
+                    info["pred_sample"] = y_pred[:pred_sample_n].tolist()
+                    info["true_sample"] = y_test[:pred_sample_n].tolist()
+                pred_info[f][c] = info
 
     gaps = []
     for f in range(nb_factors):
@@ -300,4 +520,6 @@ def sap_binary_classification_locatello(
         gaps.append(vals_sorted[1] - vals_sorted[0])
 
     sap_score = float(np.mean(gaps)) if gaps else float("nan")
+    if return_predictions:
+        return sap_score, error_matrix, pred_info
     return sap_score, error_matrix
