@@ -151,5 +151,19 @@
   "EvalTrainSceneNumber": 100,
   "EvalMeshTrainSceneNumber": 2,
   "TrainLatentHoldoutFraction": 0.1,
-  "TrainLatentHoldoutSeed": 0
+  "TrainLatentHoldoutSeed": 0,
+  "SensitivityLoss": true,
+  "SensitivityEps": 0.02,
+  "SensitivityEta": 0.02,
+  "SensitivityWeight": 0.5,
+  "SensitivityLatentIndex": 0,
+  "RankLoss": true,
+  "RankLossMargin": 0.5,
+  "RankLossTargetDim": 0,
+  "RankLossCNLabel": 0,
+  "RankLossWeight": 0.1,
+  "MatchStdLoss": true,
+  "MatchStdWeight": 0.1,
+  "MatchStdTargetDim": 0,
+  "MatchStdEps": 1e-6
 }

@@ -242,8 +242,76 @@ class SensitivityLoss(nn.Module):
         c_plus = decoder(z_plus)
         c_minus = decoder(z_minus)
         delta = torch.norm(c_plus - c_minus, dim=1).mean()
-        loss = F.relu(self.eta - delta) ** 2
+        loss = (F.relu(self.eta - delta) / self.eta) ** 2
         return loss, delta
+
+
+class RankLossZ0(nn.Module):
+    """
+    Pairwise hinge ranking loss on a target latent dimension.
+
+    Enforces z[target_dim] to be larger for CN than AD by a margin.
+    """
+
+    def __init__(self, margin: float = 0.5, target_dim: int = 0, cn_label: int = 1):
+        super().__init__()
+        self.margin = float(margin)
+        self.target_dim = int(target_dim)
+        self.cn_label = int(cn_label)
+
+    def forward(self, z: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        if z.dim() != 2:
+            z = z.view(z.size(0), -1)
+        if z.size(0) == 0:
+            return z.new_tensor(0.0)
+        if self.target_dim < 0 or self.target_dim >= z.size(1):
+            raise ValueError(
+                f"target_dim {self.target_dim} out of range for D={z.size(1)}"
+            )
+
+        z0 = z[:, self.target_dim]
+        y = y.view(-1)
+        cn = z0[y == self.cn_label]
+        ad = z0[y != self.cn_label]
+        if cn.numel() == 0 or ad.numel() == 0:
+            return z0.new_tensor(0.0)
+
+        diffs = cn.unsqueeze(1) - ad.unsqueeze(0)  # [nCN, nAD]
+        loss = F.relu(self.margin - diffs).mean()
+        return loss
+
+
+class MatchStdZ0(nn.Module):
+    """
+    Match the std of a target latent dimension to the mean std of other dims.
+    """
+
+    def __init__(self, target_dim: int = 0, eps: float = 1e-6):
+        super().__init__()
+        self.target_dim = int(target_dim)
+        self.eps = float(eps)
+
+    def forward(self, z: torch.Tensor):
+        if z.dim() != 2:
+            z = z.view(z.size(0), -1)
+        if z.size(0) == 0:
+            zero = z.new_tensor(0.0)
+            return zero, zero.detach(), zero.detach()
+        if self.target_dim < 0 or self.target_dim >= z.size(1):
+            raise ValueError(
+                f"target_dim {self.target_dim} out of range for D={z.size(1)}"
+            )
+
+        z0 = z[:, self.target_dim]
+        std0 = z0.std(unbiased=False).clamp_min(self.eps)
+
+        if z.size(1) <= 1:
+            return (std0 - std0).pow(2), std0.detach(), std0.detach()
+
+        other = torch.cat([z[:, : self.target_dim], z[:, self.target_dim + 1 :]], dim=1)
+        std_ref = other.std(dim=0, unbiased=False).mean().clamp_min(self.eps)
+
+        return (std0 - std_ref).pow(2), std0.detach(), std_ref.detach()
 
 
 class IsometryLoss(nn.Module):

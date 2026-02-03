@@ -33,7 +33,7 @@ def _load_decoder_weights(exp_dir, checkpoint, model, device):
 
 def parse_args():
     default_base = Path(__file__).resolve().parent
-    default_experiment = default_base / "minimal_eikonal_cov_256D_no_lambda"
+    default_experiment = default_base / "minimal_eikonal_gmm"
     default_gt_mesh = Path(
         "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/minimal_scaled_obj_files"
     )

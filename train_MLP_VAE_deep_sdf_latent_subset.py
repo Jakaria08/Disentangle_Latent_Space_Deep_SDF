@@ -11,13 +11,23 @@ import time
 import logging
 import random
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import LinearSVC
+from sklearn import tree
 
 import deep_sdf
 from deep_sdf import lr_scheduling, loss as deep_sdf_loss, mesh, metrics
+from deep_sdf import loss_subset as deep_sdf_loss_subset
 import deep_sdf.workspace as ws
 from sdf_utils import sap as sap_metric
-from sdf_utils import dci as dci_metric
-from sdf_utils import mig as mig_metric
+from sdf_utils import sap_latent_subset as sap_subset
+from sdf_utils import dci_latent_subset as dci_subset
+from sdf_utils import mig_latent_subset as mig_subset
 
 from networks import residual_mlp_vae, pointnet_vae
 import reconstruct
@@ -643,6 +653,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     covariance_lambda = get_spec_with_default(specs, "CovarianceLossLambda", 1.0)
     label_index = get_spec_with_default(specs, "LabelIndex", 0)
     attribute_latent_index = get_spec_with_default(specs, "AttributeLatentIndex", 0)
+    attribute_subset = get_spec_with_default(specs, "AttributeSubset", None)
     snnl_target_dim = get_spec_with_default(specs, "SNNLTargetDim", 0)
     snnl_reg_threshold = get_spec_with_default(specs, "SNNLRegThreshold", 0.05)
     snnl_reg_pos_mode = get_spec_with_default(specs, "SNNLRegPosMode", "threshold")
@@ -669,6 +680,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     age_snnl_reg_normalize_z = get_spec_with_default(
         specs, "AgeSNNLRegNormalizeZ", snnl_reg_normalize_z
     )
+    disease_latent_count = get_spec_with_default(specs, "DiseaseLatentCount", None)
+    age_latent_count = get_spec_with_default(specs, "AgeLatentCount", None)
+    other_latent_count = get_spec_with_default(specs, "OtherLatentCount", None)
+    disease_label_index = get_spec_with_default(specs, "DiseaseLabelIndex", label_index)
+    age_label_index = get_spec_with_default(
+        specs, "AgeLabelIndex", age_snnl_reg_label_index
+    )
+    kl_subset_weights = get_spec_with_default(specs, "KLSubsetWeights", None)
+    kl_disease_weight = float(get_spec_with_default(specs, "KLDiseaseWeight", 1.0))
+    kl_age_weight = float(get_spec_with_default(specs, "KLAgeWeight", 1.0))
+    kl_other_weight = float(get_spec_with_default(specs, "KLOtherWeight", 1.0))
+    if isinstance(kl_subset_weights, dict):
+        kl_disease_weight = float(kl_subset_weights.get("disease", kl_disease_weight))
+        kl_age_weight = float(kl_subset_weights.get("age", kl_age_weight))
+        kl_other_weight = float(kl_subset_weights.get("other", kl_other_weight))
     corr_leakage_loss = get_spec_with_default(specs, "CorrLeakageLoss", False)
     corr_leakage_lambda = get_spec_with_default(specs, "CorrLeakageLambda", 1.0)
     cross_cov_loss = get_spec_with_default(specs, "CrossCovLoss", False)
@@ -678,15 +704,18 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     sensitivity_eta = get_spec_with_default(specs, "SensitivityEta", 0.0025)
     sensitivity_weight = get_spec_with_default(specs, "SensitivityWeight", 0.1)
     sensitivity_target_dim = get_spec_with_default(specs, "SensitivityLatentIndex", 0)
+    sensitivity_subset = get_spec_with_default(specs, "SensitivitySubset", "disease")
     rank_loss = get_spec_with_default(specs, "RankLoss", False)
     rank_margin = get_spec_with_default(specs, "RankLossMargin", 0.5)
     rank_weight = get_spec_with_default(specs, "RankLossWeight", 0.1)
     rank_target_dim = get_spec_with_default(specs, "RankLossTargetDim", 0)
     rank_cn_label = get_spec_with_default(specs, "RankLossCNLabel", 1)
+    rank_subset = get_spec_with_default(specs, "RankLossSubset", "disease")
     matchstd_loss = get_spec_with_default(specs, "MatchStdLoss", False)
     matchstd_weight = get_spec_with_default(specs, "MatchStdWeight", 0.1)
     matchstd_target_dim = get_spec_with_default(specs, "MatchStdTargetDim", 0)
     matchstd_eps = get_spec_with_default(specs, "MatchStdEps", 1e-6)
+    matchstd_subset = get_spec_with_default(specs, "MatchStdSubset", "disease")
     leakage_target_dim = get_spec_with_default(
         specs, "LeakageTargetDim", attribute_latent_index
     )
@@ -709,6 +738,54 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         get_spec_with_default(specs, "TrainLatentHoldoutFraction", 0.0)
     )
     train_latent_holdout_seed = get_spec_with_default(specs, "TrainLatentHoldoutSeed", 0)
+
+    if (
+        disease_latent_count is None
+        or age_latent_count is None
+        or other_latent_count is None
+    ):
+        raise RuntimeError(
+            "DiseaseLatentCount, AgeLatentCount, and OtherLatentCount must be set for latent subset training."
+        )
+    disease_latent_count = int(disease_latent_count)
+    age_latent_count = int(age_latent_count)
+    other_latent_count = int(other_latent_count)
+    if disease_latent_count + age_latent_count + other_latent_count != vae_latent_dim:
+        raise RuntimeError(
+            "Latent subset counts must sum to VAELatentDim ({}): disease={} age={} other={}".format(
+                vae_latent_dim, disease_latent_count, age_latent_count, other_latent_count
+            )
+        )
+    disease_dims = list(range(0, disease_latent_count))
+    age_dims = list(range(disease_latent_count, disease_latent_count + age_latent_count))
+    other_dims = list(
+        range(
+            disease_latent_count + age_latent_count,
+            disease_latent_count + age_latent_count + other_latent_count,
+        )
+    )
+
+    def _subset_to_dims(name):
+        name = str(name).lower()
+        if name == "disease":
+            return disease_dims
+        if name == "age":
+            return age_dims
+        if name == "other":
+            return other_dims
+        raise RuntimeError(f"Unknown subset name: {name}")
+    logging.info(
+        "Latent subsets: disease=%s age=%s other=%s",
+        disease_dims,
+        age_dims,
+        other_dims,
+    )
+    logging.info(
+        "KL subset weights: disease=%.3f age=%.3f other=%.3f",
+        kl_disease_weight,
+        kl_age_weight,
+        kl_other_weight,
+    )
 
     compute_sap = get_spec_with_default(specs, "ComputeSAP", False)
     compute_dci = get_spec_with_default(specs, "ComputeDCI", True)
@@ -748,6 +825,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     sap_kumar_holdout = get_spec_with_default(specs, "SAPKumarHoldout", False)
     sap_kumar_holdout_frac = float(get_spec_with_default(specs, "SAPKumarHoldoutFrac", 0.8))
     sap_kumar_holdout_seed = get_spec_with_default(specs, "SAPKumarHoldoutSeed", 0)
+    if sap_debug_predictions:
+        logging.warning(
+            "Subset training: SAPDebugPredictions is per-latent; subset script ignores it."
+        )
+    if sap_kumar_holdout:
+        logging.info("Subset training: SAPKumarHoldout enabled (subset-level holdout SAP).")
 
 
 
@@ -1176,14 +1259,19 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     if guided_contrastive_loss:
         snnl_type_norm = str(snnl_type).lower()
         if snnl_type_norm in ("reg", "reg_fast", "regloss"):
-            snn_loss_fn = deep_sdf_loss.SNNRegLoss(
-                snnl_temp,
-                snnl_reg_threshold,
+            snn_loss_fn = deep_sdf_loss_subset.SNNRegLossExactGroup(
+                T=snnl_temp,
+                target_dims=disease_dims,
+                threshold=snnl_reg_threshold,
+                pos_mode=snnl_reg_pos_mode,
+                topk_frac=snnl_reg_topk_frac,
+                use_adaptive_T=snnl_reg_use_adaptive_T,
+                normalize_z=snnl_reg_normalize_z,
             )
         elif snnl_type_norm in ("reg_exact", "regexact", "regloss_exact"):
-            snn_loss_fn = deep_sdf_loss.SNNRegLossExact(
+            snn_loss_fn = deep_sdf_loss_subset.SNNRegLossExactGroup(
                 T=snnl_temp,
-                target_dim=snnl_target_dim,
+                target_dims=disease_dims,
                 threshold=snnl_reg_threshold,
                 pos_mode=snnl_reg_pos_mode,
                 topk_frac=snnl_reg_topk_frac,
@@ -1191,16 +1279,18 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 normalize_z=snnl_reg_normalize_z,
             )
         elif snnl_type_norm in ("cls", "class", "classification"):
-            snn_loss_fn = deep_sdf_loss.SNNLossCls(
+            snn_loss_fn = deep_sdf_loss_subset.SNNLossClsGroup(
                 T=snnl_temp,
-                target_dim=snnl_target_dim,
+                target_dims=disease_dims,
+                normalize_z=snnl_reg_normalize_z,
+                use_adaptive_T=snnl_reg_use_adaptive_T,
             )
         else:
             raise ValueError(f"Unsupported SNNLType: {snnl_type}")
     age_snnl_reg_fn = (
-        deep_sdf_loss.SNNRegLossExact(
+        deep_sdf_loss_subset.SNNRegLossExactGroup(
             T=age_snnl_reg_temp,
-            target_dim=age_snnl_reg_target_dim,
+            target_dims=age_dims,
             threshold=age_snnl_reg_threshold,
             pos_mode=age_snnl_reg_pos_mode,
             topk_frac=age_snnl_reg_topk_frac,
@@ -1212,33 +1302,36 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     )
     attr_loss_fn = deep_sdf_loss.AttributeLoss() if attribute_loss else None
     sens_loss_fn = (
-        deep_sdf_loss.SensitivityLoss(
+        deep_sdf_loss_subset.SensitivityGroupLoss(
             eps=sensitivity_eps,
             eta=sensitivity_eta,
-            target_dim=sensitivity_target_dim,
+            target_dims=_subset_to_dims(sensitivity_subset),
         )
         if sensitivity_loss
         else None
     )
     rank_loss_fn = (
-        deep_sdf_loss.RankLossZ0(
+        deep_sdf_loss_subset.RankLossGroup(
             margin=rank_margin,
-            target_dim=rank_target_dim,
+            target_dims=_subset_to_dims(rank_subset),
             cn_label=rank_cn_label,
         )
         if rank_loss
         else None
     )
     matchstd_loss_fn = (
-        deep_sdf_loss.MatchStdZ0(
-            target_dim=matchstd_target_dim,
+        deep_sdf_loss_subset.MatchStdGroup(
+            target_dims=_subset_to_dims(matchstd_subset),
             eps=matchstd_eps,
         )
         if matchstd_loss
         else None
     )
     cov_loss_fn = (
-        deep_sdf_loss.DIPVAEIILoss(beta=covariance_lambda)
+        deep_sdf_loss_subset.CovarianceSubsetLoss(
+            subsets={"disease": disease_dims, "age": age_dims, "other": other_dims},
+            beta=covariance_lambda,
+        )
         if covariance_loss
         else None
     )
@@ -1665,141 +1758,1242 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
         return factors_np[mask], codes_vae_np[mask]
 
+    def _pca1_scores_np(x):
+        if x.ndim != 2:
+            x = x.reshape(x.shape[0], -1)
+        B, D = x.shape
+        if B == 0:
+            return np.zeros((0,))
+        x_centered = x - x.mean(axis=0, keepdims=True)
+        if D == 1:
+            return x_centered[:, 0]
+        if B <= 1:
+            return np.zeros((B,))
+        cov = (x_centered.T @ x_centered) / max(B - 1, 1)
+        eigvals, eigvecs = np.linalg.eigh(cov)
+        v1 = eigvecs[:, -1]
+        return x_centered @ v1
+
+    def _subset_corrs_from_labels(latents_np, labels_np):
+        out = {
+            "pca": {"disease": None, "age": None, "other": None},
+            "mean": {"disease": None, "age": None, "other": None},
+        }
+        if labels_np is None or latents_np is None:
+            return out
+        if labels_np.shape[0] != latents_np.shape[0]:
+            return out
+        mask = np.isfinite(labels_np) & (labels_np != -1)
+        if mask.sum() < 2:
+            return out
+        latents = latents_np[mask]
+        y = labels_np[mask].astype(float)
+        y = (y - y.mean()) / (y.std() + 1e-8)
+        for name, dims in (("disease", disease_dims), ("age", age_dims), ("other", other_dims)):
+            if not dims:
+                out["pca"][name] = None
+                out["mean"][name] = None
+                continue
+            x = latents[:, dims]
+            s_pca = _pca1_scores_np(x)
+            if np.std(s_pca) == 0 or np.std(y) == 0:
+                out["pca"][name] = float("nan")
+            else:
+                s_pca = (s_pca - s_pca.mean()) / (s_pca.std() + 1e-8)
+                out["pca"][name] = float((s_pca * y).mean())
+            s_mean = x.mean(axis=1)
+            if np.std(s_mean) == 0 or np.std(y) == 0:
+                out["mean"][name] = float("nan")
+            else:
+                s_mean = (s_mean - s_mean.mean()) / (s_mean.std() + 1e-8)
+                out["mean"][name] = float((s_mean * y).mean())
+        return out
+
+    def _regression_holdout_gap(y_vals, codes_sub):
+        mask = np.isfinite(y_vals) & np.all(np.isfinite(codes_sub), axis=1)
+        if mask.sum() < 4:
+            return None
+        y_valid = y_vals[mask]
+        x_valid = codes_sub[mask]
+        n_samples = y_valid.shape[0]
+        test_size = max(1, int(round((1.0 - sap_kumar_holdout_frac) * n_samples)))
+        train_size = n_samples - test_size
+        if train_size < 2:
+            return None
+        idx = np.arange(n_samples)
+        try:
+            idx_train, idx_test = train_test_split(
+                idx,
+                test_size=test_size,
+                train_size=train_size,
+                random_state=sap_kumar_holdout_seed,
+                shuffle=True,
+            )
+        except ValueError:
+            return None
+
+        scores = []
+        for d in range(x_valid.shape[1]):
+            x_train = x_valid[idx_train, d].reshape(-1, 1)
+            x_test = x_valid[idx_test, d].reshape(-1, 1)
+            y_train = y_valid[idx_train]
+            y_test = y_valid[idx_test]
+            if np.std(x_train) == 0 or np.std(y_train) == 0:
+                scores.append(np.nan)
+                continue
+            regr = LinearRegression()
+            regr.fit(x_train, y_train)
+            y_pred = regr.predict(x_test)
+            try:
+                score = float(r2_score(y_test, y_pred))
+            except ValueError:
+                score = np.nan
+            scores.append(score)
+
+        vals = np.array(scores, dtype=float)
+        vals = vals[np.isfinite(vals)]
+        if vals.size < 2:
+            return None
+        vals_sorted = np.sort(vals)
+        return {
+            "gap": float(vals_sorted[-1] - vals_sorted[-2]),
+            "best": float(vals_sorted[-1]),
+        }
+
+    def _classification_holdout_gap(factors_sub, codes_sub, cfg):
+        try:
+            train_acc, test_acc, _ = sap_metric.sap_classification_holdout_predictions(
+                factors_sub,
+                codes_sub,
+                continuous_factors=cfg.get("continuous_factors", True),
+                nb_bins=cfg.get("nb_bins", 10),
+                train_frac=sap_kumar_holdout_frac,
+                random_state=sap_kumar_holdout_seed,
+                pred_sample_n=0,
+            )
+        except Exception:
+            return None
+        if test_acc is None or test_acc.shape[0] == 0:
+            return None
+        vals = np.array(test_acc[0], dtype=float)
+        vals = vals[np.isfinite(vals)]
+        if vals.size < 2:
+            return None
+        vals_sorted = np.sort(vals)
+        return {
+            "gap": float(vals_sorted[-1] - vals_sorted[-2]),
+            "best": float(vals_sorted[-1]),
+        }
+
+    def _sap_holdout_for_subset(factors, codes, dims, cfg):
+        if factors is None or codes is None:
+            return None
+        label_indices = cfg.get("label_indices")
+        if label_indices is None:
+            return None
+        if isinstance(label_indices, int):
+            label_indices = [label_indices]
+        if len(label_indices) != 1:
+            return None
+        y = factors[:, label_indices[0]]
+        x = codes[:, dims]
+        if x.ndim != 2 or x.shape[0] != y.shape[0]:
+            return None
+        if cfg.get("regression", True):
+            return _regression_holdout_gap(y, x)
+        return _classification_holdout_gap(y.reshape(-1, 1), x, cfg)
+
+    def _prepare_classification_labels(factors, cfg):
+        label_indices = cfg.get("label_indices")
+        if label_indices is None:
+            return None
+        if isinstance(label_indices, int):
+            label_indices = [label_indices]
+        if len(label_indices) != 1:
+            return None
+        y = factors[:, label_indices[0]]
+        if cfg.get("continuous_factors", False):
+            y = sap_metric.minmax_scale(y)
+            y = sap_metric.get_bin_index(y, cfg.get("nb_bins", 10))
+        return np.asarray(y).reshape(-1)
+
+    def _subset_scores_classification_old(factors, codes, subsets, cfg):
+        scores = {}
+        if factors is None or codes is None:
+            return scores
+        y = _prepare_classification_labels(factors, cfg)
+        if y is None:
+            return scores
+        if np.unique(y).size < 2:
+            for name in subsets:
+                scores[name] = 0.0
+            return scores
+        for name, dims in subsets.items():
+            x = codes[:, dims]
+            if x.size == 0 or x.shape[0] < 4:
+                scores[name] = 0.0
+                continue
+            best_score, best_sp = 0, 0
+            for sp in range(1, 10):
+                clf = tree.DecisionTreeClassifier(max_depth=sp)
+                try:
+                    cv = cross_val_score(clf, x, y, cv=5).mean()
+                except Exception:
+                    cv = 0.0
+                if cv > best_score:
+                    best_score, best_sp = cv, sp
+            clf = tree.DecisionTreeClassifier(max_depth=best_sp)
+            try:
+                clf.fit(x, y)
+                y_pred = clf.predict(x)
+                scores[name] = float(accuracy_score(y, y_pred))
+            except Exception:
+                scores[name] = 0.0
+        return scores
+
+    def _subset_scores_classification_holdout(factors, codes, subsets, cfg):
+        scores = {}
+        if factors is None or codes is None:
+            return scores
+        y = _prepare_classification_labels(factors, cfg)
+        if y is None:
+            return scores
+        if np.unique(y).size < 2:
+            for name in subsets:
+                scores[name] = 0.0
+            return scores
+        n_samples = y.shape[0]
+        test_size = max(1, int(round((1.0 - sap_kumar_holdout_frac) * n_samples)))
+        train_size = n_samples - test_size
+        if train_size < 2:
+            for name in subsets:
+                scores[name] = 0.0
+            return scores
+        try:
+            idx = np.arange(n_samples)
+            idx_train, idx_test = train_test_split(
+                idx,
+                test_size=test_size,
+                train_size=train_size,
+                random_state=sap_kumar_holdout_seed,
+                stratify=y if np.unique(y).size > 1 else None,
+            )
+        except Exception:
+            idx_train = np.arange(0, train_size)
+            idx_test = np.arange(train_size, n_samples)
+        for name, dims in subsets.items():
+            x = codes[:, dims]
+            if x.size == 0 or x.shape[0] < 4:
+                scores[name] = 0.0
+                continue
+            x_train = x[idx_train]
+            y_train = y[idx_train]
+            x_test = x[idx_test]
+            y_test = y[idx_test]
+            if np.unique(y_train).size < 2 or np.unique(y_test).size < 2:
+                scores[name] = 0.0
+                continue
+            best_score, best_sp = 0, 0
+            for sp in range(1, 10):
+                clf = tree.DecisionTreeClassifier(max_depth=sp)
+                try:
+                    cv = cross_val_score(clf, x_train, y_train, cv=5).mean()
+                except Exception:
+                    cv = 0.0
+                if cv > best_score:
+                    best_score, best_sp = cv, sp
+            clf = tree.DecisionTreeClassifier(max_depth=best_sp)
+            try:
+                clf.fit(x_train, y_train)
+                y_pred = clf.predict(x_test)
+                scores[name] = float(accuracy_score(y_test, y_pred))
+            except Exception:
+                scores[name] = 0.0
+        return scores
+
+    def _subset_scores_classification_locatello(factors, codes, subsets, cfg):
+        scores = {}
+        if factors is None or codes is None:
+            return scores
+        y = _prepare_classification_labels(factors, cfg)
+        if y is None:
+            return scores
+        if np.unique(y).size < 2:
+            for name in subsets:
+                scores[name] = 0.0
+            return scores
+        n_samples = y.shape[0]
+        test_size = max(1, int(round((1.0 - sap_kumar_holdout_frac) * n_samples)))
+        train_size = n_samples - test_size
+        if train_size < 2:
+            for name in subsets:
+                scores[name] = 0.0
+            return scores
+        try:
+            idx = np.arange(n_samples)
+            idx_train, idx_test = train_test_split(
+                idx,
+                test_size=test_size,
+                train_size=train_size,
+                random_state=sap_kumar_holdout_seed,
+                stratify=y if np.unique(y).size > 1 else None,
+            )
+        except Exception:
+            idx_train = np.arange(0, train_size)
+            idx_test = np.arange(train_size, n_samples)
+        for name, dims in subsets.items():
+            x = codes[:, dims]
+            if x.size == 0 or x.shape[0] < 4:
+                scores[name] = 0.0
+                continue
+            x_train = x[idx_train]
+            y_train = y[idx_train]
+            x_test = x[idx_test]
+            y_test = y[idx_test]
+            if np.unique(y_train).size < 2 or np.unique(y_test).size < 2:
+                scores[name] = 0.0
+                continue
+            scaler = StandardScaler()
+            try:
+                x_train = scaler.fit_transform(x_train)
+                x_test = scaler.transform(x_test)
+                clf = LinearSVC(C=0.01, max_iter=5000)
+                clf.fit(x_train, y_train)
+                y_pred = clf.predict(x_test)
+                scores[name] = float(accuracy_score(y_test, y_pred))
+            except Exception:
+                scores[name] = 0.0
+        return scores
+
+    def _subset_scores_regression_old(factors, codes, subsets, cfg):
+        scores = {}
+        if factors is None or codes is None:
+            return scores
+        label_indices = cfg.get("label_indices")
+        if label_indices is None:
+            return scores
+        if isinstance(label_indices, int):
+            label_indices = [label_indices]
+        if len(label_indices) != 1:
+            return scores
+        y = factors[:, label_indices[0]]
+        for name, dims in subsets.items():
+            x = codes[:, dims]
+            if x.size == 0 or x.shape[0] < 4:
+                scores[name] = 0.0
+                continue
+            try:
+                regr = LinearRegression()
+                regr.fit(x, y)
+                y_pred = regr.predict(x)
+                scores[name] = float(r2_score(y, y_pred))
+            except Exception:
+                scores[name] = 0.0
+        return scores
+
+    def _subset_scores_regression_holdout(factors, codes, subsets, cfg, use_scaler=False):
+        scores = {}
+        if factors is None or codes is None:
+            return scores
+        label_indices = cfg.get("label_indices")
+        if label_indices is None:
+            return scores
+        if isinstance(label_indices, int):
+            label_indices = [label_indices]
+        if len(label_indices) != 1:
+            return scores
+        y = factors[:, label_indices[0]]
+        n_samples = y.shape[0]
+        test_size = max(1, int(round((1.0 - sap_kumar_holdout_frac) * n_samples)))
+        train_size = n_samples - test_size
+        if train_size < 2:
+            for name in subsets:
+                scores[name] = 0.0
+            return scores
+        idx = np.arange(n_samples)
+        try:
+            idx_train, idx_test = train_test_split(
+                idx,
+                test_size=test_size,
+                train_size=train_size,
+                random_state=sap_kumar_holdout_seed,
+                shuffle=True,
+            )
+        except Exception:
+            idx_train = np.arange(0, train_size)
+            idx_test = np.arange(train_size, n_samples)
+        for name, dims in subsets.items():
+            x = codes[:, dims]
+            if x.size == 0 or x.shape[0] < 4:
+                scores[name] = 0.0
+                continue
+            x_train = x[idx_train]
+            x_test = x[idx_test]
+            y_train = y[idx_train]
+            y_test = y[idx_test]
+            if use_scaler:
+                scaler = StandardScaler()
+                x_train = scaler.fit_transform(x_train)
+                x_test = scaler.transform(x_test)
+            try:
+                regr = LinearRegression()
+                regr.fit(x_train, y_train)
+                y_pred = regr.predict(x_test)
+                scores[name] = float(r2_score(y_test, y_pred))
+            except Exception:
+                scores[name] = 0.0
+        return scores
+
+    def _corr_from_preds(y_true, y_pred):
+        y_true = np.asarray(y_true, dtype=float).reshape(-1)
+        y_pred = np.asarray(y_pred, dtype=float).reshape(-1)
+        mask = np.isfinite(y_true) & np.isfinite(y_pred)
+        if mask.sum() < 2:
+            return 0.0
+        yt = y_true[mask]
+        yp = y_pred[mask]
+        if np.std(yt) == 0 or np.std(yp) == 0:
+            return 0.0
+        return float(np.corrcoef(yt, yp)[0, 1])
+
+    def _subset_corr_classification_old(factors, codes, subsets, cfg):
+        corrs = {}
+        if factors is None or codes is None:
+            return corrs
+        y = _prepare_classification_labels(factors, cfg)
+        if y is None or np.unique(y).size < 2:
+            for name in subsets:
+                corrs[name] = 0.0
+            return corrs
+        for name, dims in subsets.items():
+            x = codes[:, dims]
+            if x.size == 0 or x.shape[0] < 4:
+                corrs[name] = 0.0
+                continue
+            best_score, best_sp = 0, 0
+            for sp in range(1, 10):
+                clf = tree.DecisionTreeClassifier(max_depth=sp)
+                try:
+                    cv = cross_val_score(clf, x, y, cv=5).mean()
+                except Exception:
+                    cv = 0.0
+                if cv > best_score:
+                    best_score, best_sp = cv, sp
+            clf = tree.DecisionTreeClassifier(max_depth=best_sp)
+            try:
+                clf.fit(x, y)
+                y_pred = clf.predict(x)
+                corrs[name] = _corr_from_preds(y, y_pred)
+            except Exception:
+                corrs[name] = 0.0
+        return corrs
+
+    def _subset_corr_classification_holdout(factors, codes, subsets, cfg):
+        corrs = {}
+        if factors is None or codes is None:
+            return corrs
+        y = _prepare_classification_labels(factors, cfg)
+        if y is None or np.unique(y).size < 2:
+            for name in subsets:
+                corrs[name] = 0.0
+            return corrs
+        n_samples = y.shape[0]
+        test_size = max(1, int(round((1.0 - sap_kumar_holdout_frac) * n_samples)))
+        train_size = n_samples - test_size
+        if train_size < 2:
+            for name in subsets:
+                corrs[name] = 0.0
+            return corrs
+        try:
+            idx = np.arange(n_samples)
+            idx_train, idx_test = train_test_split(
+                idx,
+                test_size=test_size,
+                train_size=train_size,
+                random_state=sap_kumar_holdout_seed,
+                stratify=y if np.unique(y).size > 1 else None,
+            )
+        except Exception:
+            idx_train = np.arange(0, train_size)
+            idx_test = np.arange(train_size, n_samples)
+        for name, dims in subsets.items():
+            x = codes[:, dims]
+            if x.size == 0 or x.shape[0] < 4:
+                corrs[name] = 0.0
+                continue
+            x_train = x[idx_train]
+            y_train = y[idx_train]
+            x_test = x[idx_test]
+            y_test = y[idx_test]
+            if np.unique(y_train).size < 2 or np.unique(y_test).size < 2:
+                corrs[name] = 0.0
+                continue
+            best_score, best_sp = 0, 0
+            for sp in range(1, 10):
+                clf = tree.DecisionTreeClassifier(max_depth=sp)
+                try:
+                    cv = cross_val_score(clf, x_train, y_train, cv=5).mean()
+                except Exception:
+                    cv = 0.0
+                if cv > best_score:
+                    best_score, best_sp = cv, sp
+            clf = tree.DecisionTreeClassifier(max_depth=best_sp)
+            try:
+                clf.fit(x_train, y_train)
+                y_pred = clf.predict(x_test)
+                corrs[name] = _corr_from_preds(y_test, y_pred)
+            except Exception:
+                corrs[name] = 0.0
+        return corrs
+
+    def _subset_corr_classification_locatello(factors, codes, subsets, cfg):
+        corrs = {}
+        if factors is None or codes is None:
+            return corrs
+        y = _prepare_classification_labels(factors, cfg)
+        if y is None or np.unique(y).size < 2:
+            for name in subsets:
+                corrs[name] = 0.0
+            return corrs
+        n_samples = y.shape[0]
+        test_size = max(1, int(round((1.0 - sap_kumar_holdout_frac) * n_samples)))
+        train_size = n_samples - test_size
+        if train_size < 2:
+            for name in subsets:
+                corrs[name] = 0.0
+            return corrs
+        try:
+            idx = np.arange(n_samples)
+            idx_train, idx_test = train_test_split(
+                idx,
+                test_size=test_size,
+                train_size=train_size,
+                random_state=sap_kumar_holdout_seed,
+                stratify=y if np.unique(y).size > 1 else None,
+            )
+        except Exception:
+            idx_train = np.arange(0, train_size)
+            idx_test = np.arange(train_size, n_samples)
+        for name, dims in subsets.items():
+            x = codes[:, dims]
+            if x.size == 0 or x.shape[0] < 4:
+                corrs[name] = 0.0
+                continue
+            x_train = x[idx_train]
+            y_train = y[idx_train]
+            x_test = x[idx_test]
+            y_test = y[idx_test]
+            if np.unique(y_train).size < 2 or np.unique(y_test).size < 2:
+                corrs[name] = 0.0
+                continue
+            scaler = StandardScaler()
+            try:
+                x_train = scaler.fit_transform(x_train)
+                x_test = scaler.transform(x_test)
+                clf = LinearSVC(C=0.01, max_iter=5000)
+                clf.fit(x_train, y_train)
+                y_pred = clf.predict(x_test)
+                corrs[name] = _corr_from_preds(y_test, y_pred)
+            except Exception:
+                corrs[name] = 0.0
+        return corrs
+
+    def _subset_corr_regression_old(factors, codes, subsets, cfg):
+        corrs = {}
+        if factors is None or codes is None:
+            return corrs
+        label_indices = cfg.get("label_indices")
+        if label_indices is None:
+            return corrs
+        if isinstance(label_indices, int):
+            label_indices = [label_indices]
+        if len(label_indices) != 1:
+            return corrs
+        y = factors[:, label_indices[0]]
+        for name, dims in subsets.items():
+            x = codes[:, dims]
+            if x.size == 0 or x.shape[0] < 4:
+                corrs[name] = 0.0
+                continue
+            try:
+                regr = LinearRegression()
+                regr.fit(x, y)
+                y_pred = regr.predict(x)
+                corrs[name] = _corr_from_preds(y, y_pred)
+            except Exception:
+                corrs[name] = 0.0
+        return corrs
+
+    def _subset_corr_regression_holdout(factors, codes, subsets, cfg, use_scaler=False):
+        corrs = {}
+        if factors is None or codes is None:
+            return corrs
+        label_indices = cfg.get("label_indices")
+        if label_indices is None:
+            return corrs
+        if isinstance(label_indices, int):
+            label_indices = [label_indices]
+        if len(label_indices) != 1:
+            return corrs
+        y = factors[:, label_indices[0]]
+        n_samples = y.shape[0]
+        test_size = max(1, int(round((1.0 - sap_kumar_holdout_frac) * n_samples)))
+        train_size = n_samples - test_size
+        if train_size < 2:
+            for name in subsets:
+                corrs[name] = 0.0
+            return corrs
+        idx = np.arange(n_samples)
+        try:
+            idx_train, idx_test = train_test_split(
+                idx,
+                test_size=test_size,
+                train_size=train_size,
+                random_state=sap_kumar_holdout_seed,
+                shuffle=True,
+            )
+        except Exception:
+            idx_train = np.arange(0, train_size)
+            idx_test = np.arange(train_size, n_samples)
+        for name, dims in subsets.items():
+            x = codes[:, dims]
+            if x.size == 0 or x.shape[0] < 4:
+                corrs[name] = 0.0
+                continue
+            x_train = x[idx_train]
+            x_test = x[idx_test]
+            y_train = y[idx_train]
+            y_test = y[idx_test]
+            if use_scaler:
+                scaler = StandardScaler()
+                x_train = scaler.fit_transform(x_train)
+                x_test = scaler.transform(x_test)
+            try:
+                regr = LinearRegression()
+                regr.fit(x_train, y_train)
+                y_pred = regr.predict(x_test)
+                corrs[name] = _corr_from_preds(y_test, y_pred)
+            except Exception:
+                corrs[name] = 0.0
+        return corrs
+
+    def _subset_gap(scores):
+        if not scores:
+            return 0.0, None
+        vals = [float(v) for v in scores.values()]
+        vals_sorted = sorted(vals, reverse=True)
+        if len(vals_sorted) < 2:
+            return 0.0, None
+        return float(vals_sorted[0] - vals_sorted[1]), vals_sorted
+
     def compute_disentanglement_metrics(
         eval_loader, eval_latents, epoch, split_label, label_map, npyfiles
     ):
         if eval_loader is None or (not compute_sap and not compute_sap_age):
             return {}
 
-        sap_vae = None
-        sap_loc = None
-        dci_scores = None
-        mig_scores = None
+        def _fmt(v):
+            if v is None:
+                return "0.0000"
+            try:
+                if np.isnan(v):
+                    return "0.0000"
+            except Exception:
+                pass
+            return f"{v:.4f}"
+
+        # disease labels/codes
+        factors_d, codes_d = (None, None)
         if compute_sap:
-            factors_np, codes_vae_np = _collect_factors_codes(
+            factors_d, codes_d = _collect_factors_codes(
                 eval_loader,
                 eval_latents,
                 split_label,
                 label_map,
                 npyfiles,
-                sap_label_indices,
+                None,
             )
-            if factors_np is None:
-                return {}
-
-            sap_vae = sap_metric.sap(
-                factors_np,
-                codes_vae_np,
-                continuous_factors=sap_continuous,
-                nb_bins=sap_nb_bins,
-                regression=sap_regression,
-            )
-            if not sap_regression and not sap_continuous:
-                try:
-                    sap_loc, _ = sap_metric.sap_binary_classification_locatello(
-                        factors_np,
-                        codes_vae_np,
-                    )
-                except Exception as exc:
-                    logging.warning(
-                        "Locatello SAP skipped ({}): {}".format(split_label, exc)
-                    )
-            if compute_dci:
-                dci_scores = dci_metric.dci(
-                    factors_np,
-                    codes_vae_np,
-                    continuous_factors=sap_continuous,
-                )
-            if compute_mig:
-                mig_scores = mig_metric.mig(
-                    factors_np,
-                    codes_vae_np,
-                    continuous_factors=sap_continuous,
-                    continuous_codes=True,
-                    nb_bins=sap_nb_bins,
-                )
-
-            summary_writer.add_scalar(
-                f"SAP/vae_{split_label}", sap_vae, global_step=epoch
-            )
-            if sap_loc is not None:
-                summary_writer.add_scalar(
-                    f"SAP/vae_locatello_{split_label}", sap_loc, global_step=epoch
-                )
-            if dci_scores is not None:
-                summary_writer.add_scalar(
-                    f"DCI/vae_{split_label}_disentanglement",
-                    dci_scores["disentanglement"],
-                    global_step=epoch,
-                )
-                summary_writer.add_scalar(
-                    f"DCI/vae_{split_label}_completeness",
-                    dci_scores["completeness"],
-                    global_step=epoch,
-                )
-                summary_writer.add_scalar(
-                    f"DCI/vae_{split_label}_informativeness",
-                    dci_scores["informativeness"],
-                    global_step=epoch,
-                )
-            if mig_scores is not None:
-                summary_writer.add_scalar(
-                    f"MIG/vae_{split_label}",
-                    mig_scores["mig"],
-                    global_step=epoch,
-                )
-
-        sap_age = None
+        # age labels/codes (may come from a different labels file)
+        factors_a, codes_a = (None, None)
         if compute_sap_age:
-            factors_age, codes_vae_age = _collect_factors_codes(
-                eval_loader,
-                eval_latents,
-                split_label,
-                sap_age_label_map,
-                npyfiles,
-                sap_age_label_indices,
-            )
-            if factors_age is not None:
-                sap_age = sap_metric.sap(
-                    factors_age,
-                    codes_vae_age,
-                    continuous_factors=sap_age_continuous,
-                    nb_bins=sap_age_nb_bins,
-                    regression=sap_age_regression,
-                )
-                summary_writer.add_scalar(
-                    f"SAP/vae_{split_label}_age", sap_age, global_step=epoch
+            if sap_age_label_map is label_map and factors_d is not None:
+                factors_a, codes_a = factors_d, codes_d
+            else:
+                factors_a, codes_a = _collect_factors_codes(
+                    eval_loader,
+                    eval_latents,
+                    split_label,
+                    sap_age_label_map,
+                    npyfiles,
+                    None,
                 )
 
-        metrics_parts = []
-        if sap_vae is not None:
-            metrics_parts.append(f"SAP={sap_vae:.6f}")
-        if sap_loc is not None:
-            metrics_parts.append(f"SAP_loc={sap_loc:.6f}")
-        if dci_scores is not None:
-            metrics_parts.append(
-                "DCI(d,c,i)=({:.6f},{:.6f},{:.6f})".format(
-                    dci_scores["disentanglement"],
-                    dci_scores["completeness"],
-                    dci_scores["informativeness"],
+        subsets_all = {"disease": disease_dims, "age": age_dims, "other": other_dims}
+        sap_scores_d = {}
+        sap_holdout_scores_d = {}
+        sap_loc_scores_d = {}
+        dci_scores_d = {}
+        mig_scores_d = {}
+        pred_scores_d = {}
+        sap_scores_a = {}
+        sap_holdout_scores_a = {}
+        sap_loc_scores_a = {}
+        dci_scores_a = {}
+        mig_scores_a = {}
+        pred_scores_a = {}
+
+        if factors_d is None and factors_a is None:
+            return {}
+
+        # disease subset metrics
+        if compute_sap and factors_d is not None:
+            cfg_d = {
+                "disease": {
+                    "label_indices": [disease_label_index],
+                    "regression": sap_regression,
+                    "continuous_factors": sap_continuous,
+                    "nb_bins": sap_nb_bins,
+                },
+                "age": {
+                    "label_indices": [disease_label_index],
+                    "regression": sap_regression,
+                    "continuous_factors": sap_continuous,
+                    "nb_bins": sap_nb_bins,
+                },
+                "other": {
+                    "label_indices": [disease_label_index],
+                    "regression": sap_regression,
+                    "continuous_factors": sap_continuous,
+                    "nb_bins": sap_nb_bins,
+                },
+            }
+            sap_scores_d.update(
+                _subset_scores_classification_old(factors_d, codes_d, subsets_all, cfg_d["disease"])
+            )
+            sap_holdout_scores_d.update(
+                _subset_scores_classification_holdout(
+                    factors_d, codes_d, subsets_all, cfg_d["disease"]
                 )
             )
-        if mig_scores is not None:
-            metrics_parts.append("MIG={:.6f}".format(mig_scores["mig"]))
-        if sap_age is not None:
-            metrics_parts.append("SAP_age={:.6f}".format(sap_age))
-        if metrics_parts:
+            sap_loc_scores_d.update(
+                _subset_scores_classification_locatello(
+                    factors_d, codes_d, subsets_all, cfg_d["disease"]
+                )
+            )
+            corr_sap_d_old = _subset_corr_classification_old(
+                factors_d, codes_d, subsets_all, cfg_d["disease"]
+            )
+            corr_sap_d_hold = _subset_corr_classification_holdout(
+                factors_d, codes_d, subsets_all, cfg_d["disease"]
+            )
+            corr_sap_d_loc = _subset_corr_classification_locatello(
+                factors_d, codes_d, subsets_all, cfg_d["disease"]
+            )
+            pred_scores_d.update(dci_subset.predictability_by_subset(factors_d, codes_d, subsets_all, cfg_d))
+            if compute_dci:
+                dci_scores_d.update(dci_subset.dci_by_subset(factors_d, codes_d, subsets_all, cfg_d))
+            if compute_mig:
+                mig_scores_d.update(mig_subset.mig_by_subset(factors_d, codes_d, subsets_all, cfg_d))
+        else:
+            corr_sap_d_old = {k: 0.0 for k in subsets_all}
+            corr_sap_d_hold = {k: 0.0 for k in subsets_all}
+            corr_sap_d_loc = {k: 0.0 for k in subsets_all}
+
+        # age subset metrics
+        if compute_sap_age and factors_a is not None:
+            cfg_a = {
+                "disease": {
+                    "label_indices": [age_label_index],
+                    "regression": sap_age_regression,
+                    "continuous_factors": sap_age_continuous,
+                    "nb_bins": sap_age_nb_bins,
+                },
+                "age": {
+                    "label_indices": [age_label_index],
+                    "regression": sap_age_regression,
+                    "continuous_factors": sap_age_continuous,
+                    "nb_bins": sap_age_nb_bins,
+                },
+                "other": {
+                    "label_indices": [age_label_index],
+                    "regression": sap_age_regression,
+                    "continuous_factors": sap_age_continuous,
+                    "nb_bins": sap_age_nb_bins,
+                },
+            }
+            sap_scores_a.update(
+                _subset_scores_regression_old(factors_a, codes_a, subsets_all, cfg_a["age"])
+            )
+            sap_holdout_scores_a.update(
+                _subset_scores_regression_holdout(
+                    factors_a, codes_a, subsets_all, cfg_a["age"], use_scaler=False
+                )
+            )
+            sap_loc_scores_a.update(
+                _subset_scores_regression_holdout(
+                    factors_a, codes_a, subsets_all, cfg_a["age"], use_scaler=True
+                )
+            )
+            corr_sap_a_old = _subset_corr_regression_old(
+                factors_a, codes_a, subsets_all, cfg_a["age"]
+            )
+            corr_sap_a_hold = _subset_corr_regression_holdout(
+                factors_a, codes_a, subsets_all, cfg_a["age"], use_scaler=False
+            )
+            corr_sap_a_loc = _subset_corr_regression_holdout(
+                factors_a, codes_a, subsets_all, cfg_a["age"], use_scaler=True
+            )
+            pred_scores_a.update(dci_subset.predictability_by_subset(factors_a, codes_a, subsets_all, cfg_a))
+            if compute_dci:
+                dci_scores_a.update(dci_subset.dci_by_subset(factors_a, codes_a, subsets_all, cfg_a))
+            if compute_mig:
+                mig_scores_a.update(mig_subset.mig_by_subset(factors_a, codes_a, subsets_all, cfg_a))
+        else:
+            corr_sap_a_old = {k: 0.0 for k in subsets_all}
+            corr_sap_a_hold = {k: 0.0 for k in subsets_all}
+            corr_sap_a_loc = {k: 0.0 for k in subsets_all}
+
+        def _subset_to_label_corr(factors, codes, dims, label_idx, mode="pca"):
+            if factors is None or codes is None:
+                return None
+            y = factors[:, label_idx]
+            x = codes[:, dims]
+            if x.ndim != 2 or x.shape[0] != y.shape[0]:
+                return None
+            if mode == "mean":
+                s = x.mean(axis=1)
+            else:
+                s = _pca1_scores_np(x)
+            # standardize
+            y = (y - y.mean()) / (y.std() + 1e-8)
+            s = (s - s.mean()) / (s.std() + 1e-8)
+            corr = float((s * y).mean())
+            return corr
+
+        corr_subset_disease_pca = {
+            "disease": _subset_to_label_corr(
+                factors_d, codes_d, disease_dims, disease_label_index, mode="pca"
+            ),
+            "age": _subset_to_label_corr(
+                factors_d, codes_d, age_dims, disease_label_index, mode="pca"
+            ),
+            "other": _subset_to_label_corr(
+                factors_d, codes_d, other_dims, disease_label_index, mode="pca"
+            ),
+        }
+        corr_subset_disease_mean = {
+            "disease": _subset_to_label_corr(
+                factors_d, codes_d, disease_dims, disease_label_index, mode="mean"
+            ),
+            "age": _subset_to_label_corr(
+                factors_d, codes_d, age_dims, disease_label_index, mode="mean"
+            ),
+            "other": _subset_to_label_corr(
+                factors_d, codes_d, other_dims, disease_label_index, mode="mean"
+            ),
+        }
+        corr_subset_age_pca = {
+            "disease": _subset_to_label_corr(
+                factors_a, codes_a, disease_dims, age_label_index, mode="pca"
+            ),
+            "age": _subset_to_label_corr(
+                factors_a, codes_a, age_dims, age_label_index, mode="pca"
+            ),
+            "other": _subset_to_label_corr(
+                factors_a, codes_a, other_dims, age_label_index, mode="pca"
+            ),
+        }
+        corr_subset_age_mean = {
+            "disease": _subset_to_label_corr(
+                factors_a, codes_a, disease_dims, age_label_index, mode="mean"
+            ),
+            "age": _subset_to_label_corr(
+                factors_a, codes_a, age_dims, age_label_index, mode="mean"
+            ),
+            "other": _subset_to_label_corr(
+                factors_a, codes_a, other_dims, age_label_index, mode="mean"
+            ),
+        }
+
+        gap_d_old, _ = _subset_gap(sap_scores_d)
+        gap_d_hold, _ = _subset_gap(sap_holdout_scores_d)
+        gap_d_loc, _ = _subset_gap(sap_loc_scores_d)
+        gap_a_old, _ = _subset_gap(sap_scores_a)
+        gap_a_hold, _ = _subset_gap(sap_holdout_scores_a)
+        gap_a_loc, _ = _subset_gap(sap_loc_scores_a)
+
+        # TensorBoard logging
+        if compute_sap:
+            summary_writer.add_scalar(
+                f"SAPSubsetGap/vae_{split_label}_disease_old", gap_d_old, global_step=epoch
+            )
+            summary_writer.add_scalar(
+                f"SAPSubsetGap/vae_{split_label}_disease_holdout", gap_d_hold, global_step=epoch
+            )
+            summary_writer.add_scalar(
+                f"SAPSubsetGap/vae_{split_label}_disease_locatello", gap_d_loc, global_step=epoch
+            )
+            for subset_name, val in sap_scores_d.items():
+                summary_writer.add_scalar(
+                    f"SAPSubsetScore/vae_{split_label}_disease_old_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+            for subset_name, val in sap_holdout_scores_d.items():
+                summary_writer.add_scalar(
+                    f"SAPSubsetScore/vae_{split_label}_disease_holdout_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+            for subset_name, val in sap_loc_scores_d.items():
+                summary_writer.add_scalar(
+                    f"SAPSubsetScore/vae_{split_label}_disease_locatello_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+            for subset_name, val in corr_sap_d_old.items():
+                summary_writer.add_scalar(
+                    f"CorrSAP/vae_{split_label}_disease_old_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+            for subset_name, val in corr_sap_d_hold.items():
+                summary_writer.add_scalar(
+                    f"CorrSAP/vae_{split_label}_disease_holdout_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+            for subset_name, val in corr_sap_d_loc.items():
+                summary_writer.add_scalar(
+                    f"CorrSAP/vae_{split_label}_disease_locatello_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+        if compute_sap_age:
+            summary_writer.add_scalar(
+                f"SAPSubsetGap/vae_{split_label}_age_old", gap_a_old, global_step=epoch
+            )
+            summary_writer.add_scalar(
+                f"SAPSubsetGap/vae_{split_label}_age_holdout", gap_a_hold, global_step=epoch
+            )
+            summary_writer.add_scalar(
+                f"SAPSubsetGap/vae_{split_label}_age_locatello", gap_a_loc, global_step=epoch
+            )
+            for subset_name, val in sap_scores_a.items():
+                summary_writer.add_scalar(
+                    f"SAPSubsetScore/vae_{split_label}_age_old_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+            for subset_name, val in sap_holdout_scores_a.items():
+                summary_writer.add_scalar(
+                    f"SAPSubsetScore/vae_{split_label}_age_holdout_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+            for subset_name, val in sap_loc_scores_a.items():
+                summary_writer.add_scalar(
+                    f"SAPSubsetScore/vae_{split_label}_age_locatello_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+            for subset_name, val in corr_sap_a_old.items():
+                summary_writer.add_scalar(
+                    f"CorrSAP/vae_{split_label}_age_old_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+            for subset_name, val in corr_sap_a_hold.items():
+                summary_writer.add_scalar(
+                    f"CorrSAP/vae_{split_label}_age_holdout_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+            for subset_name, val in corr_sap_a_loc.items():
+                summary_writer.add_scalar(
+                    f"CorrSAP/vae_{split_label}_age_locatello_{subset_name}",
+                    float(val),
+                    global_step=epoch,
+                )
+        if "disease" in dci_scores_d:
+            summary_writer.add_scalar(
+                f"DCI/vae_{split_label}_disease_disentanglement",
+                dci_scores_d["disease"]["disentanglement"],
+                global_step=epoch,
+            )
+            summary_writer.add_scalar(
+                f"DCI/vae_{split_label}_disease_completeness",
+                dci_scores_d["disease"]["completeness"],
+                global_step=epoch,
+            )
+            summary_writer.add_scalar(
+                f"DCI/vae_{split_label}_disease_informativeness",
+                dci_scores_d["disease"]["informativeness"],
+                global_step=epoch,
+            )
+        if "age" in dci_scores_d:
+            summary_writer.add_scalar(
+                f"DCI/vae_{split_label}_age_disentanglement",
+                dci_scores_d["age"]["disentanglement"],
+                global_step=epoch,
+            )
+            summary_writer.add_scalar(
+                f"DCI/vae_{split_label}_age_completeness",
+                dci_scores_d["age"]["completeness"],
+                global_step=epoch,
+            )
+            summary_writer.add_scalar(
+                f"DCI/vae_{split_label}_age_informativeness",
+                dci_scores_d["age"]["informativeness"],
+                global_step=epoch,
+            )
+        if "other" in dci_scores_d:
+            summary_writer.add_scalar(
+                f"DCI/vae_{split_label}_other_disentanglement",
+                dci_scores_d["other"]["disentanglement"],
+                global_step=epoch,
+            )
+            summary_writer.add_scalar(
+                f"DCI/vae_{split_label}_other_completeness",
+                dci_scores_d["other"]["completeness"],
+                global_step=epoch,
+            )
+            summary_writer.add_scalar(
+                f"DCI/vae_{split_label}_other_informativeness",
+                dci_scores_d["other"]["informativeness"],
+                global_step=epoch,
+            )
+        if "disease" in mig_scores_d:
+            summary_writer.add_scalar(
+                f"MIG/vae_{split_label}_disease", mig_scores_d["disease"]["mig"], global_step=epoch
+            )
+        if "age" in mig_scores_d:
+            summary_writer.add_scalar(
+                f"MIG/vae_{split_label}_age", mig_scores_d["age"]["mig"], global_step=epoch
+            )
+        if "other" in mig_scores_d:
+            summary_writer.add_scalar(
+                f"MIG/vae_{split_label}_other", mig_scores_d["other"]["mig"], global_step=epoch
+            )
+        if "disease" in pred_scores_d:
+            summary_writer.add_scalar(
+                f"Predict/vae_{split_label}_disease_acc", pred_scores_d["disease"], global_step=epoch
+            )
+        if "age" in pred_scores_d:
+            summary_writer.add_scalar(
+                f"Predict/vae_{split_label}_age_r2", pred_scores_d["age"], global_step=epoch
+            )
+        if "other" in pred_scores_d:
+            summary_writer.add_scalar(
+                f"Predict/vae_{split_label}_other", pred_scores_d["other"], global_step=epoch
+            )
+        for subset_name, val in corr_subset_disease_pca.items():
+            if val is not None:
+                summary_writer.add_scalar(
+                    f"Corr/vae_{split_label}_{subset_name}_disease", val, global_step=epoch
+                )
+        for subset_name, val in corr_subset_age_pca.items():
+            if val is not None:
+                summary_writer.add_scalar(
+                    f"Corr/vae_{split_label}_{subset_name}_age", val, global_step=epoch
+                )
+        for subset_name, val in corr_subset_disease_mean.items():
+            if val is not None:
+                summary_writer.add_scalar(
+                    f"CorrMean/vae_{split_label}_{subset_name}_disease",
+                    val,
+                    global_step=epoch,
+                )
+        for subset_name, val in corr_subset_age_mean.items():
+            if val is not None:
+                summary_writer.add_scalar(
+                    f"CorrMean/vae_{split_label}_{subset_name}_age",
+                    val,
+                    global_step=epoch,
+                )
+
+        # Console tables
+        def _log_subset_pred_table(title, scores_old, scores_hold, scores_loc, gap_old, gap_hold, gap_loc):
+            rows = [
+                [
+                    "disease",
+                    _fmt(scores_old.get("disease")),
+                    _fmt(scores_hold.get("disease")),
+                    _fmt(scores_loc.get("disease")),
+                ],
+                [
+                    "age",
+                    _fmt(scores_old.get("age")),
+                    _fmt(scores_hold.get("age")),
+                    _fmt(scores_loc.get("age")),
+                ],
+                [
+                    "other",
+                    _fmt(scores_old.get("other")),
+                    _fmt(scores_hold.get("other")),
+                    _fmt(scores_loc.get("other")),
+                ],
+            ]
+            header = ["subset", "old", "holdout", "locatello"]
+            col_widths = [max(len(str(row[i])) for row in ([header] + rows)) for i in range(len(header))]
+            lines = [" | ".join(str(h).ljust(col_widths[i]) for i, h in enumerate(header))]
+            lines.append("-+-".join("-" * w for w in col_widths))
+            for row in rows:
+                lines.append(" | ".join(str(row[i]).ljust(col_widths[i]) for i in range(len(header))))
+            logging.info("Epoch %d %s subset prediction (%s):\n%s", epoch, title, split_label, "\n".join(lines))
             logging.info(
-                "Epoch {} metrics ({}): {}".format(
-                    epoch, split_label, " | ".join(metrics_parts)
-                )
+                "Epoch %d %s SAP gap (%s): old=%.4f holdout=%.4f locatello=%.4f",
+                epoch,
+                title,
+                split_label,
+                gap_old,
+                gap_hold,
+                gap_loc,
             )
+
+        def _log_corr_table(title, corr_old, corr_hold, corr_loc, corr_pca, corr_mean):
+            rows = [
+                [
+                    "sap_old",
+                    _fmt(corr_old.get("disease")),
+                    _fmt(corr_old.get("age")),
+                    _fmt(corr_old.get("other")),
+                ],
+                [
+                    "sap_holdout",
+                    _fmt(corr_hold.get("disease")),
+                    _fmt(corr_hold.get("age")),
+                    _fmt(corr_hold.get("other")),
+                ],
+                [
+                    "sap_locatello",
+                    _fmt(corr_loc.get("disease")),
+                    _fmt(corr_loc.get("age")),
+                    _fmt(corr_loc.get("other")),
+                ],
+                [
+                    "pca",
+                    _fmt(corr_pca.get("disease")),
+                    _fmt(corr_pca.get("age")),
+                    _fmt(corr_pca.get("other")),
+                ],
+                [
+                    "mean",
+                    _fmt(corr_mean.get("disease")),
+                    _fmt(corr_mean.get("age")),
+                    _fmt(corr_mean.get("other")),
+                ],
+            ]
+            header = ["type", "disease", "age", "other"]
+            col_widths = [max(len(str(row[i])) for row in ([header] + rows)) for i in range(len(header))]
+            lines = [" | ".join(str(h).ljust(col_widths[i]) for i, h in enumerate(header))]
+            lines.append("-+-".join("-" * w for w in col_widths))
+            for row in rows:
+                lines.append(" | ".join(str(row[i]).ljust(col_widths[i]) for i in range(len(header))))
+            logging.info("Epoch %d %s correlation (%s):\n%s", epoch, title, split_label, "\n".join(lines))
+
+        def _log_metrics_table(title, dci_scores, mig_scores):
+            rows = [
+                [
+                    "disease",
+                    _fmt(dci_scores.get("disease", {}).get("disentanglement") if "disease" in dci_scores else None),
+                    _fmt(dci_scores.get("disease", {}).get("completeness") if "disease" in dci_scores else None),
+                    _fmt(dci_scores.get("disease", {}).get("informativeness") if "disease" in dci_scores else None),
+                    _fmt(mig_scores.get("disease", {}).get("mig") if "disease" in mig_scores else None),
+                ],
+                [
+                    "age",
+                    _fmt(dci_scores.get("age", {}).get("disentanglement") if "age" in dci_scores else None),
+                    _fmt(dci_scores.get("age", {}).get("completeness") if "age" in dci_scores else None),
+                    _fmt(dci_scores.get("age", {}).get("informativeness") if "age" in dci_scores else None),
+                    _fmt(mig_scores.get("age", {}).get("mig") if "age" in mig_scores else None),
+                ],
+                [
+                    "other",
+                    _fmt(dci_scores.get("other", {}).get("disentanglement") if "other" in dci_scores else None),
+                    _fmt(dci_scores.get("other", {}).get("completeness") if "other" in dci_scores else None),
+                    _fmt(dci_scores.get("other", {}).get("informativeness") if "other" in dci_scores else None),
+                    _fmt(mig_scores.get("other", {}).get("mig") if "other" in mig_scores else None),
+                ],
+            ]
+            header = ["subset", "DCI_dis", "DCI_comp", "DCI_info", "MIG"]
+            col_widths = [max(len(str(row[i])) for row in ([header] + rows)) for i in range(len(header))]
+            lines = [" | ".join(str(h).ljust(col_widths[i]) for i, h in enumerate(header))]
+            lines.append("-+-".join("-" * w for w in col_widths))
+            for row in rows:
+                lines.append(" | ".join(str(row[i]).ljust(col_widths[i]) for i in range(len(header))))
+            logging.info("Epoch %d %s metrics (%s):\n%s", epoch, title, split_label, "\n".join(lines))
+
+        if compute_sap:
+            _log_subset_pred_table(
+                "Disease-label",
+                sap_scores_d,
+                sap_holdout_scores_d,
+                sap_loc_scores_d,
+                gap_d_old,
+                gap_d_hold,
+                gap_d_loc,
+            )
+            _log_corr_table(
+                "Disease-label",
+                corr_sap_d_old,
+                corr_sap_d_hold,
+                corr_sap_d_loc,
+                corr_subset_disease_pca,
+                corr_subset_disease_mean,
+            )
+            _log_metrics_table(
+                "Disease-label",
+                dci_scores_d,
+                mig_scores_d,
+            )
+        if compute_sap_age:
+            _log_subset_pred_table(
+                "Age-label",
+                sap_scores_a,
+                sap_holdout_scores_a,
+                sap_loc_scores_a,
+                gap_a_old,
+                gap_a_hold,
+                gap_a_loc,
+            )
+            _log_corr_table(
+                "Age-label",
+                corr_sap_a_old,
+                corr_sap_a_hold,
+                corr_sap_a_loc,
+                corr_subset_age_pca,
+                corr_subset_age_mean,
+            )
+            _log_metrics_table(
+                "Age-label",
+                dci_scores_a,
+                mig_scores_a,
+            )
+
         return {
-            "sap": sap_vae,
-            "sap_locatello": sap_loc,
-            "dci": dci_scores,
-            "mig": mig_scores,
-            "sap_age": sap_age,
+            "sap": {"disease": gap_d_old, "age": gap_a_old},
+            "sap_holdout": {"disease": gap_d_hold, "age": gap_a_hold},
+            "sap_locatello": {"disease": gap_d_loc, "age": gap_a_loc},
+            "corr_sap": {
+                "disease": {"old": corr_sap_d_old, "holdout": corr_sap_d_hold, "locatello": corr_sap_d_loc},
+                "age": {"old": corr_sap_a_old, "holdout": corr_sap_a_hold, "locatello": corr_sap_a_loc},
+            },
+            "sap_subset_scores": {
+                "disease": {
+                    "old": sap_scores_d,
+                    "holdout": sap_holdout_scores_d,
+                    "locatello": sap_loc_scores_d,
+                },
+                "age": {
+                    "old": sap_scores_a,
+                    "holdout": sap_holdout_scores_a,
+                    "locatello": sap_loc_scores_a,
+                },
+            },
+            "dci": {"disease_label": dci_scores_d, "age_label": dci_scores_a},
+            "mig": {"disease_label": mig_scores_d, "age_label": mig_scores_a},
+            "predict": {"disease_label": pred_scores_d, "age_label": pred_scores_a},
         }
 
     def generate_eval_meshes(dataset, eval_latents, scene_indices, split_label, epoch):
@@ -1922,10 +3116,15 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     def compute_latent_label_correlation(
         dataset, eval_latents, epoch, split_label, label_map, scene_indices=None
     ):
+        if compute_sap or compute_sap_age:
+            # correlations are already logged via compute_disentanglement_metrics
+            return
         if dataset is None:
             return
-        labels_np = _collect_label_values(dataset.npyfiles, label_map, label_index)
-        if labels_np is None:
+        labels_d = _collect_label_values(dataset.npyfiles, label_map, disease_label_index)
+        label_map_age = sap_age_label_map if sap_age_label_map is not None else label_map
+        labels_a = _collect_label_values(dataset.npyfiles, label_map_age, age_label_index)
+        if labels_d is None and labels_a is None:
             return
         vae_inputs = _select_vae_inputs(dataset, eval_latents, scene_indices)
         if vae_inputs is None:
@@ -1936,7 +3135,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
         if scene_indices is not None:
             scene_indices = [int(idx) for idx in scene_indices]
-            labels_np = labels_np[scene_indices]
+            if labels_d is not None:
+                labels_d = labels_d[scene_indices]
+            if labels_a is not None:
+                labels_a = labels_a[scene_indices]
 
         latent_batch = get_spec_with_default(specs, "LatentExportBatchSize", 1024)
         device = next(vae.parameters()).device
@@ -1944,45 +3146,61 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             vae, vae_inputs, latent_batch, device
         ).cpu().numpy()
 
-        if vae_latents.shape[0] != labels_np.shape[0]:
+        if labels_d is not None and vae_latents.shape[0] != labels_d.shape[0]:
             logging.warning(
-                "Correlation skipped ({}): latent count {} != label count {}".format(
-                    split_label, vae_latents.shape[0], labels_np.shape[0]
+                "Correlation skipped ({}): latent count {} != disease label count {}".format(
+                    split_label, vae_latents.shape[0], labels_d.shape[0]
+                )
+            )
+            return
+        if labels_a is not None and vae_latents.shape[0] != labels_a.shape[0]:
+            logging.warning(
+                "Correlation skipped ({}): latent count {} != age label count {}".format(
+                    split_label, vae_latents.shape[0], labels_a.shape[0]
                 )
             )
             return
 
-        latent0 = vae_latents[:, 0]
-        mask = np.isfinite(labels_np) & (labels_np != -1)
-        if mask.sum() < 2:
-            logging.warning(
-                "Correlation skipped ({}): insufficient valid labels.".format(split_label)
-            )
-            return
+        corr_d = _subset_corrs_from_labels(vae_latents, labels_d)
+        corr_a = _subset_corrs_from_labels(vae_latents, labels_a)
 
-        latent0 = latent0[mask]
-        labels_np = labels_np[mask]
-        if np.std(latent0) == 0 or np.std(labels_np) == 0:
-            corr = float("nan")
-        else:
-            corr = float(np.corrcoef(latent0, labels_np)[0, 1])
-
-        summary_writer.add_scalar(
-            f"Correlation/{split_label}_latent0_label", corr, global_step=epoch
-        )
-        logging.info(
-            "Epoch {} correlation ({}): latent0 vs label[{}] = {:.6f}".format(
-                epoch, split_label, label_index, corr
-            )
-        )
+        for subset_name, val in corr_d["pca"].items():
+            if val is not None:
+                summary_writer.add_scalar(
+                    f"Corr/vae_{split_label}_{subset_name}_disease", val, global_step=epoch
+                )
+        for subset_name, val in corr_a["pca"].items():
+            if val is not None:
+                summary_writer.add_scalar(
+                    f"Corr/vae_{split_label}_{subset_name}_age", val, global_step=epoch
+                )
+        for subset_name, val in corr_d["mean"].items():
+            if val is not None:
+                summary_writer.add_scalar(
+                    f"CorrMean/vae_{split_label}_{subset_name}_disease",
+                    val,
+                    global_step=epoch,
+                )
+        for subset_name, val in corr_a["mean"].items():
+            if val is not None:
+                summary_writer.add_scalar(
+                    f"CorrMean/vae_{split_label}_{subset_name}_age",
+                    val,
+                    global_step=epoch,
+                )
 
     def print_latent_diagnosis_table(
         dataset, eval_latents, epoch, split_label, label_map, scene_indices=None
     ):
+        if compute_sap or compute_sap_age:
+            # subset table already printed in compute_disentanglement_metrics
+            return
         if dataset is None:
             return
-        labels_np = _collect_label_values(dataset.npyfiles, label_map, label_index)
-        if labels_np is None:
+        labels_d = _collect_label_values(dataset.npyfiles, label_map, disease_label_index)
+        label_map_age = sap_age_label_map if sap_age_label_map is not None else label_map
+        labels_a = _collect_label_values(dataset.npyfiles, label_map_age, age_label_index)
+        if labels_d is None and labels_a is None:
             return
         vae_inputs = _select_vae_inputs(dataset, eval_latents, scene_indices)
         if vae_inputs is None:
@@ -1993,7 +3211,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
         if scene_indices is not None:
             scene_indices = [int(idx) for idx in scene_indices]
-            labels_np = labels_np[scene_indices]
+            if labels_d is not None:
+                labels_d = labels_d[scene_indices]
+            if labels_a is not None:
+                labels_a = labels_a[scene_indices]
 
         latent_batch = get_spec_with_default(specs, "LatentExportBatchSize", 1024)
         device = next(vae.parameters()).device
@@ -2001,239 +3222,70 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             vae, vae_inputs, latent_batch, device
         ).cpu().numpy()
 
-        if vae_latents.shape[0] != labels_np.shape[0]:
+        if labels_d is not None and vae_latents.shape[0] != labels_d.shape[0]:
             logging.warning(
-                "Latent table skipped ({}): latent count {} != label count {}".format(
-                    split_label, vae_latents.shape[0], labels_np.shape[0]
+                "Latent table skipped ({}): latent count {} != disease label count {}".format(
+                    split_label, vae_latents.shape[0], labels_d.shape[0]
+                )
+            )
+            return
+        if labels_a is not None and vae_latents.shape[0] != labels_a.shape[0]:
+            logging.warning(
+                "Latent table skipped ({}): latent count {} != age label count {}".format(
+                    split_label, vae_latents.shape[0], labels_a.shape[0]
                 )
             )
             return
 
-        mask = np.isfinite(labels_np) & (labels_np != -1)
-        if mask.sum() < 2:
-            logging.warning(
-                "Latent table skipped ({}): insufficient valid labels.".format(split_label)
-            )
-            return
+        corr_d = _subset_corrs_from_labels(vae_latents, labels_d)
+        corr_a = _subset_corrs_from_labels(vae_latents, labels_a)
 
-        labels_np = labels_np[mask].astype(float)
-        latents = vae_latents[mask]
-
-        is_regression = bool(sap_regression or sap_continuous)
-        sap_scores = None
-        if compute_sap:
-            factors = labels_np.reshape(-1, 1)
+        def _fmt(v):
+            if v is None:
+                return "n/a"
             try:
-                sap_matrix = sap_metric.sap_score_matrix(
-                    factors,
-                    latents,
-                    continuous_factors=sap_continuous,
-                    nb_bins=sap_nb_bins,
-                    regression=sap_regression,
-                )
-                if sap_matrix.shape[0] > 0:
-                    sap_scores = sap_matrix[0]
-            except Exception as exc:
-                logging.warning(
-                    "SAP per-latent scores unavailable ({}): {}".format(split_label, exc)
-                )
-        sap_pred_info = None
-        if sap_debug_predictions:
-            try:
-                factors = labels_np.reshape(-1, 1)
-                if is_regression:
-                    sap_pred_info = sap_metric.sap_regression_predictions(
-                        factors, latents, pred_sample_n=sap_debug_pred_samples
-                    )
-                else:
-                    sap_pred_info = sap_metric.sap_classification_predictions(
-                        factors,
-                        latents,
-                        continuous_factors=sap_continuous,
-                        nb_bins=sap_nb_bins,
-                        pred_sample_n=sap_debug_pred_samples,
-                    )
-            except Exception as exc:
-                logging.warning(
-                    "SAP prediction debug unavailable ({}): {}".format(split_label, exc)
-                )
+                if np.isnan(v):
+                    return "n/a"
+            except Exception:
+                pass
+            return f"{v:.4f}"
 
-        if is_regression:
-            logging.info(
-                "Epoch {} latent vs label table ({}):".format(epoch, split_label)
-            )
-            logging.info("  dim | corr | sap_r2")
-            for dim in range(latents.shape[1]):
-                x = latents[:, dim]
-                if np.std(x) == 0 or np.std(labels_np) == 0:
-                    corr = float("nan")
-                else:
-                    corr = float(np.corrcoef(x, labels_np)[0, 1])
-                sap_val = float("nan")
-                if sap_scores is not None:
-                    sap_val = float(sap_scores[dim])
-                logging.info("  {:>3d} | {:>6.3f} | {:>6.3f}".format(dim, corr, sap_val))
-            if sap_debug_predictions and sap_pred_info is not None:
-                logging.info("  dim | sap_pred_mean | sap_pred_std | sap_pred_sample")
-                for dim in range(latents.shape[1]):
-                    info = sap_pred_info[0][dim] if sap_pred_info else None
-                    pred_mean = info.get("pred_mean") if info else None
-                    pred_std = info.get("pred_std") if info else None
-                    pred_sample = info.get("pred_sample") if info else None
-                    logging.info(
-                        "  {:>3d} | {:>12} | {:>12} | {}".format(
-                            dim,
-                            "n/a" if pred_mean is None else "{:.4f}".format(pred_mean),
-                            "n/a" if pred_std is None else "{:.4f}".format(pred_std),
-                            "n/a" if pred_sample is None else pred_sample,
-                        )
-                    )
-            return
-
-        labels_np = labels_np.astype(int)
-        loc_scores = None
-        loc_pred_info = None
-        sap_holdout_acc = None
-        sap_holdout_pred_info = None
-        sap_holdout_gap = float("nan")
-        try:
-            if sap_debug_predictions:
-                loc_sap, loc_err_matrix, loc_pred_info = sap_metric.sap_binary_classification_locatello(
-                    labels_np.reshape(-1, 1),
-                    latents,
-                    return_predictions=True,
-                    pred_sample_n=sap_debug_pred_samples,
-                )
-            else:
-                loc_sap, loc_err_matrix = sap_metric.sap_binary_classification_locatello(
-                    labels_np.reshape(-1, 1),
-                    latents,
-                )
-            if loc_err_matrix is not None and loc_err_matrix.shape[0] > 0:
-                loc_scores = 1.0 - loc_err_matrix[0]
-        except Exception as exc:
-            logging.warning(
-                "Locatello SAP per-latent scores unavailable ({}): {}".format(
-                    split_label, exc
-                )
-            )
-        if sap_kumar_holdout:
-            try:
-                sap_holdout_acc, sap_holdout_test_acc, sap_holdout_pred_info = (
-                    sap_metric.sap_classification_holdout_predictions(
-                        labels_np.reshape(-1, 1),
-                        latents,
-                        continuous_factors=sap_continuous,
-                        nb_bins=sap_nb_bins,
-                        train_frac=sap_kumar_holdout_frac,
-                        random_state=sap_kumar_holdout_seed,
-                        pred_sample_n=sap_debug_pred_samples if sap_debug_predictions else 0,
-                    )
-                )
-                if sap_holdout_test_acc is not None and sap_holdout_test_acc.shape[0] > 0:
-                    vals = sap_holdout_test_acc[0]
-                    vals = vals[np.isfinite(vals)]
-                    if vals.size >= 2:
-                        vals_sorted = np.sort(vals)
-                        sap_holdout_gap = float(vals_sorted[-1] - vals_sorted[-2])
-            except Exception as exc:
-                logging.warning(
-                    "Kumar holdout SAP unavailable ({}): {}".format(split_label, exc)
-                )
-        logging.info(
-            "Epoch {} latent vs diagnosis table ({}):".format(epoch, split_label)
-        )
-        if sap_kumar_holdout:
-            logging.info("  dim | corr | sap_acc | sap_err | sap_hold_acc | sap_hold_err | loc_acc | loc_err")
-        else:
-            logging.info("  dim | corr | sap_acc | sap_err | loc_acc | loc_err")
-        for dim in range(latents.shape[1]):
-            x = latents[:, dim]
-            if np.std(x) == 0 or np.std(labels_np) == 0:
-                corr = float("nan")
-            else:
-                corr = float(np.corrcoef(x, labels_np)[0, 1])
-            sap_val = float("nan")
-            if sap_scores is not None:
-                sap_val = float(sap_scores[dim])
-            sap_err = float("nan")
-            if np.isfinite(sap_val):
-                sap_err = 1.0 - sap_val
-            sap_hold_val = float("nan")
-            sap_hold_err = float("nan")
-            if sap_kumar_holdout and sap_holdout_test_acc is not None:
-                sap_hold_val = float(sap_holdout_test_acc[0][dim])
-                if np.isfinite(sap_hold_val):
-                    sap_hold_err = 1.0 - sap_hold_val
-            loc_val = float("nan")
-            if loc_scores is not None:
-                loc_val = float(loc_scores[dim])
-            loc_err = float("nan")
-            if loc_err_matrix is not None and loc_err_matrix.shape[0] > 0:
-                loc_err = float(loc_err_matrix[0][dim])
-            if sap_kumar_holdout:
-                logging.info(
-                    "  {:>3d} | {:>6.3f} | {:>7.3f} | {:>7.3f} | {:>12.3f} | {:>12.3f} | {:>7.3f} | {:>7.3f}".format(
-                        dim, corr, sap_val, sap_err, sap_hold_val, sap_hold_err, loc_val, loc_err
-                    )
-                )
-            else:
-                logging.info(
-                    "  {:>3d} | {:>6.3f} | {:>7.3f} | {:>7.3f} | {:>7.3f} | {:>7.3f}".format(
-                        dim, corr, sap_val, sap_err, loc_val, loc_err
-                    )
-                )
-        if sap_kumar_holdout and np.isfinite(sap_holdout_gap):
-            logging.info(
-                "Epoch {} Kumar SAP holdout gap ({}): {:.6f}".format(
-                    epoch, split_label, sap_holdout_gap
-                )
-            )
-        if sap_debug_predictions:
-            if sap_kumar_holdout:
-                logging.info(
-                    "  dim | sap_pred_counts | sap_hold_pred_counts | loc_pred_counts | sap_pred_sample | sap_hold_pred_sample | loc_pred_sample"
-                )
-            else:
-                logging.info(
-                    "  dim | sap_pred_counts | loc_pred_counts | sap_pred_sample | loc_pred_sample"
-                )
-            for dim in range(latents.shape[1]):
-                sap_info = sap_pred_info[0][dim] if sap_pred_info else None
-                loc_info = loc_pred_info[0][dim] if loc_pred_info else None
-                sap_counts = sap_info.get("pred_counts") if sap_info else None
-                sap_hold_counts = None
-                sap_hold_sample = None
-                if sap_kumar_holdout and sap_holdout_pred_info:
-                    hold_info = sap_holdout_pred_info[0][dim]
-                    if hold_info:
-                        sap_hold_counts = hold_info.get("test_pred_counts")
-                        sap_hold_sample = hold_info.get("test_pred_sample")
-                loc_counts = loc_info.get("pred_counts") if loc_info else None
-                sap_sample = sap_info.get("pred_sample") if sap_info else None
-                loc_sample = loc_info.get("pred_sample") if loc_info else None
-                if sap_kumar_holdout:
-                    logging.info(
-                        "  {:>3d} | {} | {} | {} | {} | {} | {}".format(
-                            dim,
-                            "n/a" if sap_counts is None else sap_counts,
-                            "n/a" if sap_hold_counts is None else sap_hold_counts,
-                            "n/a" if loc_counts is None else loc_counts,
-                            "n/a" if sap_sample is None else sap_sample,
-                            "n/a" if sap_hold_sample is None else sap_hold_sample,
-                            "n/a" if loc_sample is None else loc_sample,
-                        )
-                    )
-                else:
-                    logging.info(
-                        "  {:>3d} | {} | {} | {} | {}".format(
-                            dim,
-                            "n/a" if sap_counts is None else sap_counts,
-                            "n/a" if loc_counts is None else loc_counts,
-                            "n/a" if sap_sample is None else sap_sample,
-                            "n/a" if loc_sample is None else loc_sample,
-                        )
-                    )
+        rows = [
+            [
+                "disease",
+                _fmt(corr_d["pca"].get("disease")),
+                _fmt(corr_d["mean"].get("disease")),
+                _fmt(corr_a["pca"].get("disease")),
+                _fmt(corr_a["mean"].get("disease")),
+            ],
+            [
+                "age",
+                _fmt(corr_d["pca"].get("age")),
+                _fmt(corr_d["mean"].get("age")),
+                _fmt(corr_a["pca"].get("age")),
+                _fmt(corr_a["mean"].get("age")),
+            ],
+            [
+                "other",
+                _fmt(corr_d["pca"].get("other")),
+                _fmt(corr_d["mean"].get("other")),
+                _fmt(corr_a["pca"].get("other")),
+                _fmt(corr_a["mean"].get("other")),
+            ],
+        ]
+        header = [
+            "subset",
+            "corr_disease_pca",
+            "corr_disease_mean",
+            "corr_age_pca",
+            "corr_age_mean",
+        ]
+        col_widths = [max(len(str(row[i])) for row in ([header] + rows)) for i in range(len(header))]
+        lines = [" | ".join(str(h).ljust(col_widths[i]) for i, h in enumerate(header))]
+        lines.append("-+-".join("-" * w for w in col_widths))
+        for row in rows:
+            lines.append(" | ".join(str(row[i]).ljust(col_widths[i]) for i in range(len(header))))
+        logging.info("Epoch %d subset correlation table (%s):\n%s", epoch, split_label, "\n".join(lines))
 
     def log_eval_debug(eval_loader, dataset, eval_latents, epoch, split_label, label_map):
         if eval_loader is None or dataset is None:
@@ -2499,15 +3551,43 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 logvar = vae_out["logvar"]
                 z_hat = vae_out["z_hat"]
 
-                vae_total, vae_recon, vae_kl = residual_mlp_vae.vae_loss(
-                    z_hat,
-                    teacher_batch,
-                    mu,
-                    logvar,
-                    recon_weight=vae_recon_weight,
-                    kl_weight=kl_weight,
-                    recon_loss=recon_loss_type,
-                )
+                if use_kl and (
+                    kl_disease_weight != 1.0
+                    or kl_age_weight != 1.0
+                    or kl_other_weight != 1.0
+                ):
+                    # reconstruction
+                    if recon_loss_type == "l1":
+                        recon = F.l1_loss(z_hat, teacher_batch, reduction="mean")
+                    elif recon_loss_type == "mse":
+                        recon = F.mse_loss(z_hat, teacher_batch, reduction="mean")
+                    else:
+                        raise ValueError(f"Unsupported recon_loss: {recon_loss_type}")
+
+                    # weighted KL per subset
+                    kl_terms = 0.5 * (
+                        mu.pow(2) + logvar.exp() - 1.0 - logvar
+                    )  # [B,D]
+                    kl_dim = kl_terms.mean(dim=0)  # [D]
+                    weights = mu.new_ones(mu.shape[1])
+                    weights[disease_dims] = kl_disease_weight
+                    weights[age_dims] = kl_age_weight
+                    weights[other_dims] = kl_other_weight
+                    kl = (kl_dim * weights).mean()
+
+                    vae_recon = recon
+                    vae_kl = kl
+                    vae_total = vae_recon_weight * recon + kl_weight * kl
+                else:
+                    vae_total, vae_recon, vae_kl = residual_mlp_vae.vae_loss(
+                        z_hat,
+                        teacher_batch,
+                        mu,
+                        logvar,
+                        recon_weight=vae_recon_weight,
+                        kl_weight=kl_weight,
+                        recon_loss=recon_loss_type,
+                    )
 
                 snnl_loss_val = 0.0
                 age_snnl_loss_val = 0.0
@@ -2580,14 +3660,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             pseudo_labels = pseudo_labels.to(mu.device).view(
                                 pseudo_labels.shape[0], -1
                             )
-                            if pseudo_labels.shape[1] <= label_index:
+                            if pseudo_labels.shape[1] <= disease_label_index:
                                 raise RuntimeError(
                                     "Pseudo labels missing label_index {} (shape {}).".format(
-                                        label_index, pseudo_labels.shape
+                                        disease_label_index, pseudo_labels.shape
                                     )
                                 )
                             label_values[pseudo_mask] = pseudo_labels[
-                                pseudo_mask, label_index
+                                pseudo_mask, disease_label_index
                             ].to(torch.float32)
 
                         if real_ratio > 0.0 and real_mask.any():
@@ -2601,26 +3681,26 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             real_labels = real_labels.to(mu.device).view(
                                 real_labels.shape[0], -1
                             )
-                            if real_labels.shape[1] <= label_index:
+                            if real_labels.shape[1] <= disease_label_index:
                                 raise RuntimeError(
                                     "Real labels missing label_index {} (shape {}).".format(
-                                        label_index, real_labels.shape
+                                        disease_label_index, real_labels.shape
                                     )
                                 )
                             label_values[real_mask] = real_labels[
-                                real_mask, label_index
+                                real_mask, disease_label_index
                             ].to(torch.float32)
                     else:
                         if labels is None:
                             raise RuntimeError("Label-based losses enabled but labels are missing in batch.")
                         labels = labels.to(mu.device).view(labels.shape[0], -1)
-                        if labels.shape[1] <= label_index:
+                        if labels.shape[1] <= disease_label_index:
                             raise RuntimeError(
                                 "Labels missing label_index {} (shape {}).".format(
-                                    label_index, labels.shape
+                                    disease_label_index, labels.shape
                                 )
                             )
-                        label_values = labels[:, label_index].to(torch.float32)
+                        label_values = labels[:, disease_label_index].to(torch.float32)
 
                     valid_mask = torch.isfinite(label_values) & (label_values != -1)
                     if valid_mask.any():
@@ -2631,24 +3711,27 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             vae_total = vae_total + (snnl_weight * snnl_loss)
                             snnl_loss_val = snnl_loss.item()
                         if attribute_loss:
-                            attr_latent = mu[valid_mask, attribute_latent_index]
+                            if attribute_subset:
+                                attr_latent = mu[valid_mask][:, _subset_to_dims(attribute_subset)].mean(dim=1)
+                            else:
+                                attr_latent = mu[valid_mask, attribute_latent_index]
                             attr_loss = attr_loss_fn(
                                 attr_latent, label_values[valid_mask]
                             )
                             vae_total = vae_total + (attr_weight * attr_loss)
                             attr_loss_val = attr_loss.item()
                         if corr_leakage_loss:
-                            leak_loss = deep_sdf_loss.corr_leakage_penalty(
+                            leak_loss = deep_sdf_loss_subset.corr_leakage_penalty_group(
                                 mu[valid_mask],
                                 label_values[valid_mask],
-                                leakage_target_dim,
+                                disease_dims,
                             )
                             vae_total = vae_total + (corr_leakage_lambda * leak_loss)
                             corr_leak_loss_val = leak_loss.item()
                         if cross_cov_loss:
-                            cross_loss = deep_sdf_loss.cross_cov_penalty(
+                            cross_loss = deep_sdf_loss_subset.cross_cov_penalty_group(
                                 mu[valid_mask],
-                                leakage_target_dim,
+                                disease_dims,
                             )
                             vae_total = vae_total + (cross_cov_lambda * cross_loss)
                             cross_cov_loss_val = cross_loss.item()
@@ -2665,13 +3748,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                                 "Age SNNL enabled but labels are missing in batch."
                             )
                         age_labels = age_labels.to(mu.device).view(age_labels.shape[0], -1)
-                        if age_labels.shape[1] <= age_snnl_reg_label_index:
+                        if age_labels.shape[1] <= age_label_index:
                             raise RuntimeError(
                                 "Labels missing age label_index {} (shape {}).".format(
-                                    age_snnl_reg_label_index, age_labels.shape
+                                    age_label_index, age_labels.shape
                                 )
                             )
-                        age_label_values = age_labels[:, age_snnl_reg_label_index].to(
+                        age_label_values = age_labels[:, age_label_index].to(
                             torch.float32
                         )
                         age_valid_mask = torch.isfinite(age_label_values) & (
@@ -3133,24 +4216,35 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         last_test_cd,
                     )
                 ):
+                    def _fmt_sap_summary(val):
+                        if val is None:
+                            return "n/a"
+                        if isinstance(val, dict):
+                            parts = []
+                            if "disease" in val:
+                                parts.append("disease={:.4f}".format(val["disease"]))
+                            if "age" in val:
+                                parts.append("age={:.4f}".format(val["age"]))
+                            return "{" + ", ".join(parts) + "}" if parts else "n/a"
+                        try:
+                            return "{:.6f}".format(val)
+                        except Exception:
+                            return str(val)
+
                     logging.info(
                         "Epoch {} extra summary: train_sdf_loss={} train_sap={} train_cd={} test_sdf_loss={} test_sap={} test_cd={}".format(
                             epoch,
                             "{:.6f}".format(last_train_eval_sdf)
                             if last_train_eval_sdf is not None
                             else "n/a",
-                            "{:.6f}".format(last_train_sap)
-                            if last_train_sap is not None
-                            else "n/a",
+                            _fmt_sap_summary(last_train_sap),
                             "{:.6f}".format(last_train_cd)
                             if last_train_cd is not None
                             else "n/a",
                             "{:.6f}".format(last_test_eval_sdf)
                             if last_test_eval_sdf is not None
                             else "n/a",
-                            "{:.6f}".format(last_test_sap)
-                            if last_test_sap is not None
-                            else "n/a",
+                            _fmt_sap_summary(last_test_sap),
                             "{:.6f}".format(last_test_cd)
                             if last_test_cd is not None
                             else "n/a",
@@ -3321,7 +4415,19 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                                 last_test_cd = test_cd
 
                         def _fmt_metric(val):
-                            return "n/a" if val is None else "{:.6f}".format(val)
+                            if val is None:
+                                return "n/a"
+                            if isinstance(val, dict):
+                                parts = []
+                                if "disease" in val:
+                                    parts.append("disease={:.4f}".format(val["disease"]))
+                                if "age" in val:
+                                    parts.append("age={:.4f}".format(val["age"]))
+                                return "{" + ", ".join(parts) + "}" if parts else "n/a"
+                            try:
+                                return "{:.6f}".format(val)
+                            except Exception:
+                                return str(val)
 
                         logging.info(
                             "Epoch %d test summary: eval_count=%d mesh_count=%d "

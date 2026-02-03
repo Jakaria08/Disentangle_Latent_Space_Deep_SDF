@@ -106,6 +106,16 @@
   "SNNLRegTopkFrac": 0.1,
   "SNNLRegUseAdaptiveT": true,
   "SNNLRegNormalizeZ": true,
+  "AgeSNNLRegLoss": true,
+  "AgeSNNLRegWeight": 0.5,
+  "AgeSNNLRegLabelIndex": 1,
+  "AgeSNNLRegTargetDim": 1,
+  "AgeSNNLRegTemp": 10.0,
+  "AgeSNNLRegThreshold": 0.2,
+  "AgeSNNLRegPosMode": "topk",
+  "AgeSNNLRegTopkFrac": 0.1,
+  "AgeSNNLRegUseAdaptiveT": true,
+  "AgeSNNLRegNormalizeZ": true,
   "AttributeWeight": 0.25,
   "LabelIndex": 0,
   "AttributeLatentIndex": 0,
@@ -119,6 +129,14 @@
   "SAPLabelIndices": [
     0
   ],
+  "ComputeSAPAge": true,
+  "SAPAgeLabelIndices": [
+    1
+  ],
+  "SAPAgeRegression": true,
+  "SAPAgeContinuousFactors": true,
+  "SAPAgeNumBins": 10,
+  "SAPAgeCORRLabelsFile": "normalized_labels.pt",
   "SAPContinuousFactors": false,
   "SAPDebugPredictions": false,
   "SAPDebugPredSamples": 0,
