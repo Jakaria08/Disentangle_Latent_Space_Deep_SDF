@@ -23,7 +23,14 @@ def reconstruct(
     num_samples=30000,
     lr=5e-4,
     l2reg=False,
+    code_reg_lambda=None,
+    code_reg_type="l2_sq",
+    code_bound=None,
     return_loss_hist=False,
+    dist_mean=None,
+    dist_std=None,
+    dist_weight=0.0,
+    dist_type="zscore_l2",
 ):
     def adjust_learning_rate(
         initial_lr, optimizer, num_iterations, decreased_by, adjust_lr_every
@@ -33,16 +40,35 @@ def reconstruct(
             param_group["lr"] = lr
 
     decreased_by = 10
-    adjust_lr_every = int(num_iterations / 2)
+    # Avoid divide-by-zero for tiny optimization runs (useful for smoke tests).
+    adjust_lr_every = max(1, int(num_iterations / 2))
+
+    # Keep decoder frozen and optimize only the latent code on the same device as the decoder.
+    device = next(decoder.parameters()).device
 
     if type(stat) == type(0.1):
-        latent = torch.ones(1, latent_size).normal_(mean=0, std=stat).cuda()
+        latent = torch.ones(1, latent_size, device=device).normal_(mean=0, std=stat)
     else:
-        latent = torch.normal(stat[0].detach(), stat[1].detach()).cuda()
+        latent = torch.normal(stat[0].detach(), stat[1].detach()).to(device)
 
     latent.requires_grad = True
 
     optimizer = torch.optim.Adam([latent], lr=lr)
+
+    dist_weight_val = float(dist_weight) if dist_weight is not None else 0.0
+    dist_mean_t = None
+    dist_std_t = None
+    if dist_mean is not None:
+        if torch.is_tensor(dist_mean):
+            dist_mean_t = dist_mean.to(device=device, dtype=latent.dtype)
+        else:
+            dist_mean_t = torch.tensor(dist_mean, device=device, dtype=latent.dtype)
+    if dist_std is not None:
+        if torch.is_tensor(dist_std):
+            dist_std_t = dist_std.to(device=device, dtype=latent.dtype)
+        else:
+            dist_std_t = torch.tensor(dist_std, device=device, dtype=latent.dtype)
+        dist_std_t = torch.clamp(dist_std_t, min=1e-8)
 
     loss_num = 0
     all_losses = []
@@ -51,9 +77,7 @@ def reconstruct(
     for e in range(num_iterations):
 
         decoder.eval()
-        sdf_data = data.unpack_sdf_samples_from_ram(
-            test_sdf, num_samples
-        ).cuda()
+        sdf_data = data.unpack_sdf_samples_from_ram(test_sdf, num_samples).to(device)
         xyz = sdf_data[:, 0:3]
         sdf_gt = sdf_data[:, 3].unsqueeze(1)
 
@@ -65,7 +89,7 @@ def reconstruct(
 
         latent_inputs = latent.expand(num_samples, -1)
 
-        inputs = torch.cat([latent_inputs, xyz], 1).cuda()
+        inputs = torch.cat([latent_inputs, xyz], 1)
 
         pred_sdf = decoder(inputs)
 
@@ -76,10 +100,44 @@ def reconstruct(
         pred_sdf = torch.clamp(pred_sdf, -clamp_dist, clamp_dist)
 
         loss = loss_l1(pred_sdf, sdf_gt)
-        if l2reg:
-            loss += 1e-4 * torch.mean(latent.pow(2))
+
+        # Latent regularization (optional). This is useful to match training-time code regularization
+        # behavior when reconstructing latents for multiple splits.
+        if code_reg_lambda is not None and float(code_reg_lambda) > 0.0:
+            code_reg_type_l = str(code_reg_type).lower()
+            if code_reg_type_l in ("l2_norm", "l2norm", "norm"):
+                loss = loss + float(code_reg_lambda) * latent.norm(dim=1).mean()
+            elif code_reg_type_l in ("l2_sq", "l2_squared", "l2", "sq", "squared"):
+                loss = loss + float(code_reg_lambda) * torch.mean(latent.pow(2))
+            else:
+                raise ValueError(f"Unknown code_reg_type: {code_reg_type}")
+        elif l2reg:
+            # Backward-compatible path: original DeepSDF reconstruction uses a fixed weight.
+            loss = loss + 1e-4 * torch.mean(latent.pow(2))
+        if dist_weight_val > 0.0 and dist_mean_t is not None:
+            dist_type_l = str(dist_type).lower()
+            if dist_std_t is not None:
+                diff = (latent - dist_mean_t) / dist_std_t
+            else:
+                diff = latent - dist_mean_t
+            if dist_type_l in ("zscore_l2", "diag_gaussian", "gaussian", "l2", "mse"):
+                dist_penalty = torch.mean(diff.pow(2))
+            elif dist_type_l in ("l1", "abs"):
+                dist_penalty = torch.mean(diff.abs())
+            else:
+                raise ValueError(f"Unknown dist_type: {dist_type}")
+            loss = loss + dist_weight_val * dist_penalty
         loss.backward()
         optimizer.step()
+
+        # Hard latent norm bound (optional), similar to nn.Embedding(max_norm=...).
+        if code_bound is not None:
+            with torch.no_grad():
+                bound = float(code_bound)
+                if bound > 0:
+                    n = latent.norm(dim=1, keepdim=True)
+                    scale = torch.clamp(bound / (n + 1e-12), max=1.0)
+                    latent.mul_(scale)
 
         if e % 50 == 0:
             logging.debug(loss.cpu().data.numpy())

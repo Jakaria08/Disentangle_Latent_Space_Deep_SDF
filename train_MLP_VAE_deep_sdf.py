@@ -301,6 +301,55 @@ def load_latent_codes_from_file(latent_path):
     raise Exception("unrecognized latent code format")
 
 
+def _latent_dim_from_data(latent_data):
+    if isinstance(latent_data, dict):
+        if not latent_data:
+            raise Exception("latent dict is empty")
+        first = next(iter(latent_data.values()))
+        first_t = torch.as_tensor(first)
+        if first_t.dim() >= 2 and 1 in first_t.shape:
+            first_t = first_t.view(-1)
+        return int(first_t.numel())
+    if isinstance(latent_data, torch.Tensor):
+        if latent_data.dim() == 3 and latent_data.size(1) == 1:
+            return int(latent_data.size(2))
+        if latent_data.dim() == 3 and latent_data.size(2) == 1:
+            return int(latent_data.size(1))
+        return int(latent_data.size(1))
+    raise Exception("cannot infer latent dimension from data")
+
+
+def _latents_from_map(latent_map, npyfiles, label="train"):
+    missing = []
+    ordered = []
+    expected_len = None
+    for npy_path in npyfiles:
+        base_name = os.path.splitext(os.path.basename(npy_path))[0]
+        latent = latent_map.get(base_name) if isinstance(latent_map, dict) else None
+        if latent is None:
+            missing.append(base_name)
+            continue
+        latent_t = torch.as_tensor(latent).view(-1)
+        if expected_len is None:
+            expected_len = latent_t.numel()
+        elif latent_t.numel() != expected_len:
+            raise Exception(
+                "Latent length mismatch for {}: {} vs {}".format(
+                    base_name, latent_t.numel(), expected_len
+                )
+            )
+        ordered.append(latent_t)
+    if missing:
+        raise Exception(
+            "{} latent dict missing {} entries (e.g., {}).".format(
+                label, len(missing), missing[0]
+            )
+        )
+    if not ordered:
+        raise Exception("No {} latents matched dataset.".format(label))
+    return torch.stack(ordered, dim=0)
+
+
 def load_sdf_decoder_weights(model_path, sdf_decoder):
     if model_path is None:
         return
@@ -560,6 +609,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     data_source = specs["DataSource"]
     train_split_file = specs["TrainSplit"]
+    val_split_file = get_spec_with_default(specs, "ValSplit", None)
     test_split_file = get_spec_with_default(specs, "TestSplit", None)
 
     arch = __import__("networks." + specs["NetworkArch"], fromlist=["Decoder"])
@@ -585,13 +635,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         raise Exception("PretrainedLatentPath or LatentCodesPath must be set in specs")
 
     teacher_latents = load_latent_codes_from_file(latent_codes_path)
-    teacher_latents = teacher_latents.float()
-
-    code_length = get_spec_with_default(specs, "CodeLength", teacher_latents.shape[1])
-    if code_length != teacher_latents.shape[1]:
+    latent_dim = _latent_dim_from_data(teacher_latents)
+    code_length = get_spec_with_default(specs, "CodeLength", latent_dim)
+    if code_length != latent_dim:
         raise Exception(
             "CodeLength does not match pretrained latent dimensionality: {} vs {}".format(
-                code_length, teacher_latents.shape[1]
+                code_length, latent_dim
             )
         )
 
@@ -671,6 +720,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     )
     corr_leakage_loss = get_spec_with_default(specs, "CorrLeakageLoss", False)
     corr_leakage_lambda = get_spec_with_default(specs, "CorrLeakageLambda", 1.0)
+    age_corr_leakage_loss = get_spec_with_default(specs, "AgeCorrLeakageLoss", False)
+    age_corr_leakage_lambda = get_spec_with_default(
+        specs, "AgeCorrLeakageLambda", corr_leakage_lambda
+    )
     cross_cov_loss = get_spec_with_default(specs, "CrossCovLoss", False)
     cross_cov_lambda = get_spec_with_default(specs, "CrossCovLambda", 1.0)
     sensitivity_loss = get_spec_with_default(specs, "SensitivityLoss", False)
@@ -690,6 +743,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     leakage_target_dim = get_spec_with_default(
         specs, "LeakageTargetDim", attribute_latent_index
     )
+    age_leakage_target_dim = get_spec_with_default(
+        specs, "AgeLeakageTargetDim", age_snnl_reg_target_dim
+    )
     label_mix_enabled = get_spec_with_default(specs, "LabelMixing", False)
     pseudo_labels_file = get_spec_with_default(specs, "PseudoLabelsFile", "pseudo_label.pt")
     real_labels_file = get_spec_with_default(specs, "RealLabelsFile", "labels.pt")
@@ -705,6 +761,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         )
     eval_test_reconstruct = get_spec_with_default(specs, "EvalTestReconstructLatents", False)
     eval_test_start_epoch = get_spec_with_default(specs, "EvalTestStartEpoch", 1)
+    eval_val_reconstruct = get_spec_with_default(specs, "EvalValReconstructLatents", False)
+    eval_val_start_epoch = get_spec_with_default(specs, "EvalValStartEpoch", eval_test_start_epoch)
     train_latent_holdout_frac = float(
         get_spec_with_default(specs, "TrainLatentHoldoutFraction", 0.0)
     )
@@ -743,6 +801,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     sap_age_corr_labels_file = get_spec_with_default(
         specs, "SAPAgeCORRLabelsFile", sap_corr_labels_file
     )
+    age_label_index_for_table = get_spec_with_default(specs, "AgeLabelIndexForTable", None)
+    if age_label_index_for_table is None:
+        if sap_age_label_indices:
+            age_label_index_for_table = int(sap_age_label_indices[0])
+        else:
+            age_label_index_for_table = int(age_snnl_reg_label_index)
     sap_debug_predictions = get_spec_with_default(specs, "SAPDebugPredictions", False)
     sap_debug_pred_samples = int(get_spec_with_default(specs, "SAPDebugPredSamples", 0))
     sap_kumar_holdout = get_spec_with_default(specs, "SAPKumarHoldout", False)
@@ -757,6 +821,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             guided_contrastive_loss
             or attribute_loss
             or corr_leakage_loss
+            or age_corr_leakage_loss
             or rank_loss
             or age_snnl_reg_loss
             or compute_sap
@@ -828,6 +893,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     with open(train_split_file, "r") as f:
         train_split = json.load(f)
+    val_split = None
+    if val_split_file is not None:
+        with open(val_split_file, "r") as f:
+            val_split = json.load(f)
     test_split = None
     if test_split_file is not None:
         with open(test_split_file, "r") as f:
@@ -859,6 +928,11 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     )
 
     num_scenes = len(sdf_dataset)
+    if isinstance(teacher_latents, dict):
+        teacher_latents = _latents_from_map(
+            teacher_latents, sdf_dataset.npyfiles, label="train"
+        )
+    teacher_latents = teacher_latents.float()
     if teacher_latents.shape[0] != num_scenes:
         raise Exception(
             "Pretrained latent count does not match number of scenes: {} vs {}".format(
@@ -957,6 +1031,75 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         )
                     )
 
+    val_dataset = None
+    val_latents = None
+    if val_split is not None:
+        val_dataset = deep_sdf.data.SDFSamples(
+            data_source,
+            val_split,
+            num_samp_per_scene,
+            load_ram=load_ram,
+            return_labels=use_labels,
+            labels_filename=labels_filename,
+            data_source_mesh=data_source_mesh,
+            return_surface_points=return_surface_points,
+            surface_point_count=surface_point_count,
+            warn_missing_labels=warn_missing_labels,
+        )
+        val_latents_path = get_spec_with_default(specs, "ValLatentPath", None)
+        val_latents_path = resolve_spec_path(experiment_directory, val_latents_path)
+        if (
+            vae_input_mode == "latent"
+            and not eval_val_reconstruct
+            and val_latents_path is None
+        ):
+            raise RuntimeError(
+                "EncoderType=residual_mlp requires ValLatentPath for val eval "
+                "(or set EvalValReconstructLatents=true / disable val eval)."
+            )
+        if val_latents_path is None:
+            if not eval_val_reconstruct:
+                logging.info(
+                    "ValSplit provided without ValLatentPath; val eval will run without VAE recon loss."
+                )
+        else:
+            if eval_val_reconstruct:
+                logging.info(
+                    "EvalValReconstructLatents enabled; ignoring ValLatentPath."
+                )
+            else:
+                val_latents = load_latent_codes_from_file(val_latents_path)
+                if isinstance(val_latents, dict):
+                    missing = []
+                    ordered = []
+                    for npy_path in val_dataset.npyfiles:
+                        base_name = os.path.splitext(os.path.basename(npy_path))[0]
+                        if base_name not in val_latents:
+                            missing.append(base_name)
+                            continue
+                        ordered.append(val_latents[base_name].detach().cpu())
+                    if missing:
+                        raise Exception(
+                            "Val latent dict missing {} entries (e.g., {}).".format(
+                                len(missing),
+                                missing[0],
+                            )
+                        )
+                    if not ordered:
+                        raise Exception("No val latents matched val dataset.")
+                    val_latents = torch.stack(ordered, dim=0)
+                    if val_latents.dim() == 3 and val_latents.size(1) == 1:
+                        val_latents = val_latents[:, 0, :]
+                    elif val_latents.dim() == 3 and val_latents.size(2) == 1:
+                        val_latents = val_latents[:, :, 0]
+                val_latents = val_latents.float()
+                if val_latents.shape[0] != len(val_dataset):
+                    raise Exception(
+                        "Val latent count does not match number of val scenes: {} vs {}".format(
+                            val_latents.shape[0], len(val_dataset)
+                        )
+                    )
+
     def _select_vae_inputs(dataset, eval_latents, scene_indices=None):
         if vae_input_mode == "points":
             if dataset is None or not getattr(dataset, "surface_points", None):
@@ -979,6 +1122,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         guided_contrastive_loss
         or attribute_loss
         or corr_leakage_loss
+        or age_corr_leakage_loss
         or age_snnl_reg_loss
         or compute_sap
         or compute_sap_age
@@ -1024,8 +1168,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     eval_train_frequency = get_spec_with_default(specs, "EvalTrainFrequency", 0)
     eval_test_frequency = get_spec_with_default(specs, "EvalTestFrequency", 0)
+    eval_val_frequency = get_spec_with_default(specs, "EvalValFrequency", eval_test_frequency)
     eval_train_scene_num = get_spec_with_default(specs, "EvalTrainSceneNumber", 0)
     eval_test_scene_num = get_spec_with_default(specs, "EvalTestSceneNumber", 0)
+    eval_val_scene_num = get_spec_with_default(specs, "EvalValSceneNumber", eval_test_scene_num)
     eval_test_optimization_steps = get_spec_with_default(specs, "EvalTestOptimizationSteps", 1000)
     eval_test_latent_lr = get_spec_with_default(specs, "EvalTestLatentLR", 5e-3)
     eval_test_latent_l2reg = get_spec_with_default(specs, "EvalTestLatentL2Reg", True)
@@ -1033,6 +1179,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     eval_test_num_samples = get_spec_with_default(specs, "EvalTestNumSamples", num_samp_per_scene)
     mesh_train_scene_num = get_spec_with_default(specs, "EvalMeshTrainSceneNumber", 10)
     mesh_test_scene_num = get_spec_with_default(specs, "EvalMeshTestSceneNumber", 10)
+    mesh_val_scene_num = get_spec_with_default(specs, "EvalMeshValSceneNumber", mesh_test_scene_num)
     eval_grid_res = get_spec_with_default(specs, "EvalGridResolution", 256)
     eval_max_batch = get_spec_with_default(specs, "EvalMaxBatch", int(2 ** 18))
     eval_gt_mesh_dir = get_spec_with_default(specs, "EvalGTMeshDir", None)
@@ -1118,10 +1265,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             )
 
     eval_test_scene_idxs = select_eval_indices(test_dataset, eval_test_scene_num)
+    eval_val_scene_idxs = select_eval_indices(val_dataset, eval_val_scene_num)
     holdout_eval_scene_idxs = select_indices_from_pool(
         holdout_indices, eval_test_scene_num
     )
     eval_test_loader = None
+    eval_val_loader = None
     if eval_test_frequency is not None and eval_test_frequency > 0:
         if test_dataset is None:
             logging.warning(
@@ -1135,6 +1284,19 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             logging.warning(
                 "EvalTestFrequency set but no eval test indices; skipping test evaluation."
             )
+    if eval_val_frequency is not None and eval_val_frequency > 0:
+        if val_dataset is None:
+            logging.warning(
+                "EvalValFrequency set but val dataset missing; skipping val evaluation."
+            )
+        elif eval_val_scene_idxs:
+            eval_val_loader = build_eval_loader_from_indices(
+                val_dataset, eval_val_scene_idxs, "val"
+            )
+        else:
+            logging.warning(
+                "EvalValFrequency set but no eval val indices; skipping val evaluation."
+            )
     eval_holdout_loader = None
 
     eval_train_scene_idxs = (
@@ -1143,6 +1305,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         else select_mesh_indices(sdf_dataset, mesh_train_scene_num)
     )
     mesh_test_scene_idxs = select_mesh_indices(test_dataset, mesh_test_scene_num)
+    mesh_val_scene_idxs = select_mesh_indices(val_dataset, mesh_val_scene_num)
     holdout_mesh_scene_idxs = select_indices_from_pool(
         holdout_indices, mesh_test_scene_num
     )
@@ -1267,12 +1430,17 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     last_test_eval_sdf = None
     last_test_sap = None
     last_test_latent_recon = None
+    last_val_eval_sdf = None
+    last_val_sap = None
+    last_val_latent_recon = None
     last_train_eval_sdf = None
     last_train_sap = None
     last_train_eval_epoch = None
     last_test_eval_epoch = None
+    last_val_eval_epoch = None
     last_train_cd = None
     last_test_cd = None
+    last_val_cd = None
 
     start_epoch = 1
 
@@ -2141,12 +2309,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     "Kumar holdout SAP unavailable ({}): {}".format(split_label, exc)
                 )
         logging.info(
-            "Epoch {} latent vs diagnosis table ({}):".format(epoch, split_label)
+            "Epoch {} latent vs diagnosis tables ({}):".format(epoch, split_label)
         )
-        if sap_kumar_holdout:
-            logging.info("  dim | corr | sap_acc | sap_err | sap_hold_acc | sap_hold_err | loc_acc | loc_err")
-        else:
-            logging.info("  dim | corr | sap_acc | sap_err | loc_acc | loc_err")
+        logging.info("  table A: dim | corr | sap_acc | sap_err | sap_hold_acc")
+        logging.info("  table B: dim | sap_hold_err | loc_acc | loc_err")
+        rows_a = []
+        rows_b = []
         for dim in range(latents.shape[1]):
             x = latents[:, dim]
             if np.std(x) == 0 or np.std(labels_np) == 0:
@@ -2171,18 +2339,20 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             loc_err = float("nan")
             if loc_err_matrix is not None and loc_err_matrix.shape[0] > 0:
                 loc_err = float(loc_err_matrix[0][dim])
-            if sap_kumar_holdout:
-                logging.info(
-                    "  {:>3d} | {:>6.3f} | {:>7.3f} | {:>7.3f} | {:>12.3f} | {:>12.3f} | {:>7.3f} | {:>7.3f}".format(
-                        dim, corr, sap_val, sap_err, sap_hold_val, sap_hold_err, loc_val, loc_err
-                    )
+            rows_a.append((dim, corr, sap_val, sap_err, sap_hold_val))
+            rows_b.append((dim, sap_hold_err, loc_val, loc_err))
+        for dim, corr, sap_val, sap_err, sap_hold_val in rows_a:
+            logging.info(
+                "  A {:>3d} | {:>6.3f} | {:>7.3f} | {:>7.3f} | {:>12.3f}".format(
+                    dim, corr, sap_val, sap_err, sap_hold_val
                 )
-            else:
-                logging.info(
-                    "  {:>3d} | {:>6.3f} | {:>7.3f} | {:>7.3f} | {:>7.3f} | {:>7.3f}".format(
-                        dim, corr, sap_val, sap_err, loc_val, loc_err
-                    )
+            )
+        for dim, sap_hold_err, loc_val, loc_err in rows_b:
+            logging.info(
+                "  B {:>3d} | {:>12.3f} | {:>7.3f} | {:>7.3f}".format(
+                    dim, sap_hold_err, loc_val, loc_err
                 )
+            )
         if sap_kumar_holdout and np.isfinite(sap_holdout_gap):
             logging.info(
                 "Epoch {} Kumar SAP holdout gap ({}): {:.6f}".format(
@@ -2234,6 +2404,153 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             "n/a" if loc_sample is None else loc_sample,
                         )
                     )
+
+    def print_latent_age_table(
+        dataset, eval_latents, epoch, split_label, label_map, scene_indices=None
+    ):
+        if dataset is None or label_map is None:
+            return
+        labels_np = _collect_label_values(dataset.npyfiles, label_map, age_label_index_for_table)
+        if labels_np is None:
+            return
+        vae_inputs = _select_vae_inputs(dataset, eval_latents, scene_indices)
+        if vae_inputs is None:
+            logging.warning(
+                "Age table skipped ({}): VAE inputs unavailable.".format(split_label)
+            )
+            return
+
+        if scene_indices is not None:
+            scene_indices = [int(idx) for idx in scene_indices]
+            labels_np = labels_np[scene_indices]
+
+        latent_batch = get_spec_with_default(specs, "LatentExportBatchSize", 1024)
+        device = next(vae.parameters()).device
+        vae_latents = compute_vae_latents(
+            vae, vae_inputs, latent_batch, device
+        ).cpu().numpy()
+
+        if vae_latents.shape[0] != labels_np.shape[0]:
+            logging.warning(
+                "Age table skipped ({}): latent count {} != label count {}".format(
+                    split_label, vae_latents.shape[0], labels_np.shape[0]
+                )
+            )
+            return
+
+        mask = np.isfinite(labels_np) & (labels_np != -1)
+        if mask.sum() < 2:
+            logging.warning(
+                "Age table skipped ({}): insufficient valid labels.".format(split_label)
+            )
+            return
+
+        labels_np = labels_np[mask].astype(float)
+        latents = vae_latents[mask]
+
+        sap_scores = None
+        if compute_sap_age:
+            factors = labels_np.reshape(-1, 1)
+            try:
+                sap_matrix = sap_metric.sap_score_matrix(
+                    factors,
+                    latents,
+                    continuous_factors=sap_age_continuous,
+                    nb_bins=sap_age_nb_bins,
+                    regression=sap_age_regression,
+                )
+                if sap_matrix.shape[0] > 0:
+                    sap_scores = sap_matrix[0]
+            except Exception as exc:
+                logging.warning(
+                    "Age SAP per-latent scores unavailable ({}): {}".format(
+                        split_label, exc
+                    )
+                )
+
+        pred_info = None
+        if sap_age_regression or sap_age_continuous:
+            try:
+                factors = labels_np.reshape(-1, 1)
+                pred_info = sap_metric.sap_regression_predictions(
+                    factors, latents, pred_sample_n=sap_debug_pred_samples
+                )
+            except Exception as exc:
+                logging.warning(
+                    "Age prediction debug unavailable ({}): {}".format(split_label, exc)
+                )
+
+        table_dir = os.path.join(experiment_directory, ws.tb_logs_dir, "AgeTables")
+        os.makedirs(table_dir, exist_ok=True)
+        table_path = os.path.join(
+            table_dir, f"age_table_{split_label}_epoch_{epoch}.csv"
+        )
+
+        logging.info(
+            "Epoch {} age latent table ({}):".format(epoch, split_label)
+        )
+        logging.info("  dim | corr | sap_r2 | pred_mean | pred_std")
+
+        rows = []
+        for dim in range(latents.shape[1]):
+            x = latents[:, dim]
+            if np.std(x) == 0 or np.std(labels_np) == 0:
+                corr = float("nan")
+            else:
+                corr = float(np.corrcoef(x, labels_np)[0, 1])
+            sap_val = float("nan")
+            if sap_scores is not None:
+                sap_val = float(sap_scores[dim])
+            pred_mean = float("nan")
+            pred_std = float("nan")
+            if pred_info is not None and pred_info[0][dim] is not None:
+                pred_mean = pred_info[0][dim].get("pred_mean", float("nan"))
+                pred_std = pred_info[0][dim].get("pred_std", float("nan"))
+            logging.info(
+                "  {:>3d} | {:>6.3f} | {:>6.3f} | {:>9.4f} | {:>8.4f}".format(
+                    dim, corr, sap_val, pred_mean, pred_std
+                )
+            )
+            rows.append([dim, corr, sap_val, pred_mean, pred_std])
+
+        try:
+            with open(table_path, "w", encoding="utf-8") as f:
+                f.write("dim,corr,sap_r2,pred_mean,pred_std\n")
+                for row in rows:
+                    f.write(
+                        "{},{:.6f},{:.6f},{:.6f},{:.6f}\n".format(
+                            row[0],
+                            row[1],
+                            row[2],
+                            row[3],
+                            row[4],
+                        )
+                    )
+        except Exception as exc:
+            logging.warning("Failed to save age table ({}): {}".format(split_label, exc))
+
+        if sap_debug_predictions and pred_info is not None:
+            sample_path = os.path.join(
+                table_dir, f"age_pred_samples_{split_label}_epoch_{epoch}.csv"
+            )
+            logging.info("  dim | pred_sample")
+            try:
+                with open(sample_path, "w", encoding="utf-8") as f:
+                    f.write("dim,pred_sample\n")
+                    for dim in range(latents.shape[1]):
+                        sample = pred_info[0][dim].get("pred_sample") if pred_info else None
+                        logging.info(
+                            "  {:>3d} | {}".format(
+                                dim, "n/a" if sample is None else sample
+                            )
+                        )
+                        f.write("{},{}\n".format(dim, sample))
+            except Exception as exc:
+                logging.warning(
+                    "Failed to save age prediction samples ({}): {}".format(
+                        split_label, exc
+                    )
+                )
 
     def log_eval_debug(eval_loader, dataset, eval_latents, epoch, split_label, label_map):
         if eval_loader is None or dataset is None:
@@ -2514,6 +2831,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 attr_loss_val = 0.0
                 cov_loss_val = 0.0
                 corr_leak_loss_val = 0.0
+                age_corr_leak_loss_val = 0.0
                 cross_cov_loss_val = 0.0
                 rank_loss_val = 0.0
                 matchstd_loss_val = 0.0
@@ -2658,11 +2976,11 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             )
                             vae_total = vae_total + (rank_weight * rank_loss_val_t)
                             rank_loss_val = rank_loss_val_t.item()
-                    if age_snnl_reg_loss:
+                    if age_snnl_reg_loss or age_corr_leakage_loss:
                         age_labels = labels
                         if age_labels is None:
                             raise RuntimeError(
-                                "Age SNNL enabled but labels are missing in batch."
+                                "Age losses enabled but labels are missing in batch."
                             )
                         age_labels = age_labels.to(mu.device).view(age_labels.shape[0], -1)
                         if age_labels.shape[1] <= age_snnl_reg_label_index:
@@ -2678,11 +2996,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             age_label_values != -1
                         )
                         if age_valid_mask.any() and age_valid_mask.sum().item() > 1:
-                            age_snnl_loss = age_snnl_reg_fn(
-                                mu[age_valid_mask], age_label_values[age_valid_mask]
-                            )
-                            vae_total = vae_total + (age_snnl_reg_weight * age_snnl_loss)
-                            age_snnl_loss_val = age_snnl_loss.item()
+                            if age_snnl_reg_loss:
+                                age_snnl_loss = age_snnl_reg_fn(
+                                    mu[age_valid_mask], age_label_values[age_valid_mask]
+                                )
+                                vae_total = vae_total + (age_snnl_reg_weight * age_snnl_loss)
+                                age_snnl_loss_val = age_snnl_loss.item()
+                            if age_corr_leakage_loss:
+                                age_leak_loss = deep_sdf_loss.corr_leakage_penalty(
+                                    mu[age_valid_mask],
+                                    age_label_values[age_valid_mask],
+                                    age_leakage_target_dim,
+                                )
+                                vae_total = vae_total + (age_corr_leakage_lambda * age_leak_loss)
+                                age_corr_leak_loss_val = age_leak_loss.item()
+                                corr_leak_loss_val += age_corr_leak_loss_val
 
                 if matchstd_loss:
                     matchstd_loss_t, std0_t, stdref_t = matchstd_loss_fn(mu)
@@ -2769,7 +3097,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     epoch_attr.append(attr_loss_val)
                 if covariance_loss:
                     epoch_cov.append(cov_loss_val)
-                if corr_leakage_loss:
+                if corr_leakage_loss or age_corr_leakage_loss:
                     epoch_corr_leak.append(corr_leak_loss_val)
                 if cross_cov_loss:
                     epoch_cross_cov.append(cross_cov_loss_val)
@@ -2871,6 +3199,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 or attribute_loss
                 or covariance_loss
                 or corr_leakage_loss
+                or age_corr_leakage_loss
                 or cross_cov_loss
                 or rank_loss
                 or matchstd_loss
@@ -2884,7 +3213,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     extra_parts.append(f"attr: {epoch_attr_loss:.6f}")
                 if covariance_loss:
                     extra_parts.append(f"cov: {epoch_cov_loss:.6f}")
-                if corr_leakage_loss:
+                if corr_leakage_loss or age_corr_leakage_loss:
                     extra_parts.append(f"leak: {epoch_corr_leak_loss:.6f}")
                 if cross_cov_loss:
                     extra_parts.append(f"cross_cov: {epoch_cross_cov_loss:.6f}")
@@ -2936,7 +3265,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 summary_writer.add_scalar("Loss/train_attr", epoch_attr_loss, global_step=epoch)
             if covariance_loss:
                 summary_writer.add_scalar("Loss/train_cov", epoch_cov_loss, global_step=epoch)
-            if corr_leakage_loss:
+            if corr_leakage_loss or age_corr_leakage_loss:
                 summary_writer.add_scalar("Loss/train_leak", epoch_corr_leak_loss, global_step=epoch)
             if cross_cov_loss:
                 summary_writer.add_scalar("Loss/train_cross_cov", epoch_cross_cov_loss, global_step=epoch)
@@ -3030,6 +3359,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         epoch,
                         split_label,
                         sap_corr_label_map,
+                        scene_indices=scene_indices,
+                    )
+                    print_latent_age_table(
+                        sdf_dataset,
+                        teacher_latents,
+                        epoch,
+                        split_label + "_age",
+                        sap_age_label_map,
                         scene_indices=scene_indices,
                     )
                     log_eval_debug(
@@ -3158,6 +3495,160 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     )
 
             if (
+                eval_val_frequency is not None
+                and eval_val_frequency > 0
+                and epoch % eval_val_frequency == 0
+            ):
+                if eval_val_loader is None:
+                    logging.warning(
+                        "EvalValFrequency set but no val eval loader; skipping eval."
+                    )
+                elif epoch < eval_val_start_epoch:
+                    logging.info(
+                        "Skipping val eval at epoch %d (start epoch %d).",
+                        epoch,
+                        eval_val_start_epoch,
+                    )
+                else:
+                    if eval_val_loader is not None:
+                        logging.info(
+                            "Val eval status: dataset=%s latents=%s gt_mesh_dir=%s",
+                            "ok" if val_dataset is not None else "missing",
+                            "set" if val_latents is not None else "none",
+                            eval_gt_mesh_dir if eval_gt_mesh_dir is not None else "missing",
+                        )
+                        val_sdf_loss = None
+                        val_sap = None
+                        val_cd = None
+                        if eval_val_reconstruct:
+                            subset_indices = (
+                                eval_val_scene_idxs if eval_val_scene_idxs else None
+                            )
+                            val_latents, val_latent_recon = reconstruct_latents_for_dataset(
+                                val_dataset,
+                                sdf_decoder,
+                                data_source,
+                                latent_size,
+                                clamp_dist,
+                                eval_test_num_samples,
+                                eval_test_optimization_steps,
+                                eval_test_latent_lr,
+                                eval_test_latent_l2reg,
+                                eval_test_latent_init_std,
+                                scene_indices=subset_indices,
+                            )
+                            last_val_latent_recon = val_latent_recon
+                            summary_writer.add_scalar(
+                                "Loss/val_latent_recon", val_latent_recon, global_step=epoch
+                            )
+
+                        if val_latents is not None:
+                            logging.info("Val latents shape: %s", tuple(val_latents.shape))
+                        else:
+                            logging.info(
+                                "Val latents not provided; skipping VAE recon loss on val."
+                            )
+
+                        subset_indices = (
+                            eval_val_scene_idxs if eval_val_scene_idxs else None
+                        )
+                        compute_latent_label_correlation(
+                            val_dataset,
+                            val_latents,
+                            epoch,
+                            "val",
+                            sap_corr_label_map,
+                            scene_indices=subset_indices,
+                        )
+                        print_latent_diagnosis_table(
+                            val_dataset,
+                            val_latents,
+                            epoch,
+                            "val",
+                            sap_corr_label_map,
+                            scene_indices=subset_indices,
+                        )
+                        print_latent_age_table(
+                            val_dataset,
+                            val_latents,
+                            epoch,
+                            "val_age",
+                            sap_age_label_map,
+                            scene_indices=subset_indices,
+                        )
+                        eval_metrics = run_eval(
+                            eval_val_loader,
+                            val_latents,
+                            epoch,
+                            "eval_val",
+                            kl_weight,
+                            code_reg_weight,
+                        )
+                        if eval_metrics is not None:
+                            last_val_eval_sdf = eval_metrics.get("eval_sdf_loss")
+                            last_val_eval_epoch = epoch
+                            val_sdf_loss = last_val_eval_sdf
+                        val_metrics = compute_disentanglement_metrics(
+                            eval_val_loader,
+                            val_latents,
+                            epoch,
+                            "val",
+                            sap_corr_label_map,
+                            val_dataset.npyfiles if val_dataset is not None else [],
+                        )
+                        if val_metrics and val_metrics.get("sap") is not None:
+                            last_val_sap = val_metrics["sap"]
+                            val_sap = val_metrics["sap"]
+                        elif compute_sap:
+                            logging.error(
+                                "Val SAP unavailable; check SAPCORRLabelsFile or LabelIndex."
+                            )
+                        if vae_input_mode == "latent" and val_latents is None:
+                            logging.error(
+                                "Val latents missing; skipping val mesh generation."
+                            )
+                        else:
+                            generate_eval_meshes(
+                                val_dataset,
+                                val_latents,
+                                mesh_val_scene_idxs,
+                                "val",
+                                epoch,
+                            )
+                        if eval_gt_mesh_dir is None:
+                            logging.error("EvalGTMeshDir not set; skipping val Chamfer.")
+                        else:
+                            if vae_input_mode == "latent" and val_latents is None:
+                                logging.error(
+                                    "Val latents missing; skipping val Chamfer."
+                                )
+                            else:
+                                val_cd = compute_chamfer_for_scenes(
+                                    val_dataset,
+                                    val_latents,
+                                    mesh_val_scene_idxs,
+                                    "val",
+                                    epoch,
+                                )
+                            if val_cd is not None:
+                                last_val_cd = val_cd
+
+                        def _fmt_metric(val):
+                            return "n/a" if val is None else "{:.6f}".format(val)
+
+                        logging.info(
+                            "Epoch %d val summary: eval_count=%d mesh_count=%d "
+                            "val_sdf_loss=%s val_sap=%s val_cd=%s val_latent_recon=%s",
+                            epoch,
+                            len(eval_val_scene_idxs) if eval_val_scene_idxs else 0,
+                            len(mesh_val_scene_idxs) if mesh_val_scene_idxs else 0,
+                            _fmt_metric(val_sdf_loss),
+                            _fmt_metric(val_sap),
+                            _fmt_metric(val_cd),
+                            _fmt_metric(last_val_latent_recon),
+                        )
+
+            if (
                 eval_test_frequency is not None
                 and eval_test_frequency > 0
                 and epoch % eval_test_frequency == 0
@@ -3261,6 +3752,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             epoch,
                             "test",
                             sap_corr_label_map,
+                            scene_indices=subset_indices,
+                        )
+                        print_latent_age_table(
+                            test_dataset,
+                            test_latents,
+                            epoch,
+                            "test_age",
+                            sap_age_label_map,
                             scene_indices=subset_indices,
                         )
                         eval_metrics = run_eval(
