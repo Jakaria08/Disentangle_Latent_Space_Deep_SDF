@@ -671,6 +671,11 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     vae_dropout = get_spec_with_default(specs, "VAEDropout", 0.0)
     vae_layernorm = get_spec_with_default(specs, "VAELayerNorm", True)
     use_kl = get_spec_with_default(specs, "UseKLLoss", True)
+    vae_objective = str(get_spec_with_default(specs, "VAEObjective", "beta_vae")).lower()
+    beta_tc_alpha = get_spec_with_default(specs, "BetaTC_Alpha", 1.0)
+    beta_tc_beta = get_spec_with_default(specs, "BetaTC_Beta", 6.0)
+    beta_tc_gamma = get_spec_with_default(specs, "BetaTC_Gamma", 1.0)
+    beta_tc_dataset_size = get_spec_with_default(specs, "BetaTC_DatasetSize", None)
 
     guided_contrastive_loss = get_spec_with_default(specs, "GuidedContrastiveLoss", False)
     attribute_loss = get_spec_with_default(specs, "AttributeLoss", False)
@@ -1157,6 +1162,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     train_dataset = sdf_dataset
     if holdout_indices:
         train_dataset = data_utils.Subset(sdf_dataset, train_indices)
+
+    if beta_tc_dataset_size is None:
+        beta_tc_dataset_size = len(train_dataset)
 
     sdf_loader = data_utils.DataLoader(
         train_dataset,
@@ -2816,15 +2824,31 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 logvar = vae_out["logvar"]
                 z_hat = vae_out["z_hat"]
 
-                vae_total, vae_recon, vae_kl = residual_mlp_vae.vae_loss(
-                    z_hat,
-                    teacher_batch,
-                    mu,
-                    logvar,
-                    recon_weight=vae_recon_weight,
-                    kl_weight=kl_weight,
-                    recon_loss=recon_loss_type,
-                )
+                if vae_objective in ("beta_tcvae", "beta_tc", "tcvae"):
+                    vae_total, vae_recon, vae_kl, _, _, _ = residual_mlp_vae.beta_tcvae_loss(
+                        z_hat,
+                        teacher_batch,
+                        vae_out["z"],
+                        mu,
+                        logvar,
+                        recon_weight=vae_recon_weight,
+                        kl_weight=kl_weight,
+                        tc_alpha=beta_tc_alpha,
+                        tc_beta=beta_tc_beta,
+                        tc_gamma=beta_tc_gamma,
+                        recon_loss=recon_loss_type,
+                        dataset_size=beta_tc_dataset_size,
+                    )
+                else:
+                    vae_total, vae_recon, vae_kl = residual_mlp_vae.vae_loss(
+                        z_hat,
+                        teacher_batch,
+                        mu,
+                        logvar,
+                        recon_weight=vae_recon_weight,
+                        kl_weight=kl_weight,
+                        recon_loss=recon_loss_type,
+                    )
 
                 snnl_loss_val = 0.0
                 age_snnl_loss_val = 0.0
@@ -3879,6 +3903,9 @@ if __name__ == "__main__":
     deep_sdf.add_common_args(arg_parser)
 
     args = arg_parser.parse_args()
+
+    if args.logfile is None:
+        args.logfile = os.path.join(args.experiment_directory, "train.log")
 
     deep_sdf.configure_logging(args)
 

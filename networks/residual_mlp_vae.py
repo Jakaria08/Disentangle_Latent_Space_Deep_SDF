@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -278,6 +279,11 @@ def kl_divergence(mu, logvar):
     return -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
 
 
+def log_density_gaussian(z, mu, logvar):
+    log2pi = math.log(2.0 * math.pi)
+    return -0.5 * (log2pi + logvar + (z - mu).pow(2) / logvar.exp())
+
+
 def vae_loss(
     z_hat,
     z_target,
@@ -296,6 +302,55 @@ def vae_loss(
     kl = kl_divergence(mu, logvar)
     total = recon_weight * recon + kl_weight * kl
     return total, recon, kl
+
+
+def beta_tcvae_loss(
+    z_hat,
+    z_target,
+    z,
+    mu,
+    logvar,
+    recon_weight=1.0,
+    kl_weight=1.0,
+    tc_alpha=1.0,
+    tc_beta=6.0,
+    tc_gamma=1.0,
+    recon_loss="mse",
+    dataset_size=None,
+):
+    if recon_loss == "l1":
+        recon = F.l1_loss(z_hat, z_target, reduction="mean")
+    elif recon_loss == "mse":
+        recon = F.mse_loss(z_hat, z_target, reduction="mean")
+    else:
+        raise ValueError(f"Unsupported recon_loss: {recon_loss}")
+
+    batch_size = z.shape[0]
+    if dataset_size is None:
+        dataset_size = batch_size
+    dataset_size = max(int(dataset_size), 1)
+
+    log_qz_condx = log_density_gaussian(z, mu, logvar).sum(dim=1)
+
+    z_expand = z.unsqueeze(1)
+    mu_expand = mu.unsqueeze(0)
+    logvar_expand = logvar.unsqueeze(0)
+    log_qz_x = log_density_gaussian(z_expand, mu_expand, logvar_expand)
+
+    log_qz = torch.logsumexp(log_qz_x.sum(2), dim=1) - math.log(dataset_size)
+    log_qz_prod = torch.logsumexp(log_qz_x, dim=1) - math.log(dataset_size)
+    log_prod_qz = log_qz_prod.sum(dim=1)
+
+    log_pz = log_density_gaussian(z, torch.zeros_like(z), torch.zeros_like(z)).sum(dim=1)
+
+    mi = (log_qz_condx - log_qz).mean()
+    tc = (log_qz - log_prod_qz).mean()
+    dwkl = (log_prod_qz - log_pz).mean()
+    total_kl = mi + tc + dwkl
+
+    weighted_kl = tc_alpha * mi + tc_beta * tc + tc_gamma * dwkl
+    total = recon_weight * recon + kl_weight * weighted_kl
+    return total, recon, total_kl, mi, tc, dwkl
 
 
 def deep_sdf_loss(
