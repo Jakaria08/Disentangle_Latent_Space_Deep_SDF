@@ -37,6 +37,7 @@ DEFAULT_BASE_SPECS = (
 )
 
 DEFAULT_SEARCH_DIR = "outputs/optuna_vae_sdf"
+DEFAULT_NUM_EPOCHS = 500
 
 WEIGHTS = {
     "sap": 0.6,
@@ -355,11 +356,11 @@ def _write_all_epoch_metrics_logs(trial_dir: str, log_path: str) -> None:
 def _build_trial_specs(base_specs: Dict, trial: optuna.Trial) -> Dict:
     specs = copy.deepcopy(base_specs)
 
-    # Use base spec epochs (defaulting to 300 if missing).
-    specs["NumEpochs"] = int(base_specs.get("NumEpochs", 300))
+    # Override base spec epochs to keep optuna runs consistent.
+    specs["NumEpochs"] = DEFAULT_NUM_EPOCHS
 
     # Core hyperparameters
-    specs["VAELatentDim"] = trial.suggest_categorical("VAELatentDim", [4, 8, 16])
+    specs["VAELatentDim"] = trial.suggest_categorical("VAELatentDim", [4, 8])
     specs["VAEReconWeight"] = trial.suggest_float(
         "VAEReconWeight", 1e-3, 5e-1, log=True
     )
@@ -379,6 +380,9 @@ def _build_trial_specs(base_specs: Dict, trial: optuna.Trial) -> Dict:
     specs["AgeSNNLRegTemp"] = trial.suggest_float(
         "AgeSNNLRegTemp", 1.0, 30.0, log=True
     )
+    specs["AgeSNNLRegThreshold"] = trial.suggest_categorical(
+        "AgeSNNLRegThreshold", [0.025, 0.05]
+    )
 
     # Regularizers
     specs["CovarianceLossLambda"] = trial.suggest_float(
@@ -387,21 +391,9 @@ def _build_trial_specs(base_specs: Dict, trial: optuna.Trial) -> Dict:
     specs["CorrLeakageLambda"] = trial.suggest_float(
         "CorrLeakageLambda", 1e-3, 5e-1, log=True
     )
-    specs["AgeCorrLeakageLambda"] = trial.suggest_float(
-        "AgeCorrLeakageLambda", 1e-3, 5e-1, log=True
-    )
-    specs["SensitivityWeight"] = trial.suggest_float(
-        "SensitivityWeight", 1e-3, 1.0, log=True
-    )
-    specs["SensitivityEps"] = trial.suggest_float(
-        "SensitivityEps", 5e-3, 5e-2, log=True
-    )
-    specs["SensitivityEta"] = trial.suggest_float(
-        "SensitivityEta", 5e-3, 5e-2, log=True
-    )
-    specs["MatchStdWeight"] = trial.suggest_float(
-        "MatchStdWeight", 1e-3, 5e-1, log=True
-    )
+    # Keep AgeCorrLeakage/Sensitivity/MatchStd fixed to base specs defaults.
+    # Explicitly disable age-corr leakage as requested.
+    specs["AgeCorrLeakageLoss"] = False
 
     # LR schedule: keep intervals/factors; tune initial values
     lr0 = trial.suggest_float("LrInitial", 1e-4, 5e-3, log=True)

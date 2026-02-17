@@ -676,6 +676,25 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     beta_tc_beta = get_spec_with_default(specs, "BetaTC_Beta", 6.0)
     beta_tc_gamma = get_spec_with_default(specs, "BetaTC_Gamma", 1.0)
     beta_tc_dataset_size = get_spec_with_default(specs, "BetaTC_DatasetSize", None)
+    dip_vae_type = str(get_spec_with_default(specs, "DIPVAEType", "ii")).lower()
+    dip_vae_lambda_od = get_spec_with_default(specs, "DIPVAE_LambdaOD", 1.0)
+    dip_vae_lambda_d = get_spec_with_default(specs, "DIPVAE_LambdaD", 1.0)
+    dip_objectives = {
+        "dip_vae",
+        "dip_vae_ii",
+        "dip_vae2",
+        "dip_ii",
+        "dip2",
+        "dip_vae_i",
+        "dip_vae1",
+        "dip_i",
+        "dip1",
+    }
+    use_dip_objective = vae_objective in dip_objectives
+    if vae_objective in ("dip_vae_ii", "dip_vae2", "dip_ii", "dip2"):
+        dip_vae_type = "ii"
+    elif vae_objective in ("dip_vae_i", "dip_vae1", "dip_i", "dip1"):
+        dip_vae_type = "i"
 
     guided_contrastive_loss = get_spec_with_default(specs, "GuidedContrastiveLoss", False)
     attribute_loss = get_spec_with_default(specs, "AttributeLoss", False)
@@ -2267,9 +2286,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             return
 
         labels_np = labels_np.astype(int)
+        unique_labels, unique_counts = np.unique(labels_np, return_counts=True)
+        label_balance = {int(k): int(v) for k, v in zip(unique_labels, unique_counts)}
+        logging.info("  label balance ({}): {}".format(split_label, label_balance))
         loc_scores = None
         loc_pred_info = None
         sap_holdout_acc = None
+        sap_holdout_test_acc = None
         sap_holdout_pred_info = None
         sap_holdout_gap = float("nan")
         try:
@@ -2768,6 +2791,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_matchstd_stdref = []
             epoch_sens = []
             epoch_sens_delta = []
+            epoch_dip = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -2839,6 +2863,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         recon_loss=recon_loss_type,
                         dataset_size=beta_tc_dataset_size,
                     )
+                elif use_dip_objective:
+                    vae_total, vae_recon, vae_kl, dip_loss, dip_off, dip_diag = (
+                        residual_mlp_vae.dip_vae_loss(
+                            z_hat,
+                            teacher_batch,
+                            mu,
+                            logvar,
+                            recon_weight=vae_recon_weight,
+                            kl_weight=kl_weight,
+                            dip_lambda_od=dip_vae_lambda_od,
+                            dip_lambda_d=dip_vae_lambda_d,
+                            dip_type=dip_vae_type,
+                            recon_loss=recon_loss_type,
+                        )
+                    )
                 else:
                     vae_total, vae_recon, vae_kl = residual_mlp_vae.vae_loss(
                         z_hat,
@@ -2863,6 +2902,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 matchstd_stdref_val = 0.0
                 sens_loss_val = 0.0
                 sens_delta_val = 0.0
+                dip_loss_val = 0.0
+                if use_dip_objective:
+                    dip_loss_val = float(dip_loss.item())
                 if use_labels:
                     label_values = None
                     if label_mix_enabled:
@@ -3134,6 +3176,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 if sensitivity_loss:
                     epoch_sens.append(sens_loss_val)
                     epoch_sens_delta.append(sens_delta_val)
+                if use_dip_objective:
+                    epoch_dip.append(dip_loss_val)
 
             seconds_elapsed = time.time() - epoch_time_start
             timing_log.append(seconds_elapsed)
@@ -3170,6 +3214,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_sens_delta = (
                 sum(epoch_sens_delta) / len(epoch_sens_delta) if epoch_sens_delta else 0.0
             )
+            epoch_dip_loss = sum(epoch_dip) / len(epoch_dip) if epoch_dip else 0.0
             epoch_sdf_weighted = sdf_loss_weight * (epoch_sdf_loss + epoch_sdf_reg)
             epoch_vae_recon_weighted = vae_recon_weight * epoch_vae_recon_loss
             epoch_vae_kl_weighted = kl_weight * epoch_vae_kl_loss
@@ -3227,6 +3272,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 or cross_cov_loss
                 or rank_loss
                 or matchstd_loss
+                or use_dip_objective
             ):
                 extra_parts = []
                 if guided_contrastive_loss:
@@ -3245,6 +3291,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     extra_parts.append(f"rank: {epoch_rank_loss:.6f}")
                 if matchstd_loss:
                     extra_parts.append(f"matchstd: {epoch_matchstd_loss:.6f}")
+                if use_dip_objective:
+                    extra_parts.append(f"dip: {epoch_dip_loss:.6f}")
                 if extra_parts:
                     logging.info(
                         "Epoch {} extra losses: {}".format(

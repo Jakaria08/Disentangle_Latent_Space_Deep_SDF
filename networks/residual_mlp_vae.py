@@ -304,6 +304,55 @@ def vae_loss(
     return total, recon, kl
 
 
+def _covariance_matrix(x):
+    if x.dim() != 2:
+        raise ValueError("covariance expects a 2D tensor [N, D]")
+    n = x.shape[0]
+    if n <= 1:
+        return torch.zeros((x.shape[1], x.shape[1]), device=x.device, dtype=x.dtype)
+    x_centered = x - x.mean(dim=0, keepdim=True)
+    return (x_centered.t() @ x_centered) / float(n - 1)
+
+
+def dip_vae_loss(
+    z_hat,
+    z_target,
+    mu,
+    logvar,
+    recon_weight=1.0,
+    kl_weight=1.0,
+    dip_lambda_od=1.0,
+    dip_lambda_d=1.0,
+    dip_type="ii",
+    recon_loss="mse",
+):
+    if recon_loss == "l1":
+        recon = F.l1_loss(z_hat, z_target, reduction="mean")
+    elif recon_loss == "mse":
+        recon = F.mse_loss(z_hat, z_target, reduction="mean")
+    else:
+        raise ValueError(f"Unsupported recon_loss: {recon_loss}")
+
+    kl = kl_divergence(mu, logvar)
+
+    dip_type = str(dip_type).lower()
+    cov_mu = _covariance_matrix(mu)
+    if dip_type in ("ii", "2", "dip_vae_ii", "dip_vae2", "dip_ii", "dip2"):
+        var = torch.exp(logvar)
+        cov_z = cov_mu + torch.diag(var.mean(dim=0))
+    else:
+        cov_z = cov_mu
+
+    diag = torch.diag(cov_z)
+    off_diag = cov_z - torch.diag(diag)
+    off_loss = torch.sum(off_diag.pow(2))
+    diag_loss = torch.sum((diag - 1.0).pow(2))
+    dip_loss = dip_lambda_od * off_loss + dip_lambda_d * diag_loss
+
+    total = recon_weight * recon + kl_weight * kl + dip_loss
+    return total, recon, kl, dip_loss, off_loss, diag_loss
+
+
 def beta_tcvae_loss(
     z_hat,
     z_target,
