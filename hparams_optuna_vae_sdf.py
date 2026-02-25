@@ -360,7 +360,7 @@ def _build_trial_specs(base_specs: Dict, trial: optuna.Trial) -> Dict:
     specs["NumEpochs"] = DEFAULT_NUM_EPOCHS
 
     # Core hyperparameters
-    specs["VAELatentDim"] = trial.suggest_categorical("VAELatentDim", [4, 8])
+    specs["VAELatentDim"] = 8
     specs["VAEReconWeight"] = trial.suggest_float(
         "VAEReconWeight", 1e-3, 5e-1, log=True
     )
@@ -381,7 +381,7 @@ def _build_trial_specs(base_specs: Dict, trial: optuna.Trial) -> Dict:
         "AgeSNNLRegTemp", 1.0, 30.0, log=True
     )
     specs["AgeSNNLRegThreshold"] = trial.suggest_categorical(
-        "AgeSNNLRegThreshold", [0.025, 0.05]
+        "AgeSNNLRegThreshold", [0.15, 0.2]
     )
 
     # Regularizers

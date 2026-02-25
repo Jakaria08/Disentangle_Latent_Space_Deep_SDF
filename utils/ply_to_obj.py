@@ -5,8 +5,8 @@ import trimesh
 #input_directory = '../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle'
 #output_directory = '../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/obj_files'
 
-input_directory = '../../../ADNI/ADNI_1/adni_processed/combined_hippocampus_correspondence/minimal_final_ply'
-output_directory = '../../../ADNI/ADNI_1/adni_processed/combined_hippocampus_correspondence/minimal_final_obj'
+input_directory = '../../../OAI-ZIB/mesh_minimal'
+output_directory = '../../../OAI-ZIB/mesh_minimal_obj'
 
 # Ensure the output directory exists
 if not os.path.exists(output_directory):

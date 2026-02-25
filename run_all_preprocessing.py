@@ -58,9 +58,9 @@ def main(data_dir, source_dir, splits_dir, debug=False):
 
 if __name__ == "__main__":
 
-    data_dir = "../../ADNI/ADNI_1/adni_processed/combined_hippocampus_correspondence/sdf_data_smooth"      
-    source_dir = "../../ADNI/ADNI_1/adni_processed/combined_hippocampus_correspondence/minimal_smooth_scaled_obj_files"
-    splits_dir = "examples/splits/splits_combined_hippocampus_ADNI_smooth"
+    data_dir = "../../OAI-ZIB/sdf_data"      
+    source_dir = "../../OAI-ZIB/mesh_minimal_scaled_obj_files"
+    splits_dir = "examples/splits/splits_OAI_Femur"
 
     os.makedirs(data_dir, exist_ok=True)
 

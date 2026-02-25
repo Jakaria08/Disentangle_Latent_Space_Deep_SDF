@@ -233,7 +233,34 @@ class SDFSamples(torch.utils.data.Dataset):
         if not os.path.isfile(labels_path):
             raise FileNotFoundError(f"labels file not found: {labels_path}")
         labels = torch.load(labels_path, map_location="cpu")
-        return self._build_label_map(labels)
+        label_map = self._build_label_map(labels)
+
+        # Handle filename/label key mismatch for OAI-ZIB (e.g., *_femur).
+        # If a label is missing for a base name with "_femur", try the suffix-stripped ID.
+        # If still missing, raise (or warn + fill NaN later via __getitem__ if warn_missing_labels is True).
+        missing = []
+        for npy_path in self.npyfiles:
+            base_name = os.path.splitext(os.path.basename(npy_path))[0]
+            if base_name in label_map:
+                continue
+            if base_name.endswith("_femur"):
+                alt = base_name[:-6]
+                if alt in label_map:
+                    label_map[base_name] = label_map[alt]
+                    continue
+            missing.append(base_name)
+
+        if missing:
+            msg = (
+                f"Missing labels for {len(missing)} files (e.g., {missing[0]}). "
+                "If your label keys are IDs, ensure they match filenames or use the _femur suffix."
+            )
+            if self.warn_missing_labels:
+                logging.warning(msg)
+            else:
+                raise RuntimeError(msg)
+
+        return label_map
 
     def __len__(self):
         return len(self.npyfiles)

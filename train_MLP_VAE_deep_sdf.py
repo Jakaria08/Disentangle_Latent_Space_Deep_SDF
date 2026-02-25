@@ -89,6 +89,27 @@ def load_model(experiment_directory, filename, vae, sdf_decoder):
     return data["epoch"]
 
 
+def load_vae_weights(weights_path, vae):
+    if weights_path is None:
+        return
+    if not os.path.isfile(weights_path):
+        raise Exception('VAE weights file "{}" does not exist'.format(weights_path))
+    data = torch.load(weights_path, map_location="cpu")
+    state_dict = None
+    if isinstance(data, dict):
+        if "vae_state_dict" in data:
+            state_dict = data["vae_state_dict"]
+        elif "state_dict" in data:
+            state_dict = data["state_dict"]
+        elif "model_state_dict" in data:
+            state_dict = data["model_state_dict"]
+        else:
+            state_dict = data
+    else:
+        state_dict = data
+    _load_module_state(vae, state_dict)
+
+
 def save_optimizer(experiment_directory, filename, optimizer, epoch):
     optimizer_params_dir = ws.get_optimizer_params_dir(experiment_directory, True)
     torch.save(
@@ -483,6 +504,16 @@ def _load_label_map(labels_path, npyfiles):
         raise FileNotFoundError(f"labels file not found: {labels_path}")
     labels = torch.load(labels_path, map_location="cpu")
     if isinstance(labels, dict):
+        # Handle filename/label key mismatch for OAI-ZIB (e.g., *_femur).
+        # If a label is missing for a base name with "_femur", try the suffix-stripped ID.
+        for npy_path in npyfiles:
+            base_name = os.path.splitext(os.path.basename(npy_path))[0]
+            if base_name in labels:
+                continue
+            if base_name.endswith("_femur"):
+                alt = base_name[:-6]
+                if alt in labels:
+                    labels[base_name] = labels[alt]
         return labels
     if hasattr(labels, "__len__") and len(labels) == len(npyfiles):
         label_map = {}
@@ -502,6 +533,14 @@ def _labels_for_indices(npyfiles, label_map, indices):
     for idx in indices.tolist():
         base_name = os.path.splitext(os.path.basename(npyfiles[idx]))[0]
         label = label_map.get(base_name) if isinstance(label_map, dict) else None
+        # Handle *_femur filename mismatch (OAI-ZIB): try stripped ID if missing.
+        if label is None and base_name.endswith("_femur") and isinstance(label_map, dict):
+            alt = base_name[:-6]
+            label = label_map.get(alt)
+        # Handle *_femur filename mismatch (OAI-ZIB): try stripped ID if missing.
+        if label is None and base_name.endswith("_femur") and isinstance(label_map, dict):
+            alt = base_name[:-6]
+            label = label_map.get(alt)
         if label is None:
             labels.append(None)
             continue
@@ -535,6 +574,10 @@ def _summarize_labels(npyfiles, label_map, label_index):
     for npy_path in npyfiles:
         base_name = os.path.splitext(os.path.basename(npy_path))[0]
         label = label_map.get(base_name) if isinstance(label_map, dict) else None
+        # Handle *_femur filename mismatch (OAI-ZIB): try stripped ID if missing.
+        if label is None and base_name.endswith("_femur") and isinstance(label_map, dict):
+            alt = base_name[:-6]
+            label = label_map.get(alt)
         if label is None:
             missing += 1
             continue
@@ -882,6 +925,14 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             decoder_layernorm=vae_layernorm,
             use_kl=use_kl,
         ).cuda()
+
+    pretrained_vae_path = get_spec_with_default(specs, "PretrainedVAEPath", None)
+    if not pretrained_vae_path:
+        pretrained_vae_path = None
+    pretrained_vae_path = resolve_spec_path(experiment_directory, pretrained_vae_path)
+    if pretrained_vae_path is not None:
+        logging.info("Loading pretrained VAE from: {}".format(pretrained_vae_path))
+        load_vae_weights(pretrained_vae_path, vae)
 
     if torch.cuda.device_count() > 1:
         vae = torch.nn.DataParallel(vae)
