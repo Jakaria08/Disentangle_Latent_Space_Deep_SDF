@@ -171,7 +171,7 @@ def get_SDFGen_voxels(
     padding: float = 3,
     shapenet_path: str = "/mnt/hdd/ShapeNetCore.v2",
     class_id: str = "02691156",
-    sdf_gen_path: str = "/home/freissmuth/sdf-gen/build/bin"
+    sdf_gen_path: str = "[path to sdf folder: bin]"
 ):
     voxel_size = 2.0 / (voxel_resolution - 2 * padding)
     in_path = os.path.join(shapenet_path, class_id, shape_id, "models/model_normalized.obj")

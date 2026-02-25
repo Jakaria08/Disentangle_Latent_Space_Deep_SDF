@@ -8,8 +8,8 @@
     "Switch to disease classification: LabelTaskType=classification, LabelIndex=0, SAPLabelIndices=[0], SAPRegression=false, SAPContinuousFactors=false, SNNLType=cls.",
     "Use EncoderType=residual_mlp to feed 256D latents (no surface points). Provide TestLatentPath for test eval; ReturnSurfacePoints is ignored."
   ],
-  "DataSource": "/home/jakaria/OAI-ZIB/sdf_data/SdfSamples/mesh_minimal_scaled_obj_files",
-  "DataSourceMesh": "/home/jakaria/OAI-ZIB/mesh_minimal_scaled_obj_files",
+  "DataSource": "[path to sdf folder: mesh_minimal_scaled_obj_files]",
+  "DataSourceMesh": "[path to mesh folder: mesh_minimal_scaled_obj_files]",
   "TrainSplit": "examples/splits/splits_OAI_Femur_new_all/train_split_torus.json",
   "TestSplit": "examples/splits/splits_OAI_Femur_new_all/test_split_torus.json",
   "EvalTrainFrequency": 100,
@@ -159,7 +159,7 @@
   "LabelMixUnlabeledRatioStart": 0.0,
   "TestLatentPath": "../minimal_eikonal/LatentCodes/latents_by_name.pt",
   "EvalMeshTestSceneNumber": 2,
-  "EvalGTMeshDir": "/home/jakaria/OAI-ZIB/mesh_minimal_scaled_obj_files",
+  "EvalGTMeshDir": "[path to mesh folder: mesh_minimal_scaled_obj_files]",
   "EvalGTMeshExt": ".obj",
   "CorrLeakageLoss": true,
   "CorrLeakageLambda": 0.05,
@@ -187,5 +187,5 @@
   "ValSplit": "examples/splits/splits_OAI_Femur_new_all/val_split_torus.json",
   "ValLatentPath": "../minimal_eikonal/LatentCodes/latents_by_name.pt",
   "AgeLabelIndexForTable": 3,
-  "PretrainedVAEPath": "/home/jakaria/INR/Deep3DComp/examples/OAI-ZIB/MLP_VAE_SDF_disentangle_all_true_label_age/ModelParameters/latest.pth"
+  "PretrainedVAEPath": "ModelParameters/latest.pth"
 }

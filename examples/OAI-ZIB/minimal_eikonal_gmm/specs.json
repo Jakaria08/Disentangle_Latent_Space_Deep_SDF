@@ -1,11 +1,11 @@
 {
   "Description" : [ "This experiment learns a shape representation for torus ",
                     "using synthetic data." ],
-  "DataSource" : "/home/jakaria/OAI-ZIB/sdf_data/SdfSamples/mesh_minimal_scaled_obj_files",
-  "DataSourceMesh" : "/home/jakaria/OAI-ZIB/mesh_minimal_scaled_obj_files",
+  "DataSource" : "[path to sdf folder: mesh_minimal_scaled_obj_files]",
+  "DataSourceMesh" : "[path to mesh folder: mesh_minimal_scaled_obj_files]",
   "TrainSplit" : "examples/splits/splits_OAI_Femur_all/train_split_torus.json",
   "TestSplit" : "examples/splits/splits_OAI_Femur_all/test_split_torus.json",
-  "TorusPath" : "/home/jakaria/OAI-ZIB/minimal_scaled_obj_files",
+  "TorusPath" : "[path to mesh folder: minimal_scaled_obj_files]",
   "NetworkArch" : "deep_sdf_decoder",
   "NetworkSpecs" : {
     "dims" : [ 512, 512, 512, 512, 512, 512, 512, 512 ],
@@ -66,6 +66,6 @@
   "GradMetricIsoAlpha" : 1.0,
   "GradMetricIsoNormalize" : false,
   "UsePretrainedSDFDecoder" : false,
-  "PretrainedSDFDecoderDir" : "/home/jakaria/OAI-ZIB/pretrained_sdf_decoder",
+  "PretrainedSDFDecoderDir" : "[path to sdf folder: pretrained_sdf_decoder]",
   "PretrainedSDFDecoderCheckpoint" : "latest"
 }

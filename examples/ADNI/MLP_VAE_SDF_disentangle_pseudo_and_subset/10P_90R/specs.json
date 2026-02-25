@@ -3,7 +3,7 @@
     "Residual MLP VAE + DeepSDF latent distillation.",
     "Teacher latents come from a pretrained DeepSDF experiment."
   ],
-  "DataSource": "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/sdf_data/SdfSamples/minimal_scaled_obj_files",
+  "DataSource": "[path to sdf folder: minimal_scaled_obj_files]",
   "TrainSplit": "examples/splits/splits_left_hippocampus_ADNI_No_MCI/train_split_left_hippocampus_adni_no_mci.json",
   "TestSplit": "examples/splits/splits_left_hippocampus_ADNI_No_MCI/test_split_left_hippocampus_adni_no_mci.json",
   "EvalTrainFrequency": 100,
@@ -123,7 +123,7 @@
     "Switch to disease classification: LabelTaskType=classification, LabelIndex=0, SAPLabelIndices=[0], SAPRegression=false, SAPContinuousFactors=false, SNNLType=cls.",
     "Use EncoderType=residual_mlp to feed 256D latents (no surface points). Provide TestLatentPath for test eval; ReturnSurfacePoints is ignored."
   ],
-  "DataSourceMesh": "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/minimal_scaled_obj_files",
+  "DataSourceMesh": "[path to mesh folder: minimal_scaled_obj_files]",
   "ReturnSurfacePoints": true,
   "SurfacePointCount": 3000,
   "EncoderType": "residual_mlp",
@@ -140,7 +140,7 @@
   "ComputeMIG": false,
   "TestLatentPath": "../minimal_eikonal_cov_256D_no_lambda/test_latents/test_latents.pt",
   "EvalMeshTestSceneNumber": 1,
-  "EvalGTMeshDir": "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/minimal_scaled_obj_files",
+  "EvalGTMeshDir": "[path to mesh folder: minimal_scaled_obj_files]",
   "EvalGTMeshExt": ".obj",
   "EvalTrainSceneNumber": 100,
   "EvalMeshTrainSceneNumber": 1,

@@ -83,3 +83,6 @@ docs/_build/
 
 # Parameter Tuning
 examples/CALSNIC_control_L/optuna_reconstruction_search/
+
+# Local experiment folders
+**/MLP_VAE_SDF_disentangle_pseudo_and_subset/
