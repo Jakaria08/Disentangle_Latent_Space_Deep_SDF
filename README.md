@@ -4,7 +4,7 @@ DeepSDF-based pipeline for learning an SDF auto-decoder and a second-stage MLPâ€
 
 ![Overall Architecture of Our Two Stage Training](./resources/overall_arch.png)
 
-[Latent Interpolation and Disentanglement Visualization of Hippocampus Shapes (MP4)](./resources/interp_gen.mp4)
+[![Latent Interpolation and Disentanglement Visualization of Hippocampus Shapes](./resources/interp_preview.png)](./resources/interp_gen.mp4)
 
 ## Overview
 

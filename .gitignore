@@ -16,6 +16,7 @@ outputs/*
 *.jpg
 *.png
 !resources/overall_arch.png
+!resources/interp_preview.png
 *.pth
 *.pt
 
