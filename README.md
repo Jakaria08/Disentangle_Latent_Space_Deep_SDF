@@ -14,18 +14,19 @@ The scripts assume a shared organizational structure so that outputs from one st
 
 ### Data Layout
 
-```text
-<data_source_name>/
+<small>
+<pre><code>&lt;data_source_name&gt;/
     .datasources.json
     SdfSamples/
-        <dataset_name>/
-            <class_name>/
-                <instance_name>.npz
+        &lt;dataset_name&gt;/
+            &lt;class_name&gt;/
+                &lt;instance_name&gt;.npz
     SurfaceSamples/
-        <dataset_name>/
-            <class_name>/
-                <instance_name>.ply
-```
+        &lt;dataset_name&gt;/
+            &lt;class_name&gt;/
+                &lt;instance_name&gt;.ply
+</code></pre>
+</small>
 
 Split files (JSON) define subsets of the unified data source. See `examples/splits/`.
 
@@ -33,36 +34,37 @@ The file `datasources.json` stores a mapping from dataset names to paths. If dat
 
 ### Experiment Layout
 
-```text
-<experiment_name>/
+<small>
+<pre><code>&lt;experiment_name&gt;/
     specs.json
     Logs.pth
     LatentCodes/
-        <Epoch>.pth
+        &lt;Epoch&gt;.pth
     ModelParameters/
-        <Epoch>.pth
+        &lt;Epoch&gt;.pth
     OptimizerParameters/
-        <Epoch>.pth
+        &lt;Epoch&gt;.pth
     Reconstructions/
-        <Epoch>/
+        &lt;Epoch&gt;/
             Codes/
-                <MeshId>.pth
+                &lt;MeshId&gt;.pth
             Meshes/
-                <MeshId>.pth
+                &lt;MeshId&gt;.pth
     Evaluations/
         Chamfer/
-            <Epoch>.json
+            &lt;Epoch&gt;.json
         EarthMoversDistance/
-            <Epoch>.json
+            &lt;Epoch&gt;.json
     TensorBoard/
         ReconstructionsTrain/
-            <classID_shapeID>/
-                <epoch=Epoch>.ply
+            &lt;classID_shapeID&gt;/
+                &lt;epoch=Epoch&gt;.ply
         ReconstructionsTest/
-            <classID_shapeID>/
-                <epoch=Epoch>.ply
+            &lt;classID_shapeID&gt;/
+                &lt;epoch=Epoch&gt;.ply
         TensorBoardLogFile
-```
+</code></pre>
+</small>
 
 The only file required to begin an experiment is `specs.json`, which sets parameters, architecture, and data paths.
 
