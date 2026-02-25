@@ -50,6 +50,14 @@ The file `datasources.json` stores a mapping from dataset names to paths. If dat
                 &lt;MeshId&gt;.pth
             Meshes/
                 &lt;MeshId&gt;.pth
+    TensorBoard/
+        ReconstructionsTrain/
+            &lt;classID_shapeID&gt;/
+                &lt;epoch=Epoch&gt;.ply
+        ReconstructionsTest/
+            &lt;classID_shapeID&gt;/
+                &lt;epoch=Epoch&gt;.ply
+        TensorBoardLogFile
 </code></pre>
 </small>
 
