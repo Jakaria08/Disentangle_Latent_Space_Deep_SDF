@@ -14,7 +14,8 @@ The scripts assume a shared organizational structure so that outputs from one st
 
 ### Data Layout
 
-<small>
+<details>
+<summary>Data Layout (expand)</summary>
 <pre><code>&lt;data_source_name&gt;/
     .datasources.json
     SdfSamples/
@@ -26,7 +27,7 @@ The scripts assume a shared organizational structure so that outputs from one st
             &lt;class_name&gt;/
                 &lt;instance_name&gt;.ply
 </code></pre>
-</small>
+</details>
 
 Split files (JSON) define subsets of the unified data source. See `examples/splits/`.
 
@@ -34,7 +35,8 @@ The file `datasources.json` stores a mapping from dataset names to paths. If dat
 
 ### Experiment Layout
 
-<small>
+<details>
+<summary>Experiment Layout (expand)</summary>
 <pre><code>&lt;experiment_name&gt;/
     specs.json
     Logs.pth
@@ -59,7 +61,7 @@ The file `datasources.json` stores a mapping from dataset names to paths. If dat
                 &lt;epoch=Epoch&gt;.ply
         TensorBoardLogFile
 </code></pre>
-</small>
+</details>
 
 The only file required to begin an experiment is `specs.json`, which sets parameters, architecture, and data paths.
 
