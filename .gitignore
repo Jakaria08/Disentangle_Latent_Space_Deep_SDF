@@ -15,6 +15,7 @@ outputs/*
 *.pdf
 *.jpg
 *.png
+!resources/overall_arch.png
 *.pth
 *.pt
 
