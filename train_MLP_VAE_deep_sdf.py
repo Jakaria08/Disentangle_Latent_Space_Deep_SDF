@@ -16,8 +16,7 @@ import deep_sdf
 from deep_sdf import lr_scheduling, loss as deep_sdf_loss, mesh, metrics
 import deep_sdf.workspace as ws
 from sdf_utils import sap as sap_metric
-from sdf_utils import dci as dci_metric
-from sdf_utils import mig as mig_metric
+
 
 from networks import residual_mlp_vae, pointnet_vae
 import reconstruct
@@ -836,8 +835,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     train_latent_holdout_seed = get_spec_with_default(specs, "TrainLatentHoldoutSeed", 0)
 
     compute_sap = get_spec_with_default(specs, "ComputeSAP", False)
-    compute_dci = get_spec_with_default(specs, "ComputeDCI", True)
-    compute_mig = get_spec_with_default(specs, "ComputeMIG", True)
     if "SAPRegression" in specs:
         sap_regression = get_spec_with_default(specs, "SAPRegression", False)
     elif label_task_type in ("classification", "class", "cls", "binary"):
@@ -1919,8 +1916,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
         sap_vae = None
         sap_loc = None
-        dci_scores = None
-        mig_scores = None
         if compute_sap:
             factors_np, codes_vae_np = _collect_factors_codes(
                 eval_loader,
@@ -1950,49 +1945,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     logging.warning(
                         "Locatello SAP skipped ({}): {}".format(split_label, exc)
                     )
-            if compute_dci:
-                dci_scores = dci_metric.dci(
-                    factors_np,
-                    codes_vae_np,
-                    continuous_factors=sap_continuous,
-                )
-            if compute_mig:
-                mig_scores = mig_metric.mig(
-                    factors_np,
-                    codes_vae_np,
-                    continuous_factors=sap_continuous,
-                    continuous_codes=True,
-                    nb_bins=sap_nb_bins,
-                )
-
             summary_writer.add_scalar(
                 f"SAP/vae_{split_label}", sap_vae, global_step=epoch
             )
             if sap_loc is not None:
                 summary_writer.add_scalar(
                     f"SAP/vae_locatello_{split_label}", sap_loc, global_step=epoch
-                )
-            if dci_scores is not None:
-                summary_writer.add_scalar(
-                    f"DCI/vae_{split_label}_disentanglement",
-                    dci_scores["disentanglement"],
-                    global_step=epoch,
-                )
-                summary_writer.add_scalar(
-                    f"DCI/vae_{split_label}_completeness",
-                    dci_scores["completeness"],
-                    global_step=epoch,
-                )
-                summary_writer.add_scalar(
-                    f"DCI/vae_{split_label}_informativeness",
-                    dci_scores["informativeness"],
-                    global_step=epoch,
-                )
-            if mig_scores is not None:
-                summary_writer.add_scalar(
-                    f"MIG/vae_{split_label}",
-                    mig_scores["mig"],
-                    global_step=epoch,
                 )
 
         sap_age = None
@@ -2022,16 +1980,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             metrics_parts.append(f"SAP={sap_vae:.6f}")
         if sap_loc is not None:
             metrics_parts.append(f"SAP_loc={sap_loc:.6f}")
-        if dci_scores is not None:
-            metrics_parts.append(
-                "DCI(d,c,i)=({:.6f},{:.6f},{:.6f})".format(
-                    dci_scores["disentanglement"],
-                    dci_scores["completeness"],
-                    dci_scores["informativeness"],
-                )
-            )
-        if mig_scores is not None:
-            metrics_parts.append("MIG={:.6f}".format(mig_scores["mig"]))
         if sap_age is not None:
             metrics_parts.append("SAP_age={:.6f}".format(sap_age))
         if metrics_parts:
@@ -2043,8 +1991,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         return {
             "sap": sap_vae,
             "sap_locatello": sap_loc,
-            "dci": dci_scores,
-            "mig": mig_scores,
             "sap_age": sap_age,
         }
 
