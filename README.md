@@ -2,6 +2,14 @@
 
 DeepSDF-based pipeline for learning an SDF auto-decoder and a second-stage MLP‑VAE over latent codes.
 
+![Overall Architecture of Our Two Stage Training](resources/overall_arch.png)
+
+<video src="resources/interp_gen.mp4" controls>
+Latent Interpolation and Disentanglement Visualization of Hippocampus Shapes
+</video>
+
+*Latent Interpolation and Disentanglement Visualization of Hippocampus Shapes*
+
 ## Overview
 
 1. Preprocess meshes into SDF samples.
@@ -13,6 +21,8 @@ DeepSDF-based pipeline for learning an SDF auto-decoder and a second-stage MLP�
 The scripts assume a shared organizational structure so that outputs from one step can be used by later steps.
 
 ### Data Layout
+
+This folder holds the unified SDF and surface samples after preprocessing. Split files point to subsets of these samples for training and evaluation.
 
 <details>
 <summary>Data Layout (expand)</summary>
@@ -34,6 +44,8 @@ Split files (JSON) define subsets of the unified data source. See `examples/spli
 The file `datasources.json` stores a mapping from dataset names to paths. If data is moved, update this file accordingly.
 
 ### Experiment Layout
+
+Each experiment directory is self-contained: specs + checkpoints + reconstructions + TensorBoard outputs. Stage 2 (MLP‑VAE) reads latent codes produced by Stage 1.
 
 <details>
 <summary>Experiment Layout (expand)</summary>
@@ -95,11 +107,15 @@ Preprocess SDF samples:
 python preprocess_data.py --data_dir [path to sdf data folder] --source [path to mesh dataset folder] --name <dataset_name> --split examples/splits/<split>.json --skip
 ```
 
+This generates `.npz` SDF samples under `SdfSamples/` using the specified split. Keep `datasources.json` consistent with your data paths.
+
 Preprocess surface samples (for evaluation):
 
 ```
 python preprocess_data.py --data_dir [path to sdf data folder] --source [path to mesh dataset folder] --name <dataset_name> --split examples/splits/<split>.json --surface --skip
 ```
+
+Surface samples are used only for evaluation metrics and visualization, not for SDF training.
 
 ## Training
 
@@ -115,6 +131,8 @@ Stage 2: Train MLP‑VAE on latent codes:
 python train_MLP_VAE_deep_sdf.py -e examples/<experiment_folder>
 ```
 
+Run Stage 1 first to produce latent codes, then Stage 2 to learn the disentangled latent model.
+
 To resume training:
 
 ```
@@ -127,8 +145,12 @@ python train_deep_sdf.py -e examples/<experiment_folder> --continue <epoch>
 python reconstruct.py -e examples/<experiment_folder> -c <epoch> --split examples/splits/<split>.json -d [path to sdf data folder] --skip
 ```
 
+Reconstruction uses a trained checkpoint to produce meshes for the split.
+
 ## Evaluation
 
 ```
 python evaluate.py -e examples/<experiment_folder> -c <epoch> -d [path to sdf data folder] -s examples/splits/<split>.json
 ```
+
+Evaluation compares reconstructions against surface samples from the same split.
