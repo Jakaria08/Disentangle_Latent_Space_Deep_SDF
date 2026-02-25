@@ -1,4 +1,4 @@
-# Deep3DComp
+# Semi-supervised Disentanglement in Medical Shapes
 
 DeepSDF-based pipeline for learning an SDF auto-decoder and a second-stage MLP‑VAE over latent codes.
 
@@ -14,7 +14,7 @@ The scripts assume a shared organizational structure so that outputs from one st
 
 ### Data Layout
 
-```
+```text
 <data_source_name>/
     .datasources.json
     SdfSamples/
@@ -33,7 +33,7 @@ The file `datasources.json` stores a mapping from dataset names to paths. If dat
 
 ### Experiment Layout
 
-```
+```text
 <experiment_name>/
     specs.json
     Logs.pth
