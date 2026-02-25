@@ -86,4 +86,4 @@ examples/CALSNIC_control_L/optuna_reconstruction_search/
 
 # Local experiment folders
 examples/ADNI/MLP_VAE_SDF_disentangle_real_only_and_subset/
-examples/ADNI//MLP_VAE_SDF_disentangle_pseudo_and_subset/
+examples/ADNI/MLP_VAE_SDF_disentangle_pseudo_and_subset/
