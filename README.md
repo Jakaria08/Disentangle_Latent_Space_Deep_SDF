@@ -5,20 +5,28 @@ DeepSDF-based pipeline for learning an SDF auto-decoder and a second-stage MLPâ€
 <table>
   <tr>
     <td align="left">
-      <img src="./resources/overall_arch.png" alt="Overall Architecture of Our Two Stage Training" width="360" />
-    </td>
-    <td align="left">
-      <img src="./resources/interpolation_visualization.png" alt="Interpolation Visualization" width="420" />
-    </td>
-  </tr>
-  <tr>
-    <td align="left">
-      <img src="./resources/interpolation_visualization_1.png" alt="Interpolation Visualization 1" width="360" />
+      <img src="./resources/overall_arch.png" alt="Overall Architecture of Our Two Stage Training" width="460" />
+      <br />
+      <em>One-line architecture description (edit me).</em>
     </td>
     <td align="left">
       <a href="https://youtu.be/eIOmwitfXA8">
         <img src="./resources/interp_video_thumb.png" alt="Latent Interpolation and Disentanglement Visualization of Hippocampus Shapes" width="420" />
       </a>
+      <br />
+      <em>One-line video description (edit me).</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="left">
+      <img src="./resources/interpolation_visualization.png" alt="Interpolation Visualization" width="360" />
+      <br />
+      <em>One-line interpolation description (edit me).</em>
+    </td>
+    <td align="left">
+      <img src="./resources/interpolation_visualization_1.png" alt="Interpolation Visualization 1" width="360" />
+      <br />
+      <em>One-line interpolation description (edit me).</em>
     </td>
   </tr>
 </table>
