@@ -7,26 +7,26 @@ DeepSDF-based pipeline for learning an SDF auto-decoder and a second-stage MLPâ€
     <td align="left">
       <img src="./resources/overall_arch.png" alt="Overall Architecture of Our Two Stage Training" width="460" />
       <br />
-      <em>One-line architecture description (edit me).</em>
+      <em>Overall Architecture.</em>
     </td>
     <td align="left">
       <a href="https://youtu.be/eIOmwitfXA8" target="_blank" rel="noopener noreferrer">
         <img src="./resources/interp_video_thumb.png" alt="Latent Interpolation and Disentanglement Visualization of Hippocampus Shapes" width="420" />
       </a>
       <br />
-      <em>One-line video description (edit me).</em>
+      <em>Interpolation Visualization Video.</em>
     </td>
   </tr>
   <tr>
     <td align="left">
       <img src="./resources/interpolation_visualization.png" alt="Interpolation Visualization" width="360" />
       <br />
-      <em>One-line interpolation description (edit me).</em>
+      <em>Hippocampus Interpolation and Generation.</em>
     </td>
     <td align="left">
       <img src="./resources/interpolation_visualization_1.png" alt="Interpolation Visualization 1" width="360" />
       <br />
-      <em>One-line interpolation description (edit me).</em>
+      <em>Hippocampus and Femur Interpolation and Generation.</em>
     </td>
   </tr>
 </table>
