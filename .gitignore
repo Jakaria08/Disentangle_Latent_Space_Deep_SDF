@@ -17,6 +17,9 @@ outputs/*
 *.png
 !resources/overall_arch.png
 !resources/interp_preview.png
+!resources/interpolation_visualization.png
+!resources/interpolation_visualization_1.png
+!resources/interp_video_thumb.png
 *.pth
 *.pt
 
