@@ -10,7 +10,7 @@ DeepSDF-based pipeline for learning an SDF auto-decoder and a second-stage MLPâ€
       <em>One-line architecture description (edit me).</em>
     </td>
     <td align="left">
-      <a href="https://youtu.be/eIOmwitfXA8">
+      <a href="https://youtu.be/eIOmwitfXA8" target="_blank" rel="noopener noreferrer">
         <img src="./resources/interp_video_thumb.png" alt="Latent Interpolation and Disentanglement Visualization of Hippocampus Shapes" width="420" />
       </a>
       <br />
