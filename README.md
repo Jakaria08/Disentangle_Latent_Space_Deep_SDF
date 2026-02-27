@@ -164,6 +164,11 @@ To resume training:
 python train_deep_sdf.py -e examples/<experiment_folder> --continue <epoch>
 ```
 
+Visualization notebooks (run after training):
+
+- Stage 1 latent space visualization: [run_HLLE_ICA_latent_space.ipynb](run_HLLE_ICA_latent_space.ipynb)
+- Stage 2 latent-to-shape visualization: [interactive_visualization_latent_to_shape.ipynb](interactive_visualization_latent_to_shape.ipynb)
+
 ## Training Checkpoints
 
 Saved checkpoints for Stage 1 and Stage 2 (latent codes, model parameters, optimizer parameters):
