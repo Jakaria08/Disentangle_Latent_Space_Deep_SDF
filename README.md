@@ -138,6 +138,10 @@ python preprocess_data.py --data_dir [path to sdf data folder] --source [path to
 
 Surface samples are used only for evaluation metrics and visualization, not for SDF training.
 
+Generate mesh `.ply` files from segmentation files:
+
+- [`utils/batch_process_to_ply.py`](utils/batch_process_to_ply.py) converts segmentation files into mesh `.ply` outputs in batch.
+
 ## Training
 
 Stage 1: Train SDF auto-decoder:
