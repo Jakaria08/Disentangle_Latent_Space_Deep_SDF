@@ -164,6 +164,12 @@ To resume training:
 python train_deep_sdf.py -e examples/<experiment_folder> --continue <epoch>
 ```
 
+## Training Checkpoints
+
+Saved checkpoints for Stage 1 and Stage 2 (latent codes, model parameters, optimizer parameters):
+
+- [Google Drive folder](https://drive.google.com/drive/folders/126Qa6eJAueuNJF_lj259ABY0bZjAP1_V?usp=drive_link)
+
 ## Reconstruction
 
 ```
