@@ -646,7 +646,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         for p in [75, 90, 99]:
                             if p in percentiles:
                                 summary_writer.add_scalar(f"CD Percentiles/train {p}th", percentiles[p], global_step=epoch)
-                    summary_writer.add_scalar("Time/train eval per shape (sec)", (time.time()-eval_train_time_start)/len(eval_test_filenames), epoch)
+                    summary_writer.add_scalar(
+                        "Time/train eval per shape (sec)",
+                        (time.time() - eval_train_time_start)
+                        / max(1, len(eval_train_scene_idxs)),
+                        epoch,
+                    )
                     # End of eval train.
                 
                 if epoch % eval_test_frequency == 0:
@@ -660,12 +665,16 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     mesh_label_names = []
                     test_latents = []
                     for test_fname in eval_test_filenames:
-                        save_name = os.path.basename(sdf_dataset.npyfiles[index]).split(".npz")[0]
+                        save_name = os.path.splitext(os.path.basename(test_fname))[0]
                         mesh_label_names.append(save_name)
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_test_reconstructions, save_name)
                         if not os.path.exists(path):
                             os.makedirs(path)
-                        test_fpath = os.path.join(data_source, ws.sdf_samples_subdir, test_fname)
+                        test_fpath = (
+                            test_fname
+                            if os.path.isabs(test_fname)
+                            else os.path.join(data_source, test_fname)
+                        )
                         test_sdf_samples = deep_sdf.data.read_sdf_samples_into_ram(test_fpath)
                         test_sdf_samples[0] = test_sdf_samples[0][torch.randperm(test_sdf_samples[0].shape[0])]
                         test_sdf_samples[1] = test_sdf_samples[1][torch.randperm(test_sdf_samples[1].shape[0])]
