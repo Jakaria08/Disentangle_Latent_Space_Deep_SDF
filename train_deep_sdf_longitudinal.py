@@ -278,6 +278,100 @@ def apply_temporal_flow(temporal_flow, z, s, t):
     return z + (t - s) * temporal_flow(z, s, t)
 
 
+def _sample_sorted_time_pairs(count, device, mode="uniform_01", time_values=None, dtype=torch.float32):
+    if int(count) <= 0:
+        return None, None
+
+    if mode == "from_values":
+        if time_values is None or time_values.numel() < 2:
+            return None, None
+        n = time_values.numel()
+        idx_a = torch.randint(0, n, (int(count),), device=device)
+        idx_b = torch.randint(0, n, (int(count),), device=device)
+        s = time_values.index_select(0, idx_a).unsqueeze(1)
+        t = time_values.index_select(0, idx_b).unsqueeze(1)
+    else:
+        # Default sampling in normalized longitudinal time [0,1].
+        s = torch.rand(int(count), 1, device=device, dtype=dtype)
+        t = torch.rand(int(count), 1, device=device, dtype=dtype)
+
+    st = torch.sort(torch.cat([s, t], dim=1), dim=1).values
+    s = st[:, 0:1]
+    t = st[:, 1:2]
+    if mode != "from_values":
+        return s, t
+    valid = ((t - s).abs() > 1e-8).squeeze(1)
+    if valid.sum().item() == 0:
+        return None, None
+    return s[valid], t[valid]
+
+
+def _sample_sorted_time_triplets(count, device, mode="uniform_01", time_values=None, dtype=torch.float32):
+    if int(count) <= 0:
+        return None, None, None
+
+    if mode == "from_values":
+        if time_values is None or time_values.numel() < 3:
+            return None, None, None
+        n = time_values.numel()
+        idx_a = torch.randint(0, n, (int(count),), device=device)
+        idx_b = torch.randint(0, n, (int(count),), device=device)
+        idx_c = torch.randint(0, n, (int(count),), device=device)
+        a = time_values.index_select(0, idx_a).unsqueeze(1)
+        b = time_values.index_select(0, idx_b).unsqueeze(1)
+        c = time_values.index_select(0, idx_c).unsqueeze(1)
+    else:
+        # Default sampling in normalized longitudinal time [0,1].
+        a = torch.rand(int(count), 1, device=device, dtype=dtype)
+        b = torch.rand(int(count), 1, device=device, dtype=dtype)
+        c = torch.rand(int(count), 1, device=device, dtype=dtype)
+
+    abc = torch.sort(torch.cat([a, b, c], dim=1), dim=1).values
+    s = abc[:, 0:1]
+    r = abc[:, 1:2]
+    t = abc[:, 2:3]
+    if mode != "from_values":
+        return s, r, t
+    valid = (((r - s).abs() > 1e-8) & ((t - r).abs() > 1e-8)).squeeze(1)
+    if valid.sum().item() == 0:
+        return None, None, None
+    return s[valid], r[valid], t[valid]
+
+
+def _apply_temporal_flow_interval(temporal_flow, z_start, t_start, t_end, max_dt=0.0):
+    dt_total = float(t_end) - float(t_start)
+    if abs(dt_total) <= 1e-12:
+        return z_start
+
+    max_dt_val = float(max_dt) if max_dt is not None else 0.0
+    if max_dt_val <= 0.0:
+        s = torch.full(
+            (z_start.shape[0], 1),
+            float(t_start),
+            device=z_start.device,
+            dtype=z_start.dtype,
+        )
+        t = torch.full(
+            (z_start.shape[0], 1),
+            float(t_end),
+            device=z_start.device,
+            dtype=z_start.dtype,
+        )
+        return apply_temporal_flow(temporal_flow, z_start, s, t)
+
+    num_steps = max(1, int(math.ceil(abs(dt_total) / max_dt_val)))
+    step = dt_total / float(num_steps)
+    z = z_start
+    cur_t = float(t_start)
+    for _ in range(num_steps):
+        nxt_t = cur_t + step
+        s = torch.full((z.shape[0], 1), cur_t, device=z.device, dtype=z.dtype)
+        t = torch.full((z.shape[0], 1), nxt_t, device=z.device, dtype=z.dtype)
+        z = apply_temporal_flow(temporal_flow, z, s, t)
+        cur_t = nxt_t
+    return z
+
+
 def _parse_subject_and_timepoint(shape_name):
     sid_match = re.search(r"__sid-(\d+)__", shape_name)
     tp_match = re.search(r"__tp-(\d+)__", shape_name)
@@ -504,6 +598,15 @@ def optimize_subject_anchor_from_observations(
     init_std,
     code_reg_lambda=0.0,
     code_bound=None,
+    use_pair_forward_consistency=False,
+    pair_forward_lambda=0.0,
+    pair_forward_pairs_per_iter=1,
+    use_pair_backward_consistency=False,
+    pair_backward_lambda=0.0,
+    pair_backward_pairs_per_iter=1,
+    use_general_cocycle_consistency=False,
+    general_cocycle_lambda=0.0,
+    general_cocycle_triplets_per_iter=1,
 ):
     if len(observations) == 0:
         raise ValueError("No observations provided for subject-anchor optimization.")
@@ -531,6 +634,10 @@ def optimize_subject_anchor_from_observations(
         optimizer = torch.optim.Adam([anchor], lr=float(lr))
         loss_l1 = torch.nn.L1Loss(reduction="mean")
         loss_hist = []
+        observed_times = sorted({float(obs["time"]) for obs in observations})
+        observed_times_tensor = torch.tensor(
+            observed_times, device=device, dtype=anchor.dtype
+        )
 
         for _ in range(int(num_iterations)):
             optimizer.zero_grad()
@@ -560,6 +667,71 @@ def optimize_subject_anchor_from_observations(
             reg_lambda = float(code_reg_lambda) if code_reg_lambda is not None else 0.0
             if reg_lambda > 0.0:
                 loss = loss + reg_lambda * torch.mean(anchor.pow(2))
+
+            if (
+                observed_times_tensor.numel() >= 2
+                and (
+                    use_pair_forward_consistency
+                    or use_pair_backward_consistency
+                    or use_general_cocycle_consistency
+                )
+            ):
+                if use_pair_forward_consistency and float(pair_forward_lambda) > 0.0:
+                    s, t = _sample_sorted_time_pairs(
+                        int(pair_forward_pairs_per_iter),
+                        device=device,
+                        mode="from_values",
+                        time_values=observed_times_tensor,
+                        dtype=anchor.dtype,
+                    )
+                    if s is not None:
+                        anchor_rep = anchor.expand(s.shape[0], -1)
+                        zeros = torch.zeros_like(s)
+                        z_s = apply_temporal_flow(temporal_flow, anchor_rep, zeros, s)
+                        z_t = apply_temporal_flow(temporal_flow, anchor_rep, zeros, t)
+                        z_st = apply_temporal_flow(temporal_flow, z_s, s, t)
+                        pair_fwd_raw = torch.mean((z_st - z_t) ** 2)
+                        loss = loss + float(pair_forward_lambda) * pair_fwd_raw
+
+                if use_pair_backward_consistency and float(pair_backward_lambda) > 0.0:
+                    s, t = _sample_sorted_time_pairs(
+                        int(pair_backward_pairs_per_iter),
+                        device=device,
+                        mode="from_values",
+                        time_values=observed_times_tensor,
+                        dtype=anchor.dtype,
+                    )
+                    if s is not None:
+                        anchor_rep = anchor.expand(s.shape[0], -1)
+                        zeros = torch.zeros_like(s)
+                        z_s = apply_temporal_flow(temporal_flow, anchor_rep, zeros, s)
+                        z_t = apply_temporal_flow(temporal_flow, anchor_rep, zeros, t)
+                        z_ts = apply_temporal_flow(temporal_flow, z_t, t, s)
+                        pair_bwd_raw = torch.mean((z_ts - z_s) ** 2)
+                        loss = loss + float(pair_backward_lambda) * pair_bwd_raw
+
+                if (
+                    use_general_cocycle_consistency
+                    and float(general_cocycle_lambda) > 0.0
+                    and observed_times_tensor.numel() >= 3
+                ):
+                    s, r, t = _sample_sorted_time_triplets(
+                        int(general_cocycle_triplets_per_iter),
+                        device=device,
+                        mode="from_values",
+                        time_values=observed_times_tensor,
+                        dtype=anchor.dtype,
+                    )
+                    if s is not None:
+                        anchor_rep = anchor.expand(s.shape[0], -1)
+                        z_s = apply_temporal_flow(
+                            temporal_flow, anchor_rep, torch.zeros_like(s), s
+                        )
+                        z_sr = apply_temporal_flow(temporal_flow, z_s, s, r)
+                        z_srt = apply_temporal_flow(temporal_flow, z_sr, r, t)
+                        z_st = apply_temporal_flow(temporal_flow, z_s, s, t)
+                        cyc_gen_raw = torch.mean((z_srt - z_st) ** 2)
+                        loss = loss + float(general_cocycle_lambda) * cyc_gen_raw
 
             loss.backward()
             optimizer.step()
@@ -722,18 +894,74 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         )
 
     flow_hidden_dims = get_spec_with_default(specs, "FlowHiddenDims", [256, 256])
+    temporal_consistency_phase = int(
+        get_spec_with_default(specs, "TemporalConsistencyPhase", 0)
+    )
+    if temporal_consistency_phase < 0 or temporal_consistency_phase > 3:
+        logging.warning(
+            "TemporalConsistencyPhase=%s is outside [0,3]. Clamping into range.",
+            temporal_consistency_phase,
+        )
+        temporal_consistency_phase = max(0, min(3, temporal_consistency_phase))
+
     use_cocycle_loss = get_spec_with_default(specs, "UseCocycleLoss", True)
     cocycle_lambda = get_spec_with_default(specs, "CocycleLossLambda", 1e-2)
     cocycle_pairs_per_subject = max(
         1, int(get_spec_with_default(specs, "CocyclePairsPerSubject", 1))
     )
+    use_pair_forward_loss = get_spec_with_default(
+        specs, "UsePairForwardLoss", temporal_consistency_phase >= 1
+    )
+    pair_forward_lambda = float(
+        get_spec_with_default(specs, "PairForwardLossLambda", 1e-2)
+    )
+    pair_forward_pairs_per_subject = max(
+        1, int(get_spec_with_default(specs, "PairForwardPairsPerSubject", 1))
+    )
+    use_pair_backward_loss = get_spec_with_default(
+        specs, "UsePairBackwardLoss", temporal_consistency_phase >= 1
+    )
+    pair_backward_lambda = float(
+        get_spec_with_default(specs, "PairBackwardLossLambda", 1e-2)
+    )
+    pair_backward_pairs_per_subject = max(
+        1, int(get_spec_with_default(specs, "PairBackwardPairsPerSubject", 1))
+    )
+    use_general_cocycle_loss = get_spec_with_default(
+        specs, "UseGeneralCocycleLoss", temporal_consistency_phase >= 3
+    )
+    general_cocycle_lambda = float(
+        get_spec_with_default(specs, "GeneralCocycleLossLambda", 1e-2)
+    )
+    general_cocycle_triplets_per_subject = max(
+        1, int(get_spec_with_default(specs, "GeneralCocycleTripletsPerSubject", 1))
+    )
     time_normalization_mode = get_spec_with_default(
         specs, "LongitudinalTimeNormalization", "subject_minmax"
     )
+    logging.info("Temporal consistency phase: %d", temporal_consistency_phase)
     if use_cocycle_loss:
         logging.info(
             "Cocycle loss enabled: "
             f"lambda={cocycle_lambda}, pairs_per_subject={cocycle_pairs_per_subject}"
+        )
+    if use_pair_forward_loss:
+        logging.info(
+            "Pair forward consistency enabled: lambda=%s, pairs_per_subject=%s",
+            pair_forward_lambda,
+            pair_forward_pairs_per_subject,
+        )
+    if use_pair_backward_loss:
+        logging.info(
+            "Pair backward consistency enabled: lambda=%s, pairs_per_subject=%s",
+            pair_backward_lambda,
+            pair_backward_pairs_per_subject,
+        )
+    if use_general_cocycle_loss:
+        logging.info(
+            "General cocycle consistency enabled: lambda=%s, triplets_per_subject=%s",
+            general_cocycle_lambda,
+            general_cocycle_triplets_per_subject,
         )
     logging.info(
         "Longitudinal flow: hidden_dims=%s, time_normalization=%s",
@@ -854,6 +1082,96 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     eval_test_anchor_code_reg_lambda = get_spec_with_default(
         specs, "EvalTestAnchorCodeRegLambda", 1e-4
     )
+    default_rollout_mode = "composed" if temporal_consistency_phase >= 2 else "direct"
+    eval_test_rollout_mode = str(
+        get_spec_with_default(specs, "EvalTestRolloutMode", default_rollout_mode)
+    ).lower()
+    if eval_test_rollout_mode not in ("direct", "composed"):
+        logging.warning(
+            "Unknown EvalTestRolloutMode=%s; falling back to 'direct'.",
+            eval_test_rollout_mode,
+        )
+        eval_test_rollout_mode = "direct"
+    eval_test_rollout_start = str(
+        get_spec_with_default(specs, "EvalTestRolloutStart", "last_observed")
+    ).lower()
+    if eval_test_rollout_start not in ("zero", "last_observed"):
+        logging.warning(
+            "Unknown EvalTestRolloutStart=%s; falling back to 'last_observed'.",
+            eval_test_rollout_start,
+        )
+        eval_test_rollout_start = "last_observed"
+    eval_test_max_rollout_dt = float(
+        get_spec_with_default(specs, "EvalTestMaxRolloutDt", 0.0)
+    )
+    use_test_pair_consistency = bool(
+        get_spec_with_default(specs, "UseTestPairConsistency", False)
+    )
+    test_pair_forward_lambda = float(
+        get_spec_with_default(specs, "TestPairForwardLambda", 0.0)
+    )
+    test_pair_forward_pairs_per_iter = max(
+        1, int(get_spec_with_default(specs, "TestPairForwardPairsPerIter", 1))
+    )
+    test_pair_backward_lambda = float(
+        get_spec_with_default(specs, "TestPairBackwardLambda", 0.0)
+    )
+    test_pair_backward_pairs_per_iter = max(
+        1, int(get_spec_with_default(specs, "TestPairBackwardPairsPerIter", 1))
+    )
+    use_test_general_cocycle_consistency = bool(
+        get_spec_with_default(specs, "UseTestGeneralCocycleConsistency", False)
+    )
+    test_general_cocycle_lambda = float(
+        get_spec_with_default(specs, "TestGeneralCocycleLambda", 0.0)
+    )
+    test_general_cocycle_triplets_per_iter = max(
+        1, int(get_spec_with_default(specs, "TestGeneralCocycleTripletsPerIter", 1))
+    )
+    logging.info(
+        "Test rollout mode=%s, start=%s, max_dt=%s",
+        eval_test_rollout_mode,
+        eval_test_rollout_start,
+        eval_test_max_rollout_dt,
+    )
+    if use_test_pair_consistency or use_test_general_cocycle_consistency:
+        logging.info(
+            "Test anchor consistency enabled: pair=%s (fwd_lambda=%s, bwd_lambda=%s), "
+            "general_cocycle=%s (lambda=%s)",
+            use_test_pair_consistency,
+            test_pair_forward_lambda,
+            test_pair_backward_lambda,
+            use_test_general_cocycle_consistency,
+            test_general_cocycle_lambda,
+        )
+    eval_chamfer_metric = get_spec_with_default(specs, "EvalChamferMetric", "chamfer")
+    eval_chamfer_align_mode = get_spec_with_default(
+        specs, "EvalChamferAlignMode", "centroid"
+    )
+    eval_chamfer_align_iters = int(
+        get_spec_with_default(specs, "EvalChamferAlignIters", 20)
+    )
+    eval_chamfer_align_trim_quantile = float(
+        get_spec_with_default(specs, "EvalChamferAlignTrimQuantile", 0.90)
+    )
+    eval_chamfer_metric_kwargs = {}
+    if eval_chamfer_metric in ("chamfer_starmen_aligned", "chamfer_aligned_starmen"):
+        eval_chamfer_metric_kwargs = {
+            "align_mode": eval_chamfer_align_mode,
+            "align_max_iterations": eval_chamfer_align_iters,
+            "align_trim_quantile": eval_chamfer_align_trim_quantile,
+        }
+    logging.info(
+        "Eval Chamfer metric: %s%s",
+        eval_chamfer_metric,
+        (
+            f" (align_mode={eval_chamfer_align_mode}, "
+            f"iters={eval_chamfer_align_iters}, "
+            f"trim_q={eval_chamfer_align_trim_quantile})"
+            if eval_chamfer_metric_kwargs
+            else ""
+        ),
+    )
     eval_test_filenames = deep_sdf.data.get_instance_filenames(data_source, test_split)
     test_longitudinal_meta = build_longitudinal_metadata(
         eval_test_filenames, time_normalization_mode
@@ -880,7 +1198,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
     logging.debug(decoder)
 
-    lat_vecs = torch.nn.Embedding(num_subjects, latent_size, max_norm=code_bound)
+    # Avoid nn.Embedding(max_norm=...) because it renormalizes weights in-place
+    # during forward passes, which can invalidate autograd when the embedding is
+    # used multiple times in one optimization step.
+    lat_vecs = torch.nn.Embedding(num_subjects, latent_size)
     lat_vecs = lat_vecs.cuda()
     torch.nn.init.normal_(
         lat_vecs.weight.data,
@@ -1041,6 +1362,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             epoch_iso_g1_losses = []
             epoch_iso_g2_losses = []
             epoch_cocycle_losses = []
+            epoch_pair_forward_losses = []
+            epoch_pair_backward_losses = []
+            epoch_general_cocycle_losses = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -1090,6 +1414,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 iso_g1_tb = 0.0
                 iso_g2_tb = 0.0
                 cocycle_loss_tb = 0.0
+                pair_forward_loss_tb = 0.0
+                pair_backward_loss_tb = 0.0
+                general_cocycle_loss_tb = 0.0
 
                 optimizer_all.zero_grad()
 
@@ -1125,29 +1452,135 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                         chunk_loss = chunk_loss + reg_loss.cuda()
                         reg_loss_tb += reg_loss.item()
 
-                    if use_cocycle_loss:
+                    if (
+                        use_cocycle_loss
+                        or use_pair_forward_loss
+                        or use_pair_backward_loss
+                        or use_general_cocycle_loss
+                    ):
                         unique_subjects = torch.unique(scan_subject_indices)
                         if unique_subjects.numel() > 0:
                             subject_anchors = lat_vecs(unique_subjects)
                             subject_count = subject_anchors.shape[0]
-                            cocycle_raw_loss = 0.0
-                            for _ in range(cocycle_pairs_per_subject):
-                                r = torch.rand(subject_count, 1, device=subject_anchors.device)
-                                t = torch.rand(subject_count, 1, device=subject_anchors.device)
-                                rt = torch.sort(torch.cat([r, t], dim=1), dim=1).values
-                                r = rt[:, 0:1]
-                                t = rt[:, 1:2]
-                                zeros = torch.zeros_like(r)
-                                z_r = apply_temporal_flow(temporal_flow, subject_anchors, zeros, r)
-                                z_rt = apply_temporal_flow(temporal_flow, z_r, r, t)
-                                z_t = apply_temporal_flow(temporal_flow, subject_anchors, zeros, t)
-                                cocycle_raw_loss = cocycle_raw_loss + torch.mean((z_rt - z_t) ** 2)
-                            cocycle_raw_loss = cocycle_raw_loss / max(
-                                1, cocycle_pairs_per_subject
-                            )
-                            cocycle_loss = cocycle_lambda * cocycle_raw_loss
-                            chunk_loss = chunk_loss + cocycle_loss
-                            cocycle_loss_tb += cocycle_loss.item()
+
+                            if use_pair_forward_loss and pair_forward_lambda > 0.0:
+                                pair_fwd_raw_loss = 0.0
+                                pair_fwd_samples = 0
+                                for _ in range(pair_forward_pairs_per_subject):
+                                    s, t = _sample_sorted_time_pairs(
+                                        subject_count,
+                                        device=subject_anchors.device,
+                                        mode="uniform_01",
+                                        dtype=subject_anchors.dtype,
+                                    )
+                                    if s is None:
+                                        continue
+                                    z_s = apply_temporal_flow(
+                                        temporal_flow, subject_anchors, torch.zeros_like(s), s
+                                    )
+                                    z_t = apply_temporal_flow(
+                                        temporal_flow, subject_anchors, torch.zeros_like(t), t
+                                    )
+                                    z_st = apply_temporal_flow(temporal_flow, z_s, s, t)
+                                    pair_fwd_raw_loss = pair_fwd_raw_loss + torch.mean(
+                                        (z_st - z_t) ** 2
+                                    )
+                                    pair_fwd_samples += 1
+                                if pair_fwd_samples > 0:
+                                    pair_fwd_raw_loss = pair_fwd_raw_loss / pair_fwd_samples
+                                    pair_fwd_loss = pair_forward_lambda * pair_fwd_raw_loss
+                                    chunk_loss = chunk_loss + pair_fwd_loss
+                                    pair_forward_loss_tb += pair_fwd_loss.item()
+
+                            if use_pair_backward_loss and pair_backward_lambda > 0.0:
+                                pair_bwd_raw_loss = 0.0
+                                pair_bwd_samples = 0
+                                for _ in range(pair_backward_pairs_per_subject):
+                                    s, t = _sample_sorted_time_pairs(
+                                        subject_count,
+                                        device=subject_anchors.device,
+                                        mode="uniform_01",
+                                        dtype=subject_anchors.dtype,
+                                    )
+                                    if s is None:
+                                        continue
+                                    z_s = apply_temporal_flow(
+                                        temporal_flow, subject_anchors, torch.zeros_like(s), s
+                                    )
+                                    z_t = apply_temporal_flow(
+                                        temporal_flow, subject_anchors, torch.zeros_like(t), t
+                                    )
+                                    z_ts = apply_temporal_flow(temporal_flow, z_t, t, s)
+                                    pair_bwd_raw_loss = pair_bwd_raw_loss + torch.mean(
+                                        (z_ts - z_s) ** 2
+                                    )
+                                    pair_bwd_samples += 1
+                                if pair_bwd_samples > 0:
+                                    pair_bwd_raw_loss = pair_bwd_raw_loss / pair_bwd_samples
+                                    pair_bwd_loss = pair_backward_lambda * pair_bwd_raw_loss
+                                    chunk_loss = chunk_loss + pair_bwd_loss
+                                    pair_backward_loss_tb += pair_bwd_loss.item()
+
+                            if use_cocycle_loss and cocycle_lambda > 0.0:
+                                cocycle_raw_loss = 0.0
+                                cocycle_samples = 0
+                                for _ in range(cocycle_pairs_per_subject):
+                                    r, t = _sample_sorted_time_pairs(
+                                        subject_count,
+                                        device=subject_anchors.device,
+                                        mode="uniform_01",
+                                        dtype=subject_anchors.dtype,
+                                    )
+                                    if r is None:
+                                        continue
+                                    z_r = apply_temporal_flow(
+                                        temporal_flow, subject_anchors, torch.zeros_like(r), r
+                                    )
+                                    z_rt = apply_temporal_flow(temporal_flow, z_r, r, t)
+                                    z_t = apply_temporal_flow(
+                                        temporal_flow, subject_anchors, torch.zeros_like(t), t
+                                    )
+                                    cocycle_raw_loss = cocycle_raw_loss + torch.mean(
+                                        (z_rt - z_t) ** 2
+                                    )
+                                    cocycle_samples += 1
+                                if cocycle_samples > 0:
+                                    cocycle_raw_loss = cocycle_raw_loss / cocycle_samples
+                                    cocycle_loss = cocycle_lambda * cocycle_raw_loss
+                                    chunk_loss = chunk_loss + cocycle_loss
+                                    cocycle_loss_tb += cocycle_loss.item()
+
+                            if use_general_cocycle_loss and general_cocycle_lambda > 0.0:
+                                general_cocycle_raw_loss = 0.0
+                                general_cocycle_samples = 0
+                                for _ in range(general_cocycle_triplets_per_subject):
+                                    s, r, t = _sample_sorted_time_triplets(
+                                        subject_count,
+                                        device=subject_anchors.device,
+                                        mode="uniform_01",
+                                        dtype=subject_anchors.dtype,
+                                    )
+                                    if s is None:
+                                        continue
+                                    z_s = apply_temporal_flow(
+                                        temporal_flow, subject_anchors, torch.zeros_like(s), s
+                                    )
+                                    z_sr = apply_temporal_flow(temporal_flow, z_s, s, r)
+                                    z_srt = apply_temporal_flow(temporal_flow, z_sr, r, t)
+                                    z_st = apply_temporal_flow(temporal_flow, z_s, s, t)
+                                    general_cocycle_raw_loss = (
+                                        general_cocycle_raw_loss + torch.mean((z_srt - z_st) ** 2)
+                                    )
+                                    general_cocycle_samples += 1
+                                if general_cocycle_samples > 0:
+                                    general_cocycle_raw_loss = (
+                                        general_cocycle_raw_loss / general_cocycle_samples
+                                    )
+                                    general_cocycle_loss = (
+                                        general_cocycle_lambda * general_cocycle_raw_loss
+                                    )
+                                    chunk_loss = chunk_loss + general_cocycle_loss
+                                    general_cocycle_loss_tb += general_cocycle_loss.item()
                     
                     # Isometry/metric losses computation
                     if (use_isometry or use_grad_metric_iso) and (global_batch_idx % iso_compute_frequency == 0):
@@ -1311,6 +1744,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 epoch_iso_g1_losses.append(iso_g1_tb)
                 epoch_iso_g2_losses.append(iso_g2_tb)
                 epoch_cocycle_losses.append(cocycle_loss_tb)
+                epoch_pair_forward_losses.append(pair_forward_loss_tb)
+                epoch_pair_backward_losses.append(pair_backward_loss_tb)
+                epoch_general_cocycle_losses.append(general_cocycle_loss_tb)
 
                 if grad_clip is not None:
                     torch.nn.utils.clip_grad_norm_(
@@ -1320,6 +1756,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                     )
 
                 optimizer_all.step()
+                if code_bound is not None:
+                    with torch.no_grad():
+                        bound = float(code_bound)
+                        if bound > 0.0:
+                            n = lat_vecs.weight.norm(dim=1, keepdim=True)
+                            scale = torch.clamp(bound / (n + 1e-12), max=1.0)
+                            lat_vecs.weight.mul_(scale)
 
             # LOG EPOCH
             seconds_elapsed = time.time() - epoch_time_start
@@ -1338,6 +1781,15 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 sum(epoch_grad_metric_iso_losses) / len(epoch_grad_metric_iso_losses)
             )
             epoch_cocycle_loss = sum(epoch_cocycle_losses) / len(epoch_cocycle_losses)
+            epoch_pair_forward_loss = (
+                sum(epoch_pair_forward_losses) / len(epoch_pair_forward_losses)
+            )
+            epoch_pair_backward_loss = (
+                sum(epoch_pair_backward_losses) / len(epoch_pair_backward_losses)
+            )
+            epoch_general_cocycle_loss = (
+                sum(epoch_general_cocycle_losses) / len(epoch_general_cocycle_losses)
+            )
 
             print(f"Epoch {epoch} total loss: {epoch_loss}")
             print(f"Epoch {epoch} sdf loss (weighted): {epoch_sdf_loss}")
@@ -1369,6 +1821,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 )
             if use_cocycle_loss:
                 print(f"Epoch {epoch} cocycle loss (weighted): {epoch_cocycle_loss}")
+            if use_pair_forward_loss:
+                print(
+                    f"Epoch {epoch} pair forward consistency loss (weighted): "
+                    f"{epoch_pair_forward_loss}"
+                )
+            if use_pair_backward_loss:
+                print(
+                    f"Epoch {epoch} pair backward consistency loss (weighted): "
+                    f"{epoch_pair_backward_loss}"
+                )
+            if use_general_cocycle_loss:
+                print(
+                    f"Epoch {epoch} general cocycle loss (weighted): "
+                    f"{epoch_general_cocycle_loss}"
+                )
 
             print(f"Epoch {epoch} time (s): {seconds_elapsed:.2f}")
             loss_log_epoch.append(epoch_loss)
@@ -1381,6 +1848,24 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                 summary_writer.add_scalar("Loss/train_covariance", epoch_cov_loss, global_step=epoch)
             if use_cocycle_loss:
                 summary_writer.add_scalar("Loss/train_cocycle", epoch_cocycle_loss, global_step=epoch)
+            if use_pair_forward_loss:
+                summary_writer.add_scalar(
+                    "Loss/train_pair_forward",
+                    epoch_pair_forward_loss,
+                    global_step=epoch,
+                )
+            if use_pair_backward_loss:
+                summary_writer.add_scalar(
+                    "Loss/train_pair_backward",
+                    epoch_pair_backward_loss,
+                    global_step=epoch,
+                )
+            if use_general_cocycle_loss:
+                summary_writer.add_scalar(
+                    "Loss/train_general_cocycle",
+                    epoch_general_cocycle_loss,
+                    global_step=epoch,
+                )
             if use_gmm_prior:
                 summary_writer.add_scalar("Loss/train_gmm", epoch_gmm_loss, global_step=epoch)
                 summary_writer.add_scalar("Loss/train_gmm_nll", epoch_gmm_nll, global_step=epoch)
@@ -1508,7 +1993,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
 
                         if train_mesh is not None:
                             gt_mesh_path = f"{torus_path}/{save_name}.obj"
-                            cd, cd_all = metrics.compute_metric(gt_mesh=gt_mesh_path, gen_mesh=train_mesh, metric="chamfer")
+                            cd, cd_all = metrics.compute_metric(
+                                gt_mesh=gt_mesh_path,
+                                gen_mesh=train_mesh,
+                                metric=eval_chamfer_metric,
+                                **eval_chamfer_metric_kwargs,
+                            )
                             chamfer_dists.append(cd)
                             chamfer_dists_all.append(cd_all)
                         
@@ -1602,6 +2092,21 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                                 init_std=float(eval_test_anchor_init_std),
                                 code_reg_lambda=float(eval_test_anchor_code_reg_lambda),
                                 code_bound=code_bound,
+                                use_pair_forward_consistency=use_test_pair_consistency,
+                                pair_forward_lambda=float(test_pair_forward_lambda),
+                                pair_forward_pairs_per_iter=int(
+                                    test_pair_forward_pairs_per_iter
+                                ),
+                                use_pair_backward_consistency=use_test_pair_consistency,
+                                pair_backward_lambda=float(test_pair_backward_lambda),
+                                pair_backward_pairs_per_iter=int(
+                                    test_pair_backward_pairs_per_iter
+                                ),
+                                use_general_cocycle_consistency=use_test_general_cocycle_consistency,
+                                general_cocycle_lambda=float(test_general_cocycle_lambda),
+                                general_cocycle_triplets_per_iter=int(
+                                    test_general_cocycle_triplets_per_iter
+                                ),
                             )
                         )
                         logging.debug(
@@ -1614,6 +2119,35 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             fitted_subject_count += 1
                         test_loss_hists.append(anchor_loss_hist)
                         subject_loss_labels.append(f"sid-{sid}")
+                        target_indices = sorted(
+                            target_indices,
+                            key=lambda idx: float(
+                                test_longitudinal_meta["timepoints_raw"][idx].item()
+                            ),
+                        )
+                        rollout_z_prev = None
+                        rollout_t_prev = None
+                        if eval_test_rollout_mode == "composed":
+                            if (
+                                eval_test_rollout_start == "last_observed"
+                                and len(observed_indices) > 0
+                            ):
+                                t_roll_start = float(
+                                    test_longitudinal_meta["timepoints"][
+                                        observed_indices[-1]
+                                    ].item()
+                                )
+                                rollout_z_prev = _apply_temporal_flow_interval(
+                                    temporal_flow,
+                                    subject_anchor,
+                                    t_start=0.0,
+                                    t_end=t_roll_start,
+                                    max_dt=eval_test_max_rollout_dt,
+                                )
+                                rollout_t_prev = t_roll_start
+                            else:
+                                rollout_z_prev = subject_anchor
+                                rollout_t_prev = 0.0
 
                         for scan_idx in target_indices:
                             test_fname = eval_test_filenames[scan_idx]
@@ -1631,18 +2165,37 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                             t_target = float(
                                 test_longitudinal_meta["timepoints"][scan_idx].item()
                             )
-                            t_target_tensor = torch.full(
-                                (1, 1),
-                                t_target,
-                                device=subject_anchor.device,
-                                dtype=subject_anchor.dtype,
-                            )
-                            z_target = apply_temporal_flow(
-                                temporal_flow,
-                                subject_anchor,
-                                torch.zeros_like(t_target_tensor),
-                                t_target_tensor,
-                            )
+                            if eval_test_rollout_mode == "composed":
+                                if rollout_t_prev is None or rollout_z_prev is None:
+                                    rollout_z_prev = subject_anchor
+                                    rollout_t_prev = 0.0
+                                if t_target < float(rollout_t_prev) - 1e-8:
+                                    # Fallback for unexpected ordering.
+                                    z_target = _apply_temporal_flow_interval(
+                                        temporal_flow,
+                                        subject_anchor,
+                                        t_start=0.0,
+                                        t_end=t_target,
+                                        max_dt=eval_test_max_rollout_dt,
+                                    )
+                                else:
+                                    z_target = _apply_temporal_flow_interval(
+                                        temporal_flow,
+                                        rollout_z_prev,
+                                        t_start=float(rollout_t_prev),
+                                        t_end=t_target,
+                                        max_dt=eval_test_max_rollout_dt,
+                                    )
+                                    rollout_z_prev = z_target.detach()
+                                    rollout_t_prev = t_target
+                            else:
+                                z_target = _apply_temporal_flow_interval(
+                                    temporal_flow,
+                                    subject_anchor,
+                                    t_start=0.0,
+                                    t_end=t_target,
+                                    max_dt=eval_test_max_rollout_dt,
+                                )
                             test_latents.append(z_target.detach())
 
                             start = time.time()
@@ -1665,7 +2218,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
                                 cd, cd_all = metrics.compute_metric(
                                     gt_mesh=gt_mesh_path,
                                     gen_mesh=test_mesh,
-                                    metric="chamfer",
+                                    metric=eval_chamfer_metric,
+                                    **eval_chamfer_metric_kwargs,
                                 )
                                 chamfer_dists.append(cd)
                                 chamfer_dists_all.append(cd_all)
@@ -1750,12 +2304,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
             # "CodeRegularizationLambda": code_reg_lambda,
         }
         train_results = {
-            "best_train_loss" : min(loss_log),
+            "best_train_loss" : min(loss_log) if len(loss_log) else -1,
             "best_train_cd" : min(train_chamfer_dists_log) if len(train_chamfer_dists_log) else -1,
             "best_test_cd" : min(test_chamfer_dists_log) if len(test_chamfer_dists_log) else -1,
         }
         summary_writer.add_hparams(writer_hparams, train_results, run_name='.')
-        summary_writer.add_graph(decoder, input)        
+        if "input" in locals():
+            summary_writer.add_graph(decoder, input)
         summary_writer.flush()    
         summary_writer.close()
         # End of training.
