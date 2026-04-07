@@ -5,8 +5,8 @@ import trimesh
 #input_directory = '../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle'
 #output_directory = '../../../torus_bump_5000_two_scale_binary_bump_variable_noise_fixed_angle/obj_files'
 
-input_directory = '../../../starmen/starman_all_meshes/subsets/first_100_ids_10_scans/meshes/output_random_noacc'
-output_directory = '../../../starmen/starman_all_meshes/subsets/first_100_ids_10_scans/meshes/output_random_noacc/mesh_minimal_obj'
+input_directory = '../../../torus_creation/torus_mesh'
+output_directory = '../../../torus_creation/torus_mesh/obj_files'
 
 # Ensure the output directory exists
 if not os.path.exists(output_directory):
