@@ -119,7 +119,13 @@ def compute_metric(
         gt_points_sampled = trimesh.sample.sample_surface(gt_mesh, num_mesh_samples)[0]
         if metric == "chamfer": 
             return compute_chamfer(gen_points_sampled, gt_points_sampled)
-        elif metric in ("chamfer_starmen_aligned", "chamfer_aligned_starmen"):
+        elif metric in (
+            "chamfer_starmen_aligned",
+            "chamfer_aligned_starmen",
+            "chamfer_torus_aligned",
+            "chamfer_aligned_torus",
+            "chamfer_aligned",
+        ):
             align_mode = kwargs.get("align_mode", "centroid")
             align_max_iterations = kwargs.get("align_max_iterations", 20)
             align_trim_quantile = kwargs.get("align_trim_quantile", 0.90)

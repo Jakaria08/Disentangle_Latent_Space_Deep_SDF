@@ -58,9 +58,9 @@ def main(data_dir, source_dir, splits_dir, debug=False):
 
 if __name__ == "__main__":
 
-    data_dir = "../../starmen/starman_all_meshes/subsets/first_100_ids_10_scans/meshes/output_random_noacc/sdf_data"      
-    source_dir = "../../starmen/starman_all_meshes/subsets/first_100_ids_10_scans/meshes/output_random_noacc/mesh_minimal_scaled_obj_files"
-    splits_dir = "examples/splits/splits_starmen"
+    data_dir = "../../torus_creation/torus_mesh/scaled_obj_files/sdf_data"      
+    source_dir = "../../torus_creation/torus_mesh/scaled_obj_files"
+    splits_dir = "examples/splits/splits_torus"
 
     os.makedirs(data_dir, exist_ok=True)
 

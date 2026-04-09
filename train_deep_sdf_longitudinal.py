@@ -373,14 +373,22 @@ def _apply_temporal_flow_interval(temporal_flow, z_start, t_start, t_end, max_dt
 
 
 def _parse_subject_and_timepoint(shape_name):
+    # Starmen-style names: "...__sid-0001__...__tp-03__..."
     sid_match = re.search(r"__sid-(\d+)__", shape_name)
     tp_match = re.search(r"__tp-(\d+)__", shape_name)
-    if sid_match is None or tp_match is None:
-        raise RuntimeError(
-            f"Could not parse sid/tp from shape name '{shape_name}'. "
-            "Expected tokens like '__sid-0001__tp-03__'."
-        )
-    return sid_match.group(1), int(tp_match.group(1))
+    if sid_match is not None and tp_match is not None:
+        return sid_match.group(1), int(tp_match.group(1))
+
+    # Torus-style names: "ID_000_t0"
+    torus_match = re.match(r"^(?:ID|id)_(\d+)_t(\d+)$", shape_name)
+    if torus_match is not None:
+        return torus_match.group(1), int(torus_match.group(2))
+
+    raise RuntimeError(
+        f"Could not parse sid/tp from shape name '{shape_name}'. "
+        "Supported patterns are Starmen-style '__sid-0001__tp-03__' "
+        "and Torus-style 'ID_000_t0'."
+    )
 
 
 def build_longitudinal_metadata(npyfiles, time_normalization_mode):
@@ -434,10 +442,13 @@ def build_longitudinal_metadata(npyfiles, time_normalization_mode):
 
 def _resolve_existing_file(path, experiment_directory=None):
     candidates = []
+    repo_root = os.path.dirname(os.path.abspath(__file__))
     if path is not None:
         candidates.append(path)
     if experiment_directory is not None and path is not None and not os.path.isabs(path):
         candidates.append(os.path.join(experiment_directory, path))
+    if path is not None and not os.path.isabs(path):
+        candidates.append(os.path.join(repo_root, path))
     if path is not None and not os.path.isabs(path):
         candidates.append(os.path.join(os.getcwd(), path))
 
@@ -769,8 +780,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
     logging.info("Experiment description: \n" + str(specs["Description"]))
 
     data_source = specs["DataSource"]
-    train_split_file = specs["TrainSplit"]
-    test_split_file = specs["TestSplit"]
+    train_split_file = _resolve_existing_file(
+        specs["TrainSplit"], experiment_directory
+    )
+    test_split_file = _resolve_existing_file(
+        specs["TestSplit"], experiment_directory
+    )
 
     arch = __import__("networks." + specs["NetworkArch"], fromlist=["Decoder"])
 
@@ -1155,7 +1170,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int):
         get_spec_with_default(specs, "EvalChamferAlignTrimQuantile", 0.90)
     )
     eval_chamfer_metric_kwargs = {}
-    if eval_chamfer_metric in ("chamfer_starmen_aligned", "chamfer_aligned_starmen"):
+    if eval_chamfer_metric in (
+        "chamfer_starmen_aligned",
+        "chamfer_aligned_starmen",
+        "chamfer_torus_aligned",
+        "chamfer_aligned_torus",
+        "chamfer_aligned",
+    ):
         eval_chamfer_metric_kwargs = {
             "align_mode": eval_chamfer_align_mode,
             "align_max_iterations": eval_chamfer_align_iters,
