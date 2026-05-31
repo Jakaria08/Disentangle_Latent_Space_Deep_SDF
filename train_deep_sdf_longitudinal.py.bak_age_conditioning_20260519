@@ -97,16 +97,7 @@ def load_model_and_flow(experiment_directory, checkpoint, decoder, temporal_flow
         raise Exception('model state dict "{}" does not exist'.format(filename))
 
     data = torch.load(filename, map_location="cpu")
-    state_dict = data["model_state_dict"]
-
-    model_is_dp = isinstance(decoder, torch.nn.DataParallel)
-    state_has_module = any(k.startswith("module.") for k in state_dict.keys())
-    if model_is_dp and not state_has_module:
-        state_dict = {f"module.{k}": v for k, v in state_dict.items()}
-    elif (not model_is_dp) and state_has_module:
-        state_dict = {k[len("module."):]: v for k, v in state_dict.items()}
-
-    decoder.load_state_dict(state_dict)
+    decoder.load_state_dict(data["model_state_dict"])
 
     flow_state = data.get("flow_state_dict", None)
     if flow_state is None:
@@ -262,12 +253,11 @@ def append_parameter_magnitudes(param_mag_log, model):
 
 
 class TemporalFlowMLP(torch.nn.Module):
-    def __init__(self, latent_size, hidden_dims, age_condition_dim=0):
+    def __init__(self, latent_size, hidden_dims):
         super().__init__()
         if len(hidden_dims) == 0:
             raise ValueError("Flow hidden dims must be non-empty.")
-        self.age_condition_dim = max(0, int(age_condition_dim))
-        dims = [latent_size + 2 + self.age_condition_dim] + list(hidden_dims) + [latent_size]
+        dims = [latent_size + 2] + list(hidden_dims) + [latent_size]
         layers = []
         for i in range(len(dims) - 1):
             layers.append(torch.nn.Linear(dims[i], dims[i + 1]))
@@ -275,58 +265,20 @@ class TemporalFlowMLP(torch.nn.Module):
                 layers.append(torch.nn.ReLU(inplace=True))
         self.net = torch.nn.Sequential(*layers)
 
-    def _prepare_age_condition(self, z, age_cond):
-        if self.age_condition_dim <= 0:
-            return None
-
-        if age_cond is None:
-            return torch.zeros(
-                z.shape[0],
-                self.age_condition_dim,
-                device=z.device,
-                dtype=z.dtype,
-            )
-
-        age = age_cond
-        if age.dim() == 1:
-            age = age.unsqueeze(1)
-        age = age.to(device=z.device, dtype=z.dtype)
-
-        if age.shape[1] == self.age_condition_dim:
-            return age
-        if age.shape[1] == 1 and self.age_condition_dim > 1:
-            return age.repeat(1, self.age_condition_dim)
-
-        raise ValueError(
-            f"Invalid age condition width: got {age.shape[1]}, "
-            f"expected {self.age_condition_dim}"
-        )
-
-    def forward(self, z, s, t, age_cond=None):
+    def forward(self, z, s, t):
         if s.dim() == 1:
             s = s.unsqueeze(1)
         if t.dim() == 1:
             t = t.unsqueeze(1)
-        parts = [z, s, t]
-        if self.age_condition_dim > 0:
-            parts.append(self._prepare_age_condition(z, age_cond))
-        x = torch.cat(parts, dim=1)
+        x = torch.cat([z, s, t], dim=1)
         return self.net(x)
 
 
-def apply_temporal_flow(temporal_flow, z, s, t, age_cond=None):
-    return z + (t - s) * temporal_flow(z, s, t, age_cond=age_cond)
+def apply_temporal_flow(temporal_flow, z, s, t):
+    return z + (t - s) * temporal_flow(z, s, t)
 
 
-def _sample_sorted_time_pairs(
-    count,
-    device,
-    mode="uniform_01",
-    time_values=None,
-    dtype=torch.float32,
-    uniform_low=0.0,
-    uniform_high=1.0,
-):
+def _sample_sorted_time_pairs(count, device, mode="uniform_01", time_values=None, dtype=torch.float32):
     if int(count) <= 0:
         return None, None
 
@@ -339,14 +291,9 @@ def _sample_sorted_time_pairs(
         s = time_values.index_select(0, idx_a).unsqueeze(1)
         t = time_values.index_select(0, idx_b).unsqueeze(1)
     else:
-        lo = float(uniform_low)
-        hi = float(uniform_high)
-        if hi < lo:
-            lo, hi = hi, lo
-        if abs(hi - lo) <= 1e-12:
-            return None, None
-        s = lo + (hi - lo) * torch.rand(int(count), 1, device=device, dtype=dtype)
-        t = lo + (hi - lo) * torch.rand(int(count), 1, device=device, dtype=dtype)
+        # Default sampling in normalized longitudinal time [0,1].
+        s = torch.rand(int(count), 1, device=device, dtype=dtype)
+        t = torch.rand(int(count), 1, device=device, dtype=dtype)
 
     st = torch.sort(torch.cat([s, t], dim=1), dim=1).values
     s = st[:, 0:1]
@@ -359,15 +306,7 @@ def _sample_sorted_time_pairs(
     return s[valid], t[valid]
 
 
-def _sample_sorted_time_triplets(
-    count,
-    device,
-    mode="uniform_01",
-    time_values=None,
-    dtype=torch.float32,
-    uniform_low=0.0,
-    uniform_high=1.0,
-):
+def _sample_sorted_time_triplets(count, device, mode="uniform_01", time_values=None, dtype=torch.float32):
     if int(count) <= 0:
         return None, None, None
 
@@ -382,16 +321,10 @@ def _sample_sorted_time_triplets(
         b = time_values.index_select(0, idx_b).unsqueeze(1)
         c = time_values.index_select(0, idx_c).unsqueeze(1)
     else:
-        lo = float(uniform_low)
-        hi = float(uniform_high)
-        if hi < lo:
-            lo, hi = hi, lo
-        if abs(hi - lo) <= 1e-12:
-            return None, None, None
-        scale = hi - lo
-        a = lo + scale * torch.rand(int(count), 1, device=device, dtype=dtype)
-        b = lo + scale * torch.rand(int(count), 1, device=device, dtype=dtype)
-        c = lo + scale * torch.rand(int(count), 1, device=device, dtype=dtype)
+        # Default sampling in normalized longitudinal time [0,1].
+        a = torch.rand(int(count), 1, device=device, dtype=dtype)
+        b = torch.rand(int(count), 1, device=device, dtype=dtype)
+        c = torch.rand(int(count), 1, device=device, dtype=dtype)
 
     abc = torch.sort(torch.cat([a, b, c], dim=1), dim=1).values
     s = abc[:, 0:1]
@@ -405,14 +338,7 @@ def _sample_sorted_time_triplets(
     return s[valid], r[valid], t[valid]
 
 
-def _apply_temporal_flow_interval(
-    temporal_flow,
-    z_start,
-    t_start,
-    t_end,
-    max_dt=0.0,
-    age_end_cond=None,
-):
+def _apply_temporal_flow_interval(temporal_flow, z_start, t_start, t_end, max_dt=0.0):
     dt_total = float(t_end) - float(t_start)
     if abs(dt_total) <= 1e-12:
         return z_start
@@ -431,7 +357,7 @@ def _apply_temporal_flow_interval(
             device=z_start.device,
             dtype=z_start.dtype,
         )
-        return apply_temporal_flow(temporal_flow, z_start, s, t, age_cond=age_end_cond)
+        return apply_temporal_flow(temporal_flow, z_start, s, t)
 
     num_steps = max(1, int(math.ceil(abs(dt_total) / max_dt_val)))
     step = dt_total / float(num_steps)
@@ -441,7 +367,7 @@ def _apply_temporal_flow_interval(
         nxt_t = cur_t + step
         s = torch.full((z.shape[0], 1), cur_t, device=z.device, dtype=z.dtype)
         t = torch.full((z.shape[0], 1), nxt_t, device=z.device, dtype=z.dtype)
-        z = apply_temporal_flow(temporal_flow, z, s, t, age_cond=age_end_cond)
+        z = apply_temporal_flow(temporal_flow, z, s, t)
         cur_t = nxt_t
     return z
 
@@ -465,35 +391,14 @@ def _parse_subject_and_timepoint(shape_name):
     )
 
 
-def build_longitudinal_metadata(
-    npyfiles,
-    time_normalization_mode,
-    scan_to_time_map=None,
-    time_key_name="time",
-):
+def build_longitudinal_metadata(npyfiles, time_normalization_mode):
     subject_ids = []
     timepoints = []
-    missing_time = []
     for fpath in npyfiles:
         base = os.path.splitext(os.path.basename(fpath))[0]
         sid, tp = _parse_subject_and_timepoint(base)
         subject_ids.append(sid)
-        if scan_to_time_map is not None:
-            tval = scan_to_time_map.get(base, None)
-            if tval is None:
-                missing_time.append(base)
-                timepoints.append(float(tp))
-            else:
-                timepoints.append(float(tval))
-        else:
-            timepoints.append(float(tp))
-
-    if scan_to_time_map is not None and missing_time:
-        preview = ", ".join(missing_time[:5])
-        raise RuntimeError(
-            f"Missing longitudinal time metadata '{time_key_name}' for {len(missing_time)} scans. "
-            f"First missing keys: {preview}"
-        )
+        timepoints.append(tp)
 
     unique_subject_ids = sorted(set(subject_ids))
     subject_to_index = {sid: idx for idx, sid in enumerate(unique_subject_ids)}
@@ -533,214 +438,6 @@ def build_longitudinal_metadata(
         "num_subjects": len(unique_subject_ids),
         "subject_to_index": subject_to_index,
     }
-
-
-def _scan_key_from_path(path_str):
-    return os.path.splitext(os.path.basename(path_str))[0]
-
-
-def _load_scan_age_map_from_labels(labels_path, age_key):
-    labels_obj = torch.load(labels_path, map_location="cpu")
-    scan_to_age = {}
-
-    if isinstance(labels_obj, dict) and "records" in labels_obj and isinstance(labels_obj["records"], list):
-        for rec in labels_obj["records"]:
-            if not isinstance(rec, dict):
-                continue
-            if age_key not in rec:
-                continue
-            mesh_path = rec.get("mesh_path", None)
-            if mesh_path is None:
-                continue
-            scan_key = _scan_key_from_path(mesh_path)
-            scan_to_age[scan_key] = float(rec[age_key])
-    elif isinstance(labels_obj, dict):
-        # Backward-compatible fallback for {"ID_000_t0": ...} maps.
-        for key, value in labels_obj.items():
-            if isinstance(value, dict):
-                if age_key in value:
-                    scan_to_age[str(key)] = float(value[age_key])
-            elif torch.is_tensor(value):
-                flat = value.detach().cpu().view(-1)
-                if flat.numel() > 0:
-                    scan_to_age[str(key)] = float(flat[0].item())
-            else:
-                try:
-                    scan_to_age[str(key)] = float(value)
-                except Exception:
-                    pass
-    else:
-        raise RuntimeError(
-            f"Unsupported labels format at {labels_path}: {type(labels_obj)}"
-        )
-
-    if len(scan_to_age) == 0:
-        raise RuntimeError(
-            f"No scan->age entries could be parsed from {labels_path} with key '{age_key}'."
-        )
-
-    return scan_to_age
-
-
-def build_scan_age_tensor(npyfiles, scan_to_age_map, age_condition_key):
-    vals = []
-    missing = []
-    for fpath in npyfiles:
-        scan_key = _scan_key_from_path(fpath)
-        age_val = scan_to_age_map.get(scan_key, None)
-        if age_val is None:
-            missing.append(scan_key)
-            vals.append(0.0)
-        else:
-            vals.append(float(age_val))
-    if missing:
-        preview = ", ".join(missing[:5])
-        raise RuntimeError(
-            f"Missing age metadata for {len(missing)} scans using key '{age_condition_key}'. "
-            f"First missing keys: {preview}"
-        )
-    return torch.tensor(vals, dtype=torch.float32)
-
-
-def build_scan_condition_tensor(npyfiles, scan_to_age_map_dict, condition_keys):
-    cond_cols = []
-    for key in condition_keys:
-        cond_cols.append(build_scan_age_tensor(npyfiles, scan_to_age_map_dict[key], key))
-    if len(cond_cols) == 0:
-        raise RuntimeError("Condition key list is empty.")
-    return torch.stack(cond_cols, dim=1)
-
-
-def compute_subject_baseline_time(
-    scan_to_subject_idx_cpu,
-    scan_to_time_cpu,
-    num_subjects,
-):
-    time_inf = float("inf")
-    subject_time = torch.full((num_subjects,), time_inf, dtype=torch.float32)
-
-    for scan_idx in range(scan_to_subject_idx_cpu.numel()):
-        subj = int(scan_to_subject_idx_cpu[scan_idx].item())
-        tval = float(scan_to_time_cpu[scan_idx].item())
-        if tval < float(subject_time[subj].item()):
-            subject_time[subj] = tval
-
-    if torch.isinf(subject_time).any():
-        bad = torch.nonzero(torch.isinf(subject_time), as_tuple=False).view(-1)
-        raise RuntimeError(
-            f"Found {bad.numel()} subjects without baseline time metadata."
-        )
-
-    return subject_time
-
-
-def compute_subject_baseline_time_and_condition(
-    scan_to_subject_idx_cpu,
-    scan_to_time_cpu,
-    scan_to_condition_cpu,
-    num_subjects,
-):
-    if scan_to_condition_cpu.dim() != 2:
-        raise RuntimeError(
-            "scan_to_condition_cpu must have shape [num_scans, condition_dim]"
-        )
-    time_inf = float("inf")
-    subject_time = torch.full((num_subjects,), time_inf, dtype=torch.float32)
-    cond_dim = int(scan_to_condition_cpu.shape[1])
-    subject_condition = torch.zeros((num_subjects, cond_dim), dtype=torch.float32)
-
-    for scan_idx in range(scan_to_subject_idx_cpu.numel()):
-        subj = int(scan_to_subject_idx_cpu[scan_idx].item())
-        tval = float(scan_to_time_cpu[scan_idx].item())
-        if tval < float(subject_time[subj].item()):
-            subject_time[subj] = tval
-            subject_condition[subj] = scan_to_condition_cpu[scan_idx]
-
-    if torch.isinf(subject_time).any():
-        bad = torch.nonzero(torch.isinf(subject_time), as_tuple=False).view(-1)
-        raise RuntimeError(
-            f"Found {bad.numel()} subjects without baseline time/condition metadata."
-        )
-
-    return subject_time, subject_condition
-
-
-def build_subject_condition_linear_fit(
-    scan_to_subject_idx_cpu,
-    scan_to_time_cpu,
-    scan_to_condition_cpu,
-    num_subjects,
-):
-    if scan_to_condition_cpu.dim() != 2:
-        raise RuntimeError(
-            "scan_to_condition_cpu must have shape [num_scans, condition_dim]"
-        )
-    cond_dim = int(scan_to_condition_cpu.shape[1])
-    subject_t_min = torch.full((num_subjects,), float("inf"), dtype=torch.float32)
-    subject_t_max = torch.full((num_subjects,), float("-inf"), dtype=torch.float32)
-    cond_at_min = torch.zeros((num_subjects, cond_dim), dtype=torch.float32)
-    cond_at_max = torch.zeros((num_subjects, cond_dim), dtype=torch.float32)
-
-    for scan_idx in range(scan_to_subject_idx_cpu.numel()):
-        subj = int(scan_to_subject_idx_cpu[scan_idx].item())
-        tval = float(scan_to_time_cpu[scan_idx].item())
-        cval = scan_to_condition_cpu[scan_idx]
-        if tval < float(subject_t_min[subj].item()):
-            subject_t_min[subj] = tval
-            cond_at_min[subj] = cval
-        if tval > float(subject_t_max[subj].item()):
-            subject_t_max[subj] = tval
-            cond_at_max[subj] = cval
-
-    if torch.isinf(subject_t_min).any() or torch.isinf(subject_t_max).any():
-        bad = torch.nonzero(
-            torch.isinf(subject_t_min) | torch.isinf(subject_t_max), as_tuple=False
-        ).view(-1)
-        raise RuntimeError(
-            f"Found {bad.numel()} subjects without condition/time metadata for linear fit."
-        )
-
-    dt = (subject_t_max - subject_t_min).unsqueeze(1)
-    safe_dt = torch.clamp(dt, min=1e-8)
-    slopes = (cond_at_max - cond_at_min) / safe_dt
-    slopes = torch.where(dt <= 1e-8, torch.zeros_like(slopes), slopes)
-    intercepts = cond_at_min - slopes * subject_t_min.unsqueeze(1)
-
-    return {
-        "t_min": subject_t_min,
-        "t_max": subject_t_max,
-        "slopes": slopes,
-        "intercepts": intercepts,
-    }
-
-
-def subject_condition_at_time(subject_indices, sampled_time, subject_condition_fit, device, dtype):
-    if subject_condition_fit is None:
-        return None
-    if sampled_time.dim() == 1:
-        sampled_time = sampled_time.unsqueeze(1)
-
-    fit_device = subject_condition_fit["t_min"].device
-    if subject_indices.device != fit_device:
-        subject_indices = subject_indices.to(fit_device)
-    if sampled_time.device != fit_device:
-        sampled_time = sampled_time.to(fit_device)
-
-    t_min = subject_condition_fit["t_min"].index_select(0, subject_indices).to(
-        device=device, dtype=dtype
-    )
-    t_max = subject_condition_fit["t_max"].index_select(0, subject_indices).to(
-        device=device, dtype=dtype
-    )
-    slopes = subject_condition_fit["slopes"].index_select(0, subject_indices).to(
-        device=device, dtype=dtype
-    )
-    intercepts = subject_condition_fit["intercepts"].index_select(0, subject_indices).to(
-        device=device, dtype=dtype
-    )
-
-    tt = torch.clamp(sampled_time, min=t_min.unsqueeze(1), max=t_max.unsqueeze(1))
-    return intercepts + slopes * tt
 
 
 def _resolve_existing_file(path, experiment_directory=None):
@@ -921,7 +618,6 @@ def optimize_subject_anchor_from_observations(
     use_general_cocycle_consistency=False,
     general_cocycle_lambda=0.0,
     general_cocycle_triplets_per_iter=1,
-    use_age_conditioning=False,
 ):
     if len(observations) == 0:
         raise ValueError("No observations provided for subject-anchor optimization.")
@@ -953,65 +649,6 @@ def optimize_subject_anchor_from_observations(
         observed_times_tensor = torch.tensor(
             observed_times, device=device, dtype=anchor.dtype
         )
-        observed_baseline_time = float(observed_times[0]) if len(observed_times) > 0 else 0.0
-
-        def _condition_to_1d_tensor(cond_val):
-            if cond_val is None:
-                return None
-            if torch.is_tensor(cond_val):
-                return cond_val.detach().cpu().float().view(-1)
-            if isinstance(cond_val, (list, tuple, np.ndarray)):
-                return torch.tensor(cond_val, dtype=torch.float32).view(-1)
-            return torch.tensor([float(cond_val)], dtype=torch.float32)
-
-        condition_fit = None
-        condition_fallback = None
-        if use_age_conditioning:
-            obs_pairs = []
-            for obs in observations:
-                cond_vec = _condition_to_1d_tensor(obs.get("age_cond", None))
-                if cond_vec is not None:
-                    obs_pairs.append((float(obs["time"]), cond_vec))
-            if len(obs_pairs) > 0:
-                obs_pairs = sorted(obs_pairs, key=lambda x: x[0])
-                condition_fallback = obs_pairs[0][1]
-            if len(obs_pairs) >= 2:
-                cond_dim = int(obs_pairs[0][1].numel())
-                for _, cond_vec in obs_pairs:
-                    if int(cond_vec.numel()) != cond_dim:
-                        raise RuntimeError(
-                            "Inconsistent condition dimensions across observations in test anchor fitting."
-                        )
-                t_vals = torch.tensor([p[0] for p in obs_pairs], dtype=torch.float32)
-                c_start = obs_pairs[0][1]
-                c_end = obs_pairs[-1][1]
-                dt = float(t_vals[-1].item() - t_vals[0].item())
-                if dt <= 1e-8:
-                    slope = torch.zeros_like(c_start)
-                else:
-                    slope = (c_end - c_start) / dt
-                intercept = c_start - slope * float(t_vals[0].item())
-                condition_fit = {
-                    "t_min": float(t_vals.min().item()),
-                    "t_max": float(t_vals.max().item()),
-                    "slope": slope,
-                    "intercept": intercept,
-                }
-
-        def _condition_from_sampled_time(tt):
-            if not use_age_conditioning:
-                return None
-            if condition_fit is not None:
-                tmin = float(condition_fit["t_min"])
-                tmax = float(condition_fit["t_max"])
-                slope = condition_fit["slope"].to(device=device, dtype=anchor.dtype)
-                intercept = condition_fit["intercept"].to(device=device, dtype=anchor.dtype)
-                tt_clamped = torch.clamp(tt, min=tmin, max=tmax)
-                return intercept.unsqueeze(0) + tt_clamped * slope.unsqueeze(0)
-            if condition_fallback is not None:
-                fallback = condition_fallback.to(device=device, dtype=anchor.dtype).view(1, -1)
-                return fallback.repeat(tt.shape[0], 1)
-            return None
 
         for _ in range(int(num_iterations)):
             optimizer.zero_grad()
@@ -1028,21 +665,9 @@ def optimize_subject_anchor_from_observations(
                 t = torch.full(
                     (xyz.shape[0], 1), t_obs, device=device, dtype=anchor.dtype
                 )
-                s = torch.full_like(t, observed_baseline_time)
+                s = torch.zeros_like(t)
                 anchor_expanded = anchor.expand(xyz.shape[0], -1)
-                age_cond = None
-                if use_age_conditioning:
-                    obs_cond = _condition_to_1d_tensor(obs.get("age_cond", None))
-                    if obs_cond is not None:
-                        age_cond = obs_cond.to(device=device, dtype=anchor.dtype).view(1, -1)
-                        age_cond = age_cond.repeat(xyz.shape[0], 1)
-                z_t = apply_temporal_flow(
-                    temporal_flow,
-                    anchor_expanded,
-                    s,
-                    t,
-                    age_cond=age_cond,
-                )
+                z_t = apply_temporal_flow(temporal_flow, anchor_expanded, s, t)
                 pred_sdf = decoder(torch.cat([z_t, xyz], dim=1))
                 pred_sdf = torch.clamp(
                     pred_sdf, -float(clamp_dist), float(clamp_dist)
@@ -1072,12 +697,10 @@ def optimize_subject_anchor_from_observations(
                     )
                     if s is not None:
                         anchor_rep = anchor.expand(s.shape[0], -1)
-                        baseline = torch.full_like(s, observed_baseline_time)
-                        age_s = _condition_from_sampled_time(s)
-                        age_t = _condition_from_sampled_time(t)
-                        z_s = apply_temporal_flow(temporal_flow, anchor_rep, baseline, s, age_cond=age_s)
-                        z_t = apply_temporal_flow(temporal_flow, anchor_rep, baseline, t, age_cond=age_t)
-                        z_st = apply_temporal_flow(temporal_flow, z_s, s, t, age_cond=age_t)
+                        zeros = torch.zeros_like(s)
+                        z_s = apply_temporal_flow(temporal_flow, anchor_rep, zeros, s)
+                        z_t = apply_temporal_flow(temporal_flow, anchor_rep, zeros, t)
+                        z_st = apply_temporal_flow(temporal_flow, z_s, s, t)
                         pair_fwd_raw = torch.mean((z_st - z_t) ** 2)
                         loss = loss + float(pair_forward_lambda) * pair_fwd_raw
 
@@ -1091,12 +714,10 @@ def optimize_subject_anchor_from_observations(
                     )
                     if s is not None:
                         anchor_rep = anchor.expand(s.shape[0], -1)
-                        baseline = torch.full_like(s, observed_baseline_time)
-                        age_s = _condition_from_sampled_time(s)
-                        age_t = _condition_from_sampled_time(t)
-                        z_s = apply_temporal_flow(temporal_flow, anchor_rep, baseline, s, age_cond=age_s)
-                        z_t = apply_temporal_flow(temporal_flow, anchor_rep, baseline, t, age_cond=age_t)
-                        z_ts = apply_temporal_flow(temporal_flow, z_t, t, s, age_cond=age_s)
+                        zeros = torch.zeros_like(s)
+                        z_s = apply_temporal_flow(temporal_flow, anchor_rep, zeros, s)
+                        z_t = apply_temporal_flow(temporal_flow, anchor_rep, zeros, t)
+                        z_ts = apply_temporal_flow(temporal_flow, z_t, t, s)
                         pair_bwd_raw = torch.mean((z_ts - z_s) ** 2)
                         loss = loss + float(pair_backward_lambda) * pair_bwd_raw
 
@@ -1114,16 +735,12 @@ def optimize_subject_anchor_from_observations(
                     )
                     if s is not None:
                         anchor_rep = anchor.expand(s.shape[0], -1)
-                        baseline = torch.full_like(s, observed_baseline_time)
-                        age_s = _condition_from_sampled_time(s)
-                        age_r = _condition_from_sampled_time(r)
-                        age_t = _condition_from_sampled_time(t)
                         z_s = apply_temporal_flow(
-                            temporal_flow, anchor_rep, baseline, s, age_cond=age_s
+                            temporal_flow, anchor_rep, torch.zeros_like(s), s
                         )
-                        z_sr = apply_temporal_flow(temporal_flow, z_s, s, r, age_cond=age_r)
-                        z_srt = apply_temporal_flow(temporal_flow, z_sr, r, t, age_cond=age_t)
-                        z_st = apply_temporal_flow(temporal_flow, z_s, s, t, age_cond=age_t)
+                        z_sr = apply_temporal_flow(temporal_flow, z_s, s, r)
+                        z_srt = apply_temporal_flow(temporal_flow, z_sr, r, t)
+                        z_st = apply_temporal_flow(temporal_flow, z_s, s, t)
                         cyc_gen_raw = torch.mean((z_srt - z_st) ** 2)
                         loss = loss + float(general_cocycle_lambda) * cyc_gen_raw
 
@@ -1152,7 +769,7 @@ def optimize_subject_anchor_from_observations(
             temporal_flow.train()
 
 
-def main_function(experiment_directory: str, continue_from, batch_split: int, gpu: int = None):
+def main_function(experiment_directory: str, continue_from, batch_split: int):
 
    
     
@@ -1161,29 +778,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     specs = ws.load_experiment_specifications(experiment_directory)
 
     logging.info("Experiment description: \n" + str(specs["Description"]))
-
-    if not torch.cuda.is_available():
-        raise RuntimeError(
-            "CUDA is not available. This training script requires a CUDA-enabled PyTorch setup."
-        )
-
-    requested_gpu = gpu
-    if requested_gpu is None:
-        requested_gpu = get_spec_with_default(specs, "GpuId", None)
-    if requested_gpu is not None:
-        requested_gpu = int(requested_gpu)
-        if requested_gpu < 0:
-            raise RuntimeError(f"GpuId/--gpu must be >= 0, got {requested_gpu}")
-        try:
-            torch.cuda.set_device(requested_gpu)
-        except Exception as e:
-            raise RuntimeError(
-                f"Unable to set CUDA device to index {requested_gpu}. "
-                f"Visible CUDA devices: {torch.cuda.device_count()}. Error: {e}"
-            ) from e
-        logging.info("Using requested CUDA device index: %d", requested_gpu)
-    else:
-        logging.info("Using default CUDA device index: %d", torch.cuda.current_device())
 
     data_source = specs["DataSource"]
     train_split_file = _resolve_existing_file(
@@ -1254,12 +848,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
 
     do_code_regularization = get_spec_with_default(specs, "CodeRegularization", True)
     code_reg_lambda = get_spec_with_default(specs, "CodeRegularizationLambda", 1e-4)
-    use_zero_displacement_loss = bool(
-        get_spec_with_default(specs, "UseZeroDisplacementLoss", False)
-    )
-    zero_displacement_lambda = float(
-        get_spec_with_default(specs, "ZeroDisplacementLambda", 0.0)
-    )
     use_eikonal = get_spec_with_default(specs, "UseEikonal", False)
     use_covariance = get_spec_with_default(specs, "UseCovarianceLoss", False)
     lambda_cov = get_spec_with_default(specs, "CovarianceLossLambda", 1e-3)
@@ -1396,50 +984,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     time_normalization_mode = get_spec_with_default(
         specs, "LongitudinalTimeNormalization", "subject_minmax"
     )
-    use_age_conditioning = bool(get_spec_with_default(specs, "UseAgeConditioning", False))
-    age_condition_key = str(get_spec_with_default(specs, "AgeConditionKey", "age_norm"))
-    age_condition_keys_raw = get_spec_with_default(specs, "AgeConditionKeys", None)
-    if age_condition_keys_raw is None:
-        age_condition_keys = [age_condition_key]
-    elif isinstance(age_condition_keys_raw, str):
-        age_condition_keys = [age_condition_keys_raw]
-    elif isinstance(age_condition_keys_raw, (list, tuple)):
-        age_condition_keys = [str(x) for x in age_condition_keys_raw]
-    else:
-        raise RuntimeError(
-            "AgeConditionKeys must be a string or a list of strings when provided."
-        )
-    age_condition_keys = [k for k in age_condition_keys if k]
-    if age_condition_key and age_condition_key not in age_condition_keys:
-        age_condition_keys = [age_condition_key] + age_condition_keys
-    age_metadata_file = get_spec_with_default(specs, "AgeMetadataFile", None)
-    time_metadata_file = get_spec_with_default(
-        specs, "LongitudinalTimeMetadataFile", age_metadata_file
-    )
-    time_metadata_key = str(get_spec_with_default(specs, "LongitudinalTimeKey", "time_index"))
-    age_condition_dim = int(
-        get_spec_with_default(
-            specs,
-            "AgeConditionDim",
-            len(age_condition_keys) if use_age_conditioning else 0,
-        )
-    )
-    if not use_age_conditioning:
-        age_condition_dim = 0
-    if use_age_conditioning and age_condition_dim <= 0:
-        raise RuntimeError(
-            "UseAgeConditioning=true requires AgeConditionDim >= 1"
-        )
-    if use_age_conditioning and len(age_condition_keys) == 0:
-        raise RuntimeError(
-            "UseAgeConditioning=true requires at least one condition key "
-            "(AgeConditionKey or AgeConditionKeys)."
-        )
-    if use_age_conditioning and len(age_condition_keys) > 1 and age_condition_dim != len(age_condition_keys):
-        raise RuntimeError(
-            "For multi-key conditioning, AgeConditionDim must match len(AgeConditionKeys). "
-            f"Got dim={age_condition_dim}, keys={age_condition_keys}"
-        )
     logging.info("Temporal consistency phase: %d", temporal_consistency_phase)
     if use_cocycle_loss:
         logging.info(
@@ -1480,46 +1024,16 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
         flow_hidden_dims,
         time_normalization_mode,
     )
-    logging.info(
-        "Age conditioning: enabled=%s, dim=%d, keys=%s, metadata=%s",
-        use_age_conditioning,
-        age_condition_dim,
-        age_condition_keys,
-        age_metadata_file,
-    )
-    logging.info(
-        "Longitudinal time metadata: key=%s, file=%s",
-        time_metadata_key,
-        time_metadata_file,
-    )
-    logging.info(
-        "Zero-displacement regularizer: enabled=%s, lambda=%s",
-        use_zero_displacement_loss,
-        zero_displacement_lambda,
-    )
+
     code_bound = get_spec_with_default(specs, "CodeBound", None)
 
     decoder = arch.Decoder(latent_size, **specs["NetworkSpecs"]).cuda()
 
-    gpu_count = torch.cuda.device_count()
-    logging.info("training with {} GPU(s)".format(gpu_count))
+    logging.info("training with {} GPU(s)".format(torch.cuda.device_count()))
 
-    use_data_parallel = bool(get_spec_with_default(specs, "UseDataParallel", False))
-    if requested_gpu is not None and use_data_parallel:
-        logging.info(
-            "UseDataParallel=true ignored because explicit single-GPU selection is active (gpu=%d).",
-            requested_gpu,
-        )
-        use_data_parallel = False
-    if use_data_parallel and gpu_count > 1:
-        decoder = torch.nn.DataParallel(decoder)
-        logging.info("DataParallel enabled across %d GPUs.", gpu_count)
-    elif use_data_parallel and gpu_count <= 1:
-        logging.info("UseDataParallel=true but <=1 GPU visible; running without DataParallel.")
-    else:
-        logging.info("DataParallel disabled.")
+    decoder = torch.nn.DataParallel(decoder)
     train_device = next(decoder.parameters()).device
-    temporal_flow = TemporalFlowMLP(latent_size, flow_hidden_dims, age_condition_dim=age_condition_dim).to(train_device)
+    temporal_flow = TemporalFlowMLP(latent_size, flow_hidden_dims).to(train_device)
 
     use_pretrained_sdf = get_spec_with_default(specs, "UsePretrainedSDFDecoder", False)
     pretrained_sdf_dir = get_spec_with_default(specs, "PretrainedSDFDecoderDir", None)
@@ -1571,87 +1085,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     sdf_dataset = deep_sdf.data.SDFSamples(
         data_source, train_split, num_samp_per_scene, load_ram=load_ram
     )
-    scan_age_condition_cpu = None
-    scan_age_condition = None
-    subject_baseline_time = None
-    subject_baseline_age = None
-    subject_condition_fit = None
-    scan_age_map = {}
-    age_metadata_resolved = None
-    time_metadata_resolved = None
-    scan_time_map = None
-
-    if time_metadata_file:
-        time_metadata_resolved = _resolve_existing_file(
-            time_metadata_file, experiment_directory
-        )
-        scan_time_map = _load_scan_age_map_from_labels(
-            time_metadata_resolved, time_metadata_key
-        )
-
-    if use_age_conditioning:
-        if age_metadata_file is None:
-            raise RuntimeError(
-                "UseAgeConditioning=true but AgeMetadataFile is not set in specs.json"
-            )
-        age_metadata_resolved = _resolve_existing_file(age_metadata_file, experiment_directory)
-        for condition_key in age_condition_keys:
-            scan_age_map[condition_key] = _load_scan_age_map_from_labels(
-                age_metadata_resolved,
-                condition_key,
-            )
-
     longitudinal_meta = build_longitudinal_metadata(
-        sdf_dataset.npyfiles,
-        time_normalization_mode,
-        scan_to_time_map=scan_time_map,
-        time_key_name=time_metadata_key,
+        sdf_dataset.npyfiles, time_normalization_mode
     )
     scan_to_subject_idx_cpu = longitudinal_meta["scan_to_subject_idx"]
     scan_to_subject_idx = scan_to_subject_idx_cpu.to(train_device)
-    scan_to_time_cpu = longitudinal_meta["timepoints"]
-    scan_to_time = scan_to_time_cpu.to(train_device)
+    scan_to_time = longitudinal_meta["timepoints"].to(train_device)
     num_subjects = longitudinal_meta["num_subjects"]
-    subject_baseline_time_cpu = compute_subject_baseline_time(
-        scan_to_subject_idx_cpu,
-        scan_to_time_cpu,
-        num_subjects,
-    )
-    subject_baseline_time = subject_baseline_time_cpu.to(train_device)
-    consistency_time_sample_low = float(scan_to_time_cpu.min().item())
-    consistency_time_sample_high = float(scan_to_time_cpu.max().item())
-
-    if use_age_conditioning:
-        scan_age_condition_cpu = build_scan_condition_tensor(
-            sdf_dataset.npyfiles,
-            scan_age_map,
-            age_condition_keys,
-        )
-        scan_age_condition = scan_age_condition_cpu.to(train_device)
-        (
-            _subject_baseline_time_cpu_check,
-            subject_baseline_age_cpu,
-        ) = compute_subject_baseline_time_and_condition(
-            scan_to_subject_idx_cpu,
-            scan_to_time_cpu,
-            scan_age_condition_cpu,
-            num_subjects,
-        )
-        subject_condition_fit_cpu = build_subject_condition_linear_fit(
-            scan_to_subject_idx_cpu,
-            scan_to_time_cpu,
-            scan_age_condition_cpu,
-            num_subjects,
-        )
-        if not torch.allclose(_subject_baseline_time_cpu_check, subject_baseline_time_cpu):
-            raise RuntimeError(
-                "Inconsistent subject baseline time computed from time metadata."
-            )
-        subject_baseline_age = subject_baseline_age_cpu.to(train_device)
-        subject_condition_fit = {
-            key: val.to(train_device) for key, val in subject_condition_fit_cpu.items()
-        }
-
     logging.info(
         "Longitudinal mapping built: %d scans -> %d subjects",
         len(sdf_dataset),
@@ -1796,20 +1236,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     )
     eval_test_filenames = deep_sdf.data.get_instance_filenames(data_source, test_split)
     test_longitudinal_meta = build_longitudinal_metadata(
-        eval_test_filenames,
-        time_normalization_mode,
-        scan_to_time_map=scan_time_map,
-        time_key_name=time_metadata_key,
+        eval_test_filenames, time_normalization_mode
     )
-    test_scan_age_condition = None
-    if use_age_conditioning:
-        if len(scan_age_map) == 0:
-            raise RuntimeError("Age conditioning enabled but scan_age_map is not initialized.")
-        test_scan_age_condition = build_scan_condition_tensor(
-            eval_test_filenames,
-            scan_age_map,
-            age_condition_keys,
-        ).to(train_device)
     test_subject_to_scan_indices = {}
     for scan_idx, sid in enumerate(test_longitudinal_meta["subject_ids"]):
         test_subject_to_scan_indices.setdefault(sid, []).append(scan_idx)
@@ -2063,19 +1491,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                     unique_indices = torch.unique(indices[i])
                     scan_subject_indices = scan_to_subject_idx.index_select(0, indices[i])
                     scan_times = scan_to_time.index_select(0, indices[i]).unsqueeze(1)
-                    start_times = subject_baseline_time.index_select(
-                        0, scan_subject_indices
-                    ).unsqueeze(1)
+                    start_times = torch.zeros_like(scan_times)
                     subject_anchor_batch = lat_vecs(scan_subject_indices)
-                    scan_ages = None
-                    if use_age_conditioning:
-                        scan_ages = scan_age_condition.index_select(0, indices[i])
                     batch_vecs = apply_temporal_flow(
                         temporal_flow,
                         subject_anchor_batch,
                         start_times,
                         scan_times,
-                        age_cond=scan_ages,
                     )
                     input = torch.cat([batch_vecs, xyz[i]], dim=1)
                     
@@ -2096,23 +1518,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                         chunk_loss = chunk_loss + reg_loss.cuda()
                         reg_loss_tb += reg_loss.item()
 
-                    if use_zero_displacement_loss and zero_displacement_lambda > 0.0:
-                        unique_subjects = torch.unique(scan_subject_indices)
-                        unique_anchor_vecs = lat_vecs(unique_subjects)
-                        baseline_t = subject_baseline_time.index_select(0, unique_subjects).unsqueeze(1)
-                        baseline_age = None
-                        if use_age_conditioning:
-                            baseline_age = subject_baseline_age.index_select(0, unique_subjects)
-                        baseline_velocity = temporal_flow(
-                            unique_anchor_vecs,
-                            baseline_t,
-                            baseline_t,
-                            age_cond=baseline_age,
-                        )
-                        zero_disp_loss = zero_displacement_lambda * torch.mean(baseline_velocity ** 2)
-                        chunk_loss = chunk_loss + zero_disp_loss
-                        reg_loss_tb += float(zero_disp_loss.item())
-
                     if (
                         use_cocycle_loss
                         or use_cocycle_backward_loss
@@ -2125,20 +1530,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                         if unique_subjects.numel() > 0:
                             subject_anchors = lat_vecs(unique_subjects)
                             subject_count = subject_anchors.shape[0]
-                            baseline_s = subject_baseline_time.index_select(
-                                0, unique_subjects
-                            ).unsqueeze(1)
-
-                            def _sampled_condition(tt):
-                                if not use_age_conditioning:
-                                    return None
-                                return subject_condition_at_time(
-                                    unique_subjects,
-                                    tt,
-                                    subject_condition_fit,
-                                    device=subject_anchors.device,
-                                    dtype=subject_anchors.dtype,
-                                )
 
                             if use_pair_forward_loss and pair_forward_lambda > 0.0:
                                 pair_fwd_raw_loss = 0.0
@@ -2149,30 +1540,16 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                         device=subject_anchors.device,
                                         mode="uniform_01",
                                         dtype=subject_anchors.dtype,
-                                        uniform_low=consistency_time_sample_low,
-                                        uniform_high=consistency_time_sample_high,
                                     )
                                     if s is None:
                                         continue
-                                    cond_s = _sampled_condition(s)
-                                    cond_t = _sampled_condition(t)
                                     z_s = apply_temporal_flow(
-                                        temporal_flow,
-                                        subject_anchors,
-                                        baseline_s,
-                                        s,
-                                        age_cond=cond_s,
+                                        temporal_flow, subject_anchors, torch.zeros_like(s), s
                                     )
                                     z_t = apply_temporal_flow(
-                                        temporal_flow,
-                                        subject_anchors,
-                                        baseline_s,
-                                        t,
-                                        age_cond=cond_t,
+                                        temporal_flow, subject_anchors, torch.zeros_like(t), t
                                     )
-                                    z_st = apply_temporal_flow(
-                                        temporal_flow, z_s, s, t, age_cond=cond_t
-                                    )
+                                    z_st = apply_temporal_flow(temporal_flow, z_s, s, t)
                                     pair_fwd_raw_loss = pair_fwd_raw_loss + torch.mean(
                                         (z_st - z_t) ** 2
                                     )
@@ -2192,30 +1569,16 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                         device=subject_anchors.device,
                                         mode="uniform_01",
                                         dtype=subject_anchors.dtype,
-                                        uniform_low=consistency_time_sample_low,
-                                        uniform_high=consistency_time_sample_high,
                                     )
                                     if s is None:
                                         continue
-                                    cond_s = _sampled_condition(s)
-                                    cond_t = _sampled_condition(t)
                                     z_s = apply_temporal_flow(
-                                        temporal_flow,
-                                        subject_anchors,
-                                        baseline_s,
-                                        s,
-                                        age_cond=cond_s,
+                                        temporal_flow, subject_anchors, torch.zeros_like(s), s
                                     )
                                     z_t = apply_temporal_flow(
-                                        temporal_flow,
-                                        subject_anchors,
-                                        baseline_s,
-                                        t,
-                                        age_cond=cond_t,
+                                        temporal_flow, subject_anchors, torch.zeros_like(t), t
                                     )
-                                    z_ts = apply_temporal_flow(
-                                        temporal_flow, z_t, t, s, age_cond=cond_s
-                                    )
+                                    z_ts = apply_temporal_flow(temporal_flow, z_t, t, s)
                                     pair_bwd_raw_loss = pair_bwd_raw_loss + torch.mean(
                                         (z_ts - z_s) ** 2
                                     )
@@ -2235,29 +1598,15 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                         device=subject_anchors.device,
                                         mode="uniform_01",
                                         dtype=subject_anchors.dtype,
-                                        uniform_low=consistency_time_sample_low,
-                                        uniform_high=consistency_time_sample_high,
                                     )
                                     if r is None:
                                         continue
-                                    cond_r = _sampled_condition(r)
-                                    cond_t = _sampled_condition(t)
                                     z_r = apply_temporal_flow(
-                                        temporal_flow,
-                                        subject_anchors,
-                                        baseline_s,
-                                        r,
-                                        age_cond=cond_r,
+                                        temporal_flow, subject_anchors, torch.zeros_like(r), r
                                     )
-                                    z_rt = apply_temporal_flow(
-                                        temporal_flow, z_r, r, t, age_cond=cond_t
-                                    )
+                                    z_rt = apply_temporal_flow(temporal_flow, z_r, r, t)
                                     z_t = apply_temporal_flow(
-                                        temporal_flow,
-                                        subject_anchors,
-                                        baseline_s,
-                                        t,
-                                        age_cond=cond_t,
+                                        temporal_flow, subject_anchors, torch.zeros_like(t), t
                                     )
                                     cocycle_raw_loss = cocycle_raw_loss + torch.mean(
                                         (z_rt - z_t) ** 2
@@ -2278,29 +1627,15 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                         device=subject_anchors.device,
                                         mode="uniform_01",
                                         dtype=subject_anchors.dtype,
-                                        uniform_low=consistency_time_sample_low,
-                                        uniform_high=consistency_time_sample_high,
                                     )
                                     if r is None:
                                         continue
-                                    cond_r = _sampled_condition(r)
-                                    cond_t = _sampled_condition(t)
                                     z_t = apply_temporal_flow(
-                                        temporal_flow,
-                                        subject_anchors,
-                                        baseline_s,
-                                        t,
-                                        age_cond=cond_t,
+                                        temporal_flow, subject_anchors, torch.zeros_like(t), t
                                     )
-                                    z_tr = apply_temporal_flow(
-                                        temporal_flow, z_t, t, r, age_cond=cond_r
-                                    )
+                                    z_tr = apply_temporal_flow(temporal_flow, z_t, t, r)
                                     z_r = apply_temporal_flow(
-                                        temporal_flow,
-                                        subject_anchors,
-                                        baseline_s,
-                                        r,
-                                        age_cond=cond_r,
+                                        temporal_flow, subject_anchors, torch.zeros_like(r), r
                                     )
                                     cocycle_backward_raw_loss = (
                                         cocycle_backward_raw_loss + torch.mean((z_tr - z_r) ** 2)
@@ -2325,30 +1660,15 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                         device=subject_anchors.device,
                                         mode="uniform_01",
                                         dtype=subject_anchors.dtype,
-                                        uniform_low=consistency_time_sample_low,
-                                        uniform_high=consistency_time_sample_high,
                                     )
                                     if s is None:
                                         continue
-                                    cond_s = _sampled_condition(s)
-                                    cond_r = _sampled_condition(r)
-                                    cond_t = _sampled_condition(t)
                                     z_s = apply_temporal_flow(
-                                        temporal_flow,
-                                        subject_anchors,
-                                        baseline_s,
-                                        s,
-                                        age_cond=cond_s,
+                                        temporal_flow, subject_anchors, torch.zeros_like(s), s
                                     )
-                                    z_sr = apply_temporal_flow(
-                                        temporal_flow, z_s, s, r, age_cond=cond_r
-                                    )
-                                    z_srt = apply_temporal_flow(
-                                        temporal_flow, z_sr, r, t, age_cond=cond_t
-                                    )
-                                    z_st = apply_temporal_flow(
-                                        temporal_flow, z_s, s, t, age_cond=cond_t
-                                    )
+                                    z_sr = apply_temporal_flow(temporal_flow, z_s, s, r)
+                                    z_srt = apply_temporal_flow(temporal_flow, z_sr, r, t)
+                                    z_st = apply_temporal_flow(temporal_flow, z_s, s, t)
                                     general_cocycle_raw_loss = (
                                         general_cocycle_raw_loss + torch.mean((z_srt - z_st) ** 2)
                                     )
@@ -2375,30 +1695,15 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                         device=subject_anchors.device,
                                         mode="uniform_01",
                                         dtype=subject_anchors.dtype,
-                                        uniform_low=consistency_time_sample_low,
-                                        uniform_high=consistency_time_sample_high,
                                     )
                                     if s is None:
                                         continue
-                                    cond_s = _sampled_condition(s)
-                                    cond_r = _sampled_condition(r)
-                                    cond_t = _sampled_condition(t)
                                     z_t = apply_temporal_flow(
-                                        temporal_flow,
-                                        subject_anchors,
-                                        baseline_s,
-                                        t,
-                                        age_cond=cond_t,
+                                        temporal_flow, subject_anchors, torch.zeros_like(t), t
                                     )
-                                    z_tr = apply_temporal_flow(
-                                        temporal_flow, z_t, t, r, age_cond=cond_r
-                                    )
-                                    z_trs = apply_temporal_flow(
-                                        temporal_flow, z_tr, r, s, age_cond=cond_s
-                                    )
-                                    z_ts = apply_temporal_flow(
-                                        temporal_flow, z_t, t, s, age_cond=cond_s
-                                    )
+                                    z_tr = apply_temporal_flow(temporal_flow, z_t, t, r)
+                                    z_trs = apply_temporal_flow(temporal_flow, z_tr, r, s)
+                                    z_ts = apply_temporal_flow(temporal_flow, z_t, t, s)
                                     general_cocycle_backward_raw_loss = (
                                         general_cocycle_backward_raw_loss
                                         + torch.mean((z_trs - z_ts) ** 2)
@@ -2523,11 +1828,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                 chunk_loss = chunk_loss + grad_metric_iso_loss
                                 grad_metric_iso_loss_tb += grad_metric_iso_loss.item()
                     
-                    summary_writer.add_scalar(
-                        "Loss/train_vanilla",
-                        float(chunk_loss.detach().item()),
-                        global_step=epoch,
-                    )
+                    summary_writer.add_scalar("Loss/train_vanilla", chunk_loss, global_step=epoch)
                     if use_eikonal:
                         grad_outputs = torch.ones_like(pred_sdf, requires_grad=True)
                         gradients = torch.autograd.grad(pred_sdf, [xyz[i]], grad_outputs=grad_outputs, create_graph=True, allow_unused=True, retain_graph=True)[0]
@@ -2842,19 +2143,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                         )
                         subject_idx = scan_to_subject_idx.index_select(0, index_tensor)
                         eval_time = scan_to_time.index_select(0, index_tensor).unsqueeze(1)
-                        eval_start = subject_baseline_time.index_select(
-                            0, subject_idx
-                        ).unsqueeze(1)
+                        eval_start = torch.zeros_like(eval_time)
                         subject_anchor = lat_vecs(subject_idx)
-                        eval_age = None
-                        if use_age_conditioning:
-                            eval_age = scan_age_condition.index_select(0, index_tensor)
                         lat_vec = apply_temporal_flow(
-                            temporal_flow,
-                            subject_anchor,
-                            eval_start,
-                            eval_time,
-                            age_cond=eval_age,
+                            temporal_flow, subject_anchor, eval_start, eval_time
                         )
                         save_name = os.path.basename(sdf_dataset.npyfiles[index]).split(".npz")[0]
                         path = os.path.join(experiment_directory, ws.tb_logs_dir, ws.tb_logs_train_reconstructions, save_name)
@@ -2956,12 +2248,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                             t_obs = float(
                                 test_longitudinal_meta["timepoints"][scan_idx].item()
                             )
-                            obs_item = {"samples": test_sdf_samples, "time": t_obs}
-                            if use_age_conditioning:
-                                obs_item["age_cond"] = (
-                                    test_scan_age_condition[scan_idx].detach().cpu()
-                                )
-                            observations.append(obs_item)
+                            observations.append(
+                                {"samples": test_sdf_samples, "time": t_obs}
+                            )
 
                         start = time.time()
                         subject_anchor, anchor_loss_hist = (
@@ -2992,7 +2281,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                 general_cocycle_triplets_per_iter=int(
                                     test_general_cocycle_triplets_per_iter
                                 ),
-                                use_age_conditioning=use_age_conditioning,
                             )
                         )
                         logging.debug(
@@ -3011,11 +2299,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                 test_longitudinal_meta["timepoints_raw"][idx].item()
                             ),
                         )
-                        subject_baseline_t = float(
-                            test_longitudinal_meta["timepoints"][
-                                subject_scan_indices[0]
-                            ].item()
-                        )
                         rollout_z_prev = None
                         rollout_t_prev = None
                         if eval_test_rollout_mode == "composed":
@@ -3028,23 +2311,17 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                         observed_indices[-1]
                                     ].item()
                                 )
-                                roll_start_age = None
-                                if use_age_conditioning:
-                                    roll_start_age = test_scan_age_condition[
-                                        observed_indices[-1]
-                                    ].view(1, -1)
                                 rollout_z_prev = _apply_temporal_flow_interval(
                                     temporal_flow,
                                     subject_anchor,
-                                    t_start=subject_baseline_t,
+                                    t_start=0.0,
                                     t_end=t_roll_start,
                                     max_dt=eval_test_max_rollout_dt,
-                                    age_end_cond=roll_start_age,
                                 )
                                 rollout_t_prev = t_roll_start
                             else:
                                 rollout_z_prev = subject_anchor
-                                rollout_t_prev = subject_baseline_t
+                                rollout_t_prev = 0.0
 
                         for scan_idx in target_indices:
                             test_fname = eval_test_filenames[scan_idx]
@@ -3062,22 +2339,18 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                             t_target = float(
                                 test_longitudinal_meta["timepoints"][scan_idx].item()
                             )
-                            age_target = None
-                            if use_age_conditioning:
-                                age_target = test_scan_age_condition[scan_idx].view(1, -1)
                             if eval_test_rollout_mode == "composed":
                                 if rollout_t_prev is None or rollout_z_prev is None:
                                     rollout_z_prev = subject_anchor
-                                    rollout_t_prev = subject_baseline_t
+                                    rollout_t_prev = 0.0
                                 if t_target < float(rollout_t_prev) - 1e-8:
                                     # Fallback for unexpected ordering.
                                     z_target = _apply_temporal_flow_interval(
                                         temporal_flow,
                                         subject_anchor,
-                                        t_start=subject_baseline_t,
+                                        t_start=0.0,
                                         t_end=t_target,
                                         max_dt=eval_test_max_rollout_dt,
-                                        age_end_cond=age_target,
                                     )
                                 else:
                                     z_target = _apply_temporal_flow_interval(
@@ -3086,7 +2359,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                         t_start=float(rollout_t_prev),
                                         t_end=t_target,
                                         max_dt=eval_test_max_rollout_dt,
-                                        age_end_cond=age_target,
                                     )
                                     rollout_z_prev = z_target.detach()
                                     rollout_t_prev = t_target
@@ -3094,10 +2366,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                 z_target = _apply_temporal_flow_interval(
                                     temporal_flow,
                                     subject_anchor,
-                                    t_start=subject_baseline_t,
+                                    t_start=0.0,
                                     t_end=t_target,
                                     max_dt=eval_test_max_rollout_dt,
-                                    age_end_cond=age_target,
                                 )
                             test_latents.append(z_target.detach())
 
@@ -3170,7 +2441,6 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     except KeyboardInterrupt as e:
         logging.error(f"Received KeyboardInterrupt. Cleaning up and ending training.")
     finally:
-        exception_in_flight = sys.exc_info()[0] is not None
         # Calculate model size.
         param_size = 0
         param_cnt = 0
@@ -3213,14 +2483,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             "best_test_cd" : min(test_chamfer_dists_log) if len(test_chamfer_dists_log) else -1,
         }
         summary_writer.add_hparams(writer_hparams, train_results, run_name='.')
-        write_model_graph = bool(get_spec_with_default(specs, "WriteModelGraph", False))
-        if write_model_graph and not exception_in_flight and "input" in locals():
-            try:
-                summary_writer.add_graph(decoder, input)
-            except Exception as e:
-                logging.warning("Skipping add_graph due to error: %s", str(e))
-        elif write_model_graph and exception_in_flight:
-            logging.warning("Skipping add_graph because an exception is already in flight.")
+        if "input" in locals():
+            summary_writer.add_graph(decoder, input)
         summary_writer.flush()    
         summary_writer.close()
         # End of training.
@@ -3252,51 +2516,16 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "--batch_split",
         dest="batch_split",
-        type=int,
-        default=None,
+        default=1,
         help="This splits the batch into separate subbatches which are "
         + "processed separately, with gradients accumulated across all "
         + "subbatches. This allows for training with large effective batch "
         + "sizes in memory constrained environments.",
     )
-    arg_parser.add_argument(
-        "--gpu",
-        dest="gpu",
-        type=int,
-        default=None,
-        help="CUDA device index to use for this run (e.g., 0 or 1). "
-        + "If omitted, uses specs.json GpuId when present, else PyTorch default.",
-    )
 
     deep_sdf.add_common_args(arg_parser)
 
     args = arg_parser.parse_args()
-    runtime_specs = {}
-
-    specs_path = os.path.join(args.experiment_directory, "specs.json")
-    if os.path.isfile(specs_path):
-        with open(specs_path, "r") as spec_f:
-            runtime_specs = json.load(spec_f)
-
-        # Allow logging level control from specs.json when CLI flags are omitted.
-        # CLI --debug/--quiet still take precedence.
-        if not args.debug and not args.quiet:
-            spec_debug = bool(runtime_specs.get("DebugLogging", False))
-            spec_quiet = bool(runtime_specs.get("QuietLogging", False))
-            if spec_debug:
-                args.debug = True
-            elif spec_quiet:
-                args.quiet = True
-
-    if args.batch_split is None:
-        args.batch_split = int(runtime_specs.get("BatchSplit", 1))
-    if int(args.batch_split) <= 0:
-        raise RuntimeError(f"batch_split must be >= 1, got {args.batch_split}")
-
-    if args.gpu is None and "GpuId" in runtime_specs:
-        args.gpu = int(runtime_specs["GpuId"])
-    if args.gpu is not None and int(args.gpu) < 0:
-        raise RuntimeError(f"gpu must be >= 0, got {args.gpu}")
 
     if args.logfile is None:
         args.logfile = os.path.join(args.experiment_directory, "train.log")
@@ -3309,12 +2538,7 @@ if __name__ == "__main__":
     sys.stderr = TeeStream(stderr_orig, terminal_log_file)
     try:
         deep_sdf.configure_logging(args)
-        main_function(
-            args.experiment_directory,
-            args.continue_from,
-            int(args.batch_split),
-            gpu=None if args.gpu is None else int(args.gpu),
-        )
+        main_function(args.experiment_directory, args.continue_from, int(args.batch_split))
     finally:
         sys.stdout = stdout_orig
         sys.stderr = stderr_orig

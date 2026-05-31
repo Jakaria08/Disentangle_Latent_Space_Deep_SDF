@@ -1,0 +1,123 @@
+{
+  "Description": [
+    "Age+disease-conditioned longitudinal torus experiment.",
+    "Uses normalized age (age_norm) as longitudinal time with diagnosis conditioning and optional baseline zero-displacement regularization."
+  ],
+  "DataSource": "/home/jakaria/torus_creation/torus_age_disease_longitudinal_100ids_5tp_flat/scaled_obj_files/sdf_data/SdfSamples/scaled_obj_files",
+  "DataSourceMesh": "/home/jakaria/torus_creation/torus_age_disease_longitudinal_100ids_5tp_flat/scaled_obj_files",
+  "TrainSplit": "/home/jakaria/torus_creation/splits_torus_age_disease_progression/train_split_torus.json",
+  "TestSplit": "/home/jakaria/torus_creation/splits_torus_age_disease_progression/test_split_torus.json",
+  "TorusPath": "/home/jakaria/torus_creation/torus_age_disease_longitudinal_100ids_5tp_flat/scaled_obj_files",
+  "NetworkArch": "deep_sdf_decoder",
+  "NetworkSpecs": {
+    "dims": [
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512
+    ],
+    "dropout": [],
+    "dropout_prob": 0.2,
+    "norm_layers": [],
+    "latent_in": [
+      4
+    ],
+    "xyz_in_all": false,
+    "use_tanh": false,
+    "latent_dropout": false,
+    "weight_norm": true
+  },
+  "CodeLength": 256,
+  "NumEpochs": 2001,
+  "SnapshotFrequency": 1000,
+  "AdditionalSnapshots": [
+    100,
+    500
+  ],
+  "LearningRateSchedule": [
+    {
+      "Type": "Step",
+      "Initial": 0.0005,
+      "Interval": 500,
+      "Factor": 0.5
+    },
+    {
+      "Type": "Step",
+      "Initial": 0.001,
+      "Interval": 500,
+      "Factor": 0.5
+    }
+  ],
+  "SamplesPerScene": 16384,
+  "ScenesPerBatch": 16,
+  "UseEikonal": true,
+  "DataLoaderThreads": 16,
+  "ClampingDistance": 0.1,
+  "CodeRegularization": true,
+  "CodeRegularizationLambda": 0.0001,
+  "CodeBound": 1.0,
+  "GradientClipNorm": 1.0,
+  "DebugLogging": false,
+  "GpuId": 0,
+  "BatchSplit": 8,
+  "UseDataParallel": false,
+  "WriteModelGraph": false,
+  "FlowHiddenDims": [
+    256,
+    256
+  ],
+  "LongitudinalTimeNormalization": "none",
+  "TemporalConsistencyPhase": 3,
+  "UseCocycleLoss": true,
+  "UseCocycleBackwardLoss": true,
+  "UsePairForwardLoss": false,
+  "UsePairBackwardLoss": false,
+  "UseGeneralCocycleLoss": false,
+  "UseGeneralCocycleBackwardLoss": false,
+  "CocycleLossLambda": 0.01,
+  "CocyclePairsPerSubject": 1,
+  "CocycleBackwardLossLambda": 0.01,
+  "CocycleBackwardPairsPerSubject": 1,
+  "PairForwardLossLambda": 0.01,
+  "PairForwardPairsPerSubject": 1,
+  "PairBackwardLossLambda": 0.01,
+  "PairBackwardPairsPerSubject": 1,
+  "GeneralCocycleLossLambda": 0.01,
+  "GeneralCocycleTripletsPerSubject": 1,
+  "UseAgeConditioning": true,
+  "AgeConditionDim": 1,
+  "AgeConditionKey": "diagnosis",
+  "AgeConditionKeys": [
+    "diagnosis"
+  ],
+  "AgeMetadataFile": "/home/jakaria/torus_creation/torus_age_disease_longitudinal_100ids_5tp_flat/labels.pt",
+  "LongitudinalTimeKey": "age_norm",
+  "LongitudinalTimeMetadataFile": "/home/jakaria/torus_creation/torus_age_disease_longitudinal_100ids_5tp_flat/labels.pt",
+  "UseZeroDisplacementLoss": true,
+  "ZeroDisplacementLambda": 0.001,
+  "EvalTestRolloutStart": "last_observed",
+  "EvalTestMaxRolloutDt": 0.0,
+  "UseTestPairConsistency": false,
+  "TestPairForwardLambda": 0.0,
+  "TestPairForwardPairsPerIter": 1,
+  "TestPairBackwardLambda": 0.0,
+  "TestPairBackwardPairsPerIter": 1,
+  "UseTestGeneralCocycleConsistency": false,
+  "TestGeneralCocycleLambda": 0.0,
+  "TestGeneralCocycleTripletsPerIter": 1,
+  "UsePretrainedSDFDecoder": true,
+  "UsePretrainedSubjectAnchorInit": true,
+  "EvalChamferMetric": "chamfer_torus_aligned",
+  "EvalChamferAlignMode": "centroid",
+  "EvalChamferAlignIters": 20,
+  "EvalChamferAlignTrimQuantile": 0.9,
+  "PretrainedSDFDecoderDir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id/minimal_eikonal",
+  "PretrainedSDFDecoderCheckpoint": "latest",
+  "PretrainedSubjectAnchorInitDir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id/minimal_eikonal",
+  "PretrainedSubjectAnchorInitCheckpoint": "latest",
+  "PretrainedSubjectAnchorExpectedScansPerSubject": 5
+}
