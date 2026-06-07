@@ -1,7 +1,7 @@
 {
   "Description": [
-    "Age+disease-conditioned longitudinal torus experiment.",
-    "Uses normalized age (age_norm) as longitudinal time with diagnosis conditioning and optional baseline zero-displacement regularization."
+    "Age+disease-conditioned longitudinal torus experiment with optional cocycle shape-SDF consistency.",
+    "Enables shape-level cocycle self-consistency while preserving baseline reconstruction and latent cocycle paths."
   ],
   "DataSource": "/home/jakaria/torus_creation/torus_age_disease_longitudinal_100ids_5tp_flat/scaled_obj_files/sdf_data/SdfSamples/scaled_obj_files",
   "DataSourceMesh": "/home/jakaria/torus_creation/torus_age_disease_longitudinal_100ids_5tp_flat/scaled_obj_files",
@@ -74,8 +74,8 @@
   "TemporalConsistencyPhase": 3,
   "UseCocycleLoss": true,
   "UseCocycleBackwardLoss": true,
-  "UsePairForwardLoss": false,
-  "UsePairBackwardLoss": false,
+  "UsePairForwardLoss": true,
+  "UsePairBackwardLoss": true,
   "UseGeneralCocycleLoss": false,
   "UseGeneralCocycleBackwardLoss": false,
   "CocycleLossLambda": 0.01,
@@ -115,9 +115,13 @@
   "EvalChamferAlignMode": "centroid",
   "EvalChamferAlignIters": 20,
   "EvalChamferAlignTrimQuantile": 0.9,
-  "PretrainedSDFDecoderDir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id/minimal_eikonal",
+  "PretrainedSDFDecoderDir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id_age_progression/longitudinal_age_disease_conditioned_cocycle_shape",
   "PretrainedSDFDecoderCheckpoint": "latest",
   "PretrainedSubjectAnchorInitDir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id/minimal_eikonal",
   "PretrainedSubjectAnchorInitCheckpoint": "latest",
-  "PretrainedSubjectAnchorExpectedScansPerSubject": 5
+  "PretrainedSubjectAnchorExpectedScansPerSubject": 5,
+  "UseCocycleShapeLoss": true,
+  "CocycleShapeLossLambda": 0.001,
+  "CocycleShapeNumPoints": 512,
+  "CocycleShapeUseClamp": true
 }

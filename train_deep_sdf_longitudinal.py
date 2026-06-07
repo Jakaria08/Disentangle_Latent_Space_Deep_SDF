@@ -326,6 +326,9 @@ def _sample_sorted_time_pairs(
     dtype=torch.float32,
     uniform_low=0.0,
     uniform_high=1.0,
+    mixed_adjacent_ratio=0.5,
+    mixed_adjacent_max_gap_ratio=0.25,
+    mixed_far_min_gap_ratio=0.5,
 ):
     if int(count) <= 0:
         return None, None
@@ -338,6 +341,66 @@ def _sample_sorted_time_pairs(
         idx_b = torch.randint(0, n, (int(count),), device=device)
         s = time_values.index_select(0, idx_a).unsqueeze(1)
         t = time_values.index_select(0, idx_b).unsqueeze(1)
+    elif mode == "mixed_adjacent_far":
+        lo = float(uniform_low)
+        hi = float(uniform_high)
+        if hi < lo:
+            lo, hi = hi, lo
+        span = hi - lo
+        if abs(span) <= 1e-12:
+            return None, None
+
+        adj_ratio = min(max(float(mixed_adjacent_ratio), 0.0), 1.0)
+        n_adj = int(round(int(count) * adj_ratio))
+        n_adj = max(0, min(int(count), n_adj))
+        n_far = int(count) - n_adj
+        adj_max = span * min(max(float(mixed_adjacent_max_gap_ratio), 0.0), 1.0)
+        far_min = span * min(max(float(mixed_far_min_gap_ratio), 0.0), 1.0)
+
+        def _collect_pairs(num_pairs, want_adjacent):
+            if num_pairs <= 0:
+                empty = torch.empty((0, 1), device=device, dtype=dtype)
+                return empty, empty
+
+            s_chunks = []
+            t_chunks = []
+            remaining = int(num_pairs)
+            for _ in range(8):
+                if remaining <= 0:
+                    break
+                draw = max(remaining * 2, 16)
+                s_try = lo + span * torch.rand(draw, 1, device=device, dtype=dtype)
+                t_try = lo + span * torch.rand(draw, 1, device=device, dtype=dtype)
+                st_try = torch.sort(torch.cat([s_try, t_try], dim=1), dim=1).values
+                s_try = st_try[:, 0:1]
+                t_try = st_try[:, 1:2]
+                gap = (t_try - s_try).squeeze(1)
+                mask = gap <= adj_max if want_adjacent else gap >= far_min
+                if mask.any():
+                    s_sel = s_try[mask]
+                    t_sel = t_try[mask]
+                    take = min(remaining, s_sel.shape[0])
+                    s_chunks.append(s_sel[:take])
+                    t_chunks.append(t_sel[:take])
+                    remaining -= take
+
+            if remaining > 0:
+                s_fill = lo + span * torch.rand(remaining, 1, device=device, dtype=dtype)
+                t_fill = lo + span * torch.rand(remaining, 1, device=device, dtype=dtype)
+                st_fill = torch.sort(torch.cat([s_fill, t_fill], dim=1), dim=1).values
+                s_chunks.append(st_fill[:, 0:1])
+                t_chunks.append(st_fill[:, 1:2])
+
+            return torch.cat(s_chunks, dim=0), torch.cat(t_chunks, dim=0)
+
+        s_adj, t_adj = _collect_pairs(n_adj, want_adjacent=True)
+        s_far, t_far = _collect_pairs(n_far, want_adjacent=False)
+        s = torch.cat([s_adj, s_far], dim=0)
+        t = torch.cat([t_adj, t_far], dim=0)
+        if s.shape[0] > 1:
+            perm = torch.randperm(s.shape[0], device=device)
+            s = s.index_select(0, perm)
+            t = t.index_select(0, perm)
     else:
         lo = float(uniform_low)
         hi = float(uniform_high)
@@ -444,6 +507,75 @@ def _apply_temporal_flow_interval(
         z = apply_temporal_flow(temporal_flow, z, s, t, age_cond=age_end_cond)
         cur_t = nxt_t
     return z
+
+
+def _sample_query_points(xyz_chunk, num_points):
+    if xyz_chunk is None or xyz_chunk.numel() == 0:
+        return None
+    k = int(num_points)
+    if k <= 0:
+        return None
+    n = int(xyz_chunk.shape[0])
+    if n <= 0:
+        return None
+    k = min(k, n)
+    if k == n:
+        return xyz_chunk
+    idx = torch.randint(0, n, (k,), device=xyz_chunk.device)
+    return xyz_chunk.index_select(0, idx)
+
+
+def _decode_sdf_on_shared_points(
+    decoder,
+    latents,
+    query_xyz,
+    clamp_min=None,
+    clamp_max=None,
+):
+    if latents is None or query_xyz is None:
+        return None
+    if latents.numel() == 0 or query_xyz.numel() == 0:
+        return None
+
+    batch_size = int(latents.shape[0])
+    num_points = int(query_xyz.shape[0])
+    if batch_size <= 0 or num_points <= 0:
+        return None
+
+    z = latents.unsqueeze(1).expand(-1, num_points, -1).reshape(batch_size * num_points, -1)
+    x = query_xyz.unsqueeze(0).expand(batch_size, -1, -1).reshape(batch_size * num_points, 3)
+    pred = decoder(torch.cat([z, x], dim=1)).reshape(batch_size, num_points, -1)
+
+    if clamp_min is not None and clamp_max is not None:
+        pred = torch.clamp(pred, float(clamp_min), float(clamp_max))
+    return pred
+
+
+def _compute_shape_cocycle_sdf_loss(
+    decoder,
+    z_a,
+    z_b,
+    query_xyz,
+    clamp_min=None,
+    clamp_max=None,
+):
+    pred_a = _decode_sdf_on_shared_points(
+        decoder,
+        z_a,
+        query_xyz,
+        clamp_min=clamp_min,
+        clamp_max=clamp_max,
+    )
+    pred_b = _decode_sdf_on_shared_points(
+        decoder,
+        z_b,
+        query_xyz,
+        clamp_min=clamp_min,
+        clamp_max=clamp_max,
+    )
+    if pred_a is None or pred_b is None:
+        return None
+    return torch.mean(torch.abs(pred_a - pred_b))
 
 
 def _parse_subject_and_timepoint(shape_name):
@@ -1336,6 +1468,33 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     cocycle_pairs_per_subject = max(
         1, int(get_spec_with_default(specs, "CocyclePairsPerSubject", 1))
     )
+    use_cocycle_shape_loss = bool(
+        get_spec_with_default(specs, "UseCocycleShapeLoss", False)
+    )
+    cocycle_shape_lambda = float(
+        get_spec_with_default(specs, "CocycleShapeLossLambda", 0.0)
+    )
+    cocycle_shape_num_points = int(
+        get_spec_with_default(specs, "CocycleShapeNumPoints", 512)
+    )
+    cocycle_shape_use_clamp = bool(
+        get_spec_with_default(specs, "CocycleShapeUseClamp", True)
+    )
+    if cocycle_shape_num_points <= 0:
+        logging.warning(
+            "CocycleShapeNumPoints=%s is invalid; disabling cocycle shape loss.",
+            cocycle_shape_num_points,
+        )
+        use_cocycle_shape_loss = False
+    if use_cocycle_shape_loss and cocycle_shape_lambda <= 0.0:
+        logging.info(
+            "UseCocycleShapeLoss=true but CocycleShapeLossLambda<=0; shape cocycle term is inactive."
+        )
+    if use_cocycle_shape_loss and not use_cocycle_loss:
+        logging.warning(
+            "UseCocycleShapeLoss=true requires UseCocycleLoss=true. Disabling cocycle shape loss."
+        )
+        use_cocycle_shape_loss = False
     use_cocycle_backward_loss = get_spec_with_default(
         specs, "UseCocycleBackwardLoss", temporal_consistency_phase >= 4
     )
@@ -1363,6 +1522,24 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     pair_backward_pairs_per_subject = max(
         1, int(get_spec_with_default(specs, "PairBackwardPairsPerSubject", 1))
     )
+    consistency_pair_sampling_mode = str(
+        get_spec_with_default(specs, "ConsistencyPairSamplingMode", "uniform_01")
+    ).strip().lower()
+    if consistency_pair_sampling_mode not in ("uniform_01", "mixed_adjacent_far"):
+        logging.warning(
+            "Unknown ConsistencyPairSamplingMode='%s'; using uniform_01.",
+            consistency_pair_sampling_mode,
+        )
+        consistency_pair_sampling_mode = "uniform_01"
+    consistency_pair_adjacent_ratio = float(
+        get_spec_with_default(specs, "ConsistencyPairAdjacentRatio", 0.5)
+    )
+    consistency_pair_adjacent_max_gap_ratio = float(
+        get_spec_with_default(specs, "ConsistencyPairAdjacentMaxGapRatio", 0.25)
+    )
+    consistency_pair_far_min_gap_ratio = float(
+        get_spec_with_default(specs, "ConsistencyPairFarMinGapRatio", 0.5)
+    )
     use_general_cocycle_loss = get_spec_with_default(
         specs, "UseGeneralCocycleLoss", temporal_consistency_phase >= 3
     )
@@ -1389,6 +1566,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
         use_pair_backward_loss = False
         use_general_cocycle_loss = True
         use_general_cocycle_backward_loss = True
+        if use_cocycle_shape_loss:
+            logging.info(
+                "Temporal consistency phase 4 disables pair-based cocycle losses; "
+                "cocycle shape loss is also disabled."
+            )
+            use_cocycle_shape_loss = False
         logging.info(
             "Temporal consistency phase 4 active: using only triplet forward/backward "
             "general cocycle losses; pairwise and pair-based cocycle losses are disabled."
@@ -1446,11 +1629,25 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             "Cocycle loss enabled: "
             f"lambda={cocycle_lambda}, pairs_per_subject={cocycle_pairs_per_subject}"
         )
+    if use_cocycle_shape_loss:
+        logging.info(
+            "Cocycle shape loss enabled: lambda=%s, points=%s, clamp=%s",
+            cocycle_shape_lambda,
+            cocycle_shape_num_points,
+            cocycle_shape_use_clamp,
+        )
     if use_cocycle_backward_loss:
         logging.info(
             "Backward cocycle loss enabled: "
             f"lambda={cocycle_backward_lambda}, pairs_per_subject={cocycle_backward_pairs_per_subject}"
         )
+    logging.info(
+        "Consistency pair sampling mode=%s (adjacent_ratio=%.3f, adjacent_max_gap_ratio=%.3f, far_min_gap_ratio=%.3f)",
+        consistency_pair_sampling_mode,
+        consistency_pair_adjacent_ratio,
+        consistency_pair_adjacent_max_gap_ratio,
+        consistency_pair_far_min_gap_ratio,
+    )
     if use_pair_forward_loss:
         logging.info(
             "Pair forward consistency enabled: lambda=%s, pairs_per_subject=%s",
@@ -1996,6 +2193,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             epoch_iso_g1_losses = []
             epoch_iso_g2_losses = []
             epoch_cocycle_losses = []
+            epoch_cocycle_shape_losses = []
             epoch_cocycle_backward_losses = []
             epoch_pair_forward_losses = []
             epoch_pair_backward_losses = []
@@ -2050,6 +2248,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 iso_g1_tb = 0.0
                 iso_g2_tb = 0.0
                 cocycle_loss_tb = 0.0
+                cocycle_shape_loss_tb = 0.0
                 cocycle_backward_loss_tb = 0.0
                 pair_forward_loss_tb = 0.0
                 pair_backward_loss_tb = 0.0
@@ -2147,10 +2346,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                     s, t = _sample_sorted_time_pairs(
                                         subject_count,
                                         device=subject_anchors.device,
-                                        mode="uniform_01",
+                                        mode=consistency_pair_sampling_mode,
                                         dtype=subject_anchors.dtype,
                                         uniform_low=consistency_time_sample_low,
                                         uniform_high=consistency_time_sample_high,
+                                        mixed_adjacent_ratio=consistency_pair_adjacent_ratio,
+                                        mixed_adjacent_max_gap_ratio=consistency_pair_adjacent_max_gap_ratio,
+                                        mixed_far_min_gap_ratio=consistency_pair_far_min_gap_ratio,
                                     )
                                     if s is None:
                                         continue
@@ -2190,10 +2392,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                     s, t = _sample_sorted_time_pairs(
                                         subject_count,
                                         device=subject_anchors.device,
-                                        mode="uniform_01",
+                                        mode=consistency_pair_sampling_mode,
                                         dtype=subject_anchors.dtype,
                                         uniform_low=consistency_time_sample_low,
                                         uniform_high=consistency_time_sample_high,
+                                        mixed_adjacent_ratio=consistency_pair_adjacent_ratio,
+                                        mixed_adjacent_max_gap_ratio=consistency_pair_adjacent_max_gap_ratio,
+                                        mixed_far_min_gap_ratio=consistency_pair_far_min_gap_ratio,
                                     )
                                     if s is None:
                                         continue
@@ -2229,14 +2434,19 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                             if use_cocycle_loss and cocycle_lambda > 0.0:
                                 cocycle_raw_loss = 0.0
                                 cocycle_samples = 0
+                                cocycle_shape_raw_loss = 0.0
+                                cocycle_shape_samples = 0
                                 for _ in range(cocycle_pairs_per_subject):
                                     r, t = _sample_sorted_time_pairs(
                                         subject_count,
                                         device=subject_anchors.device,
-                                        mode="uniform_01",
+                                        mode=consistency_pair_sampling_mode,
                                         dtype=subject_anchors.dtype,
                                         uniform_low=consistency_time_sample_low,
                                         uniform_high=consistency_time_sample_high,
+                                        mixed_adjacent_ratio=consistency_pair_adjacent_ratio,
+                                        mixed_adjacent_max_gap_ratio=consistency_pair_adjacent_max_gap_ratio,
+                                        mixed_far_min_gap_ratio=consistency_pair_far_min_gap_ratio,
                                     )
                                     if r is None:
                                         continue
@@ -2263,11 +2473,42 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                         (z_rt - z_t) ** 2
                                     )
                                     cocycle_samples += 1
+                                    if (
+                                        use_cocycle_shape_loss
+                                        and cocycle_shape_lambda > 0.0
+                                    ):
+                                        query_xyz = _sample_query_points(
+                                            xyz[i].detach(), cocycle_shape_num_points
+                                        )
+                                        clamp_min_shape = minT if (cocycle_shape_use_clamp and enforce_minmax) else None
+                                        clamp_max_shape = maxT if (cocycle_shape_use_clamp and enforce_minmax) else None
+                                        cocycle_shape_raw = _compute_shape_cocycle_sdf_loss(
+                                            decoder,
+                                            z_rt,
+                                            z_t,
+                                            query_xyz,
+                                            clamp_min=clamp_min_shape,
+                                            clamp_max=clamp_max_shape,
+                                        )
+                                        if cocycle_shape_raw is not None:
+                                            cocycle_shape_raw_loss = (
+                                                cocycle_shape_raw_loss + cocycle_shape_raw
+                                            )
+                                            cocycle_shape_samples += 1
                                 if cocycle_samples > 0:
                                     cocycle_raw_loss = cocycle_raw_loss / cocycle_samples
                                     cocycle_loss = cocycle_lambda * cocycle_raw_loss
                                     chunk_loss = chunk_loss + cocycle_loss
                                     cocycle_loss_tb += cocycle_loss.item()
+                                if cocycle_shape_samples > 0:
+                                    cocycle_shape_raw_loss = (
+                                        cocycle_shape_raw_loss / cocycle_shape_samples
+                                    )
+                                    cocycle_shape_loss = (
+                                        cocycle_shape_lambda * cocycle_shape_raw_loss
+                                    )
+                                    chunk_loss = chunk_loss + cocycle_shape_loss
+                                    cocycle_shape_loss_tb += cocycle_shape_loss.item()
 
                             if use_cocycle_backward_loss and cocycle_backward_lambda > 0.0:
                                 cocycle_backward_raw_loss = 0.0
@@ -2276,10 +2517,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                                     r, t = _sample_sorted_time_pairs(
                                         subject_count,
                                         device=subject_anchors.device,
-                                        mode="uniform_01",
+                                        mode=consistency_pair_sampling_mode,
                                         dtype=subject_anchors.dtype,
                                         uniform_low=consistency_time_sample_low,
                                         uniform_high=consistency_time_sample_high,
+                                        mixed_adjacent_ratio=consistency_pair_adjacent_ratio,
+                                        mixed_adjacent_max_gap_ratio=consistency_pair_adjacent_max_gap_ratio,
+                                        mixed_far_min_gap_ratio=consistency_pair_far_min_gap_ratio,
                                     )
                                     if r is None:
                                         continue
@@ -2584,6 +2828,7 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 epoch_iso_g1_losses.append(iso_g1_tb)
                 epoch_iso_g2_losses.append(iso_g2_tb)
                 epoch_cocycle_losses.append(cocycle_loss_tb)
+                epoch_cocycle_shape_losses.append(cocycle_shape_loss_tb)
                 epoch_cocycle_backward_losses.append(cocycle_backward_loss_tb)
                 epoch_pair_forward_losses.append(pair_forward_loss_tb)
                 epoch_pair_backward_losses.append(pair_backward_loss_tb)
@@ -2625,6 +2870,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 sum(epoch_grad_metric_iso_losses) / len(epoch_grad_metric_iso_losses)
             )
             epoch_cocycle_loss = sum(epoch_cocycle_losses) / len(epoch_cocycle_losses)
+            epoch_cocycle_shape_loss = (
+                sum(epoch_cocycle_shape_losses) / len(epoch_cocycle_shape_losses)
+            )
             epoch_cocycle_backward_loss = (
                 sum(epoch_cocycle_backward_losses) / len(epoch_cocycle_backward_losses)
             )
@@ -2672,6 +2920,10 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 )
             if use_cocycle_loss:
                 print(f"Epoch {epoch} cocycle loss (weighted): {epoch_cocycle_loss}")
+            if use_cocycle_shape_loss and cocycle_shape_lambda > 0.0:
+                print(
+                    f"Epoch {epoch} cocycle shape loss (weighted): {epoch_cocycle_shape_loss}"
+                )
             if use_cocycle_backward_loss:
                 print(
                     f"Epoch {epoch} cocycle backward loss (weighted): "
@@ -2709,6 +2961,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 summary_writer.add_scalar("Loss/train_covariance", epoch_cov_loss, global_step=epoch)
             if use_cocycle_loss:
                 summary_writer.add_scalar("Loss/train_cocycle", epoch_cocycle_loss, global_step=epoch)
+            if use_cocycle_shape_loss and cocycle_shape_lambda > 0.0:
+                summary_writer.add_scalar(
+                    "Loss/train_cocycle_shape",
+                    epoch_cocycle_shape_loss,
+                    global_step=epoch,
+                )
             if use_cocycle_backward_loss:
                 summary_writer.add_scalar(
                     "Loss/train_cocycle_backward",

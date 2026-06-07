@@ -1,0 +1,27 @@
+{
+  "experiment_dir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id_age_progression/longitudinal_age_disease_conditioned_cocycle_shape",
+  "checkpoint": "latest",
+  "num_rows": 148,
+  "num_subjects": 15,
+  "diagnosis_counts": {
+    "1": 88,
+    "0": 60
+  },
+  "phase_counts": {
+    "future": 73,
+    "forecast": 60,
+    "observed": 15
+  },
+  "time_key": "age_norm",
+  "time_mode": "none",
+  "age_conditioning_keys": [
+    "diagnosis"
+  ],
+  "future_years": [
+    4.0,
+    8.0,
+    12.0,
+    16.0,
+    20.0
+  ]
+}
