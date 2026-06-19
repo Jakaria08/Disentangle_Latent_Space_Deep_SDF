@@ -28,6 +28,7 @@ from deep_sdf.loss import (
 )
 import deep_sdf.workspace as ws
 import reconstruct
+from networks.longitudinal_disentangled_flow import build_temporal_flow
 
 
 class TeeStream:
@@ -317,6 +318,89 @@ class TemporalFlowMLP(torch.nn.Module):
 
 def apply_temporal_flow(temporal_flow, z, s, t, age_cond=None):
     return z + (t - s) * temporal_flow(z, s, t, age_cond=age_cond)
+
+
+def has_disentangled_velocity_components(temporal_flow):
+    flow = temporal_flow.module if hasattr(temporal_flow, "module") else temporal_flow
+    return callable(getattr(flow, "velocity_components", None))
+
+
+def get_disentangled_velocity_components(temporal_flow, z, s, t, age_cond=None):
+    flow = temporal_flow.module if hasattr(temporal_flow, "module") else temporal_flow
+    if not callable(getattr(flow, "velocity_components", None)):
+        return None
+    return flow.velocity_components(z, s, t, age_cond=age_cond)
+
+
+def compute_disentangled_velocity_losses(
+    temporal_flow,
+    z,
+    s,
+    t,
+    age_cond=None,
+    use_disease_zero=False,
+    disease_zero_lambda=0.0,
+    use_residual=False,
+    residual_lambda=0.0,
+    use_residual_diagnosis_covariance=False,
+    residual_diagnosis_covariance_lambda=0.0,
+):
+    zero = z.new_tensor(0.0)
+    out = {
+        "loss": zero,
+        "disease_zero": zero,
+        "residual": zero,
+        "residual_diagnosis_covariance": zero,
+        "age_norm": zero,
+        "disease_raw_norm": zero,
+        "disease_norm": zero,
+        "residual_norm": zero,
+    }
+    components = get_disentangled_velocity_components(
+        temporal_flow, z, s, t, age_cond=age_cond
+    )
+    if components is None:
+        return out
+
+    diagnosis = components["diagnosis"].view(-1)
+    v_age = components["age"]
+    v_dis_raw = components["disease_raw"]
+    v_dis = components["disease"]
+    v_res = components["residual"]
+
+    out["age_norm"] = torch.mean(torch.norm(v_age, dim=1)).detach()
+    out["disease_raw_norm"] = torch.mean(torch.norm(v_dis_raw, dim=1)).detach()
+    out["disease_norm"] = torch.mean(torch.norm(v_dis, dim=1)).detach()
+    out["residual_norm"] = torch.mean(torch.norm(v_res, dim=1)).detach()
+
+    if use_disease_zero and float(disease_zero_lambda) > 0.0:
+        healthy_mask = diagnosis < 0.5
+        if torch.any(healthy_mask):
+            raw = v_dis_raw[healthy_mask]
+            disease_zero = float(disease_zero_lambda) * torch.mean(raw.pow(2))
+            out["disease_zero"] = disease_zero
+            out["loss"] = out["loss"] + disease_zero
+
+    if use_residual and float(residual_lambda) > 0.0:
+        residual = float(residual_lambda) * torch.mean(v_res.pow(2))
+        out["residual"] = residual
+        out["loss"] = out["loss"] + residual
+
+    if (
+        use_residual_diagnosis_covariance
+        and float(residual_diagnosis_covariance_lambda) > 0.0
+        and diagnosis.numel() >= 2
+        and torch.any(diagnosis < 0.5)
+        and torch.any(diagnosis >= 0.5)
+    ):
+        d_centered = diagnosis.view(-1, 1) - torch.mean(diagnosis)
+        res_centered = v_res - torch.mean(v_res, dim=0, keepdim=True)
+        cov = torch.mean(res_centered * d_centered, dim=0)
+        cov_loss = float(residual_diagnosis_covariance_lambda) * torch.mean(cov.pow(2))
+        out["residual_diagnosis_covariance"] = cov_loss
+        out["loss"] = out["loss"] + cov_loss
+
+    return out
 
 
 def _sample_sorted_time_pairs(
@@ -1934,11 +2018,67 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             real_scan_pair_reconstruction_lambda,
             real_scan_pair_latent_lambda,
         )
+    flow_model_type = str(
+        get_spec_with_default(specs, "FlowModelType", "standard")
+    ).strip().lower()
+    use_disentangled_velocity_flow = flow_model_type in (
+        "disentangled_velocity",
+        "disentangled_flow",
+    )
+    use_velocity_disease_zero_loss = bool(
+        get_spec_with_default(specs, "UseVelocityDiseaseZeroLoss", False)
+    )
+    velocity_disease_zero_lambda = float(
+        get_spec_with_default(specs, "VelocityDiseaseZeroLambda", 0.0)
+    )
+    use_velocity_residual_loss = bool(
+        get_spec_with_default(specs, "UseVelocityResidualLoss", False)
+    )
+    velocity_residual_lambda = float(
+        get_spec_with_default(specs, "VelocityResidualLambda", 0.0)
+    )
+    use_velocity_residual_diagnosis_covariance_loss = bool(
+        get_spec_with_default(
+            specs, "UseVelocityResidualDiagnosisCovarianceLoss", False
+        )
+    )
+    velocity_residual_diagnosis_covariance_lambda = float(
+        get_spec_with_default(
+            specs, "VelocityResidualDiagnosisCovarianceLambda", 0.0
+        )
+    )
     logging.info(
-        "Longitudinal flow: hidden_dims=%s, time_normalization=%s",
+        "Longitudinal flow: type=%s, hidden_dims=%s, time_normalization=%s",
+        flow_model_type,
         flow_hidden_dims,
         time_normalization_mode,
     )
+    if use_disentangled_velocity_flow:
+        logging.info(
+            "Disentangled velocity flow enabled: age_dim=%s, disease_dim=%s, "
+            "residual_dim=%s, age_scale=%s, residual_uses_diagnosis=%s",
+            get_spec_with_default(specs, "VelocityAgeDim", 16),
+            get_spec_with_default(specs, "VelocityDiseaseDim", 16),
+            get_spec_with_default(
+                specs,
+                "VelocityResidualDim",
+                int(latent_size)
+                - int(get_spec_with_default(specs, "VelocityAgeDim", 16))
+                - int(get_spec_with_default(specs, "VelocityDiseaseDim", 16)),
+            ),
+            get_spec_with_default(specs, "VelocityAgeEmbeddingScale", 0.02),
+            get_spec_with_default(specs, "VelocityResidualUsesDiagnosis", False),
+        )
+        logging.info(
+            "Disentangled velocity losses: disease_zero=%s(lambda=%s), "
+            "residual=%s(lambda=%s), residual_diagnosis_covariance=%s(lambda=%s)",
+            use_velocity_disease_zero_loss,
+            velocity_disease_zero_lambda,
+            use_velocity_residual_loss,
+            velocity_residual_lambda,
+            use_velocity_residual_diagnosis_covariance_loss,
+            velocity_residual_diagnosis_covariance_lambda,
+        )
     logging.info(
         "Age conditioning: enabled=%s, dim=%d, keys=%s, metadata=%s",
         use_age_conditioning,
@@ -1978,7 +2118,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     else:
         logging.info("DataParallel disabled.")
     train_device = next(decoder.parameters()).device
-    temporal_flow = TemporalFlowMLP(latent_size, flow_hidden_dims, age_condition_dim=age_condition_dim).to(train_device)
+    temporal_flow = build_temporal_flow(
+        specs,
+        latent_size,
+        flow_hidden_dims,
+        age_condition_dim=age_condition_dim,
+    ).to(train_device)
 
     use_pretrained_sdf = get_spec_with_default(specs, "UsePretrainedSDFDecoder", False)
     pretrained_sdf_dir = get_spec_with_default(specs, "PretrainedSDFDecoderDir", None)
@@ -2481,6 +2626,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             epoch_real_pair_forward_latent_losses = []
             epoch_real_pair_backward_reconstruction_losses = []
             epoch_real_pair_backward_latent_losses = []
+            epoch_velocity_disease_zero_losses = []
+            epoch_velocity_residual_losses = []
+            epoch_velocity_residual_diagnosis_covariance_losses = []
+            epoch_velocity_age_norms = []
+            epoch_velocity_disease_raw_norms = []
+            epoch_velocity_disease_norms = []
+            epoch_velocity_residual_norms = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -2540,6 +2692,13 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 real_pair_forward_latent_loss_tb = 0.0
                 real_pair_backward_reconstruction_loss_tb = 0.0
                 real_pair_backward_latent_loss_tb = 0.0
+                velocity_disease_zero_loss_tb = 0.0
+                velocity_residual_loss_tb = 0.0
+                velocity_residual_diagnosis_covariance_loss_tb = 0.0
+                velocity_age_norm_tb = 0.0
+                velocity_disease_raw_norm_tb = 0.0
+                velocity_disease_norm_tb = 0.0
+                velocity_residual_norm_tb = 0.0
 
                 optimizer_all.zero_grad()
 
@@ -2588,15 +2747,90 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                         baseline_age = None
                         if use_age_conditioning:
                             baseline_age = subject_baseline_age.index_select(0, unique_subjects)
-                        baseline_velocity = temporal_flow(
+                        baseline_components = get_disentangled_velocity_components(
+                            temporal_flow,
                             unique_anchor_vecs,
                             baseline_t,
                             baseline_t,
                             age_cond=baseline_age,
                         )
+                        if baseline_components is None:
+                            baseline_velocity = temporal_flow(
+                                unique_anchor_vecs,
+                                baseline_t,
+                                baseline_t,
+                                age_cond=baseline_age,
+                            )
+                        else:
+                            baseline_velocity = torch.cat(
+                                [
+                                    baseline_components["disease_raw"],
+                                    baseline_components["residual"],
+                                ],
+                                dim=1,
+                            )
                         zero_disp_loss = zero_displacement_lambda * torch.mean(baseline_velocity ** 2)
                         chunk_loss = chunk_loss + zero_disp_loss
                         reg_loss_tb += float(zero_disp_loss.item())
+
+                    if use_disentangled_velocity_flow:
+                        unique_scan_indices = torch.unique(indices[i])
+                        unique_scan_subjects = scan_to_subject_idx.index_select(
+                            0, unique_scan_indices
+                        )
+                        unique_anchors = lat_vecs(unique_scan_subjects)
+                        unique_start_times = subject_baseline_time.index_select(
+                            0, unique_scan_subjects
+                        ).unsqueeze(1)
+                        unique_scan_times = scan_to_time.index_select(
+                            0, unique_scan_indices
+                        ).unsqueeze(1)
+                        unique_scan_ages = None
+                        if use_age_conditioning:
+                            unique_scan_ages = scan_age_condition.index_select(
+                                0, unique_scan_indices
+                            )
+                        velocity_losses = compute_disentangled_velocity_losses(
+                            temporal_flow,
+                            unique_anchors,
+                            unique_start_times,
+                            unique_scan_times,
+                            age_cond=unique_scan_ages,
+                            use_disease_zero=use_velocity_disease_zero_loss,
+                            disease_zero_lambda=velocity_disease_zero_lambda,
+                            use_residual=use_velocity_residual_loss,
+                            residual_lambda=velocity_residual_lambda,
+                            use_residual_diagnosis_covariance=(
+                                use_velocity_residual_diagnosis_covariance_loss
+                            ),
+                            residual_diagnosis_covariance_lambda=(
+                                velocity_residual_diagnosis_covariance_lambda
+                            ),
+                        )
+                        chunk_loss = chunk_loss + velocity_losses["loss"]
+                        velocity_disease_zero_loss_tb += float(
+                            velocity_losses["disease_zero"].detach().item()
+                        )
+                        velocity_residual_loss_tb += float(
+                            velocity_losses["residual"].detach().item()
+                        )
+                        velocity_residual_diagnosis_covariance_loss_tb += float(
+                            velocity_losses[
+                                "residual_diagnosis_covariance"
+                            ].detach().item()
+                        )
+                        velocity_age_norm_tb += float(
+                            velocity_losses["age_norm"].detach().item()
+                        )
+                        velocity_disease_raw_norm_tb += float(
+                            velocity_losses["disease_raw_norm"].detach().item()
+                        )
+                        velocity_disease_norm_tb += float(
+                            velocity_losses["disease_norm"].detach().item()
+                        )
+                        velocity_residual_norm_tb += float(
+                            velocity_losses["residual_norm"].detach().item()
+                        )
 
                     if (
                         use_cocycle_loss
@@ -3197,6 +3431,19 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 epoch_real_pair_backward_latent_losses.append(
                     real_pair_backward_latent_loss_tb
                 )
+                epoch_velocity_disease_zero_losses.append(
+                    velocity_disease_zero_loss_tb
+                )
+                epoch_velocity_residual_losses.append(velocity_residual_loss_tb)
+                epoch_velocity_residual_diagnosis_covariance_losses.append(
+                    velocity_residual_diagnosis_covariance_loss_tb
+                )
+                epoch_velocity_age_norms.append(velocity_age_norm_tb)
+                epoch_velocity_disease_raw_norms.append(
+                    velocity_disease_raw_norm_tb
+                )
+                epoch_velocity_disease_norms.append(velocity_disease_norm_tb)
+                epoch_velocity_residual_norms.append(velocity_residual_norm_tb)
 
                 if grad_clip is not None:
                     torch.nn.utils.clip_grad_norm_(
@@ -3265,6 +3512,32 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             epoch_real_pair_backward_latent_loss = (
                 sum(epoch_real_pair_backward_latent_losses)
                 / len(epoch_real_pair_backward_latent_losses)
+            )
+            epoch_velocity_disease_zero_loss = (
+                sum(epoch_velocity_disease_zero_losses)
+                / len(epoch_velocity_disease_zero_losses)
+            )
+            epoch_velocity_residual_loss = (
+                sum(epoch_velocity_residual_losses)
+                / len(epoch_velocity_residual_losses)
+            )
+            epoch_velocity_residual_diagnosis_covariance_loss = (
+                sum(epoch_velocity_residual_diagnosis_covariance_losses)
+                / len(epoch_velocity_residual_diagnosis_covariance_losses)
+            )
+            epoch_velocity_age_norm = (
+                sum(epoch_velocity_age_norms) / len(epoch_velocity_age_norms)
+            )
+            epoch_velocity_disease_raw_norm = (
+                sum(epoch_velocity_disease_raw_norms)
+                / len(epoch_velocity_disease_raw_norms)
+            )
+            epoch_velocity_disease_norm = (
+                sum(epoch_velocity_disease_norms)
+                / len(epoch_velocity_disease_norms)
+            )
+            epoch_velocity_residual_norm = (
+                sum(epoch_velocity_residual_norms) / len(epoch_velocity_residual_norms)
             )
 
             print(f"Epoch {epoch} total loss: {epoch_loss}")
@@ -3344,6 +3617,35 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                     f"Epoch {epoch} real pair backward latent loss (weighted): "
                     f"{epoch_real_pair_backward_latent_loss}"
                 )
+            if use_disentangled_velocity_flow:
+                if use_velocity_disease_zero_loss:
+                    print(
+                        f"Epoch {epoch} velocity disease-zero loss (weighted): "
+                        f"{epoch_velocity_disease_zero_loss}"
+                    )
+                if use_velocity_residual_loss:
+                    print(
+                        f"Epoch {epoch} velocity residual loss (weighted): "
+                        f"{epoch_velocity_residual_loss}"
+                    )
+                if use_velocity_residual_diagnosis_covariance_loss:
+                    print(
+                        f"Epoch {epoch} velocity residual-diagnosis covariance loss "
+                        f"(weighted): {epoch_velocity_residual_diagnosis_covariance_loss}"
+                    )
+                print(f"Epoch {epoch} velocity age norm: {epoch_velocity_age_norm}")
+                print(
+                    f"Epoch {epoch} velocity disease raw norm: "
+                    f"{epoch_velocity_disease_raw_norm}"
+                )
+                print(
+                    f"Epoch {epoch} velocity disease gated norm: "
+                    f"{epoch_velocity_disease_norm}"
+                )
+                print(
+                    f"Epoch {epoch} velocity residual norm: "
+                    f"{epoch_velocity_residual_norm}"
+                )
 
             print(f"Epoch {epoch} time (s): {seconds_elapsed:.2f}")
             loss_log_epoch.append(epoch_loss)
@@ -3412,6 +3714,40 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 summary_writer.add_scalar(
                     "Loss/train_real_pair_backward_latent",
                     epoch_real_pair_backward_latent_loss,
+                    global_step=epoch,
+                )
+            if use_disentangled_velocity_flow:
+                summary_writer.add_scalar(
+                    "Loss/train_velocity_disease_zero",
+                    epoch_velocity_disease_zero_loss,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "Loss/train_velocity_residual",
+                    epoch_velocity_residual_loss,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "Loss/train_velocity_residual_diagnosis_covariance",
+                    epoch_velocity_residual_diagnosis_covariance_loss,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "VelocityNorm/age", epoch_velocity_age_norm, global_step=epoch
+                )
+                summary_writer.add_scalar(
+                    "VelocityNorm/disease_raw",
+                    epoch_velocity_disease_raw_norm,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "VelocityNorm/disease_gated",
+                    epoch_velocity_disease_norm,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "VelocityNorm/residual",
+                    epoch_velocity_residual_norm,
                     global_step=epoch,
                 )
             if use_gmm_prior:

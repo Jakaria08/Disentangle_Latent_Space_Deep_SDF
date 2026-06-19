@@ -28,6 +28,10 @@ from deep_sdf.loss import (
 )
 import deep_sdf.workspace as ws
 import reconstruct
+from networks.longitudinal_additive_flow_no_residual_adv import (
+    build_temporal_flow,
+    gradient_reverse,
+)
 
 
 class TeeStream:
@@ -317,6 +321,144 @@ class TemporalFlowMLP(torch.nn.Module):
 
 def apply_temporal_flow(temporal_flow, z, s, t, age_cond=None):
     return z + (t - s) * temporal_flow(z, s, t, age_cond=age_cond)
+
+
+def has_additive_velocity_components(temporal_flow):
+    flow = temporal_flow.module if hasattr(temporal_flow, "module") else temporal_flow
+    return callable(getattr(flow, "velocity_components", None)) and bool(
+        getattr(flow, "is_additive_velocity_flow", False)
+    )
+
+
+def get_additive_velocity_components(temporal_flow, z, s, t, age_cond=None):
+    flow = temporal_flow.module if hasattr(temporal_flow, "module") else temporal_flow
+    if not has_additive_velocity_components(flow):
+        return None
+    return flow.velocity_components(z, s, t, age_cond=age_cond)
+
+
+def _safe_cosine_square(a, b, eps=1e-8):
+    dot = torch.sum(a * b, dim=1)
+    denom = torch.norm(a, dim=1) * torch.norm(b, dim=1) + float(eps)
+    return torch.mean((dot / denom).pow(2))
+
+
+def _binary_cross_entropy_logits(logits, target):
+    return torch.nn.functional.binary_cross_entropy_with_logits(logits, target)
+
+
+def compute_additive_velocity_losses(
+    temporal_flow,
+    z,
+    s,
+    t,
+    age_cond=None,
+    use_orthogonality=False,
+    orthogonality_lambda=0.0,
+    use_disease_zero=False,
+    disease_zero_lambda=0.0,
+    use_residual=False,
+    residual_lambda=0.0,
+    use_probe=False,
+    age_probe_lambda=0.0,
+    disease_probe_lambda=0.0,
+    use_adversarial_leakage=False,
+    adversarial_lambda=0.0,
+    gradient_reversal_lambda=1.0,
+    use_disease_margin=False,
+    disease_margin_lambda=0.0,
+    disease_margin=0.05,
+):
+    zero = z.new_tensor(0.0)
+    out = {
+        "loss": zero,
+        "orthogonality": zero,
+        "disease_zero": zero,
+        "residual": zero,
+        "age_probe": zero,
+        "disease_probe": zero,
+        "adversarial": zero,
+        "disease_margin": zero,
+        "age_norm": zero,
+        "disease_norm": zero,
+        "residual_norm": zero,
+        "total_norm": zero,
+    }
+    components = get_additive_velocity_components(
+        temporal_flow, z, s, t, age_cond=age_cond
+    )
+    if components is None:
+        return out
+
+    flow = temporal_flow.module if hasattr(temporal_flow, "module") else temporal_flow
+    v_age = components["age"]
+    v_disease = components["disease"]
+    v_residual = components["residual"]
+    v_total = components["velocity"]
+    disease_score = components["disease_score"].detach()
+    delta_age = (t - s).detach()
+
+    out["age_norm"] = torch.mean(torch.norm(v_age, dim=1)).detach()
+    out["disease_norm"] = torch.mean(torch.norm(v_disease, dim=1)).detach()
+    out["residual_norm"] = torch.mean(torch.norm(v_residual, dim=1)).detach()
+    out["total_norm"] = torch.mean(torch.norm(v_total, dim=1)).detach()
+
+    if use_orthogonality and float(orthogonality_lambda) > 0.0:
+        orth = _safe_cosine_square(v_age, v_disease)
+        out["orthogonality"] = float(orthogonality_lambda) * orth
+        out["loss"] = out["loss"] + out["orthogonality"]
+
+    if use_disease_zero and float(disease_zero_lambda) > 0.0:
+        healthy_mask = disease_score.view(-1) < 0.5
+        if torch.any(healthy_mask):
+            disease_zero = torch.mean(v_disease[healthy_mask].pow(2))
+            out["disease_zero"] = float(disease_zero_lambda) * disease_zero
+            out["loss"] = out["loss"] + out["disease_zero"]
+
+    if use_disease_margin and float(disease_margin_lambda) > 0.0:
+        diseased_mask = disease_score.view(-1) >= 0.5
+        if torch.any(diseased_mask):
+            disease_norm = torch.norm(v_disease[diseased_mask], dim=1)
+            margin = z.new_tensor(float(disease_margin))
+            disease_margin_loss = torch.mean(torch.relu(margin - disease_norm).pow(2))
+            out["disease_margin"] = float(disease_margin_lambda) * disease_margin_loss
+            out["loss"] = out["loss"] + out["disease_margin"]
+
+    if use_residual and float(residual_lambda) > 0.0:
+        residual = torch.mean(v_residual.pow(2))
+        out["residual"] = float(residual_lambda) * residual
+        out["loss"] = out["loss"] + out["residual"]
+
+    if use_probe:
+        if float(age_probe_lambda) > 0.0:
+            pred_delta = flow.age_probe(v_age)
+            age_probe = torch.mean((pred_delta - delta_age) ** 2)
+            out["age_probe"] = float(age_probe_lambda) * age_probe
+            out["loss"] = out["loss"] + out["age_probe"]
+        if float(disease_probe_lambda) > 0.0:
+            logits = flow.disease_probe(v_disease)
+            disease_probe = _binary_cross_entropy_logits(logits, disease_score)
+            out["disease_probe"] = float(disease_probe_lambda) * disease_probe
+            out["loss"] = out["loss"] + out["disease_probe"]
+
+    if use_adversarial_leakage and float(adversarial_lambda) > 0.0:
+        grl = float(gradient_reversal_lambda)
+        adv_age_from_disease = torch.mean(
+            (flow.age_leak_from_disease(gradient_reverse(v_disease, grl)) - delta_age)
+            ** 2
+        )
+        adv_disease_from_age = _binary_cross_entropy_logits(
+            flow.disease_leak_from_age(gradient_reverse(v_age, grl)),
+            disease_score,
+        )
+        adv = (
+            adv_age_from_disease
+            + adv_disease_from_age
+        ) / 2.0
+        out["adversarial"] = float(adversarial_lambda) * adv
+        out["loss"] = out["loss"] + out["adversarial"]
+
+    return out
 
 
 def _sample_sorted_time_pairs(
@@ -1934,11 +2076,93 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             real_scan_pair_reconstruction_lambda,
             real_scan_pair_latent_lambda,
         )
+    flow_model_type = str(
+        get_spec_with_default(specs, "FlowModelType", "standard")
+    ).strip().lower()
+    use_additive_velocity_flow = flow_model_type in (
+        "additive_velocity",
+        "additive_model",
+        "additive_velocity_no_residual",
+        "additive_no_residual",
+    )
+    use_additive_orthogonality_loss = bool(
+        get_spec_with_default(specs, "UseAdditiveVelocityOrthogonalityLoss", False)
+    )
+    additive_orthogonality_lambda = float(
+        get_spec_with_default(specs, "AdditiveVelocityOrthogonalityLambda", 0.0)
+    )
+    use_additive_disease_zero_loss = bool(
+        get_spec_with_default(specs, "UseAdditiveDiseaseZeroVelocityLoss", False)
+    )
+    additive_disease_zero_lambda = float(
+        get_spec_with_default(specs, "AdditiveDiseaseZeroVelocityLambda", 0.0)
+    )
+    use_additive_residual_loss = bool(
+        get_spec_with_default(specs, "UseAdditiveResidualVelocityLoss", False)
+    )
+    additive_residual_lambda = float(
+        get_spec_with_default(specs, "AdditiveResidualVelocityLambda", 0.0)
+    )
+    use_additive_probe_loss = bool(
+        get_spec_with_default(specs, "UseAdditiveVelocityProbeLoss", False)
+    )
+    additive_age_probe_lambda = float(
+        get_spec_with_default(specs, "AdditiveAgeProbeLambda", 0.0)
+    )
+    additive_disease_probe_lambda = float(
+        get_spec_with_default(specs, "AdditiveDiseaseProbeLambda", 0.0)
+    )
+    use_additive_adversarial_leakage_loss = bool(
+        get_spec_with_default(specs, "UseAdditiveAdversarialLeakageLoss", False)
+    )
+    additive_adversarial_lambda = float(
+        get_spec_with_default(specs, "AdditiveAdversarialLambda", 0.0)
+    )
+    additive_gradient_reversal_lambda = float(
+        get_spec_with_default(specs, "AdditiveGradientReversalLambda", 1.0)
+    )
+    use_additive_disease_margin_loss = bool(
+        get_spec_with_default(specs, "UseAdditiveDiseaseMarginLoss", False)
+    )
+    additive_disease_margin_lambda = float(
+        get_spec_with_default(specs, "AdditiveDiseaseMarginLambda", 0.0)
+    )
+    additive_disease_margin = float(
+        get_spec_with_default(specs, "AdditiveDiseaseMargin", 0.05)
+    )
     logging.info(
-        "Longitudinal flow: hidden_dims=%s, time_normalization=%s",
+        "Longitudinal flow: type=%s, hidden_dims=%s, time_normalization=%s",
+        flow_model_type,
         flow_hidden_dims,
         time_normalization_mode,
     )
+    if use_additive_velocity_flow:
+        logging.info(
+            "Additive velocity model enabled: disease_uses_latent=%s, "
+            "residual_uses_diagnosis=%s",
+            get_spec_with_default(specs, "AdditiveDiseaseUsesLatent", False),
+            get_spec_with_default(specs, "AdditiveResidualUsesDiagnosis", False),
+        )
+        logging.info(
+            "Additive velocity losses: orth=%s(lambda=%s), disease_zero=%s(lambda=%s), "
+            "residual=%s(lambda=%s), probes=%s(age=%s,disease=%s), "
+            "adversarial=%s(lambda=%s, grl=%s), disease_margin=%s(lambda=%s, margin=%s)",
+            use_additive_orthogonality_loss,
+            additive_orthogonality_lambda,
+            use_additive_disease_zero_loss,
+            additive_disease_zero_lambda,
+            use_additive_residual_loss,
+            additive_residual_lambda,
+            use_additive_probe_loss,
+            additive_age_probe_lambda,
+            additive_disease_probe_lambda,
+            use_additive_adversarial_leakage_loss,
+            additive_adversarial_lambda,
+            additive_gradient_reversal_lambda,
+            use_additive_disease_margin_loss,
+            additive_disease_margin_lambda,
+            additive_disease_margin,
+        )
     logging.info(
         "Age conditioning: enabled=%s, dim=%d, keys=%s, metadata=%s",
         use_age_conditioning,
@@ -1978,7 +2202,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     else:
         logging.info("DataParallel disabled.")
     train_device = next(decoder.parameters()).device
-    temporal_flow = TemporalFlowMLP(latent_size, flow_hidden_dims, age_condition_dim=age_condition_dim).to(train_device)
+    temporal_flow = build_temporal_flow(
+        specs,
+        latent_size,
+        flow_hidden_dims,
+        age_condition_dim=age_condition_dim,
+    ).to(train_device)
 
     use_pretrained_sdf = get_spec_with_default(specs, "UsePretrainedSDFDecoder", False)
     pretrained_sdf_dir = get_spec_with_default(specs, "PretrainedSDFDecoderDir", None)
@@ -2481,6 +2710,17 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             epoch_real_pair_forward_latent_losses = []
             epoch_real_pair_backward_reconstruction_losses = []
             epoch_real_pair_backward_latent_losses = []
+            epoch_additive_orthogonality_losses = []
+            epoch_additive_disease_zero_losses = []
+            epoch_additive_residual_losses = []
+            epoch_additive_age_probe_losses = []
+            epoch_additive_disease_probe_losses = []
+            epoch_additive_adversarial_losses = []
+            epoch_additive_disease_margin_losses = []
+            epoch_additive_age_norms = []
+            epoch_additive_disease_norms = []
+            epoch_additive_residual_norms = []
+            epoch_additive_total_norms = []
 
             logging.info("epoch {}...".format(epoch))
 
@@ -2540,6 +2780,17 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 real_pair_forward_latent_loss_tb = 0.0
                 real_pair_backward_reconstruction_loss_tb = 0.0
                 real_pair_backward_latent_loss_tb = 0.0
+                additive_orthogonality_loss_tb = 0.0
+                additive_disease_zero_loss_tb = 0.0
+                additive_residual_loss_tb = 0.0
+                additive_age_probe_loss_tb = 0.0
+                additive_disease_probe_loss_tb = 0.0
+                additive_adversarial_loss_tb = 0.0
+                additive_disease_margin_loss_tb = 0.0
+                additive_age_norm_tb = 0.0
+                additive_disease_norm_tb = 0.0
+                additive_residual_norm_tb = 0.0
+                additive_total_norm_tb = 0.0
 
                 optimizer_all.zero_grad()
 
@@ -2588,15 +2839,109 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                         baseline_age = None
                         if use_age_conditioning:
                             baseline_age = subject_baseline_age.index_select(0, unique_subjects)
-                        baseline_velocity = temporal_flow(
+                        baseline_components = get_additive_velocity_components(
+                            temporal_flow,
                             unique_anchor_vecs,
                             baseline_t,
                             baseline_t,
                             age_cond=baseline_age,
                         )
+                        if baseline_components is None:
+                            baseline_velocity = temporal_flow(
+                                unique_anchor_vecs,
+                                baseline_t,
+                                baseline_t,
+                                age_cond=baseline_age,
+                            )
+                        else:
+                            baseline_velocity = torch.cat(
+                                [
+                                    baseline_components["disease"],
+                                    baseline_components["residual"],
+                                ],
+                                dim=1,
+                            )
                         zero_disp_loss = zero_displacement_lambda * torch.mean(baseline_velocity ** 2)
                         chunk_loss = chunk_loss + zero_disp_loss
                         reg_loss_tb += float(zero_disp_loss.item())
+
+                    if use_additive_velocity_flow:
+                        unique_scan_indices = torch.unique(indices[i])
+                        unique_scan_subjects = scan_to_subject_idx.index_select(
+                            0, unique_scan_indices
+                        )
+                        unique_anchors = lat_vecs(unique_scan_subjects)
+                        unique_start_times = subject_baseline_time.index_select(
+                            0, unique_scan_subjects
+                        ).unsqueeze(1)
+                        unique_scan_times = scan_to_time.index_select(
+                            0, unique_scan_indices
+                        ).unsqueeze(1)
+                        unique_scan_ages = None
+                        if use_age_conditioning:
+                            unique_scan_ages = scan_age_condition.index_select(
+                                0, unique_scan_indices
+                            )
+                        additive_losses = compute_additive_velocity_losses(
+                            temporal_flow,
+                            unique_anchors,
+                            unique_start_times,
+                            unique_scan_times,
+                            age_cond=unique_scan_ages,
+                            use_orthogonality=use_additive_orthogonality_loss,
+                            orthogonality_lambda=additive_orthogonality_lambda,
+                            use_disease_zero=use_additive_disease_zero_loss,
+                            disease_zero_lambda=additive_disease_zero_lambda,
+                            use_residual=use_additive_residual_loss,
+                            residual_lambda=additive_residual_lambda,
+                            use_probe=use_additive_probe_loss,
+                            age_probe_lambda=additive_age_probe_lambda,
+                            disease_probe_lambda=additive_disease_probe_lambda,
+                            use_adversarial_leakage=(
+                                use_additive_adversarial_leakage_loss
+                            ),
+                            adversarial_lambda=additive_adversarial_lambda,
+                            gradient_reversal_lambda=(
+                                additive_gradient_reversal_lambda
+                            ),
+                            use_disease_margin=use_additive_disease_margin_loss,
+                            disease_margin_lambda=additive_disease_margin_lambda,
+                            disease_margin=additive_disease_margin,
+                        )
+                        chunk_loss = chunk_loss + additive_losses["loss"]
+                        additive_orthogonality_loss_tb += float(
+                            additive_losses["orthogonality"].detach().item()
+                        )
+                        additive_disease_zero_loss_tb += float(
+                            additive_losses["disease_zero"].detach().item()
+                        )
+                        additive_residual_loss_tb += float(
+                            additive_losses["residual"].detach().item()
+                        )
+                        additive_age_probe_loss_tb += float(
+                            additive_losses["age_probe"].detach().item()
+                        )
+                        additive_disease_probe_loss_tb += float(
+                            additive_losses["disease_probe"].detach().item()
+                        )
+                        additive_adversarial_loss_tb += float(
+                            additive_losses["adversarial"].detach().item()
+                        )
+                        additive_disease_margin_loss_tb += float(
+                            additive_losses["disease_margin"].detach().item()
+                        )
+                        additive_age_norm_tb += float(
+                            additive_losses["age_norm"].detach().item()
+                        )
+                        additive_disease_norm_tb += float(
+                            additive_losses["disease_norm"].detach().item()
+                        )
+                        additive_residual_norm_tb += float(
+                            additive_losses["residual_norm"].detach().item()
+                        )
+                        additive_total_norm_tb += float(
+                            additive_losses["total_norm"].detach().item()
+                        )
 
                     if (
                         use_cocycle_loss
@@ -3197,6 +3542,25 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 epoch_real_pair_backward_latent_losses.append(
                     real_pair_backward_latent_loss_tb
                 )
+                epoch_additive_orthogonality_losses.append(
+                    additive_orthogonality_loss_tb
+                )
+                epoch_additive_disease_zero_losses.append(
+                    additive_disease_zero_loss_tb
+                )
+                epoch_additive_residual_losses.append(additive_residual_loss_tb)
+                epoch_additive_age_probe_losses.append(additive_age_probe_loss_tb)
+                epoch_additive_disease_probe_losses.append(
+                    additive_disease_probe_loss_tb
+                )
+                epoch_additive_adversarial_losses.append(additive_adversarial_loss_tb)
+                epoch_additive_disease_margin_losses.append(
+                    additive_disease_margin_loss_tb
+                )
+                epoch_additive_age_norms.append(additive_age_norm_tb)
+                epoch_additive_disease_norms.append(additive_disease_norm_tb)
+                epoch_additive_residual_norms.append(additive_residual_norm_tb)
+                epoch_additive_total_norms.append(additive_total_norm_tb)
 
                 if grad_clip is not None:
                     torch.nn.utils.clip_grad_norm_(
@@ -3265,6 +3629,46 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             epoch_real_pair_backward_latent_loss = (
                 sum(epoch_real_pair_backward_latent_losses)
                 / len(epoch_real_pair_backward_latent_losses)
+            )
+            epoch_additive_orthogonality_loss = (
+                sum(epoch_additive_orthogonality_losses)
+                / len(epoch_additive_orthogonality_losses)
+            )
+            epoch_additive_disease_zero_loss = (
+                sum(epoch_additive_disease_zero_losses)
+                / len(epoch_additive_disease_zero_losses)
+            )
+            epoch_additive_residual_loss = (
+                sum(epoch_additive_residual_losses)
+                / len(epoch_additive_residual_losses)
+            )
+            epoch_additive_age_probe_loss = (
+                sum(epoch_additive_age_probe_losses)
+                / len(epoch_additive_age_probe_losses)
+            )
+            epoch_additive_disease_probe_loss = (
+                sum(epoch_additive_disease_probe_losses)
+                / len(epoch_additive_disease_probe_losses)
+            )
+            epoch_additive_adversarial_loss = (
+                sum(epoch_additive_adversarial_losses)
+                / len(epoch_additive_adversarial_losses)
+            )
+            epoch_additive_disease_margin_loss = (
+                sum(epoch_additive_disease_margin_losses)
+                / len(epoch_additive_disease_margin_losses)
+            )
+            epoch_additive_age_norm = (
+                sum(epoch_additive_age_norms) / len(epoch_additive_age_norms)
+            )
+            epoch_additive_disease_norm = (
+                sum(epoch_additive_disease_norms) / len(epoch_additive_disease_norms)
+            )
+            epoch_additive_residual_norm = (
+                sum(epoch_additive_residual_norms) / len(epoch_additive_residual_norms)
+            )
+            epoch_additive_total_norm = (
+                sum(epoch_additive_total_norms) / len(epoch_additive_total_norms)
             )
 
             print(f"Epoch {epoch} total loss: {epoch_loss}")
@@ -3344,6 +3748,54 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                     f"Epoch {epoch} real pair backward latent loss (weighted): "
                     f"{epoch_real_pair_backward_latent_loss}"
                 )
+            if use_additive_velocity_flow:
+                if use_additive_orthogonality_loss:
+                    print(
+                        f"Epoch {epoch} additive orthogonality loss (weighted): "
+                        f"{epoch_additive_orthogonality_loss}"
+                    )
+                if use_additive_disease_zero_loss:
+                    print(
+                        f"Epoch {epoch} additive disease-zero loss (weighted): "
+                        f"{epoch_additive_disease_zero_loss}"
+                    )
+                if use_additive_residual_loss:
+                    print(
+                        f"Epoch {epoch} additive residual loss (weighted): "
+                        f"{epoch_additive_residual_loss}"
+                    )
+                if use_additive_probe_loss:
+                    print(
+                        f"Epoch {epoch} additive age probe loss (weighted): "
+                        f"{epoch_additive_age_probe_loss}"
+                    )
+                    print(
+                        f"Epoch {epoch} additive disease probe loss (weighted): "
+                        f"{epoch_additive_disease_probe_loss}"
+                    )
+                if use_additive_adversarial_leakage_loss:
+                    print(
+                        f"Epoch {epoch} additive adversarial leakage loss "
+                        f"(weighted): {epoch_additive_adversarial_loss}"
+                    )
+                if use_additive_disease_margin_loss:
+                    print(
+                        f"Epoch {epoch} additive disease margin loss "
+                        f"(weighted): {epoch_additive_disease_margin_loss}"
+                    )
+                print(f"Epoch {epoch} additive age velocity norm: {epoch_additive_age_norm}")
+                print(
+                    f"Epoch {epoch} additive disease velocity norm: "
+                    f"{epoch_additive_disease_norm}"
+                )
+                print(
+                    f"Epoch {epoch} additive residual velocity norm: "
+                    f"{epoch_additive_residual_norm}"
+                )
+                print(
+                    f"Epoch {epoch} additive total velocity norm: "
+                    f"{epoch_additive_total_norm}"
+                )
 
             print(f"Epoch {epoch} time (s): {seconds_elapsed:.2f}")
             loss_log_epoch.append(epoch_loss)
@@ -3412,6 +3864,62 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                 summary_writer.add_scalar(
                     "Loss/train_real_pair_backward_latent",
                     epoch_real_pair_backward_latent_loss,
+                    global_step=epoch,
+                )
+            if use_additive_velocity_flow:
+                summary_writer.add_scalar(
+                    "Loss/train_additive_orthogonality",
+                    epoch_additive_orthogonality_loss,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "Loss/train_additive_disease_zero",
+                    epoch_additive_disease_zero_loss,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "Loss/train_additive_residual",
+                    epoch_additive_residual_loss,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "Loss/train_additive_age_probe",
+                    epoch_additive_age_probe_loss,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "Loss/train_additive_disease_probe",
+                    epoch_additive_disease_probe_loss,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "Loss/train_additive_adversarial",
+                    epoch_additive_adversarial_loss,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "Loss/train_additive_disease_margin",
+                    epoch_additive_disease_margin_loss,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "VelocityNorm/additive_age",
+                    epoch_additive_age_norm,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "VelocityNorm/additive_disease",
+                    epoch_additive_disease_norm,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "VelocityNorm/additive_residual",
+                    epoch_additive_residual_norm,
+                    global_step=epoch,
+                )
+                summary_writer.add_scalar(
+                    "VelocityNorm/additive_total",
+                    epoch_additive_total_norm,
                     global_step=epoch,
                 )
             if use_gmm_prior:

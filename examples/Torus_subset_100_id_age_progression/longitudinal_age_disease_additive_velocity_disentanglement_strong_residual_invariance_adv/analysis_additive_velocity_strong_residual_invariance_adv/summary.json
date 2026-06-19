@@ -1,0 +1,48 @@
+{
+  "experiment_dir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id_age_progression/longitudinal_age_disease_additive_velocity_disentanglement_strong_residual_invariance_adv",
+  "reference_additive_adv_experiment_dir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id_age_progression/longitudinal_age_disease_additive_velocity_disentanglement_adversarial",
+  "baseline_experiment_dir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id_age_progression/longitudinal_age_disease_conditioned_cocycle_shape",
+  "checkpoint": "latest.pth",
+  "reference_additive_adv_checkpoint": "latest.pth",
+  "baseline_checkpoint": "latest.pth",
+  "healthy_sid": "27",
+  "diseased_sid": "4",
+  "train_probe_rows": 240,
+  "test_probe_rows": 60,
+  "matched_test_probe_rows": 26,
+  "probe_metrics": [
+    {
+      "component": "age",
+      "age_r2": -38963.63845620359,
+      "age_mae": 1.476695820490519,
+      "disease_auc": 0.5611428571428572,
+      "disease_acc": 0.55,
+      "disease_auc_age_matched": 0.5207100591715976
+    },
+    {
+      "component": "disease",
+      "age_r2": 0.5710359762927485,
+      "age_mae": 0.01822851320107778,
+      "disease_auc": 1.0,
+      "disease_acc": 1.0,
+      "disease_auc_age_matched": 1.0
+    },
+    {
+      "component": "residual",
+      "age_r2": -262496597.1113578,
+      "age_mae": 319.13644435564674,
+      "disease_auc": 0.7142857142857143,
+      "disease_acc": 0.75,
+      "disease_auc_age_matched": 0.6153846153846154
+    },
+    {
+      "component": "full",
+      "age_r2": -12.14418606039038,
+      "age_mae": 0.07405890842278798,
+      "disease_auc": 1.0,
+      "disease_acc": 1.0,
+      "disease_auc_age_matched": 1.0
+    }
+  ],
+  "figure_dir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id_age_progression/longitudinal_age_disease_additive_velocity_disentanglement_strong_residual_invariance_adv/analysis_additive_velocity_strong_residual_invariance_adv/figures"
+}

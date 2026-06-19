@@ -1,0 +1,40 @@
+{
+  "experiment_dir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id_age_progression/longitudinal_age_disease_additive_velocity_no_residual_adv",
+  "additive_residual_experiment_dir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id_age_progression/longitudinal_age_disease_additive_velocity_disentanglement",
+  "baseline_experiment_dir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id_age_progression/longitudinal_age_disease_conditioned_cocycle_shape",
+  "checkpoint": "latest.pth",
+  "additive_residual_checkpoint": "latest.pth",
+  "baseline_checkpoint": "latest.pth",
+  "healthy_sid": "27",
+  "diseased_sid": "4",
+  "train_probe_rows": 240,
+  "test_probe_rows": 60,
+  "matched_test_probe_rows": 26,
+  "probe_metrics": [
+    {
+      "component": "age",
+      "age_r2": -58.26304431256036,
+      "age_mae": 0.04861532211303711,
+      "disease_auc": 0.5508571428571428,
+      "disease_acc": 0.5,
+      "disease_auc_age_matched": 0.4970414201183432
+    },
+    {
+      "component": "disease",
+      "age_r2": -49.432745547783774,
+      "age_mae": 0.09256033112605414,
+      "disease_auc": 1.0,
+      "disease_acc": 0.8333333333333334,
+      "disease_auc_age_matched": 1.0
+    },
+    {
+      "component": "full",
+      "age_r2": 0.9949816448672815,
+      "age_mae": 0.001656622091929116,
+      "disease_auc": 1.0,
+      "disease_acc": 0.95,
+      "disease_auc_age_matched": 1.0
+    }
+  ],
+  "figure_dir": "/home/jakaria/INR/Deep3DComp/examples/Torus_subset_100_id_age_progression/longitudinal_age_disease_additive_velocity_no_residual_adv/analysis_additive_velocity_no_residual_adv/figures"
+}
