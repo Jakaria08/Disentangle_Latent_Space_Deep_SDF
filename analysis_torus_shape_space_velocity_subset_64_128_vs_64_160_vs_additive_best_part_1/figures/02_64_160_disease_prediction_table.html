@@ -1,0 +1,89 @@
+<!doctype html>
+<html><head><meta charset='utf-8'><title>64/160/32 test-time disease prediction table</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:1200px;margin:32px auto;padding:0 22px;color:#202020}
+h1{margin-bottom:8px} .note{background:#edf6f5;border-left:4px solid #147d92;padding:12px 14px;border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13px} th,td{border:1px solid #ddd;padding:7px 9px;text-align:left}
+th{background:#f2eadc} img{max-width:100%;border:1px solid #ddd;border-radius:8px} code{background:#f3f3f3;padding:2px 5px;border-radius:3px}
+a{color:#0b5cad;text-decoration:none} a:hover{text-decoration:underline}
+</style></head><body><h1>64/160/32 test-time disease prediction table</h1><p class='note'>Disease probability is inferred from the test baseline anchor. Labels are used only for scoring.</p><p><strong>CSV:</strong> <a href='02_64_160_disease_prediction_table.csv'>02_64_160_disease_prediction_table.csv</a></p><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>file</th>
+      <th>epoch</th>
+      <th>n</th>
+      <th>accuracy</th>
+      <th>balanced_accuracy</th>
+      <th>auc</th>
+      <th>sensitivity</th>
+      <th>specificity</th>
+      <th>forecast_mean_chamfer</th>
+      <th>forecast_final_chamfer</th>
+      <th>checkpoint_available</th>
+      <th>misclassified_subjects</th>
+      <th>selected_for_notebook</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>test_epoch_500.csv</td>
+      <td>500</td>
+      <td>15</td>
+      <td>0.800000</td>
+      <td>0.805556</td>
+      <td>0.796296</td>
+      <td>0.777778</td>
+      <td>0.833333</td>
+      <td>0.000225</td>
+      <td>0.000248</td>
+      <td>True</td>
+      <td>054(0->1,p=1), 013(1->0,p=1.6e-06), 086(1->0,p=0.0025)</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>test_epoch_1000.csv</td>
+      <td>1000</td>
+      <td>15</td>
+      <td>0.666667</td>
+      <td>0.611111</td>
+      <td>0.675926</td>
+      <td>0.888889</td>
+      <td>0.333333</td>
+      <td>0.000184</td>
+      <td>0.000225</td>
+      <td>True</td>
+      <td>069(0->1,p=1), 054(0->1,p=1), 027(0->1,p=1), 011(1->0,p=0.00013), 031(0->1,p=1)</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <td>test_epoch_1500.csv</td>
+      <td>1500</td>
+      <td>15</td>
+      <td>0.933333</td>
+      <td>0.944444</td>
+      <td>1.000000</td>
+      <td>0.888889</td>
+      <td>1.000000</td>
+      <td>0.000197</td>
+      <td>0.000274</td>
+      <td>False</td>
+      <td>064(1->0,p=1.4e-05)</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>test_epoch_2000.csv</td>
+      <td>2000</td>
+      <td>15</td>
+      <td>0.666667</td>
+      <td>0.666667</td>
+      <td>0.740741</td>
+      <td>0.666667</td>
+      <td>0.666667</td>
+      <td>0.000264</td>
+      <td>0.000373</td>
+      <td>True</td>
+      <td>027(0->1,p=1), 017(1->0,p=1.8e-18), 075(1->0,p=2e-12), 086(1->0,p=5.9e-18), 031(0->1,p=1)</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table></body></html>

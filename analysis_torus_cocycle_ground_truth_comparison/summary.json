@@ -1,0 +1,121 @@
+{
+  "models": [
+    {
+      "model_key": "multiple_pairs",
+      "model": "Cocycle shape loss - multiple pairs",
+      "family": "conditioned_cocycle",
+      "checkpoint": "latest",
+      "loaded_epoch": 2000,
+      "flow_type": "standard"
+    },
+    {
+      "model_key": "single_pair",
+      "model": "Cocycle shape loss - single pair",
+      "family": "conditioned_cocycle",
+      "checkpoint": "latest",
+      "loaded_epoch": 2000,
+      "flow_type": "standard"
+    },
+    {
+      "model_key": "subset64_best",
+      "model": "Disentangled 64/128/64 - best",
+      "family": "disentangled_64_128_64",
+      "checkpoint": "500",
+      "loaded_epoch": 500,
+      "flow_type": "disentangled_velocity"
+    },
+    {
+      "model_key": "subset64_latest",
+      "model": "Disentangled 64/128/64 - latest",
+      "family": "disentangled_64_128_64",
+      "checkpoint": "latest",
+      "loaded_epoch": 2000,
+      "flow_type": "disentangled_velocity"
+    },
+    {
+      "model_key": "counterfactual_disentangled_latest",
+      "model": "Disentangled counterfactual - latest",
+      "family": "disentangled_counterfactual",
+      "checkpoint": "latest",
+      "loaded_epoch": 2000,
+      "flow_type": "disentangled_velocity"
+    }
+  ],
+  "subjects": 15,
+  "visits": 75,
+  "grid_resolution": 64,
+  "chamfer_samples": 10000,
+  "anchor_steps": 250,
+  "ranking": [
+    {
+      "model_key": "subset64_best",
+      "model": "Disentangled 64/128/64 - best",
+      "family": "disentangled_64_128_64",
+      "epoch": 500,
+      "rollout": "direct",
+      "subjects": 15,
+      "future_mean_chamfer": 0.00034900038116070567,
+      "chamfer_ci_low": 0.00028332098260549387,
+      "chamfer_ci_high": 0.0004314750241631135,
+      "future_mean_relative_volume_error": 0.017564699353216594,
+      "volume_error_ci_low": 0.008372853265784226,
+      "volume_error_ci_high": 0.029072730502516107
+    },
+    {
+      "model_key": "subset64_latest",
+      "model": "Disentangled 64/128/64 - latest",
+      "family": "disentangled_64_128_64",
+      "epoch": 2000,
+      "rollout": "direct",
+      "subjects": 15,
+      "future_mean_chamfer": 0.0005085148287748638,
+      "chamfer_ci_low": 0.00029452832390617386,
+      "chamfer_ci_high": 0.0008306820606075829,
+      "future_mean_relative_volume_error": 0.017049961029382273,
+      "volume_error_ci_low": 0.009745081513977256,
+      "volume_error_ci_high": 0.025610923814866498
+    },
+    {
+      "model_key": "multiple_pairs",
+      "model": "Cocycle shape loss - multiple pairs",
+      "family": "conditioned_cocycle",
+      "epoch": 2000,
+      "rollout": "direct",
+      "subjects": 15,
+      "future_mean_chamfer": 0.0005284603221629626,
+      "chamfer_ci_low": 0.00035931718165185773,
+      "chamfer_ci_high": 0.0007241100521254668,
+      "future_mean_relative_volume_error": 0.03530707463281319,
+      "volume_error_ci_low": 0.013870568211120758,
+      "volume_error_ci_high": 0.06072186954766824
+    },
+    {
+      "model_key": "single_pair",
+      "model": "Cocycle shape loss - single pair",
+      "family": "conditioned_cocycle",
+      "epoch": 2000,
+      "rollout": "direct",
+      "subjects": 15,
+      "future_mean_chamfer": 0.0005371398338393241,
+      "chamfer_ci_low": 0.00032516723843432584,
+      "chamfer_ci_high": 0.0007965527635096593,
+      "future_mean_relative_volume_error": 0.05135972574495081,
+      "volume_error_ci_low": 0.009205501205870681,
+      "volume_error_ci_high": 0.11726556927463341
+    },
+    {
+      "model_key": "counterfactual_disentangled_latest",
+      "model": "Disentangled counterfactual - latest",
+      "family": "disentangled_counterfactual",
+      "epoch": 2000,
+      "rollout": "direct",
+      "subjects": 15,
+      "future_mean_chamfer": 0.0006060070830918795,
+      "chamfer_ci_low": 0.00035782228950562443,
+      "chamfer_ci_high": 0.0009329547104290037,
+      "future_mean_relative_volume_error": 0.051364329172886865,
+      "volume_error_ci_low": 0.01136155830846449,
+      "volume_error_ci_high": 0.11060245336609105
+    }
+  ]
+}

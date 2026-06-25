@@ -1,0 +1,59 @@
+<!doctype html>
+<html><head><meta charset='utf-8'><title>64/160/32 future prediction summary</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:1200px;margin:32px auto;padding:0 22px;color:#202020}
+h1{margin-bottom:8px} .note{background:#edf6f5;border-left:4px solid #147d92;padding:12px 14px;border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13px} th,td{border:1px solid #ddd;padding:7px 9px;text-align:left}
+th{background:#f2eadc} img{max-width:100%;border:1px solid #ddd;border-radius:8px} code{background:#f3f3f3;padding:2px 5px;border-radius:3px}
+a{color:#0b5cad;text-decoration:none} a:hover{text-decoration:underline}
+</style></head><body><h1>64/160/32 future prediction summary</h1><p class='note'>SDF MAE and volume error grouped by subject and observed/forecast phase.</p><p><strong>CSV:</strong> <a href='09_64_160_future_prediction_summary.csv'>09_64_160_future_prediction_summary.csv</a></p><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>sid</th>
+      <th>true_diagnosis</th>
+      <th>inferred_disease_probability</th>
+      <th>predicted_disease_class</th>
+      <th>phase</th>
+      <th>mean_sdf_mae</th>
+      <th>mean_relative_volume_error</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>4</td>
+      <td>1</td>
+      <td>1.0</td>
+      <td>1</td>
+      <td>forecast</td>
+      <td>0.002563</td>
+      <td>0.999923</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>1</td>
+      <td>1.0</td>
+      <td>1</td>
+      <td>observed</td>
+      <td>0.000686</td>
+      <td>0.999920</td>
+    </tr>
+    <tr>
+      <td>27</td>
+      <td>0</td>
+      <td>1.0</td>
+      <td>1</td>
+      <td>forecast</td>
+      <td>0.002069</td>
+      <td>0.999920</td>
+    </tr>
+    <tr>
+      <td>27</td>
+      <td>0</td>
+      <td>1.0</td>
+      <td>1</td>
+      <td>observed</td>
+      <td>0.001592</td>
+      <td>0.999920</td>
+    </tr>
+  </tbody>
+</table></body></html>

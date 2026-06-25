@@ -1,0 +1,58 @@
+<!doctype html>
+<html><head><meta charset='utf-8'><title>Mean-anchor speed summary</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:1200px;margin:32px auto;padding:0 22px;color:#202020}
+h1{margin-bottom:8px} .note{background:#edf6f5;border-left:4px solid #147d92;padding:12px 14px;border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13px} th,td{border:1px solid #ddd;padding:7px 9px;text-align:left}
+th{background:#f2eadc} img{max-width:100%;border:1px solid #ddd;border-radius:8px} code{background:#f3f3f3;padding:2px 5px;border-radius:3px}
+a{color:#0b5cad;text-decoration:none} a:hover{text-decoration:underline}
+</style></head><body><h1>Mean-anchor speed summary</h1><p class='note'>Compact view of component RMS speed, residual fraction, and age-disease shape correlation.</p><p><strong>CSV:</strong> <a href='07_mean_anchor_speed_summary.csv'>07_mean_anchor_speed_summary.csv</a></p><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>component</th>
+      <th>model</th>
+      <th>age</th>
+      <th>disease</th>
+      <th>disease_raw</th>
+      <th>residual</th>
+      <th>total</th>
+      <th>residual_fraction</th>
+      <th>age_disease_corr</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th></th>
+      <td>Additive strong best</td>
+      <td>0.059965</td>
+      <td>0.062065</td>
+      <td>0.062065</td>
+      <td>0.004324</td>
+      <td>0.119352</td>
+      <td>0.036226</td>
+      <td>0.250479</td>
+    </tr>
+    <tr>
+      <th></th>
+      <td>Subset 64/128/64 best</td>
+      <td>0.006595</td>
+      <td>0.023191</td>
+      <td>0.023191</td>
+      <td>0.062352</td>
+      <td>0.084555</td>
+      <td>0.737419</td>
+      <td>0.039388</td>
+    </tr>
+    <tr>
+      <th></th>
+      <td>Subset 64/160/32 E2 best saved</td>
+      <td>0.038561</td>
+      <td>0.023914</td>
+      <td>0.023914</td>
+      <td>0.000541</td>
+      <td>0.056260</td>
+      <td>0.009623</td>
+      <td>0.408797</td>
+    </tr>
+  </tbody>
+</table></body></html>

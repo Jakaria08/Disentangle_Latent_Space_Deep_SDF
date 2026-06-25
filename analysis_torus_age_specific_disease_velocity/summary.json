@@ -1,0 +1,173 @@
+{
+  "ages": [
+    60.0,
+    70.0,
+    80.0
+  ],
+  "models": [
+    {
+      "model_key": "multiple_pairs",
+      "model": "Conditioned - multiple pairs",
+      "family": "conditioned",
+      "checkpoint": "latest",
+      "epoch": 2000,
+      "mean_latent_norm": 0.02089613303542137
+    },
+    {
+      "model_key": "single_pair",
+      "model": "Conditioned - single pair",
+      "family": "conditioned",
+      "checkpoint": "latest",
+      "epoch": 2000,
+      "mean_latent_norm": 0.019475607201457024
+    },
+    {
+      "model_key": "subset64_best",
+      "model": "64/128/64 - best",
+      "family": "disentangled",
+      "checkpoint": "500",
+      "epoch": 500,
+      "mean_latent_norm": 0.027670424431562424
+    },
+    {
+      "model_key": "subset64_latest",
+      "model": "64/128/64 - latest",
+      "family": "disentangled",
+      "checkpoint": "latest",
+      "epoch": 2000,
+      "mean_latent_norm": 0.02139720879495144
+    },
+    {
+      "model_key": "counterfactual_latest",
+      "model": "Counterfactual disentangled - latest",
+      "family": "disentangled",
+      "checkpoint": "latest",
+      "epoch": 2000,
+      "mean_latent_norm": 0.020059537142515182
+    },
+    {
+      "model_key": "additive_best",
+      "model": "Additive strong - best",
+      "family": "additive",
+      "checkpoint": "1000",
+      "epoch": 1000,
+      "mean_latent_norm": 0.07778006792068481
+    },
+    {
+      "model_key": "additive_latest",
+      "model": "Additive strong - latest",
+      "family": "additive",
+      "checkpoint": "latest",
+      "epoch": 2000,
+      "mean_latent_norm": 0.052618496119976044
+    }
+  ],
+  "selected_subjects": [
+    {
+      "anchor_key": "ID_017_near_60",
+      "sid": 17,
+      "diagnosis": 1,
+      "anchor_scan": "ID_017_t0",
+      "anchor_age": 59.92998504638672,
+      "requested_age": 60.0,
+      "inside_observed_range": true,
+      "observed_range": "59.93\u201364.11",
+      "bump_angle_deg": 0.1890170309118267
+    },
+    {
+      "anchor_key": "ID_017_near_60",
+      "sid": 17,
+      "diagnosis": 1,
+      "anchor_scan": "ID_017_t0",
+      "anchor_age": 59.92998504638672,
+      "requested_age": 70.0,
+      "inside_observed_range": false,
+      "observed_range": "59.93\u201364.11",
+      "bump_angle_deg": 0.1890170309118267
+    },
+    {
+      "anchor_key": "ID_017_near_60",
+      "sid": 17,
+      "diagnosis": 1,
+      "anchor_scan": "ID_017_t0",
+      "anchor_age": 59.92998504638672,
+      "requested_age": 80.0,
+      "inside_observed_range": false,
+      "observed_range": "59.93\u201364.11",
+      "bump_angle_deg": 0.1890170309118267
+    },
+    {
+      "anchor_key": "ID_028_near_70",
+      "sid": 28,
+      "diagnosis": 1,
+      "anchor_scan": "ID_028_t1",
+      "anchor_age": 69.98699188232422,
+      "requested_age": 60.0,
+      "inside_observed_range": false,
+      "observed_range": "68.04\u201372.93",
+      "bump_angle_deg": -2.342172781344701
+    },
+    {
+      "anchor_key": "ID_028_near_70",
+      "sid": 28,
+      "diagnosis": 1,
+      "anchor_scan": "ID_028_t1",
+      "anchor_age": 69.98699188232422,
+      "requested_age": 70.0,
+      "inside_observed_range": true,
+      "observed_range": "68.04\u201372.93",
+      "bump_angle_deg": -2.342172781344701
+    },
+    {
+      "anchor_key": "ID_028_near_70",
+      "sid": 28,
+      "diagnosis": 1,
+      "anchor_scan": "ID_028_t1",
+      "anchor_age": 69.98699188232422,
+      "requested_age": 80.0,
+      "inside_observed_range": false,
+      "observed_range": "68.04\u201372.93",
+      "bump_angle_deg": -2.342172781344701
+    },
+    {
+      "anchor_key": "ID_004_near_80",
+      "sid": 4,
+      "diagnosis": 1,
+      "anchor_scan": "ID_004_t1",
+      "anchor_age": 80.5865249633789,
+      "requested_age": 60.0,
+      "inside_observed_range": false,
+      "observed_range": "78.75\u201384.68",
+      "bump_angle_deg": -1.1866239364779971
+    },
+    {
+      "anchor_key": "ID_004_near_80",
+      "sid": 4,
+      "diagnosis": 1,
+      "anchor_scan": "ID_004_t1",
+      "anchor_age": 80.5865249633789,
+      "requested_age": 70.0,
+      "inside_observed_range": false,
+      "observed_range": "78.75\u201384.68",
+      "bump_angle_deg": -1.1866239364779971
+    },
+    {
+      "anchor_key": "ID_004_near_80",
+      "sid": 4,
+      "diagnosis": 1,
+      "anchor_scan": "ID_004_t1",
+      "anchor_age": 80.5865249633789,
+      "requested_age": 80.0,
+      "inside_observed_range": true,
+      "observed_range": "78.75\u201384.68",
+      "bump_angle_deg": -1.1866239364779971
+    }
+  ],
+  "grid_resolution": 64,
+  "local_step": 0.1,
+  "arrow_origin_offset": 0.012,
+  "velocity_definition": {
+    "conditioned": "V(d=1) - V(d=0)",
+    "disentangled": "explicit padded disease component"
+  }
+}

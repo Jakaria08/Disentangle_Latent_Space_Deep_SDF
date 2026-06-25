@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset='utf-8'><title>Reading guide: what each plot means</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:1200px;margin:32px auto;padding:0 22px;color:#202020}
+h1{margin-bottom:8px} h2{margin-top:28px} p{line-height:1.55}
+.note{background:#edf6f5;border-left:4px solid #147d92;padding:12px 14px;border-radius:6px}
+.callout{background:#fff7ed;border-left:4px solid #d97706;padding:12px 14px;border-radius:6px}
+code{background:#f3f3f3;padding:2px 5px;border-radius:3px}
+a{color:#0b5cad;text-decoration:none} a:hover{text-decoration:underline}
+img{max-width:100%;border:1px solid #ddd;border-radius:8px}
+</style></head><body><h1>Reading guide: what each plot means</h1><p class='note'>Definitions for interpreting the saved plots and final model choice.</p>
+    <p>This notebook separates three questions that are often mixed together:</p>
+    <h2>1. Velocity disentanglement</h2>
+    <p>A good disentangled model puts disease-related shape change in the disease component, ordinary aging in the age component, and little coherent progression in residual.</p>
+    <h2>2. Test-time disease prediction</h2>
+    <p>Only the <code>64/160/32</code> model has a baseline-anchor disease head. The old <code>64/128/64</code> and additive models use an oracle disease condition in these visualizations.</p>
+    <h2>3. Future generation</h2>
+    <p>Forecast quality must be judged separately from velocity disentanglement. A model may reconstruct future scans well while using a poorly separated velocity decomposition.</p>
+    <p class='callout'><strong>Important:</strong> the current future volume-error numbers have a mesh-scale mismatch. Use SDF MAE and visual shape comparison first; do not rank models by the current volume error.</p>
+    </body></html>
