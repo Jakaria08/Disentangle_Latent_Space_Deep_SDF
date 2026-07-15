@@ -1,0 +1,49 @@
+{
+  "checkpoint": "1000",
+  "observation_mode": "all",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "feature_dim": 256,
+  "split_summary": {
+    "train": {
+      "subjects": 207,
+      "diagnosis_counts": {
+        "AD": 88,
+        "CN": 119
+      },
+      "label_counts": {
+        "0": 119,
+        "1": 88
+      }
+    },
+    "val": {
+      "subjects": 13,
+      "diagnosis_counts": {
+        "AD": 4,
+        "CN": 9
+      },
+      "label_counts": {
+        "0": 9,
+        "1": 4
+      }
+    },
+    "test": {
+      "subjects": 24,
+      "diagnosis_counts": {
+        "AD": 9,
+        "CN": 15
+      },
+      "label_counts": {
+        "0": 15,
+        "1": 9
+      }
+    }
+  },
+  "seed_results_csv": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/analysis/latent_classifier/seed_results.csv",
+  "summary_csv": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/analysis/latent_classifier/summary.csv",
+  "history_csv": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/analysis/latent_classifier/training_history.csv",
+  "predictions_csv": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/analysis/latent_classifier/predictions.csv"
+}

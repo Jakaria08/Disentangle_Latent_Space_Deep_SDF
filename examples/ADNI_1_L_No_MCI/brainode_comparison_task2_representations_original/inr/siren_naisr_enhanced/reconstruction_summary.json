@@ -1,0 +1,9 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/siren_naisr_enhanced/checkpoints/best.pth",
+  "completed_total": 727,
+  "failure_count_this_run": 0,
+  "failures": [],
+  "name": "siren_naisr_enhanced",
+  "requested_scan_count": 727,
+  "resolution": 256
+}

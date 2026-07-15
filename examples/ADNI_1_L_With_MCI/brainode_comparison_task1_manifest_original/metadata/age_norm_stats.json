@@ -1,0 +1,8 @@
+{
+  "age_max_train": 90.0,
+  "age_min_train": 55.0,
+  "age_norm_formula": "(age_years - age_min_train) / (age_max_train - age_min_train)",
+  "clean_age_norm_max_all_splits": 1.0285714285714285,
+  "clean_age_norm_min_all_splits": 0.0,
+  "train_age_count": 1226
+}

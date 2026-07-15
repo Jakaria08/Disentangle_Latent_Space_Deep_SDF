@@ -1,0 +1,75 @@
+{
+  "clean_diagnosis_scan_count": {
+    "AD": 302,
+    "CN": 425
+  },
+  "clean_scan_count": 727,
+  "clean_scan_count_by_split": {
+    "test": 71,
+    "train": 617,
+    "val": 39
+  },
+  "clean_subject_count": 244,
+  "clean_subject_count_by_split": {
+    "test": 24,
+    "train": 207,
+    "val": 13
+  },
+  "clean_visit_count_distribution_subjects": {
+    "2": 5,
+    "3": 239
+  },
+  "dropped_scan_count": 92,
+  "duplicate_visit_group_count": 89,
+  "master_diagnosis_scan_count": {
+    "AD": 342,
+    "CN": 477
+  },
+  "master_scan_count": 819,
+  "master_scan_count_by_split": {
+    "test": 77,
+    "train": 696,
+    "val": 46
+  },
+  "master_subject_count": 247,
+  "master_subject_count_by_split": {
+    "test": 24,
+    "train": 209,
+    "val": 14
+  },
+  "pair_count": 722,
+  "pair_count_by_split": {
+    "test": 70,
+    "train": 613,
+    "val": 39
+  },
+  "pair_task_count": {
+    "b_to_m06": 241,
+    "b_to_m12": 239,
+    "m06_to_m12": 242
+  },
+  "pair_task_count_by_split": {
+    "test": {
+      "b_to_m06": 23,
+      "b_to_m12": 23,
+      "m06_to_m12": 24
+    },
+    "train": {
+      "b_to_m06": 205,
+      "b_to_m12": 203,
+      "m06_to_m12": 205
+    },
+    "val": {
+      "b_to_m06": 13,
+      "b_to_m12": 13,
+      "m06_to_m12": 13
+    }
+  },
+  "subjects_excluded_fewer_than_2_visits": 3,
+  "triplet_count": 239,
+  "triplet_count_by_split": {
+    "test": 23,
+    "train": 203,
+    "val": 13
+  }
+}

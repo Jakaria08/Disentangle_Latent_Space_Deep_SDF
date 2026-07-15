@@ -1,0 +1,200 @@
+{
+  "lower_validation_median_assd": "siren_eikonal",
+  "models": {
+    "deepsdf_eikonal": {
+      "assd": {
+        "count": 39,
+        "max": 0.03531427262616256,
+        "mean": 0.02109562208354421,
+        "median": 0.021359775951565407,
+        "min": 0.009179569635650534,
+        "q25": 0.016595647604071954,
+        "q75": 0.024903131253670184,
+        "std": 0.005990432548398602
+      },
+      "chamfer_l2_squared": {
+        "count": 39,
+        "max": 0.003276568050475781,
+        "mean": 0.0012268184988640611,
+        "median": 0.0011930989962160136,
+        "min": 0.00020256859294863786,
+        "q25": 0.000741558947638405,
+        "q75": 0.0015436380855925733,
+        "std": 0.0006712108921100878
+      },
+      "hd95": {
+        "count": 39,
+        "max": 0.06805233760264995,
+        "mean": 0.0394205300201453,
+        "median": 0.040100246079774554,
+        "min": 0.016543095641645085,
+        "q25": 0.0331298334707595,
+        "q75": 0.046418067074283614,
+        "std": 0.0112615461897551
+      },
+      "volume_relative_error": {
+        "count": 39,
+        "max": 0.02889434209381988,
+        "mean": 0.0032161041218077943,
+        "median": 0.0009304922673169416,
+        "min": 7.818770102364604e-06,
+        "q25": 0.00048819348912867327,
+        "q75": 0.0028074750177554944,
+        "std": 0.005997206525832326
+      }
+    },
+    "siren_eikonal": {
+      "assd": {
+        "count": 39,
+        "max": 0.02980330401590136,
+        "mean": 0.019303292834257905,
+        "median": 0.01991784225787712,
+        "min": 0.00907655789933396,
+        "q25": 0.016118141327427803,
+        "q75": 0.02211366672366809,
+        "std": 0.0048321317630471
+      },
+      "chamfer_l2_squared": {
+        "count": 39,
+        "max": 0.002833998052193575,
+        "mean": 0.0010720317599142084,
+        "median": 0.0009892662227495436,
+        "min": 0.0001965868896258823,
+        "q25": 0.0006771257937494595,
+        "q75": 0.0012741049021846073,
+        "std": 0.0006016247848463083
+      },
+      "hd95": {
+        "count": 39,
+        "max": 0.07099884176547137,
+        "mean": 0.03906760085612217,
+        "median": 0.03845410800874296,
+        "min": 0.01633959087418703,
+        "q25": 0.032376811966659425,
+        "q75": 0.044353974710921715,
+        "std": 0.012082747424236148
+      },
+      "volume_relative_error": {
+        "count": 39,
+        "max": 0.10351525711659379,
+        "mean": 0.03697787943616466,
+        "median": 0.027355112776709344,
+        "min": 0.0013896049751070984,
+        "q25": 0.009587237194201837,
+        "q75": 0.058833678197665246,
+        "std": 0.029492471404659316
+      }
+    }
+  },
+  "models_compared": [
+    "deepsdf_eikonal",
+    "siren_eikonal"
+  ],
+  "paired_scan_count": 39,
+  "pairwise_tests": {
+    "assd": {
+      "deepsdf_eikonal__vs__siren_eikonal": {
+        "deepsdf_eikonal_lower_count": 2,
+        "difference": {
+          "count": 39,
+          "max": 0.0008624361318546117,
+          "mean": -0.0017923292492863085,
+          "median": -0.001216385007517154,
+          "min": -0.0070786319587069005,
+          "q25": -0.002722278424116228,
+          "q75": -0.0003073022786752788,
+          "std": 0.001899955649291579
+        },
+        "difference_definition": "siren_eikonal - deepsdf_eikonal",
+        "holm_adjusted_p_value": 3.888999344781041e-09,
+        "model_a": "deepsdf_eikonal",
+        "model_b": "siren_eikonal",
+        "siren_eikonal_lower_count": 37,
+        "tie_count": 0,
+        "wilcoxon_p_value": 3.888999344781041e-09,
+        "wilcoxon_statistic": 26.0
+      }
+    },
+    "chamfer_l2_squared": {
+      "deepsdf_eikonal__vs__siren_eikonal": {
+        "deepsdf_eikonal_lower_count": 4,
+        "difference": {
+          "count": 39,
+          "max": 0.0005543923808091068,
+          "mean": -0.00015478673894985315,
+          "median": -0.0001110355344141863,
+          "min": -0.0008822479024212686,
+          "q25": -0.00027790096120487956,
+          "q75": -1.839188652103473e-05,
+          "std": 0.00025874475302714833
+        },
+        "difference_definition": "siren_eikonal - deepsdf_eikonal",
+        "holm_adjusted_p_value": 1.1458228982519358e-05,
+        "model_a": "deepsdf_eikonal",
+        "model_b": "siren_eikonal",
+        "siren_eikonal_lower_count": 35,
+        "tie_count": 0,
+        "wilcoxon_p_value": 1.1458228982519358e-05,
+        "wilcoxon_statistic": 96.0
+      }
+    },
+    "hd95": {
+      "deepsdf_eikonal__vs__siren_eikonal": {
+        "deepsdf_eikonal_lower_count": 10,
+        "difference": {
+          "count": 39,
+          "max": 0.011172921342365388,
+          "mean": -0.00035292916402313745,
+          "median": -0.0014804249222722388,
+          "min": -0.004355400978489521,
+          "q25": -0.001853757701900896,
+          "q75": -9.052493780511983e-06,
+          "std": 0.002990137818931971
+        },
+        "difference_definition": "siren_eikonal - deepsdf_eikonal",
+        "holm_adjusted_p_value": 0.0071616245368204545,
+        "model_a": "deepsdf_eikonal",
+        "model_b": "siren_eikonal",
+        "siren_eikonal_lower_count": 29,
+        "tie_count": 0,
+        "wilcoxon_p_value": 0.0071616245368204545,
+        "wilcoxon_statistic": 200.0
+      }
+    },
+    "volume_relative_error": {
+      "deepsdf_eikonal__vs__siren_eikonal": {
+        "deepsdf_eikonal_lower_count": 39,
+        "difference": {
+          "count": 39,
+          "max": 0.08096406968068771,
+          "mean": 0.03376177531435686,
+          "median": 0.026771258238083517,
+          "min": 0.0008603869783767957,
+          "q25": 0.009080000842741777,
+          "q75": 0.051834287514748084,
+          "std": 0.026727283861803317
+        },
+        "difference_definition": "siren_eikonal - deepsdf_eikonal",
+        "holm_adjusted_p_value": 3.637978807091713e-12,
+        "model_a": "deepsdf_eikonal",
+        "model_b": "siren_eikonal",
+        "siren_eikonal_lower_count": 0,
+        "tie_count": 0,
+        "wilcoxon_p_value": 3.637978807091713e-12,
+        "wilcoxon_statistic": 0.0
+      }
+    }
+  },
+  "selection_note": "Lower is better for every reported metric. Use validation results for selection; test metrics must remain reporting-only.",
+  "selection_split": "val",
+  "validation_median_assd_rank": [
+    {
+      "median_assd": 0.01991784225787712,
+      "model": "siren_eikonal"
+    },
+    {
+      "median_assd": 0.021359775951565407,
+      "model": "deepsdf_eikonal"
+    }
+  ]
+}

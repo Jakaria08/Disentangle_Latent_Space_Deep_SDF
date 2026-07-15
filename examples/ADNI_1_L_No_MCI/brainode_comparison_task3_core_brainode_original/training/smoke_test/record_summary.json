@@ -1,0 +1,33 @@
+{
+  "train": {
+    "count": 16,
+    "count_by_direction": {
+      "backward": 8,
+      "forward": 8
+    },
+    "count_by_length": {
+      "1": 5,
+      "2": 6,
+      "3": 5
+    }
+  },
+  "val_first_last": {
+    "count": 8,
+    "count_by_direction": {
+      "forward": 8
+    },
+    "count_by_length": {
+      "3": 8
+    }
+  },
+  "val_forward": {
+    "count": 8,
+    "count_by_direction": {
+      "forward": 8
+    },
+    "count_by_length": {
+      "2": 4,
+      "3": 4
+    }
+  }
+}

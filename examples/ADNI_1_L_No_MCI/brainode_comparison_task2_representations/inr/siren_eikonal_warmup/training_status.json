@@ -1,0 +1,10 @@
+{
+  "best_validation_l1": 0.03458150802180171,
+  "device": "cuda:1",
+  "effective_batch_size": 32,
+  "eikonal_points_per_scene": 16384,
+  "final_epoch": 70,
+  "name": "siren_eikonal_warmup",
+  "scene_chunk_size": 8,
+  "status": "interrupted"
+}

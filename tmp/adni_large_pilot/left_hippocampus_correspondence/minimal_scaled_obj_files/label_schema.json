@@ -1,0 +1,18 @@
+{
+  "columns": [
+    "diagnosis",
+    "age",
+    "sex",
+    "mask_volume_mm3",
+    "mesh_volume_mm3"
+  ],
+  "diagnosis_encoding": {
+    "CN": 0.0,
+    "AD": 1.0,
+    "MCI": -1.0
+  },
+  "sex_encoding": {
+    "male": 0.0,
+    "female": 1.0
+  }
+}

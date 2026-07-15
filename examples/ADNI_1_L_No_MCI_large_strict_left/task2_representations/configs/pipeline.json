@@ -1,0 +1,41 @@
+{
+  "name": "adni_large_strict_no_mci_left_task2",
+  "description": "Task2 representation setup for the large strict no-MCI left hippocampus correspondence/SDF dataset.",
+  "manifest": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/metadata/adni_large_strict_no_mci_left_manifest.csv",
+  "task1_validation_report": "examples/ADNI_1_L_No_MCI_large_strict_left/reports/validation_summary.json",
+  "expected_counts": {
+    "total": 2715,
+    "train": 2183,
+    "val": 267,
+    "test": 265
+  },
+  "mesh": {
+    "vertex_count": 2206,
+    "face_count": 4408,
+    "coordinate_min": -1.0,
+    "coordinate_max": 1.0
+  },
+  "inr_models": {
+    "siren_no_skip": {
+      "output_dir": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip",
+      "checkpoint": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/checkpoints/best.pth",
+      "checkpoint_kind": "task2_trained",
+      "latent_size": 256
+    },
+    "siren_latent_skip": {
+      "output_dir": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_latent_skip_warmstart",
+      "checkpoint": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_latent_skip_warmstart/checkpoints/best.pth",
+      "checkpoint_kind": "task2_trained",
+      "latent_size": 256
+    }
+  },
+  "pca": {
+    "max_components": 256
+  },
+  "evaluation": {
+    "methods": {
+      "siren_no_skip": "evaluation/reconstructions/siren_no_skip",
+      "siren_latent_skip": "evaluation/reconstructions/siren_latent_skip"
+    }
+  }
+}

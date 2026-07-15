@@ -1,0 +1,46 @@
+{
+  "subject_id": "003_S_0981",
+  "diagnosis": "CN",
+  "exports": [
+    {
+      "observation_mode": "baseline_only",
+      "target_label": "m06",
+      "method": "direct",
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/analysis/test_forecast_meshes/003_S_0981/baseline_only_m06_direct_ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093154326_S31564_I100229_left.ply",
+      "target_scan_id": "ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093154326_S31564_I100229_left",
+      "latest_observed_scan_id": "ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093138279_S20753_I100228_left"
+    },
+    {
+      "observation_mode": "baseline_only",
+      "target_label": "m12",
+      "method": "direct",
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/analysis/test_forecast_meshes/003_S_0981/baseline_only_m12_direct_ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093213435_S42293_I100230_left.ply",
+      "target_scan_id": "ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093213435_S42293_I100230_left",
+      "latest_observed_scan_id": "ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093138279_S20753_I100228_left"
+    },
+    {
+      "observation_mode": "baseline_only",
+      "target_label": "m12",
+      "method": "composed",
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/analysis/test_forecast_meshes/003_S_0981/baseline_only_m12_composed_ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093213435_S42293_I100230_left.ply",
+      "target_scan_id": "ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093213435_S42293_I100230_left",
+      "latest_observed_scan_id": "ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093138279_S20753_I100228_left"
+    },
+    {
+      "observation_mode": "baseline_plus_m06",
+      "target_label": "m12",
+      "method": "direct",
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/analysis/test_forecast_meshes/003_S_0981/baseline_plus_m06_m12_direct_ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093213435_S42293_I100230_left.ply",
+      "target_scan_id": "ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093213435_S42293_I100230_left",
+      "latest_observed_scan_id": "ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093154326_S31564_I100229_left"
+    },
+    {
+      "observation_mode": "baseline_plus_m06",
+      "target_label": "m12",
+      "method": "composed",
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/analysis/test_forecast_meshes/003_S_0981/baseline_plus_m06_m12_composed_ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093213435_S42293_I100230_left.ply",
+      "target_scan_id": "ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093213435_S42293_I100230_left",
+      "latest_observed_scan_id": "ADNI_003_S_0981_MR_Hippocampal_Mask_Hi_20080403093154326_S31564_I100229_left"
+    }
+  ]
+}

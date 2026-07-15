@@ -1,0 +1,55 @@
+{
+  "age_max_train": 91.0,
+  "age_min_train": 57.0,
+  "brainode_available_components": 256,
+  "brainode_primary_components": 150,
+  "continuous_age_norm_max": 1.0,
+  "continuous_age_norm_min": 0.0,
+  "directed_pair_count_by_split": {
+    "test": 140,
+    "train": 1226,
+    "val": 78
+  },
+  "files": {
+    "all_subject_sequences_npz": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/dataset/all_subject_sequences.npz",
+    "scan_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/metadata/core_brainode_scan_manifest.csv",
+    "subject_sequences_json": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/metadata/core_brainode_subject_sequences.json",
+    "test_subject_sequences_npz": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/dataset/test_subject_sequences.npz",
+    "train_subject_sequences_npz": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/dataset/train_subject_sequences.npz",
+    "val_subject_sequences_npz": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/dataset/val_subject_sequences.npz"
+  },
+  "forward_pair_count_by_split": {
+    "test": 70,
+    "train": 613,
+    "val": 39
+  },
+  "scan_count": 727,
+  "scan_count_by_split": {
+    "test": 71,
+    "train": 617,
+    "val": 39
+  },
+  "scan_diagnosis_count": {
+    "AD": 302,
+    "CN": 425
+  },
+  "source_task1_clean_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/adni_no_mci_left_original_clean.csv",
+  "source_task1_clean_manifest_sha256": "c19867a2c848ecb7502fcb547a34ff34e5cac39247f642640a24ed98bd531ab6",
+  "source_task2_representation_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/metadata/representation_manifest.csv",
+  "source_task2_representation_manifest_sha256": "c001935ad0e72970d1e97fdc1d123075eb9b21905d88c13dca885ff8e6559152",
+  "status": "pass",
+  "subject_count": 244,
+  "subject_count_by_split": {
+    "test": 24,
+    "train": 207,
+    "val": 13
+  },
+  "subject_diagnosis_count": {
+    "AD": 101,
+    "CN": 143
+  },
+  "visit_count_distribution_subjects": {
+    "2": 5,
+    "3": 239
+  }
+}

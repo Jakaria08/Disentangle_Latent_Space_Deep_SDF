@@ -1,0 +1,12 @@
+{
+  "finite_scans": 727,
+  "mode": "full",
+  "negative_rows": 142167513,
+  "negative_sdf_max": -1.4551915228366852e-10,
+  "negative_sdf_min": -0.17349843680858612,
+  "positive_rows": 221079233,
+  "positive_sdf_max": 1.4727404117584229,
+  "positive_sdf_min": 1.609805622138083e-09,
+  "scans_checked": 727,
+  "sign_correct_scans": 727
+}

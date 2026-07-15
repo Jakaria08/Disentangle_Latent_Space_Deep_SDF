@@ -1,0 +1,18 @@
+{
+  "attempt": 0,
+  "attempt_count": 1,
+  "best_objective": 0.004271589685231447,
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/siren_naisr_enhanced/checkpoints/best.pth",
+  "checkpoint_sha256": "b01a5d488f967f37946b13edd730b9c15aaefb5e2ee2c573bfcbc439fdba69fc",
+  "converged": true,
+  "diagnosis": "CN",
+  "final_data_l1": 0.004522465635091066,
+  "finite": true,
+  "heldout_sdf_l1": 0.00433579133823514,
+  "initial_data_l1": 0.02716919220983982,
+  "latent_norm": 0.9999998807907104,
+  "scan_id": "ADNI_027_S_0074_MR_Hippocampal_Mask_Hi_20080228135636877_S10605_I93725_left",
+  "split": "train",
+  "steps_completed": 182,
+  "steps_requested": 500
+}

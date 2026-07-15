@@ -1,0 +1,52 @@
+{
+  "errors": [],
+  "manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest/metadata/adni_no_mci_left_smooth_clean.csv",
+  "manifest_sha256": "1ee18734d2ebdc43fea6e353929d933c4f1891ad29dcc0e7f6027c8dbfd2a9e6",
+  "mesh": {
+    "face_count_distribution": {
+      "3912": 727
+    },
+    "finite": 727,
+    "global_coordinate_max": [
+      0.44689833,
+      0.87389367,
+      0.3986717
+    ],
+    "global_coordinate_min": [
+      -0.475771,
+      -0.9,
+      -0.42153277
+    ],
+    "inside_configured_domain": 727,
+    "topology_match": 727,
+    "vertex_count_distribution": {
+      "1958": 727
+    },
+    "volume_max": 0.15692800383953068,
+    "volume_min": 0.04583911574404405,
+    "watertight": 727,
+    "winding_consistent": 727
+  },
+  "reference_mesh_file_sha256": "d9c086d083ea010da0cd8f45c333f52f85caba9cafb66ebfc53fa7cb92790125",
+  "row_count": 727,
+  "sdf": {
+    "finite_scans": 727,
+    "mode": "full",
+    "negative_rows": 142167513,
+    "negative_sdf_max": -1.4551915228366852e-10,
+    "negative_sdf_min": -0.17349843680858612,
+    "positive_rows": 221079233,
+    "positive_sdf_max": 1.4727404117584229,
+    "positive_sdf_min": 1.609805622138083e-09,
+    "scans_checked": 727,
+    "sign_correct_scans": 727
+  },
+  "split_counts": {
+    "test": 71,
+    "train": 617,
+    "val": 39
+  },
+  "status": "pass",
+  "task1_validation_status": "pass",
+  "warnings": []
+}

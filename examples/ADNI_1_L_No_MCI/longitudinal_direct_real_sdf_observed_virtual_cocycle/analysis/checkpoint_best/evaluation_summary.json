@@ -1,0 +1,20 @@
+{
+  "checkpoint": "best",
+  "checkpoint_epoch": 1,
+  "decoder_epoch": 2000,
+  "splits": [
+    "val",
+    "test"
+  ],
+  "pairs": 109,
+  "virtual_ratios": [
+    0.25,
+    0.5,
+    0.75
+  ],
+  "mean_model_target_sdf_l1": 0.011590180961295552,
+  "mean_no_change_target_sdf_l1": 0.011658040084662515,
+  "mean_sdf_l1_improvement": 6.785912336696179e-05,
+  "model_beats_no_change_fraction": 0.6972477064220184,
+  "future_trajectory_region_is_unvalidated": true
+}

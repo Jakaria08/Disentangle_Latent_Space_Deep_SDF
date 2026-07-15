@@ -1,0 +1,66 @@
+{
+  "checkpoint_every": 100,
+  "clamp_distance": 0.1,
+  "code_bound": 1.0,
+  "code_regularization_lambda": 0.0001,
+  "data_loader_workers": 8,
+  "description": "Original ReLU DeepSDF decoder with eikonal regularization.",
+  "eikonal_points_per_scene": 512,
+  "eikonal_weight": 0.002,
+  "epochs": 2000,
+  "gradient_clip_norm": 1.0,
+  "latent_fit": {
+    "code_bound": 1.0,
+    "code_regularization_lambda": 0.0001,
+    "early_stop_min_delta": 1e-07,
+    "early_stop_patience": 75,
+    "evaluation_samples": 32768,
+    "holdout_fraction": 0.1,
+    "initial_std": 0.01,
+    "learning_rate": 0.005,
+    "samples_per_step": 16384,
+    "steps": 500
+  },
+  "latent_learning_rate": 0.001,
+  "latent_size": 256,
+  "learning_rate_factor": 0.5,
+  "learning_rate_step": 500,
+  "manifest": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest/metadata/adni_no_mci_left_smooth_clean.csv",
+  "name": "deepsdf_eikonal",
+  "network_arch": "deep_sdf_decoder",
+  "network_learning_rate": 0.0005,
+  "network_specs": {
+    "dims": [
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512
+    ],
+    "dropout": [],
+    "dropout_prob": 0.0,
+    "latent_dropout": false,
+    "latent_in": [
+      4
+    ],
+    "norm_layers": [],
+    "use_tanh": false,
+    "weight_norm": true,
+    "xyz_in_all": false
+  },
+  "output_dir": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations/inr/deepsdf_eikonal",
+  "reconstruction": {
+    "max_batch": 262144,
+    "resolution": 256
+  },
+  "samples_per_scene": 16384,
+  "scene_chunk_size": 2,
+  "scenes_per_batch": 24,
+  "seed": 42,
+  "validation_every": 250,
+  "validation_latent_steps": 100,
+  "validation_num_scans": 8
+}

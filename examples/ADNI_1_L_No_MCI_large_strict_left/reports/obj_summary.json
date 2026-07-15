@@ -1,0 +1,12 @@
+{
+  "groups": {
+    "left": {
+      "final_obj_dir": "/home/jakaria/ADNI/ADNI_1_GO_Large/left_hippocampus_strict_no_mci/left_hippocampus_correspondence/minimal_final_obj",
+      "scaled_obj_dir": "/home/jakaria/ADNI/ADNI_1_GO_Large/left_hippocampus_strict_no_mci/left_hippocampus_correspondence/minimal_scaled_obj_files",
+      "subject_obj_count": 2715,
+      "all_obj_count": 2716,
+      "global_min": -0.33873293,
+      "global_max": 0.34872437
+    }
+  }
+}

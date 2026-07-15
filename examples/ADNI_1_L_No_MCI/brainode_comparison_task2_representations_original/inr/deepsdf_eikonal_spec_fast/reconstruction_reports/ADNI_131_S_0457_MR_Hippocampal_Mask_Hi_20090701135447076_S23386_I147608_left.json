@@ -1,0 +1,14 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast/checkpoints/best.pth",
+  "diagnosis": "AD",
+  "face_count": 57440,
+  "mesh_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast/reconstructed_meshes/ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135447076_S23386_I147608_left.ply",
+  "resolution": 256,
+  "scan_id": "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135447076_S23386_I147608_left",
+  "sdf_grid_max": 0.9029608368873596,
+  "sdf_grid_min": -0.09890792518854141,
+  "split": "train",
+  "vertex_count": 28722,
+  "watertight": true,
+  "winding_consistent": true
+}

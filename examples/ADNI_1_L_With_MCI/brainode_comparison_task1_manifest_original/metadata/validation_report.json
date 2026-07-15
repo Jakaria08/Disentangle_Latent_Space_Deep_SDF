@@ -1,0 +1,68 @@
+{
+  "age_stats": {
+    "age_max_train": 90.0,
+    "age_min_train": 55.0,
+    "age_norm_formula": "(age_years - age_min_train) / (age_max_train - age_min_train)",
+    "clean_age_norm_max_all_splits": 1.0285714285714285,
+    "clean_age_norm_min_all_splits": 0.0,
+    "train_age_count": 1226
+  },
+  "computed_summary": {
+    "clean_diagnosis_scan_count": {
+      "AD": 302,
+      "CN": 425,
+      "MCI": 717
+    },
+    "clean_scan_count": 1444,
+    "clean_scan_count_by_split": {
+      "test": 140,
+      "train": 1226,
+      "val": 78
+    },
+    "clean_subject_count": 485,
+    "clean_visit_count_distribution_subjects": {
+      "2": 11,
+      "3": 474
+    },
+    "master_scan_count": 1632,
+    "master_scan_count_by_split": {
+      "test": 156,
+      "train": 1387,
+      "val": 89
+    },
+    "pair_count": 1433,
+    "pair_count_by_split": {
+      "test": 139,
+      "train": 1216,
+      "val": 78
+    },
+    "pair_task_count": {
+      "b_to_m06": 480,
+      "b_to_m12": 475,
+      "m06_to_m12": 478
+    },
+    "triplet_count": 474,
+    "triplet_count_by_split": {
+      "test": 46,
+      "train": 402,
+      "val": 26
+    }
+  },
+  "dropped_scan_count": 188,
+  "duplicate_visit_group_count": 183,
+  "errors": [],
+  "missing_file_count": 0,
+  "output_root": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/brainode_comparison_task1_manifest_original",
+  "required_file_count": 17,
+  "status": "pass",
+  "warnings": [
+    {
+      "code": "nontrain_age_norm_out_of_range",
+      "details": {
+        "max_age_norm": 1.028571429,
+        "min_age_norm": 0.0
+      },
+      "message": "At least one val/test age_norm lies outside the train min/max age range."
+    }
+  ]
+}

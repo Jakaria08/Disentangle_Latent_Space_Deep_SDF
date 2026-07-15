@@ -1,0 +1,12 @@
+{
+  "groups": {
+    "left": {
+      "final_obj_dir": "/home/jakaria/INR/Deep3DComp/tmp/adni_large_pilot/left_hippocampus_correspondence/minimal_final_obj",
+      "scaled_obj_dir": "/home/jakaria/INR/Deep3DComp/tmp/adni_large_pilot/left_hippocampus_correspondence/minimal_scaled_obj_files",
+      "subject_obj_count": 10,
+      "all_obj_count": 11,
+      "global_min": -0.40359142,
+      "global_max": 0.41454107
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "source_ply_dir": "/home/jakaria/ADNI/ADNI_1_GO_Large/adni_hipp_ply_surfs",
+  "clinical_csv": "/home/jakaria/ADNI/ADNI_1_GO_Large/adni_hipp_ply_surfs/clinical_volume_merged.csv",
+  "eligible_scans": 7639,
+  "selected_scans": 10,
+  "unique_eligible_subjects": 1727,
+  "unique_selected_subjects": 10,
+  "selection_mode": "subject_unique_pilot",
+  "sample_count": 10,
+  "seed": 42,
+  "require_paired": true,
+  "diagnosis_filter": "all",
+  "diagnosis_counts": {
+    "MCI": 6,
+    "CN": 3,
+    "AD": 1
+  }
+}

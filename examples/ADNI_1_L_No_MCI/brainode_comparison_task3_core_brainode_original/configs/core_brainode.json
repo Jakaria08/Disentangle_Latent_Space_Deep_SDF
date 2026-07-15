@@ -1,0 +1,65 @@
+{
+  "task1": {
+    "dir": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original",
+    "clean_manifest": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/adni_no_mci_left_original_clean.csv",
+    "trajectory_json": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/adni_no_mci_left_original_subject_trajectories.json",
+    "split_summary": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/split_summary.json",
+    "age_norm_stats": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/age_norm_stats.json",
+    "validation_report": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/validation_report.json"
+  },
+  "task2": {
+    "dir": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original",
+    "representation_manifest": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/metadata/representation_manifest.csv",
+    "pca_coefficients_csv": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/pca/coefficients/pca_coefficients.csv",
+    "validation_report": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/metadata/validation_pca.json",
+    "pca_model_dir": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/pca/model"
+  },
+  "expected_counts": {
+    "train": 617,
+    "val": 39,
+    "test": 71,
+    "total": 727
+  },
+  "expected_subject_counts": {
+    "train": 207,
+    "val": 13,
+    "test": 24,
+    "total": 244
+  },
+  "brainode": {
+    "available_components": 256,
+    "primary_components": 150,
+    "condition_values": {
+      "CN": 0.0,
+      "AD": 1.0
+    },
+    "continuous_age_formula": "baseline_age_years + months_from_baseline / 12.0",
+    "continuous_age_norm_formula": "(continuous_age_years - age_min_train) / (age_max_train - age_min_train)"
+  },
+  "model": {
+    "architecture": "ODEFuncWithAttention",
+    "condition_dim": 1,
+    "attention_dim": 256,
+    "hidden_dim": 512
+  },
+  "training": {
+    "output_root": "examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/training",
+    "run_name": "core_attention_pca150",
+    "random_seed": 42,
+    "epochs": 100,
+    "batch_size": 64,
+    "learning_rate": 0.0005,
+    "weight_decay": 0.01,
+    "scheduler_step_size": 20,
+    "scheduler_gamma": 0.5,
+    "noise_std": 0.01,
+    "scale_min": 0.98,
+    "scale_max": 1.02,
+    "integration_substeps": 1,
+    "gradient_clip_norm": 1.0,
+    "save_every": 10,
+    "num_workers": 0,
+    "best_metric": "val_first_last_vertex_mae",
+    "device": "cuda:0"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "best_validation_l1": 0.0029934979102108628,
+  "device": "cuda:0",
+  "effective_batch_size": 32,
+  "eikonal_points_per_scene": 16384,
+  "final_epoch": 2001,
+  "loss_mode": "balanced_sdf",
+  "name": "deepsdf_eikonal_spec_fast",
+  "off_surface_samples_per_scene": 16384,
+  "scene_chunk_size": 16,
+  "status": "complete",
+  "surface_samples_per_scene": 0
+}

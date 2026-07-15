@@ -1,0 +1,38 @@
+{
+  "age_norm": {
+    "max": 1.0,
+    "min": -0.0124935864549,
+    "train_max": 1.0,
+    "train_min": 0.0
+  },
+  "age_years": {
+    "max": 95.62053388,
+    "min": 55.1,
+    "train_max": 95.62053388,
+    "train_min": 55.6
+  },
+  "dataset_root": "/home/jakaria/ADNI/ADNI_1_GO_Large/left_hippocampus_strict_no_mci",
+  "diagnosis_counts": {
+    "AD": 990,
+    "CN": 1725
+  },
+  "first_missing_sdf": [],
+  "manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/metadata/adni_large_strict_no_mci_left_manifest.csv",
+  "mesh_dir": "/home/jakaria/ADNI/ADNI_1_GO_Large/left_hippocampus_strict_no_mci/left_hippocampus_correspondence/minimal_scaled_obj_files",
+  "missing_mesh_count": 0,
+  "missing_sdf_count": 0,
+  "row_count": 2715,
+  "sdf_complete": true,
+  "sdf_dir": "/home/jakaria/ADNI/ADNI_1_GO_Large/left_hippocampus_strict_no_mci/left_hippocampus_correspondence/sdf_data/SdfSamples/minimal_scaled_obj_files",
+  "selected_scans": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/manifests/selected_scans.csv",
+  "split_counts": {
+    "test": 265,
+    "train": 2183,
+    "val": 267
+  },
+  "subject_counts": {
+    "test": 68,
+    "train": 540,
+    "val": 68
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "device": "cpu",
+  "error": "element 0 of tensors does not require grad and does not have a grad_fn",
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/training/smoke_test",
+  "status": "failed",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/scripts/train_core_brainode.py\", line 639, in main\n    train_metrics = train_one_epoch(\n  File \"/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/scripts/train_core_brainode.py\", line 408, in train_one_epoch\n    loss.backward()\n  File \"/home/jakaria/anaconda3/envs/inr_sdf/lib/python3.10/site-packages/torch/_tensor.py\", line 487, in backward\n    torch.autograd.backward(\n  File \"/home/jakaria/anaconda3/envs/inr_sdf/lib/python3.10/site-packages/torch/autograd/__init__.py\", line 197, in backward\n    Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass\nRuntimeError: element 0 of tensors does not require grad and does not have a grad_fn\n"
+}

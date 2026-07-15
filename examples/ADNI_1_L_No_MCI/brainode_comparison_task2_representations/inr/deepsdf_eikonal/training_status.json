@@ -1,0 +1,7 @@
+{
+  "best_validation_l1": null,
+  "device": "cuda:0",
+  "final_epoch": 23,
+  "name": "deepsdf_eikonal",
+  "status": "interrupted"
+}

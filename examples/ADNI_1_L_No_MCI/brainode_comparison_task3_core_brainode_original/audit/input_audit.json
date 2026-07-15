@@ -1,0 +1,78 @@
+{
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/configs/core_brainode.json",
+  "continuous_age_norm": {
+    "max": 1.0,
+    "min": 0.0
+  },
+  "continuous_age_years": {
+    "max": 91.0,
+    "min": 57.0
+  },
+  "counts": {
+    "clean_split_counts": {
+      "test": 71,
+      "train": 617,
+      "val": 39
+    },
+    "diagnosis_scan_counts": {
+      "AD": 302,
+      "CN": 425
+    },
+    "expected_scans": {
+      "test": 71,
+      "total": 727,
+      "train": 617,
+      "val": 39
+    },
+    "expected_subjects": {
+      "test": 24,
+      "total": 244,
+      "train": 207,
+      "val": 13
+    },
+    "pca_split_counts": {
+      "test": 71,
+      "train": 617,
+      "val": 39
+    },
+    "representation_split_counts": {
+      "test": 71,
+      "train": 617,
+      "val": 39
+    },
+    "subject_split_counts": {
+      "test": 24,
+      "train": 207,
+      "val": 13
+    },
+    "visit_count_distribution": {
+      "2": 5,
+      "3": 239
+    }
+  },
+  "errors": [],
+  "pca_shapes": {
+    "coefficient_mean": [
+      256
+    ],
+    "coefficient_std": [
+      256
+    ],
+    "components": [
+      256,
+      5028
+    ],
+    "faces": [
+      3348,
+      3
+    ],
+    "mean": [
+      5028
+    ]
+  },
+  "status": "pass",
+  "task1_clean_manifest_sha256": "c19867a2c848ecb7502fcb547a34ff34e5cac39247f642640a24ed98bd531ab6",
+  "task2_pca_coefficients_csv_sha256": "8f267e70c88ca760a083d8ca8a37b1e4464cdb7bf36949bb9236c6edab9630b7",
+  "task2_representation_manifest_sha256": "c001935ad0e72970d1e97fdc1d123075eb9b21905d88c13dca885ff8e6559152",
+  "warnings": []
+}

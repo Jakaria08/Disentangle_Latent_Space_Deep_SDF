@@ -1,0 +1,35 @@
+{
+  "checks": {
+    "deepsdf_eikonal_latent_rows": 727,
+    "deepsdf_eikonal_mesh_count": 727,
+    "deepsdf_eikonal_nonconverged_latents": 0,
+    "deepsdf_eikonal_training_status": "complete",
+    "input_audit_status": "pass",
+    "pca_150_mesh_count": 727,
+    "pca_256_mesh_count": 727,
+    "pca_coefficient_rows": 727,
+    "pca_shapes": {
+      "components": [
+        256,
+        5028
+      ],
+      "faces": [
+        3348,
+        3
+      ],
+      "mean": [
+        5028
+      ]
+    },
+    "reconstruction_metric_rows": 2908,
+    "representation_manifest_rows": 727,
+    "siren_eikonal_latent_rows": 727,
+    "siren_eikonal_mesh_count": 727,
+    "siren_eikonal_nonconverged_latents": 0,
+    "siren_eikonal_training_status": "complete"
+  },
+  "errors": [],
+  "stage": "complete",
+  "status": "pass",
+  "warnings": []
+}

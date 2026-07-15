@@ -1,0 +1,3582 @@
+{
+  "dropped_scans": [
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_002_S_0954_MR_SNT_hippocampal_voluming_Hi_20071218151223946_S19979_I85433_left",
+      "filename": "ADNI_002_S_0954_MR_Hippocampal_Mask_Hi_20090630133510903_S19978_I146881_left.obj",
+      "image_id": "I146881",
+      "scan_id": "ADNI_002_S_0954_MR_Hippocampal_Mask_Hi_20090630133510903_S19978_I146881_left",
+      "split": "train",
+      "subject_id": "002_S_0954",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20080221135418377_S13664_I91387_left",
+      "filename": "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20090630133725919_S12599_I146890_left.obj",
+      "image_id": "I146890",
+      "scan_id": "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20090630133725919_S12599_I146890_left",
+      "split": "val",
+      "subject_id": "005_S_0324",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20080221135436253_S21628_I91388_left",
+      "filename": "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20090630133740466_S22465_I146891_left.obj",
+      "image_id": "I146891",
+      "scan_id": "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20090630133740466_S22465_I146891_left",
+      "split": "val",
+      "subject_id": "005_S_0324",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20080221135452191_S31973_I91389_left",
+      "filename": "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20090630133755169_S31698_I146892_left.obj",
+      "image_id": "I146892",
+      "scan_id": "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20090630133755169_S31698_I146892_left",
+      "split": "val",
+      "subject_id": "005_S_0324",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20090630133809685_S15928_I146893_left",
+      "filename": "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20080228121253429_S15527_I93436_left.obj",
+      "image_id": "I93436",
+      "scan_id": "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20080228121253429_S15527_I93436_left",
+      "split": "val",
+      "subject_id": "005_S_0553",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20080228121308867_S24999_I93438_left",
+      "filename": "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20090630133824794_S24693_I146894_left.obj",
+      "image_id": "I146894",
+      "scan_id": "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20090630133824794_S24693_I146894_left",
+      "split": "val",
+      "subject_id": "005_S_0553",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20080228121323586_S36818_I93439_left",
+      "filename": "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20090630133841357_S33606_I146895_left.obj",
+      "image_id": "I146895",
+      "scan_id": "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20090630133841357_S33606_I146895_left",
+      "split": "val",
+      "subject_id": "005_S_0553",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_005_S_0572_MR_SNT_hippocampal_voluming_Hi_20071218151239026_S17494_I85434_left",
+      "filename": "ADNI_005_S_0572_MR_Hippocampal_Mask_Hi_20080228121338602_S15709_I93441_left.obj",
+      "image_id": "I93441",
+      "scan_id": "ADNI_005_S_0572_MR_Hippocampal_Mask_Hi_20080228121338602_S15709_I93441_left",
+      "split": "train",
+      "subject_id": "005_S_0572",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140507492_S19117_I146911_left",
+      "filename": "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140451289_S18390_I146910_left.obj",
+      "image_id": "I146910",
+      "scan_id": "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140451289_S18390_I146910_left",
+      "split": "train",
+      "subject_id": "005_S_0814",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140523977_S29098_I146912_left",
+      "filename": "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140541117_S29396_I146913_left.obj",
+      "image_id": "I146913",
+      "scan_id": "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140541117_S29396_I146913_left",
+      "split": "train",
+      "subject_id": "005_S_0814",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140557086_S41350_I146914_left",
+      "filename": "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140613008_S43028_I146915_left.obj",
+      "image_id": "I146915",
+      "scan_id": "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140613008_S43028_I146915_left",
+      "split": "train",
+      "subject_id": "005_S_0814",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141923607_S25703_I146935_left",
+      "filename": "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141903576_S25173_I146934_left.obj",
+      "image_id": "I146934",
+      "scan_id": "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141903576_S25173_I146934_left",
+      "split": "train",
+      "subject_id": "007_S_1206",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141939779_S38141_I146936_left",
+      "filename": "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141956092_S38135_I146937_left.obj",
+      "image_id": "I146937",
+      "scan_id": "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141956092_S38135_I146937_left",
+      "split": "train",
+      "subject_id": "007_S_1206",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630142012498_S46085_I146938_left",
+      "filename": "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630142035092_S46079_I146939_left.obj",
+      "image_id": "I146939",
+      "scan_id": "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630142035092_S46079_I146939_left",
+      "split": "train",
+      "subject_id": "007_S_1206",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142107686_S26090_I146941_left",
+      "filename": "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142051514_S25402_I146940_left.obj",
+      "image_id": "I146940",
+      "scan_id": "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142051514_S25402_I146940_left",
+      "split": "train",
+      "subject_id": "007_S_1222",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142124202_S38925_I146942_left",
+      "filename": "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142139405_S38918_I146943_left.obj",
+      "image_id": "I146943",
+      "scan_id": "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142139405_S38918_I146943_left",
+      "split": "train",
+      "subject_id": "007_S_1222",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142154733_S46092_I146944_left",
+      "filename": "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142210233_S46098_I146945_left.obj",
+      "image_id": "I146945",
+      "scan_id": "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142210233_S46098_I146945_left",
+      "split": "train",
+      "subject_id": "007_S_1222",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "unknown_visit_label",
+      "filename": "ADNI_011_S_0168_MR_Hippocampal_Mask_Hi_20090630142514984_S29769_I146957_left.obj",
+      "image_id": "I146957",
+      "scan_id": "ADNI_011_S_0168_MR_Hippocampal_Mask_Hi_20090630142514984_S29769_I146957_left",
+      "split": "test",
+      "subject_id": "011_S_0168",
+      "visit_label_raw": "uns1",
+      "visit_month_from_label": null
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20090630143047408_S23101_I146965_left",
+      "filename": "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20080228122813572_S21984_I93539_left.obj",
+      "image_id": "I93539",
+      "scan_id": "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20080228122813572_S21984_I93539_left",
+      "split": "test",
+      "subject_id": "013_S_1035",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20080228122827384_S32794_I93540_left",
+      "filename": "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20090630143102502_S32816_I146966_left.obj",
+      "image_id": "I146966",
+      "scan_id": "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20090630143102502_S32816_I146966_left",
+      "split": "test",
+      "subject_id": "013_S_1035",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20080228122841275_S42697_I93541_left",
+      "filename": "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20090630143118471_S42888_I146967_left.obj",
+      "image_id": "I146967",
+      "scan_id": "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20090630143118471_S42888_I146967_left",
+      "split": "test",
+      "subject_id": "013_S_1035",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144132459_S25222_I146990_left",
+      "filename": "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630143637426_S23327_I146989_left.obj",
+      "image_id": "I146989",
+      "scan_id": "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630143637426_S23327_I146989_left",
+      "split": "train",
+      "subject_id": "016_S_1117",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144149897_S41507_I146991_left",
+      "filename": "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144210288_S37166_I146992_left.obj",
+      "image_id": "I146992",
+      "scan_id": "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144210288_S37166_I146992_left",
+      "split": "train",
+      "subject_id": "016_S_1117",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144227007_S44122_I146993_left",
+      "filename": "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144241397_S44329_I146994_left.obj",
+      "image_id": "I146994",
+      "scan_id": "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144241397_S44329_I146994_left",
+      "split": "train",
+      "subject_id": "016_S_1117",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144314272_S25229_I146996_left",
+      "filename": "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144258976_S23742_I146995_left.obj",
+      "image_id": "I146995",
+      "scan_id": "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144258976_S23742_I146995_left",
+      "split": "train",
+      "subject_id": "016_S_1121",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144328929_S36294_I146997_left",
+      "filename": "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144343179_S36309_I146998_left.obj",
+      "image_id": "I146998",
+      "scan_id": "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144343179_S36309_I146998_left",
+      "split": "train",
+      "subject_id": "016_S_1121",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144357945_S43926_I146999_left",
+      "filename": "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144411476_S44323_I147000_left.obj",
+      "image_id": "I147000",
+      "scan_id": "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144411476_S44323_I147000_left",
+      "split": "train",
+      "subject_id": "016_S_1121",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144450867_S29365_I147002_left",
+      "filename": "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144426679_S27431_I147001_left.obj",
+      "image_id": "I147001",
+      "scan_id": "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144426679_S27431_I147001_left",
+      "split": "train",
+      "subject_id": "016_S_1326",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144506554_S40723_I147003_left",
+      "filename": "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144520992_S40985_I147004_left.obj",
+      "image_id": "I147004",
+      "scan_id": "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144520992_S40985_I147004_left",
+      "split": "train",
+      "subject_id": "016_S_1326",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144536852_S47634_I147005_left",
+      "filename": "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144550508_S47894_I147006_left.obj",
+      "image_id": "I147006",
+      "scan_id": "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144550508_S47894_I147006_left",
+      "split": "train",
+      "subject_id": "016_S_1326",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144709461_S13439_I147011_left",
+      "filename": "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144653649_S12756_I147010_left.obj",
+      "image_id": "I147010",
+      "scan_id": "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144653649_S12756_I147010_left",
+      "split": "train",
+      "subject_id": "021_S_0332",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144724493_S20322_I147012_left",
+      "filename": "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144740305_S20377_I147013_left.obj",
+      "image_id": "I147013",
+      "scan_id": "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144740305_S20377_I147013_left",
+      "split": "train",
+      "subject_id": "021_S_0332",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144754696_S30699_I147014_left",
+      "filename": "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144810478_S37147_I147015_left.obj",
+      "image_id": "I147015",
+      "scan_id": "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144810478_S37147_I147015_left",
+      "split": "train",
+      "subject_id": "021_S_0332",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "subject_has_fewer_than_2_clean_visits",
+      "filename": "ADNI_022_S_0219_MR_Hippocampal_Mask_Hi_20080228130227992_S12375_I93643_left.obj",
+      "image_id": "I93643",
+      "scan_id": "ADNI_022_S_0219_MR_Hippocampal_Mask_Hi_20080228130227992_S12375_I93643_left",
+      "split": "train",
+      "subject_id": "022_S_0219",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20090630145720747_S10009_I147028_left",
+      "filename": "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20080228130604430_S9785_I93656_left.obj",
+      "image_id": "I93656",
+      "scan_id": "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20080228130604430_S9785_I93656_left",
+      "split": "train",
+      "subject_id": "023_S_0031",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20080228130622915_S13244_I93657_left",
+      "filename": "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20090630145739184_S13261_I147029_left.obj",
+      "image_id": "I147029",
+      "scan_id": "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20090630145739184_S13261_I147029_left",
+      "split": "train",
+      "subject_id": "023_S_0031",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20080228130639274_S21467_I93658_left",
+      "filename": "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20090630145757028_S21475_I147030_left.obj",
+      "image_id": "I147030",
+      "scan_id": "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20090630145757028_S21475_I147030_left",
+      "split": "train",
+      "subject_id": "023_S_0031",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20090630145813700_S10633_I147031_left",
+      "filename": "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20080403131840688_S10312_I100350_left.obj",
+      "image_id": "I100350",
+      "scan_id": "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20080403131840688_S10312_I100350_left",
+      "split": "train",
+      "subject_id": "023_S_0061",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20080403131859103_S16092_I100351_left",
+      "filename": "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20090630145830700_S15579_I147032_left.obj",
+      "image_id": "I147032",
+      "scan_id": "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20090630145830700_S15579_I147032_left",
+      "split": "train",
+      "subject_id": "023_S_0061",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20080403131917549_S23473_I100352_left",
+      "filename": "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20090630145847357_S23481_I147033_left.obj",
+      "image_id": "I147033",
+      "scan_id": "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20090630145847357_S23481_I147033_left",
+      "split": "train",
+      "subject_id": "023_S_0061",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20090630145903919_S10841_I147034_left",
+      "filename": "ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20080403131937978_S10619_I100353_left.obj",
+      "image_id": "I100353",
+      "scan_id": "ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20080403131937978_S10619_I100353_left",
+      "split": "train",
+      "subject_id": "023_S_0078",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20080403132016224_S24894_I100355_left",
+      "filename": "ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20090630145920919_S24992_I147035_left.obj",
+      "image_id": "I147035",
+      "scan_id": "ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20090630145920919_S24992_I147035_left",
+      "split": "train",
+      "subject_id": "023_S_0078",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20090630145938794_S11490_I147036_left",
+      "filename": "ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20080228131006011_S11079_I93671_left.obj",
+      "image_id": "I93671",
+      "scan_id": "ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20080228131006011_S11079_I93671_left",
+      "split": "train",
+      "subject_id": "023_S_0139",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20080228131039012_S26343_I93673_left",
+      "filename": "ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20090630150000216_S26521_I147037_left.obj",
+      "image_id": "I147037",
+      "scan_id": "ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20090630150000216_S26521_I147037_left",
+      "split": "train",
+      "subject_id": "023_S_0139",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20090630150017326_S13168_I147038_left",
+      "filename": "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20080228131144138_S12428_I93677_left.obj",
+      "image_id": "I93677",
+      "scan_id": "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20080228131144138_S12428_I93677_left",
+      "split": "val",
+      "subject_id": "023_S_0331",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20080228131201310_S19697_I93678_left",
+      "filename": "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20090630150034498_S19679_I147039_left.obj",
+      "image_id": "I147039",
+      "scan_id": "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20090630150034498_S19679_I147039_left",
+      "split": "val",
+      "subject_id": "023_S_0331",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20080228131216935_S29574_I93679_left",
+      "filename": "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20090630150052545_S28331_I147040_left.obj",
+      "image_id": "I147040",
+      "scan_id": "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20090630150052545_S28331_I147040_left",
+      "split": "val",
+      "subject_id": "023_S_0331",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20080228131250717_S20393_I93681_left",
+      "filename": "ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20090630150108764_S20446_I147041_left.obj",
+      "image_id": "I147041",
+      "scan_id": "ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20090630150108764_S20446_I147041_left",
+      "split": "train",
+      "subject_id": "023_S_0376",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20080228131306983_S28501_I93682_left",
+      "filename": "ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20090630150124920_S28518_I147042_left.obj",
+      "image_id": "I147042",
+      "scan_id": "ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20090630150124920_S28518_I147042_left",
+      "split": "train",
+      "subject_id": "023_S_0376",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20080403132052723_S22193_I100357_left",
+      "filename": "ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20090630150140233_S22184_I147043_left.obj",
+      "image_id": "I147043",
+      "scan_id": "ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20090630150140233_S22184_I147043_left",
+      "split": "train",
+      "subject_id": "023_S_0388",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20080403132113719_S29672_I100358_left",
+      "filename": "ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20090630150156936_S29861_I147044_left.obj",
+      "image_id": "I147044",
+      "scan_id": "ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20090630150156936_S29861_I147044_left",
+      "split": "train",
+      "subject_id": "023_S_0388",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20080228131338859_S23951_I93684_left",
+      "filename": "ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20090630150212795_S23944_I147045_left.obj",
+      "image_id": "I147045",
+      "scan_id": "ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20090630150212795_S23944_I147045_left",
+      "split": "train",
+      "subject_id": "023_S_0604",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20080228131355156_S33366_I93685_left",
+      "filename": "ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20090630150227967_S33372_I147046_left.obj",
+      "image_id": "I147046",
+      "scan_id": "ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20090630150227967_S33372_I147046_left",
+      "split": "train",
+      "subject_id": "023_S_0604",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150259952_S16766_I147048_left",
+      "filename": "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150244499_S15820_I147047_left.obj",
+      "image_id": "I147047",
+      "scan_id": "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150244499_S15820_I147047_left",
+      "split": "train",
+      "subject_id": "023_S_0625",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150316421_S27183_I147049_left",
+      "filename": "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150331530_S27236_I147050_left.obj",
+      "image_id": "I147050",
+      "scan_id": "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150331530_S27236_I147050_left",
+      "split": "train",
+      "subject_id": "023_S_0625",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150348218_S35036_I147051_left",
+      "filename": "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150402546_S35062_I147052_left.obj",
+      "image_id": "I147052",
+      "scan_id": "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150402546_S35062_I147052_left",
+      "split": "train",
+      "subject_id": "023_S_0625",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20090630150418437_S19523_I147053_left",
+      "filename": "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20080403132133833_S19228_I100359_left.obj",
+      "image_id": "I100359",
+      "scan_id": "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20080403132133833_S19228_I100359_left",
+      "split": "train",
+      "subject_id": "023_S_0916",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20080403132154955_S30418_I100360_left",
+      "filename": "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20090630150435453_S30560_I147054_left.obj",
+      "image_id": "I147054",
+      "scan_id": "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20090630150435453_S30560_I147054_left",
+      "split": "train",
+      "subject_id": "023_S_0916",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20080403132215179_S40717_I100361_left",
+      "filename": "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20090630150455906_S40736_I147055_left.obj",
+      "image_id": "I147055",
+      "scan_id": "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20090630150455906_S40736_I147055_left",
+      "split": "train",
+      "subject_id": "023_S_0916",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150526812_S20204_I147057_left",
+      "filename": "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150512422_S19740_I147056_left.obj",
+      "image_id": "I147056",
+      "scan_id": "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150512422_S19740_I147056_left",
+      "split": "train",
+      "subject_id": "023_S_0963",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150542875_S29234_I147058_left",
+      "filename": "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150557375_S29352_I147059_left.obj",
+      "image_id": "I147059",
+      "scan_id": "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150557375_S29352_I147059_left",
+      "split": "train",
+      "subject_id": "023_S_0963",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630151203815_S41267_I147060_left",
+      "filename": "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630151219299_S41289_I147061_left.obj",
+      "image_id": "I147061",
+      "scan_id": "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630151219299_S41289_I147061_left",
+      "split": "train",
+      "subject_id": "023_S_0963",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151345055_S25153_I147066_left",
+      "filename": "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151330467_S24847_I147065_left.obj",
+      "image_id": "I147065",
+      "scan_id": "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151330467_S24847_I147065_left",
+      "split": "train",
+      "subject_id": "023_S_1190",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151401143_S35121_I147067_left",
+      "filename": "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151416028_S35151_I147068_left.obj",
+      "image_id": "I147068",
+      "scan_id": "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151416028_S35151_I147068_left",
+      "split": "train",
+      "subject_id": "023_S_1190",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151438714_S44381_I147069_left",
+      "filename": "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151456147_S44392_I147070_left.obj",
+      "image_id": "I147070",
+      "scan_id": "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151456147_S44392_I147070_left",
+      "split": "train",
+      "subject_id": "023_S_1190",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151530169_S26861_I147072_left",
+      "filename": "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151515425_S25741_I147071_left.obj",
+      "image_id": "I147071",
+      "scan_id": "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151515425_S25741_I147071_left",
+      "split": "train",
+      "subject_id": "023_S_1247",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151546539_S36782_I147073_left",
+      "filename": "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151601377_S36944_I147074_left.obj",
+      "image_id": "I147074",
+      "scan_id": "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151601377_S36944_I147074_left",
+      "split": "train",
+      "subject_id": "023_S_1247",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151617809_S45062_I147075_left",
+      "filename": "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151632506_S45054_I147076_left.obj",
+      "image_id": "I147076",
+      "scan_id": "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151632506_S45054_I147076_left",
+      "split": "train",
+      "subject_id": "023_S_1247",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20090630151912092_S14336_I147086_left",
+      "filename": "ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20080403132648663_S13072_I100374_left.obj",
+      "image_id": "I100374",
+      "scan_id": "ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20080403132648663_S13072_I100374_left",
+      "split": "test",
+      "subject_id": "027_S_0307",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20080403132715890_S20691_I100375_left",
+      "filename": "ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20090630151927830_S20538_I147087_left.obj",
+      "image_id": "I147087",
+      "scan_id": "ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20090630151927830_S20538_I147087_left",
+      "split": "test",
+      "subject_id": "027_S_0307",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20090630151943490_S14179_I147088_left",
+      "filename": "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20080403132806942_S13717_I100377_left.obj",
+      "image_id": "I100377",
+      "scan_id": "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20080403132806942_S13717_I100377_left",
+      "split": "train",
+      "subject_id": "027_S_0403",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20080403132829513_S21484_I100378_left",
+      "filename": "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20090630152000635_S21067_I147089_left.obj",
+      "image_id": "I147089",
+      "scan_id": "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20090630152000635_S21067_I147089_left",
+      "split": "train",
+      "subject_id": "027_S_0403",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20080403132850078_S32438_I100379_left",
+      "filename": "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20090630152017951_S32184_I147090_left.obj",
+      "image_id": "I147090",
+      "scan_id": "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20090630152017951_S32184_I147090_left",
+      "split": "train",
+      "subject_id": "027_S_0403",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20090630152035424_S14494_I147091_left",
+      "filename": "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20080228140025834_S13866_I93737_left.obj",
+      "image_id": "I93737",
+      "scan_id": "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20080228140025834_S13866_I93737_left",
+      "split": "train",
+      "subject_id": "027_S_0404",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20080228140044460_S22758_I93738_left",
+      "filename": "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20090630152053304_S22840_I147092_left.obj",
+      "image_id": "I147092",
+      "scan_id": "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20090630152053304_S22840_I147092_left",
+      "split": "train",
+      "subject_id": "027_S_0404",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20080228140103335_S32020_I93739_left",
+      "filename": "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20090630152110167_S32328_I147093_left.obj",
+      "image_id": "I147093",
+      "scan_id": "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20090630152110167_S32328_I147093_left",
+      "split": "train",
+      "subject_id": "027_S_0404",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20090630152217871_S19496_I147097_left",
+      "filename": "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20080228140416917_S18760_I93753_left.obj",
+      "image_id": "I93753",
+      "scan_id": "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20080228140416917_S18760_I93753_left",
+      "split": "train",
+      "subject_id": "027_S_0835",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20080228140435902_S28808_I93754_left",
+      "filename": "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20090630152233219_S28689_I147098_left.obj",
+      "image_id": "I147098",
+      "scan_id": "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20090630152233219_S28689_I147098_left",
+      "split": "train",
+      "subject_id": "027_S_0835",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20080228140455027_S39476_I93755_left",
+      "filename": "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20090630152250207_S40013_I147099_left.obj",
+      "image_id": "I147099",
+      "scan_id": "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20090630152250207_S40013_I147099_left",
+      "split": "train",
+      "subject_id": "027_S_0835",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082839074_S26054_I147137_left",
+      "filename": "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082822245_S25357_I147136_left.obj",
+      "image_id": "I147136",
+      "scan_id": "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082822245_S25357_I147136_left",
+      "split": "train",
+      "subject_id": "027_S_1081",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082855339_S38366_I147138_left",
+      "filename": "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082912168_S37477_I147139_left.obj",
+      "image_id": "I147139",
+      "scan_id": "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082912168_S37477_I147139_left",
+      "split": "train",
+      "subject_id": "027_S_1081",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082928590_S45308_I147140_left",
+      "filename": "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082947934_S45549_I147141_left.obj",
+      "image_id": "I147141",
+      "scan_id": "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082947934_S45549_I147141_left",
+      "split": "train",
+      "subject_id": "027_S_1081",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20090701083004903_S23987_I147142_left",
+      "filename": "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20080228140621091_S22938_I93765_left.obj",
+      "image_id": "I93765",
+      "scan_id": "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20080228140621091_S22938_I93765_left",
+      "split": "train",
+      "subject_id": "027_S_1082",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20080228140641138_S33129_I93771_left",
+      "filename": "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20090701083020669_S32962_I147143_left.obj",
+      "image_id": "I147143",
+      "scan_id": "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20090701083020669_S32962_I147143_left",
+      "split": "train",
+      "subject_id": "027_S_1082",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20080228140701045_S43335_I93773_left",
+      "filename": "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20090701083037856_S43354_I147144_left.obj",
+      "image_id": "I147144",
+      "scan_id": "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20090701083037856_S43354_I147144_left",
+      "split": "train",
+      "subject_id": "027_S_1082",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083253717_S27297_I147152_left",
+      "filename": "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083236920_S26408_I147151_left.obj",
+      "image_id": "I147151",
+      "scan_id": "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083236920_S26408_I147151_left",
+      "split": "train",
+      "subject_id": "027_S_1277",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083309515_S38653_I147153_left",
+      "filename": "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083326734_S37959_I147154_left.obj",
+      "image_id": "I147154",
+      "scan_id": "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083326734_S37959_I147154_left",
+      "split": "train",
+      "subject_id": "027_S_1277",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083343437_S45870_I147155_left",
+      "filename": "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083400562_S45806_I147156_left.obj",
+      "image_id": "I147156",
+      "scan_id": "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083400562_S45806_I147156_left",
+      "split": "train",
+      "subject_id": "027_S_1277",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083435891_S28972_I147158_left",
+      "filename": "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083417422_S28133_I147157_left.obj",
+      "image_id": "I147157",
+      "scan_id": "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083417422_S28133_I147157_left",
+      "split": "train",
+      "subject_id": "027_S_1385",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083452844_S39646_I147159_left",
+      "filename": "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083510344_S40030_I147160_left.obj",
+      "image_id": "I147160",
+      "scan_id": "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083510344_S40030_I147160_left",
+      "split": "train",
+      "subject_id": "027_S_1385",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083527673_S47223_I147161_left",
+      "filename": "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083545798_S47505_I147162_left.obj",
+      "image_id": "I147162",
+      "scan_id": "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083545798_S47505_I147162_left",
+      "split": "train",
+      "subject_id": "027_S_1385",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083620783_S28276_I147164_left",
+      "filename": "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083603782_S28123_I147163_left.obj",
+      "image_id": "I147163",
+      "scan_id": "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083603782_S28123_I147163_left",
+      "split": "train",
+      "subject_id": "027_S_1387",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083637064_S39868_I147165_left",
+      "filename": "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083654299_S41966_I147166_left.obj",
+      "image_id": "I147166",
+      "scan_id": "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083654299_S41966_I147166_left",
+      "split": "train",
+      "subject_id": "027_S_1387",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083710611_S46909_I147167_left",
+      "filename": "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083727893_S47010_I147168_left.obj",
+      "image_id": "I147168",
+      "scan_id": "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083727893_S47010_I147168_left",
+      "split": "train",
+      "subject_id": "027_S_1387",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "subject_has_fewer_than_2_clean_visits",
+      "filename": "ADNI_031_S_0618_MR_Hippocampal_Mask_Hi_20080228141054534_S36607_I93785_left.obj",
+      "image_id": "I93785",
+      "scan_id": "ADNI_031_S_0618_MR_Hippocampal_Mask_Hi_20080228141054534_S36607_I93785_left",
+      "split": "test",
+      "subject_id": "031_S_0618",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_031_S_1066_MR_Hippocampal_Mask_Hi_20090701092209552_S23507_I147194_left",
+      "filename": "ADNI_031_S_1066_MR_Hippocampal_Mask_Hi_20090701092144036_S22389_I147193_left.obj",
+      "image_id": "I147193",
+      "scan_id": "ADNI_031_S_1066_MR_Hippocampal_Mask_Hi_20090701092144036_S22389_I147193_left",
+      "split": "train",
+      "subject_id": "031_S_1066",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "subject_has_fewer_than_2_clean_visits",
+      "filename": "ADNI_031_S_1066_MR_Hippocampal_Mask_Hi_20090701092209552_S23507_I147194_left.obj",
+      "image_id": "I147194",
+      "scan_id": "ADNI_031_S_1066_MR_Hippocampal_Mask_Hi_20090701092209552_S23507_I147194_left",
+      "split": "train",
+      "subject_id": "031_S_1066",
+      "visit_label_raw": "bl",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_033_S_1098_MR_Hippocampal_Mask_Hi_20080403135648703_S43311_I100407_left",
+      "filename": "ADNI_033_S_1098_MR_Hippocampal_Mask_Hi_20090701093432076_S43316_I147195_left.obj",
+      "image_id": "I147195",
+      "scan_id": "ADNI_033_S_1098_MR_Hippocampal_Mask_Hi_20090701093432076_S43316_I147195_left",
+      "split": "train",
+      "subject_id": "033_S_1098",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093515770_S24168_I147197_left",
+      "filename": "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093454549_S22799_I147196_left.obj",
+      "image_id": "I147196",
+      "scan_id": "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093454549_S22799_I147196_left",
+      "split": "train",
+      "subject_id": "033_S_1116",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093538991_S33092_I147198_left",
+      "filename": "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093558680_S33152_I147199_left.obj",
+      "image_id": "I147199",
+      "scan_id": "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093558680_S33152_I147199_left",
+      "split": "train",
+      "subject_id": "033_S_1116",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093617853_S43249_I147200_left",
+      "filename": "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093637573_S43219_I147201_left.obj",
+      "image_id": "I147201",
+      "scan_id": "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093637573_S43219_I147201_left",
+      "split": "train",
+      "subject_id": "033_S_1116",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093719998_S27484_I147203_left",
+      "filename": "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093658809_S26694_I147202_left.obj",
+      "image_id": "I147202",
+      "scan_id": "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093658809_S26694_I147202_left",
+      "split": "train",
+      "subject_id": "033_S_1279",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093740671_S39264_I147204_left",
+      "filename": "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093801251_S38478_I147205_left.obj",
+      "image_id": "I147205",
+      "scan_id": "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093801251_S38478_I147205_left",
+      "split": "train",
+      "subject_id": "033_S_1279",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093822737_S46508_I147206_left",
+      "filename": "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093843894_S46500_I147207_left.obj",
+      "image_id": "I147207",
+      "scan_id": "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093843894_S46500_I147207_left",
+      "split": "train",
+      "subject_id": "033_S_1279",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094333908_S28071_I147221_left",
+      "filename": "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094315345_S26195_I147220_left.obj",
+      "image_id": "I147220",
+      "scan_id": "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094315345_S26195_I147220_left",
+      "split": "train",
+      "subject_id": "033_S_1309",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094351315_S39276_I147222_left",
+      "filename": "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094409785_S38190_I147223_left.obj",
+      "image_id": "I147223",
+      "scan_id": "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094409785_S38190_I147223_left",
+      "split": "train",
+      "subject_id": "033_S_1309",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094428285_S46327_I147224_left",
+      "filename": "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094447192_S46303_I147225_left.obj",
+      "image_id": "I147225",
+      "scan_id": "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094447192_S46303_I147225_left",
+      "split": "train",
+      "subject_id": "033_S_1309",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_035_S_0555_MR_Hippocampal_Mask_Hi_20090701094505865_S15332_I147226_left",
+      "filename": "ADNI_035_S_0555_MR_Hippocampal_Mask_Hi_20090701094522990_S22439_I147227_left.obj",
+      "image_id": "I147227",
+      "scan_id": "ADNI_035_S_0555_MR_Hippocampal_Mask_Hi_20090701094522990_S22439_I147227_left",
+      "split": "train",
+      "subject_id": "035_S_0555",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095059124_S15805_I147246_left",
+      "filename": "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095039358_S14854_I147245_left.obj",
+      "image_id": "I147245",
+      "scan_id": "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095039358_S14854_I147245_left",
+      "split": "train",
+      "subject_id": "037_S_0501",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095118499_S24744_I147247_left",
+      "filename": "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095138390_S24751_I147248_left.obj",
+      "image_id": "I147248",
+      "scan_id": "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095138390_S24751_I147248_left",
+      "split": "train",
+      "subject_id": "037_S_0501",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095157672_S35021_I147249_left",
+      "filename": "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095220172_S35029_I147250_left.obj",
+      "image_id": "I147250",
+      "scan_id": "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095220172_S35029_I147250_left",
+      "split": "train",
+      "subject_id": "037_S_0501",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101443104_S26187_I147259_left",
+      "filename": "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101421479_S25472_I147258_left.obj",
+      "image_id": "I147258",
+      "scan_id": "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101421479_S25472_I147258_left",
+      "split": "train",
+      "subject_id": "037_S_1225",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101504011_S37852_I147260_left",
+      "filename": "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101524433_S37876_I147261_left.obj",
+      "image_id": "I147261",
+      "scan_id": "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101524433_S37876_I147261_left",
+      "split": "train",
+      "subject_id": "037_S_1225",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101545871_S45500_I147262_left",
+      "filename": "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101607824_S45505_I147263_left.obj",
+      "image_id": "I147263",
+      "scan_id": "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101607824_S45505_I147263_left",
+      "split": "train",
+      "subject_id": "037_S_1225",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20090701102020720_S25625_I147276_left",
+      "filename": "ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20080403141401816_S22884_I100441_left.obj",
+      "image_id": "I100441",
+      "scan_id": "ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20080403141401816_S22884_I100441_left",
+      "split": "val",
+      "subject_id": "051_S_1072",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20080403141421625_S34435_I100442_left",
+      "filename": "ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20090701102042423_S39333_I147277_left.obj",
+      "image_id": "I147277",
+      "scan_id": "ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20090701102042423_S39333_I147277_left",
+      "split": "val",
+      "subject_id": "051_S_1072",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_051_S_1123_MR_Hippocampal_Mask_Hi_20090701102157066_S46029_I147280_left",
+      "filename": "ADNI_051_S_1123_MR_Hippocampal_Mask_Hi_20090701102215675_S45804_I147281_left.obj",
+      "image_id": "I147281",
+      "scan_id": "ADNI_051_S_1123_MR_Hippocampal_Mask_Hi_20090701102215675_S45804_I147281_left",
+      "split": "train",
+      "subject_id": "051_S_1123",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102252879_S25285_I147283_left",
+      "filename": "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102235019_S24089_I147282_left.obj",
+      "image_id": "I147282",
+      "scan_id": "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102235019_S24089_I147282_left",
+      "split": "train",
+      "subject_id": "051_S_1131",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102311520_S36810_I147284_left",
+      "filename": "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102330036_S35110_I147285_left.obj",
+      "image_id": "I147285",
+      "scan_id": "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102330036_S35110_I147285_left",
+      "split": "train",
+      "subject_id": "051_S_1131",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102348802_S44812_I147286_left",
+      "filename": "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102406443_S45357_I147287_left.obj",
+      "image_id": "I147287",
+      "scan_id": "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102406443_S45357_I147287_left",
+      "split": "train",
+      "subject_id": "051_S_1131",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102756260_S27259_I147297_left",
+      "filename": "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102735588_S25829_I147296_left.obj",
+      "image_id": "I147296",
+      "scan_id": "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102735588_S25829_I147296_left",
+      "split": "train",
+      "subject_id": "052_S_1250",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102818479_S38680_I147298_left",
+      "filename": "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102839370_S45105_I147299_left.obj",
+      "image_id": "I147299",
+      "scan_id": "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102839370_S45105_I147299_left",
+      "split": "train",
+      "subject_id": "052_S_1250",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102859449_S44877_I147300_left",
+      "filename": "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102918918_S44924_I147301_left.obj",
+      "image_id": "I147301",
+      "scan_id": "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102918918_S44924_I147301_left",
+      "split": "train",
+      "subject_id": "052_S_1250",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20090701110038001_S15130_I147327_left",
+      "filename": "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20080229101802365_S12592_I94216_left.obj",
+      "image_id": "I94216",
+      "scan_id": "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20080229101802365_S12592_I94216_left",
+      "split": "train",
+      "subject_id": "067_S_0290",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20080229101826912_S26711_I94217_left",
+      "filename": "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20090701110059048_S26390_I147328_left.obj",
+      "image_id": "I147328",
+      "scan_id": "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20090701110059048_S26390_I147328_left",
+      "split": "train",
+      "subject_id": "067_S_0290",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20080229101849819_S33523_I94218_left",
+      "filename": "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20090701110119095_S33684_I147329_left.obj",
+      "image_id": "I147329",
+      "scan_id": "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20090701110119095_S33684_I147329_left",
+      "split": "train",
+      "subject_id": "067_S_0290",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110743321_S28405_I147346_left",
+      "filename": "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110722133_S27865_I147345_left.obj",
+      "image_id": "I147345",
+      "scan_id": "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110722133_S27865_I147345_left",
+      "split": "train",
+      "subject_id": "094_S_1293",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110804697_S39310_I147347_left",
+      "filename": "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110827400_S41239_I147348_left.obj",
+      "image_id": "I147348",
+      "scan_id": "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110827400_S41239_I147348_left",
+      "split": "train",
+      "subject_id": "094_S_1293",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110901464_S46532_I147349_left",
+      "filename": "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110927902_S47196_I147350_left.obj",
+      "image_id": "I147350",
+      "scan_id": "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110927902_S47196_I147350_left",
+      "split": "train",
+      "subject_id": "094_S_1293",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115020839_S15735_I147397_left",
+      "filename": "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701114958354_S14502_I147396_left.obj",
+      "image_id": "I147396",
+      "scan_id": "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701114958354_S14502_I147396_left",
+      "split": "test",
+      "subject_id": "116_S_0382",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115041558_S23233_I147398_left",
+      "filename": "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115103871_S23227_I147400_left.obj",
+      "image_id": "I147400",
+      "scan_id": "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115103871_S23227_I147400_left",
+      "split": "test",
+      "subject_id": "116_S_0382",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115124715_S33930_I147401_left",
+      "filename": "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115147107_S33693_I147403_left.obj",
+      "image_id": "I147403",
+      "scan_id": "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115147107_S33693_I147403_left",
+      "split": "test",
+      "subject_id": "116_S_0382",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20090701115207966_S16454_I147404_left",
+      "filename": "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20080303132706944_S15287_I95072_left.obj",
+      "image_id": "I95072",
+      "scan_id": "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20080303132706944_S15287_I95072_left",
+      "split": "train",
+      "subject_id": "116_S_0392",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20080303132727199_S23484_I95073_left",
+      "filename": "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20090701115228873_S23631_I147405_left.obj",
+      "image_id": "I147405",
+      "scan_id": "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20090701115228873_S23631_I147405_left",
+      "split": "train",
+      "subject_id": "116_S_0392",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20080303132745296_S33700_I95074_left",
+      "filename": "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20090701115250186_S33703_I147407_left.obj",
+      "image_id": "I147407",
+      "scan_id": "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20090701115250186_S33703_I147407_left",
+      "split": "train",
+      "subject_id": "116_S_0392",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20090701115313405_S17729_I147408_left",
+      "filename": "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20080303132801091_S15138_I95075_left.obj",
+      "image_id": "I95075",
+      "scan_id": "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20080303132801091_S15138_I95075_left",
+      "split": "test",
+      "subject_id": "116_S_0487",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20080303132819588_S24465_I95076_left",
+      "filename": "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20090701115335390_S24460_I147410_left.obj",
+      "image_id": "I147410",
+      "scan_id": "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20090701115335390_S24460_I147410_left",
+      "split": "test",
+      "subject_id": "116_S_0487",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20080303133919403_S33710_I95086_left",
+      "filename": "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20090701115356593_S33717_I147411_left.obj",
+      "image_id": "I147411",
+      "scan_id": "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20090701115356593_S33717_I147411_left",
+      "split": "test",
+      "subject_id": "116_S_0487",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0649_MR_Hippocampal_Mask_Hi_20080303134006883_S37130_I95089_left",
+      "filename": "ADNI_116_S_0649_MR_Hippocampal_Mask_Hi_20090701115525579_S42362_I147416_left.obj",
+      "image_id": "I147416",
+      "scan_id": "ADNI_116_S_0649_MR_Hippocampal_Mask_Hi_20090701115525579_S42362_I147416_left",
+      "split": "train",
+      "subject_id": "116_S_0649",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20090701115548080_S18680_I147418_left",
+      "filename": "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20080303134115959_S18066_I95094_left.obj",
+      "image_id": "I95094",
+      "scan_id": "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20080303134115959_S18066_I95094_left",
+      "split": "train",
+      "subject_id": "116_S_0752",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20080303134134603_S26816_I95095_left",
+      "filename": "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20090701115622487_S26819_I147419_left.obj",
+      "image_id": "I147419",
+      "scan_id": "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20090701115622487_S26819_I147419_left",
+      "split": "train",
+      "subject_id": "116_S_0752",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20080303134150543_S37126_I95096_left",
+      "filename": "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20090701115644003_S42375_I147421_left.obj",
+      "image_id": "I147421",
+      "scan_id": "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20090701115644003_S42375_I147421_left",
+      "split": "train",
+      "subject_id": "116_S_0752",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115834552_S27150_I147427_left",
+      "filename": "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115812130_S25756_I147426_left.obj",
+      "image_id": "I147426",
+      "scan_id": "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115812130_S25756_I147426_left",
+      "split": "train",
+      "subject_id": "116_S_1232",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115855255_S36796_I147429_left",
+      "filename": "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115916818_S36801_I147430_left.obj",
+      "image_id": "I147430",
+      "scan_id": "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115916818_S36801_I147430_left",
+      "split": "train",
+      "subject_id": "116_S_1232",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115937569_S45139_I147432_left",
+      "filename": "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701120000507_S45145_I147433_left.obj",
+      "image_id": "I147433",
+      "scan_id": "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701120000507_S45145_I147433_left",
+      "split": "train",
+      "subject_id": "116_S_1232",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120149509_S27351_I147440_left",
+      "filename": "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120127821_S26084_I147439_left.obj",
+      "image_id": "I147439",
+      "scan_id": "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120127821_S26084_I147439_left",
+      "split": "train",
+      "subject_id": "116_S_1249",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120209978_S38244_I147441_left",
+      "filename": "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120231853_S38250_I147443_left.obj",
+      "image_id": "I147443",
+      "scan_id": "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120231853_S38250_I147443_left",
+      "split": "train",
+      "subject_id": "116_S_1249",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120252401_S45480_I147444_left",
+      "filename": "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120314167_S45487_I147445_left.obj",
+      "image_id": "I147445",
+      "scan_id": "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120314167_S45487_I147445_left",
+      "split": "train",
+      "subject_id": "116_S_1249",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20090701120549591_S17816_I147459_left",
+      "filename": "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20080303134207124_S17191_I95097_left.obj",
+      "image_id": "I95097",
+      "scan_id": "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20080303134207124_S17191_I95097_left",
+      "split": "train",
+      "subject_id": "126_S_0606",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20080303134223330_S25770_I95098_left",
+      "filename": "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20090701120611654_S25749_I147460_left.obj",
+      "image_id": "I147460",
+      "scan_id": "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20090701120611654_S25749_I147460_left",
+      "split": "train",
+      "subject_id": "126_S_0606",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20080303134242678_S36749_I95099_left",
+      "filename": "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20090701120633389_S36584_I147462_left.obj",
+      "image_id": "I147462",
+      "scan_id": "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20090701120633389_S36584_I147462_left",
+      "split": "train",
+      "subject_id": "126_S_0606",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20090701121035613_S13858_I147473_left",
+      "filename": "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20080403164034970_S12419_I100530_left.obj",
+      "image_id": "I100530",
+      "scan_id": "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20080403164034970_S12419_I100530_left",
+      "split": "train",
+      "subject_id": "127_S_0260",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20080403164057922_S21865_I100531_left",
+      "filename": "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20090701121057566_S21836_I147474_left.obj",
+      "image_id": "I147474",
+      "scan_id": "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20090701121057566_S21836_I147474_left",
+      "split": "train",
+      "subject_id": "127_S_0260",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20080403164119373_S31942_I100532_left",
+      "filename": "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20090701121119020_S31931_I147475_left.obj",
+      "image_id": "I147475",
+      "scan_id": "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20090701121119020_S31931_I147475_left",
+      "split": "train",
+      "subject_id": "127_S_0260",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20090701121140879_S14896_I147476_left",
+      "filename": "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20080403164141106_S13200_I100533_left.obj",
+      "image_id": "I100533",
+      "scan_id": "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20080403164141106_S13200_I100533_left",
+      "split": "train",
+      "subject_id": "127_S_0393",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20080403164203198_S22874_I100534_left",
+      "filename": "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20090701121202520_S22866_I147477_left.obj",
+      "image_id": "I147477",
+      "scan_id": "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20090701121202520_S22866_I147477_left",
+      "split": "train",
+      "subject_id": "127_S_0393",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20080403164225009_S33202_I100535_left",
+      "filename": "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20090701121224365_S33211_I147478_left.obj",
+      "image_id": "I147478",
+      "scan_id": "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20090701121224365_S33211_I147478_left",
+      "split": "train",
+      "subject_id": "127_S_0393",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20090701121246271_S15986_I147479_left",
+      "filename": "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20080303135116097_S15473_I95124_left.obj",
+      "image_id": "I95124",
+      "scan_id": "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20080303135116097_S15473_I95124_left",
+      "split": "train",
+      "subject_id": "127_S_0622",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20080303135132085_S24014_I95125_left",
+      "filename": "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20090701121308303_S23999_I147481_left.obj",
+      "image_id": "I147481",
+      "scan_id": "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20090701121308303_S23999_I147481_left",
+      "split": "train",
+      "subject_id": "127_S_0622",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20080303135150913_S34161_I95126_left",
+      "filename": "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20090701121330210_S34177_I147483_left.obj",
+      "image_id": "I147483",
+      "scan_id": "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20090701121330210_S34177_I147483_left",
+      "split": "train",
+      "subject_id": "127_S_0622",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20090701121352398_S22284_I147490_left",
+      "filename": "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20080303135259959_S19874_I95130_left.obj",
+      "image_id": "I95130",
+      "scan_id": "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20080303135259959_S19874_I95130_left",
+      "split": "train",
+      "subject_id": "127_S_0844",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20080303145425634_S32360_I95142_left",
+      "filename": "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20090701121414445_S32353_I147495_left.obj",
+      "image_id": "I147495",
+      "scan_id": "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20090701121414445_S32353_I147495_left",
+      "split": "train",
+      "subject_id": "127_S_0844",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20080328105840385_S42000_I99762_left",
+      "filename": "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20090701121436852_S42006_I147501_left.obj",
+      "image_id": "I147501",
+      "scan_id": "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20090701121436852_S42006_I147501_left",
+      "split": "train",
+      "subject_id": "127_S_0844",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135413169_S15223_I147607_left",
+      "filename": "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135337747_S13976_I147606_left.obj",
+      "image_id": "I147606",
+      "scan_id": "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135337747_S13976_I147606_left",
+      "split": "train",
+      "subject_id": "131_S_0457",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135447076_S23386_I147608_left",
+      "filename": "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135522390_S23067_I147609_left.obj",
+      "image_id": "I147609",
+      "scan_id": "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135522390_S23067_I147609_left",
+      "split": "train",
+      "subject_id": "131_S_0457",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135557843_S35326_I147610_left",
+      "filename": "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135631438_S35335_I147611_left.obj",
+      "image_id": "I147611",
+      "scan_id": "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135631438_S35335_I147611_left",
+      "split": "train",
+      "subject_id": "131_S_0457",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135741502_S29824_I147613_left",
+      "filename": "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135706423_S26899_I147612_left.obj",
+      "image_id": "I147612",
+      "scan_id": "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135706423_S26899_I147612_left",
+      "split": "train",
+      "subject_id": "131_S_1301",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135816877_S40835_I147614_left",
+      "filename": "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135852409_S40855_I147615_left.obj",
+      "image_id": "I147615",
+      "scan_id": "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135852409_S40855_I147615_left",
+      "split": "train",
+      "subject_id": "131_S_1301",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135926629_S47966_I147616_left",
+      "filename": "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701140001614_S47426_I147617_left.obj",
+      "image_id": "I147617",
+      "scan_id": "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701140001614_S47426_I147617_left",
+      "split": "train",
+      "subject_id": "131_S_1301",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20090702082119059_S27659_I147674_left",
+      "filename": "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20080401153423871_S16608_I100071_left.obj",
+      "image_id": "I100071",
+      "scan_id": "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20080401153423871_S16608_I100071_left",
+      "split": "train",
+      "subject_id": "133_S_0638",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20080401153517247_S27348_I100072_left",
+      "filename": "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20090702082148669_S27382_I147675_left.obj",
+      "image_id": "I147675",
+      "scan_id": "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20090702082148669_S27382_I147675_left",
+      "split": "train",
+      "subject_id": "133_S_0638",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20080401153544138_S39021_I100073_left",
+      "filename": "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20090702082211185_S38828_I147676_left.obj",
+      "image_id": "I147676",
+      "scan_id": "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20090702082211185_S38828_I147676_left",
+      "split": "train",
+      "subject_id": "133_S_0638",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082250842_S23073_I147678_left",
+      "filename": "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082230467_S18620_I147677_left.obj",
+      "image_id": "I147677",
+      "scan_id": "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082230467_S18620_I147677_left",
+      "split": "test",
+      "subject_id": "133_S_0727",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082310358_S28176_I147679_left",
+      "filename": "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082332421_S28065_I147680_left.obj",
+      "image_id": "I147680",
+      "scan_id": "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082332421_S28065_I147680_left",
+      "split": "test",
+      "subject_id": "133_S_0727",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082353453_S39528_I147681_left",
+      "filename": "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082414438_S39434_I147682_left.obj",
+      "image_id": "I147682",
+      "scan_id": "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082414438_S39434_I147682_left",
+      "split": "test",
+      "subject_id": "133_S_0727",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702082454360_S20335_I147684_left",
+      "filename": "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702082433704_S18575_I147683_left.obj",
+      "image_id": "I147683",
+      "scan_id": "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702082433704_S18575_I147683_left",
+      "split": "train",
+      "subject_id": "133_S_0771",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083143431_S29296_I147685_left",
+      "filename": "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083206197_S29355_I147686_left.obj",
+      "image_id": "I147686",
+      "scan_id": "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083206197_S29355_I147686_left",
+      "split": "train",
+      "subject_id": "133_S_0771",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083227603_S41411_I147687_left",
+      "filename": "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083249323_S41278_I147688_left.obj",
+      "image_id": "I147688",
+      "scan_id": "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083249323_S41278_I147688_left",
+      "split": "train",
+      "subject_id": "133_S_0771",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083331386_S19279_I147690_left",
+      "filename": "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083309729_S18306_I147689_left.obj",
+      "image_id": "I147689",
+      "scan_id": "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083309729_S18306_I147689_left",
+      "split": "train",
+      "subject_id": "133_S_0792",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083352183_S29222_I147691_left",
+      "filename": "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083415668_S28469_I147692_left.obj",
+      "image_id": "I147692",
+      "scan_id": "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083415668_S28469_I147692_left",
+      "split": "train",
+      "subject_id": "133_S_0792",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083437168_S39994_I147693_left",
+      "filename": "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083459091_S39943_I147694_left.obj",
+      "image_id": "I147694",
+      "scan_id": "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083459091_S39943_I147694_left",
+      "split": "train",
+      "subject_id": "133_S_0792",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20090702083521044_S20948_I147695_left",
+      "filename": "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20080403165345149_S19884_I100566_left.obj",
+      "image_id": "I100566",
+      "scan_id": "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20080403165345149_S19884_I100566_left",
+      "split": "train",
+      "subject_id": "133_S_0912",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20080403165407569_S30156_I100567_left",
+      "filename": "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20090702083547373_S29919_I147696_left.obj",
+      "image_id": "I147696",
+      "scan_id": "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20090702083547373_S29919_I147696_left",
+      "split": "train",
+      "subject_id": "133_S_0912",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20080404081952913_S42205_I100621_left",
+      "filename": "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20090702083611233_S42194_I147697_left.obj",
+      "image_id": "I147697",
+      "scan_id": "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20090702083611233_S42194_I147697_left",
+      "split": "train",
+      "subject_id": "133_S_0912",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702083947065_S25256_I147705_left",
+      "filename": "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702083922049_S24672_I147704_left.obj",
+      "image_id": "I147704",
+      "scan_id": "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702083922049_S24672_I147704_left",
+      "split": "train",
+      "subject_id": "133_S_1170",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084011815_S36669_I147706_left",
+      "filename": "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084037535_S36563_I147707_left.obj",
+      "image_id": "I147707",
+      "scan_id": "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084037535_S36563_I147707_left",
+      "split": "train",
+      "subject_id": "133_S_1170",
+      "visit_label_raw": "m06",
+      "visit_month_from_label": 6
+    },
+    {
+      "drop_reason": "duplicate_visit_replaced_by:ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084102707_S44696_I147708_left",
+      "filename": "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084127926_S45064_I147709_left.obj",
+      "image_id": "I147709",
+      "scan_id": "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084127926_S45064_I147709_left",
+      "split": "train",
+      "subject_id": "133_S_1170",
+      "visit_label_raw": "m12",
+      "visit_month_from_label": 12
+    },
+    {
+      "drop_reason": "subject_has_fewer_than_2_clean_visits",
+      "filename": "ADNI_141_S_0852_MR_Hippocampal_Mask_Hi_20080404082609561_S19395_I100637_left.obj",
+      "image_id": "I100637",
+      "scan_id": "ADNI_141_S_0852_MR_Hippocampal_Mask_Hi_20080404082609561_S19395_I100637_left",
+      "split": "train",
+      "subject_id": "141_S_0852",
+      "visit_label_raw": "sc",
+      "visit_month_from_label": 0
+    }
+  ],
+  "duplicate_visit_groups": [
+    {
+      "kept_scan_id": "ADNI_002_S_0954_MR_SNT_hippocampal_voluming_Hi_20071218151223946_S19979_I85433_left",
+      "scan_ids": [
+        "ADNI_002_S_0954_MR_SNT_hippocampal_voluming_Hi_20071218151223946_S19979_I85433_left",
+        "ADNI_002_S_0954_MR_Hippocampal_Mask_Hi_20090630133510903_S19978_I146881_left"
+      ],
+      "subject_id": "002_S_0954",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20080221135418377_S13664_I91387_left",
+      "scan_ids": [
+        "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20080221135418377_S13664_I91387_left",
+        "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20090630133725919_S12599_I146890_left"
+      ],
+      "subject_id": "005_S_0324",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20080221135436253_S21628_I91388_left",
+      "scan_ids": [
+        "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20080221135436253_S21628_I91388_left",
+        "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20090630133740466_S22465_I146891_left"
+      ],
+      "subject_id": "005_S_0324",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20080221135452191_S31973_I91389_left",
+      "scan_ids": [
+        "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20080221135452191_S31973_I91389_left",
+        "ADNI_005_S_0324_MR_Hippocampal_Mask_Hi_20090630133755169_S31698_I146892_left"
+      ],
+      "subject_id": "005_S_0324",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20090630133809685_S15928_I146893_left",
+      "scan_ids": [
+        "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20090630133809685_S15928_I146893_left",
+        "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20080228121253429_S15527_I93436_left"
+      ],
+      "subject_id": "005_S_0553",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20080228121308867_S24999_I93438_left",
+      "scan_ids": [
+        "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20080228121308867_S24999_I93438_left",
+        "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20090630133824794_S24693_I146894_left"
+      ],
+      "subject_id": "005_S_0553",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20080228121323586_S36818_I93439_left",
+      "scan_ids": [
+        "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20080228121323586_S36818_I93439_left",
+        "ADNI_005_S_0553_MR_Hippocampal_Mask_Hi_20090630133841357_S33606_I146895_left"
+      ],
+      "subject_id": "005_S_0553",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_005_S_0572_MR_SNT_hippocampal_voluming_Hi_20071218151239026_S17494_I85434_left",
+      "scan_ids": [
+        "ADNI_005_S_0572_MR_SNT_hippocampal_voluming_Hi_20071218151239026_S17494_I85434_left",
+        "ADNI_005_S_0572_MR_Hippocampal_Mask_Hi_20080228121338602_S15709_I93441_left"
+      ],
+      "subject_id": "005_S_0572",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140507492_S19117_I146911_left",
+      "scan_ids": [
+        "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140507492_S19117_I146911_left",
+        "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140451289_S18390_I146910_left"
+      ],
+      "subject_id": "005_S_0814",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140523977_S29098_I146912_left",
+      "scan_ids": [
+        "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140523977_S29098_I146912_left",
+        "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140541117_S29396_I146913_left"
+      ],
+      "subject_id": "005_S_0814",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140557086_S41350_I146914_left",
+      "scan_ids": [
+        "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140557086_S41350_I146914_left",
+        "ADNI_005_S_0814_MR_Hippocampal_Mask_Hi_20090630140613008_S43028_I146915_left"
+      ],
+      "subject_id": "005_S_0814",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141923607_S25703_I146935_left",
+      "scan_ids": [
+        "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141923607_S25703_I146935_left",
+        "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141903576_S25173_I146934_left"
+      ],
+      "subject_id": "007_S_1206",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141939779_S38141_I146936_left",
+      "scan_ids": [
+        "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141939779_S38141_I146936_left",
+        "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630141956092_S38135_I146937_left"
+      ],
+      "subject_id": "007_S_1206",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630142012498_S46085_I146938_left",
+      "scan_ids": [
+        "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630142012498_S46085_I146938_left",
+        "ADNI_007_S_1206_MR_Hippocampal_Mask_Hi_20090630142035092_S46079_I146939_left"
+      ],
+      "subject_id": "007_S_1206",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142107686_S26090_I146941_left",
+      "scan_ids": [
+        "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142107686_S26090_I146941_left",
+        "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142051514_S25402_I146940_left"
+      ],
+      "subject_id": "007_S_1222",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142124202_S38925_I146942_left",
+      "scan_ids": [
+        "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142124202_S38925_I146942_left",
+        "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142139405_S38918_I146943_left"
+      ],
+      "subject_id": "007_S_1222",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142154733_S46092_I146944_left",
+      "scan_ids": [
+        "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142154733_S46092_I146944_left",
+        "ADNI_007_S_1222_MR_Hippocampal_Mask_Hi_20090630142210233_S46098_I146945_left"
+      ],
+      "subject_id": "007_S_1222",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20090630143047408_S23101_I146965_left",
+      "scan_ids": [
+        "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20090630143047408_S23101_I146965_left",
+        "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20080228122813572_S21984_I93539_left"
+      ],
+      "subject_id": "013_S_1035",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20080228122827384_S32794_I93540_left",
+      "scan_ids": [
+        "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20080228122827384_S32794_I93540_left",
+        "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20090630143102502_S32816_I146966_left"
+      ],
+      "subject_id": "013_S_1035",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20080228122841275_S42697_I93541_left",
+      "scan_ids": [
+        "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20080228122841275_S42697_I93541_left",
+        "ADNI_013_S_1035_MR_Hippocampal_Mask_Hi_20090630143118471_S42888_I146967_left"
+      ],
+      "subject_id": "013_S_1035",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144132459_S25222_I146990_left",
+      "scan_ids": [
+        "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144132459_S25222_I146990_left",
+        "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630143637426_S23327_I146989_left"
+      ],
+      "subject_id": "016_S_1117",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144149897_S41507_I146991_left",
+      "scan_ids": [
+        "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144149897_S41507_I146991_left",
+        "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144210288_S37166_I146992_left"
+      ],
+      "subject_id": "016_S_1117",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144227007_S44122_I146993_left",
+      "scan_ids": [
+        "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144227007_S44122_I146993_left",
+        "ADNI_016_S_1117_MR_Hippocampal_Mask_Hi_20090630144241397_S44329_I146994_left"
+      ],
+      "subject_id": "016_S_1117",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144314272_S25229_I146996_left",
+      "scan_ids": [
+        "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144314272_S25229_I146996_left",
+        "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144258976_S23742_I146995_left"
+      ],
+      "subject_id": "016_S_1121",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144328929_S36294_I146997_left",
+      "scan_ids": [
+        "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144328929_S36294_I146997_left",
+        "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144343179_S36309_I146998_left"
+      ],
+      "subject_id": "016_S_1121",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144357945_S43926_I146999_left",
+      "scan_ids": [
+        "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144357945_S43926_I146999_left",
+        "ADNI_016_S_1121_MR_Hippocampal_Mask_Hi_20090630144411476_S44323_I147000_left"
+      ],
+      "subject_id": "016_S_1121",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144450867_S29365_I147002_left",
+      "scan_ids": [
+        "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144450867_S29365_I147002_left",
+        "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144426679_S27431_I147001_left"
+      ],
+      "subject_id": "016_S_1326",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144506554_S40723_I147003_left",
+      "scan_ids": [
+        "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144506554_S40723_I147003_left",
+        "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144520992_S40985_I147004_left"
+      ],
+      "subject_id": "016_S_1326",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144536852_S47634_I147005_left",
+      "scan_ids": [
+        "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144536852_S47634_I147005_left",
+        "ADNI_016_S_1326_MR_Hippocampal_Mask_Hi_20090630144550508_S47894_I147006_left"
+      ],
+      "subject_id": "016_S_1326",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144709461_S13439_I147011_left",
+      "scan_ids": [
+        "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144709461_S13439_I147011_left",
+        "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144653649_S12756_I147010_left"
+      ],
+      "subject_id": "021_S_0332",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144724493_S20322_I147012_left",
+      "scan_ids": [
+        "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144724493_S20322_I147012_left",
+        "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144740305_S20377_I147013_left"
+      ],
+      "subject_id": "021_S_0332",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144754696_S30699_I147014_left",
+      "scan_ids": [
+        "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144754696_S30699_I147014_left",
+        "ADNI_021_S_0332_MR_Hippocampal_Mask_Hi_20090630144810478_S37147_I147015_left"
+      ],
+      "subject_id": "021_S_0332",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20090630145720747_S10009_I147028_left",
+      "scan_ids": [
+        "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20090630145720747_S10009_I147028_left",
+        "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20080228130604430_S9785_I93656_left"
+      ],
+      "subject_id": "023_S_0031",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20080228130622915_S13244_I93657_left",
+      "scan_ids": [
+        "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20080228130622915_S13244_I93657_left",
+        "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20090630145739184_S13261_I147029_left"
+      ],
+      "subject_id": "023_S_0031",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20080228130639274_S21467_I93658_left",
+      "scan_ids": [
+        "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20080228130639274_S21467_I93658_left",
+        "ADNI_023_S_0031_MR_Hippocampal_Mask_Hi_20090630145757028_S21475_I147030_left"
+      ],
+      "subject_id": "023_S_0031",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20090630145813700_S10633_I147031_left",
+      "scan_ids": [
+        "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20090630145813700_S10633_I147031_left",
+        "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20080403131840688_S10312_I100350_left"
+      ],
+      "subject_id": "023_S_0061",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20080403131859103_S16092_I100351_left",
+      "scan_ids": [
+        "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20080403131859103_S16092_I100351_left",
+        "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20090630145830700_S15579_I147032_left"
+      ],
+      "subject_id": "023_S_0061",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20080403131917549_S23473_I100352_left",
+      "scan_ids": [
+        "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20080403131917549_S23473_I100352_left",
+        "ADNI_023_S_0061_MR_Hippocampal_Mask_Hi_20090630145847357_S23481_I147033_left"
+      ],
+      "subject_id": "023_S_0061",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20090630145903919_S10841_I147034_left",
+      "scan_ids": [
+        "ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20090630145903919_S10841_I147034_left",
+        "ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20080403131937978_S10619_I100353_left"
+      ],
+      "subject_id": "023_S_0078",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20080403132016224_S24894_I100355_left",
+      "scan_ids": [
+        "ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20080403132016224_S24894_I100355_left",
+        "ADNI_023_S_0078_MR_Hippocampal_Mask_Hi_20090630145920919_S24992_I147035_left"
+      ],
+      "subject_id": "023_S_0078",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20090630145938794_S11490_I147036_left",
+      "scan_ids": [
+        "ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20090630145938794_S11490_I147036_left",
+        "ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20080228131006011_S11079_I93671_left"
+      ],
+      "subject_id": "023_S_0139",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20080228131039012_S26343_I93673_left",
+      "scan_ids": [
+        "ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20080228131039012_S26343_I93673_left",
+        "ADNI_023_S_0139_MR_Hippocampal_Mask_Hi_20090630150000216_S26521_I147037_left"
+      ],
+      "subject_id": "023_S_0139",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20090630150017326_S13168_I147038_left",
+      "scan_ids": [
+        "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20090630150017326_S13168_I147038_left",
+        "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20080228131144138_S12428_I93677_left"
+      ],
+      "subject_id": "023_S_0331",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20080228131201310_S19697_I93678_left",
+      "scan_ids": [
+        "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20080228131201310_S19697_I93678_left",
+        "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20090630150034498_S19679_I147039_left"
+      ],
+      "subject_id": "023_S_0331",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20080228131216935_S29574_I93679_left",
+      "scan_ids": [
+        "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20080228131216935_S29574_I93679_left",
+        "ADNI_023_S_0331_MR_Hippocampal_Mask_Hi_20090630150052545_S28331_I147040_left"
+      ],
+      "subject_id": "023_S_0331",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20080228131250717_S20393_I93681_left",
+      "scan_ids": [
+        "ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20080228131250717_S20393_I93681_left",
+        "ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20090630150108764_S20446_I147041_left"
+      ],
+      "subject_id": "023_S_0376",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20080228131306983_S28501_I93682_left",
+      "scan_ids": [
+        "ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20080228131306983_S28501_I93682_left",
+        "ADNI_023_S_0376_MR_Hippocampal_Mask_Hi_20090630150124920_S28518_I147042_left"
+      ],
+      "subject_id": "023_S_0376",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20080403132052723_S22193_I100357_left",
+      "scan_ids": [
+        "ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20080403132052723_S22193_I100357_left",
+        "ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20090630150140233_S22184_I147043_left"
+      ],
+      "subject_id": "023_S_0388",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20080403132113719_S29672_I100358_left",
+      "scan_ids": [
+        "ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20080403132113719_S29672_I100358_left",
+        "ADNI_023_S_0388_MR_Hippocampal_Mask_Hi_20090630150156936_S29861_I147044_left"
+      ],
+      "subject_id": "023_S_0388",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20080228131338859_S23951_I93684_left",
+      "scan_ids": [
+        "ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20080228131338859_S23951_I93684_left",
+        "ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20090630150212795_S23944_I147045_left"
+      ],
+      "subject_id": "023_S_0604",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20080228131355156_S33366_I93685_left",
+      "scan_ids": [
+        "ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20080228131355156_S33366_I93685_left",
+        "ADNI_023_S_0604_MR_Hippocampal_Mask_Hi_20090630150227967_S33372_I147046_left"
+      ],
+      "subject_id": "023_S_0604",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150259952_S16766_I147048_left",
+      "scan_ids": [
+        "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150259952_S16766_I147048_left",
+        "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150244499_S15820_I147047_left"
+      ],
+      "subject_id": "023_S_0625",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150316421_S27183_I147049_left",
+      "scan_ids": [
+        "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150316421_S27183_I147049_left",
+        "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150331530_S27236_I147050_left"
+      ],
+      "subject_id": "023_S_0625",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150348218_S35036_I147051_left",
+      "scan_ids": [
+        "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150348218_S35036_I147051_left",
+        "ADNI_023_S_0625_MR_Hippocampal_Mask_Hi_20090630150402546_S35062_I147052_left"
+      ],
+      "subject_id": "023_S_0625",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20090630150418437_S19523_I147053_left",
+      "scan_ids": [
+        "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20090630150418437_S19523_I147053_left",
+        "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20080403132133833_S19228_I100359_left"
+      ],
+      "subject_id": "023_S_0916",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20080403132154955_S30418_I100360_left",
+      "scan_ids": [
+        "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20080403132154955_S30418_I100360_left",
+        "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20090630150435453_S30560_I147054_left"
+      ],
+      "subject_id": "023_S_0916",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20080403132215179_S40717_I100361_left",
+      "scan_ids": [
+        "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20080403132215179_S40717_I100361_left",
+        "ADNI_023_S_0916_MR_Hippocampal_Mask_Hi_20090630150455906_S40736_I147055_left"
+      ],
+      "subject_id": "023_S_0916",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150526812_S20204_I147057_left",
+      "scan_ids": [
+        "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150526812_S20204_I147057_left",
+        "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150512422_S19740_I147056_left"
+      ],
+      "subject_id": "023_S_0963",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150542875_S29234_I147058_left",
+      "scan_ids": [
+        "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150542875_S29234_I147058_left",
+        "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630150557375_S29352_I147059_left"
+      ],
+      "subject_id": "023_S_0963",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630151203815_S41267_I147060_left",
+      "scan_ids": [
+        "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630151203815_S41267_I147060_left",
+        "ADNI_023_S_0963_MR_Hippocampal_Mask_Hi_20090630151219299_S41289_I147061_left"
+      ],
+      "subject_id": "023_S_0963",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151345055_S25153_I147066_left",
+      "scan_ids": [
+        "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151345055_S25153_I147066_left",
+        "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151330467_S24847_I147065_left"
+      ],
+      "subject_id": "023_S_1190",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151401143_S35121_I147067_left",
+      "scan_ids": [
+        "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151401143_S35121_I147067_left",
+        "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151416028_S35151_I147068_left"
+      ],
+      "subject_id": "023_S_1190",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151438714_S44381_I147069_left",
+      "scan_ids": [
+        "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151438714_S44381_I147069_left",
+        "ADNI_023_S_1190_MR_Hippocampal_Mask_Hi_20090630151456147_S44392_I147070_left"
+      ],
+      "subject_id": "023_S_1190",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151530169_S26861_I147072_left",
+      "scan_ids": [
+        "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151530169_S26861_I147072_left",
+        "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151515425_S25741_I147071_left"
+      ],
+      "subject_id": "023_S_1247",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151546539_S36782_I147073_left",
+      "scan_ids": [
+        "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151546539_S36782_I147073_left",
+        "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151601377_S36944_I147074_left"
+      ],
+      "subject_id": "023_S_1247",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151617809_S45062_I147075_left",
+      "scan_ids": [
+        "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151617809_S45062_I147075_left",
+        "ADNI_023_S_1247_MR_Hippocampal_Mask_Hi_20090630151632506_S45054_I147076_left"
+      ],
+      "subject_id": "023_S_1247",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20090630151912092_S14336_I147086_left",
+      "scan_ids": [
+        "ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20090630151912092_S14336_I147086_left",
+        "ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20080403132648663_S13072_I100374_left"
+      ],
+      "subject_id": "027_S_0307",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20080403132715890_S20691_I100375_left",
+      "scan_ids": [
+        "ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20080403132715890_S20691_I100375_left",
+        "ADNI_027_S_0307_MR_Hippocampal_Mask_Hi_20090630151927830_S20538_I147087_left"
+      ],
+      "subject_id": "027_S_0307",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20090630151943490_S14179_I147088_left",
+      "scan_ids": [
+        "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20090630151943490_S14179_I147088_left",
+        "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20080403132806942_S13717_I100377_left"
+      ],
+      "subject_id": "027_S_0403",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20080403132829513_S21484_I100378_left",
+      "scan_ids": [
+        "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20080403132829513_S21484_I100378_left",
+        "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20090630152000635_S21067_I147089_left"
+      ],
+      "subject_id": "027_S_0403",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20080403132850078_S32438_I100379_left",
+      "scan_ids": [
+        "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20080403132850078_S32438_I100379_left",
+        "ADNI_027_S_0403_MR_Hippocampal_Mask_Hi_20090630152017951_S32184_I147090_left"
+      ],
+      "subject_id": "027_S_0403",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20090630152035424_S14494_I147091_left",
+      "scan_ids": [
+        "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20090630152035424_S14494_I147091_left",
+        "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20080228140025834_S13866_I93737_left"
+      ],
+      "subject_id": "027_S_0404",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20080228140044460_S22758_I93738_left",
+      "scan_ids": [
+        "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20080228140044460_S22758_I93738_left",
+        "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20090630152053304_S22840_I147092_left"
+      ],
+      "subject_id": "027_S_0404",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20080228140103335_S32020_I93739_left",
+      "scan_ids": [
+        "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20080228140103335_S32020_I93739_left",
+        "ADNI_027_S_0404_MR_Hippocampal_Mask_Hi_20090630152110167_S32328_I147093_left"
+      ],
+      "subject_id": "027_S_0404",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20090630152217871_S19496_I147097_left",
+      "scan_ids": [
+        "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20090630152217871_S19496_I147097_left",
+        "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20080228140416917_S18760_I93753_left"
+      ],
+      "subject_id": "027_S_0835",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20080228140435902_S28808_I93754_left",
+      "scan_ids": [
+        "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20080228140435902_S28808_I93754_left",
+        "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20090630152233219_S28689_I147098_left"
+      ],
+      "subject_id": "027_S_0835",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20080228140455027_S39476_I93755_left",
+      "scan_ids": [
+        "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20080228140455027_S39476_I93755_left",
+        "ADNI_027_S_0835_MR_Hippocampal_Mask_Hi_20090630152250207_S40013_I147099_left"
+      ],
+      "subject_id": "027_S_0835",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082839074_S26054_I147137_left",
+      "scan_ids": [
+        "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082839074_S26054_I147137_left",
+        "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082822245_S25357_I147136_left"
+      ],
+      "subject_id": "027_S_1081",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082855339_S38366_I147138_left",
+      "scan_ids": [
+        "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082855339_S38366_I147138_left",
+        "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082912168_S37477_I147139_left"
+      ],
+      "subject_id": "027_S_1081",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082928590_S45308_I147140_left",
+      "scan_ids": [
+        "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082928590_S45308_I147140_left",
+        "ADNI_027_S_1081_MR_Hippocampal_Mask_Hi_20090701082947934_S45549_I147141_left"
+      ],
+      "subject_id": "027_S_1081",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20090701083004903_S23987_I147142_left",
+      "scan_ids": [
+        "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20090701083004903_S23987_I147142_left",
+        "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20080228140621091_S22938_I93765_left"
+      ],
+      "subject_id": "027_S_1082",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20080228140641138_S33129_I93771_left",
+      "scan_ids": [
+        "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20080228140641138_S33129_I93771_left",
+        "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20090701083020669_S32962_I147143_left"
+      ],
+      "subject_id": "027_S_1082",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20080228140701045_S43335_I93773_left",
+      "scan_ids": [
+        "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20080228140701045_S43335_I93773_left",
+        "ADNI_027_S_1082_MR_Hippocampal_Mask_Hi_20090701083037856_S43354_I147144_left"
+      ],
+      "subject_id": "027_S_1082",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083253717_S27297_I147152_left",
+      "scan_ids": [
+        "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083253717_S27297_I147152_left",
+        "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083236920_S26408_I147151_left"
+      ],
+      "subject_id": "027_S_1277",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083309515_S38653_I147153_left",
+      "scan_ids": [
+        "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083309515_S38653_I147153_left",
+        "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083326734_S37959_I147154_left"
+      ],
+      "subject_id": "027_S_1277",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083343437_S45870_I147155_left",
+      "scan_ids": [
+        "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083343437_S45870_I147155_left",
+        "ADNI_027_S_1277_MR_Hippocampal_Mask_Hi_20090701083400562_S45806_I147156_left"
+      ],
+      "subject_id": "027_S_1277",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083435891_S28972_I147158_left",
+      "scan_ids": [
+        "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083435891_S28972_I147158_left",
+        "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083417422_S28133_I147157_left"
+      ],
+      "subject_id": "027_S_1385",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083452844_S39646_I147159_left",
+      "scan_ids": [
+        "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083452844_S39646_I147159_left",
+        "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083510344_S40030_I147160_left"
+      ],
+      "subject_id": "027_S_1385",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083527673_S47223_I147161_left",
+      "scan_ids": [
+        "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083527673_S47223_I147161_left",
+        "ADNI_027_S_1385_MR_Hippocampal_Mask_Hi_20090701083545798_S47505_I147162_left"
+      ],
+      "subject_id": "027_S_1385",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083620783_S28276_I147164_left",
+      "scan_ids": [
+        "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083620783_S28276_I147164_left",
+        "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083603782_S28123_I147163_left"
+      ],
+      "subject_id": "027_S_1387",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083637064_S39868_I147165_left",
+      "scan_ids": [
+        "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083637064_S39868_I147165_left",
+        "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083654299_S41966_I147166_left"
+      ],
+      "subject_id": "027_S_1387",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083710611_S46909_I147167_left",
+      "scan_ids": [
+        "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083710611_S46909_I147167_left",
+        "ADNI_027_S_1387_MR_Hippocampal_Mask_Hi_20090701083727893_S47010_I147168_left"
+      ],
+      "subject_id": "027_S_1387",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_031_S_1066_MR_Hippocampal_Mask_Hi_20090701092209552_S23507_I147194_left",
+      "scan_ids": [
+        "ADNI_031_S_1066_MR_Hippocampal_Mask_Hi_20090701092209552_S23507_I147194_left",
+        "ADNI_031_S_1066_MR_Hippocampal_Mask_Hi_20090701092144036_S22389_I147193_left"
+      ],
+      "subject_id": "031_S_1066",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_033_S_1098_MR_Hippocampal_Mask_Hi_20080403135648703_S43311_I100407_left",
+      "scan_ids": [
+        "ADNI_033_S_1098_MR_Hippocampal_Mask_Hi_20080403135648703_S43311_I100407_left",
+        "ADNI_033_S_1098_MR_Hippocampal_Mask_Hi_20090701093432076_S43316_I147195_left"
+      ],
+      "subject_id": "033_S_1098",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093515770_S24168_I147197_left",
+      "scan_ids": [
+        "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093515770_S24168_I147197_left",
+        "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093454549_S22799_I147196_left"
+      ],
+      "subject_id": "033_S_1116",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093538991_S33092_I147198_left",
+      "scan_ids": [
+        "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093538991_S33092_I147198_left",
+        "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093558680_S33152_I147199_left"
+      ],
+      "subject_id": "033_S_1116",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093617853_S43249_I147200_left",
+      "scan_ids": [
+        "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093617853_S43249_I147200_left",
+        "ADNI_033_S_1116_MR_Hippocampal_Mask_Hi_20090701093637573_S43219_I147201_left"
+      ],
+      "subject_id": "033_S_1116",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093719998_S27484_I147203_left",
+      "scan_ids": [
+        "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093719998_S27484_I147203_left",
+        "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093658809_S26694_I147202_left"
+      ],
+      "subject_id": "033_S_1279",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093740671_S39264_I147204_left",
+      "scan_ids": [
+        "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093740671_S39264_I147204_left",
+        "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093801251_S38478_I147205_left"
+      ],
+      "subject_id": "033_S_1279",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093822737_S46508_I147206_left",
+      "scan_ids": [
+        "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093822737_S46508_I147206_left",
+        "ADNI_033_S_1279_MR_Hippocampal_Mask_Hi_20090701093843894_S46500_I147207_left"
+      ],
+      "subject_id": "033_S_1279",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094333908_S28071_I147221_left",
+      "scan_ids": [
+        "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094333908_S28071_I147221_left",
+        "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094315345_S26195_I147220_left"
+      ],
+      "subject_id": "033_S_1309",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094351315_S39276_I147222_left",
+      "scan_ids": [
+        "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094351315_S39276_I147222_left",
+        "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094409785_S38190_I147223_left"
+      ],
+      "subject_id": "033_S_1309",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094428285_S46327_I147224_left",
+      "scan_ids": [
+        "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094428285_S46327_I147224_left",
+        "ADNI_033_S_1309_MR_Hippocampal_Mask_Hi_20090701094447192_S46303_I147225_left"
+      ],
+      "subject_id": "033_S_1309",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_035_S_0555_MR_Hippocampal_Mask_Hi_20090701094505865_S15332_I147226_left",
+      "scan_ids": [
+        "ADNI_035_S_0555_MR_Hippocampal_Mask_Hi_20090701094505865_S15332_I147226_left",
+        "ADNI_035_S_0555_MR_Hippocampal_Mask_Hi_20090701094522990_S22439_I147227_left"
+      ],
+      "subject_id": "035_S_0555",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095059124_S15805_I147246_left",
+      "scan_ids": [
+        "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095059124_S15805_I147246_left",
+        "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095039358_S14854_I147245_left"
+      ],
+      "subject_id": "037_S_0501",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095118499_S24744_I147247_left",
+      "scan_ids": [
+        "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095118499_S24744_I147247_left",
+        "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095138390_S24751_I147248_left"
+      ],
+      "subject_id": "037_S_0501",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095157672_S35021_I147249_left",
+      "scan_ids": [
+        "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095157672_S35021_I147249_left",
+        "ADNI_037_S_0501_MR_Hippocampal_Mask_Hi_20090701095220172_S35029_I147250_left"
+      ],
+      "subject_id": "037_S_0501",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101443104_S26187_I147259_left",
+      "scan_ids": [
+        "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101443104_S26187_I147259_left",
+        "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101421479_S25472_I147258_left"
+      ],
+      "subject_id": "037_S_1225",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101504011_S37852_I147260_left",
+      "scan_ids": [
+        "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101504011_S37852_I147260_left",
+        "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101524433_S37876_I147261_left"
+      ],
+      "subject_id": "037_S_1225",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101545871_S45500_I147262_left",
+      "scan_ids": [
+        "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101545871_S45500_I147262_left",
+        "ADNI_037_S_1225_MR_Hippocampal_Mask_Hi_20090701101607824_S45505_I147263_left"
+      ],
+      "subject_id": "037_S_1225",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20090701102020720_S25625_I147276_left",
+      "scan_ids": [
+        "ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20090701102020720_S25625_I147276_left",
+        "ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20080403141401816_S22884_I100441_left"
+      ],
+      "subject_id": "051_S_1072",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20080403141421625_S34435_I100442_left",
+      "scan_ids": [
+        "ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20080403141421625_S34435_I100442_left",
+        "ADNI_051_S_1072_MR_Hippocampal_Mask_Hi_20090701102042423_S39333_I147277_left"
+      ],
+      "subject_id": "051_S_1072",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_051_S_1123_MR_Hippocampal_Mask_Hi_20090701102157066_S46029_I147280_left",
+      "scan_ids": [
+        "ADNI_051_S_1123_MR_Hippocampal_Mask_Hi_20090701102157066_S46029_I147280_left",
+        "ADNI_051_S_1123_MR_Hippocampal_Mask_Hi_20090701102215675_S45804_I147281_left"
+      ],
+      "subject_id": "051_S_1123",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102252879_S25285_I147283_left",
+      "scan_ids": [
+        "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102252879_S25285_I147283_left",
+        "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102235019_S24089_I147282_left"
+      ],
+      "subject_id": "051_S_1131",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102311520_S36810_I147284_left",
+      "scan_ids": [
+        "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102311520_S36810_I147284_left",
+        "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102330036_S35110_I147285_left"
+      ],
+      "subject_id": "051_S_1131",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102348802_S44812_I147286_left",
+      "scan_ids": [
+        "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102348802_S44812_I147286_left",
+        "ADNI_051_S_1131_MR_Hippocampal_Mask_Hi_20090701102406443_S45357_I147287_left"
+      ],
+      "subject_id": "051_S_1131",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102756260_S27259_I147297_left",
+      "scan_ids": [
+        "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102756260_S27259_I147297_left",
+        "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102735588_S25829_I147296_left"
+      ],
+      "subject_id": "052_S_1250",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102818479_S38680_I147298_left",
+      "scan_ids": [
+        "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102818479_S38680_I147298_left",
+        "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102839370_S45105_I147299_left"
+      ],
+      "subject_id": "052_S_1250",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102859449_S44877_I147300_left",
+      "scan_ids": [
+        "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102859449_S44877_I147300_left",
+        "ADNI_052_S_1250_MR_Hippocampal_Mask_Hi_20090701102918918_S44924_I147301_left"
+      ],
+      "subject_id": "052_S_1250",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20090701110038001_S15130_I147327_left",
+      "scan_ids": [
+        "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20090701110038001_S15130_I147327_left",
+        "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20080229101802365_S12592_I94216_left"
+      ],
+      "subject_id": "067_S_0290",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20080229101826912_S26711_I94217_left",
+      "scan_ids": [
+        "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20080229101826912_S26711_I94217_left",
+        "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20090701110059048_S26390_I147328_left"
+      ],
+      "subject_id": "067_S_0290",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20080229101849819_S33523_I94218_left",
+      "scan_ids": [
+        "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20080229101849819_S33523_I94218_left",
+        "ADNI_067_S_0290_MR_Hippocampal_Mask_Hi_20090701110119095_S33684_I147329_left"
+      ],
+      "subject_id": "067_S_0290",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110743321_S28405_I147346_left",
+      "scan_ids": [
+        "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110743321_S28405_I147346_left",
+        "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110722133_S27865_I147345_left"
+      ],
+      "subject_id": "094_S_1293",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110804697_S39310_I147347_left",
+      "scan_ids": [
+        "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110804697_S39310_I147347_left",
+        "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110827400_S41239_I147348_left"
+      ],
+      "subject_id": "094_S_1293",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110901464_S46532_I147349_left",
+      "scan_ids": [
+        "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110901464_S46532_I147349_left",
+        "ADNI_094_S_1293_MR_Hippocampal_Mask_Hi_20090701110927902_S47196_I147350_left"
+      ],
+      "subject_id": "094_S_1293",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115020839_S15735_I147397_left",
+      "scan_ids": [
+        "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115020839_S15735_I147397_left",
+        "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701114958354_S14502_I147396_left"
+      ],
+      "subject_id": "116_S_0382",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115041558_S23233_I147398_left",
+      "scan_ids": [
+        "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115041558_S23233_I147398_left",
+        "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115103871_S23227_I147400_left"
+      ],
+      "subject_id": "116_S_0382",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115124715_S33930_I147401_left",
+      "scan_ids": [
+        "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115124715_S33930_I147401_left",
+        "ADNI_116_S_0382_MR_Hippocampal_Mask_Hi_20090701115147107_S33693_I147403_left"
+      ],
+      "subject_id": "116_S_0382",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20090701115207966_S16454_I147404_left",
+      "scan_ids": [
+        "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20090701115207966_S16454_I147404_left",
+        "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20080303132706944_S15287_I95072_left"
+      ],
+      "subject_id": "116_S_0392",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20080303132727199_S23484_I95073_left",
+      "scan_ids": [
+        "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20080303132727199_S23484_I95073_left",
+        "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20090701115228873_S23631_I147405_left"
+      ],
+      "subject_id": "116_S_0392",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20080303132745296_S33700_I95074_left",
+      "scan_ids": [
+        "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20080303132745296_S33700_I95074_left",
+        "ADNI_116_S_0392_MR_Hippocampal_Mask_Hi_20090701115250186_S33703_I147407_left"
+      ],
+      "subject_id": "116_S_0392",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20090701115313405_S17729_I147408_left",
+      "scan_ids": [
+        "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20090701115313405_S17729_I147408_left",
+        "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20080303132801091_S15138_I95075_left"
+      ],
+      "subject_id": "116_S_0487",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20080303132819588_S24465_I95076_left",
+      "scan_ids": [
+        "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20080303132819588_S24465_I95076_left",
+        "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20090701115335390_S24460_I147410_left"
+      ],
+      "subject_id": "116_S_0487",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20080303133919403_S33710_I95086_left",
+      "scan_ids": [
+        "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20080303133919403_S33710_I95086_left",
+        "ADNI_116_S_0487_MR_Hippocampal_Mask_Hi_20090701115356593_S33717_I147411_left"
+      ],
+      "subject_id": "116_S_0487",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0649_MR_Hippocampal_Mask_Hi_20080303134006883_S37130_I95089_left",
+      "scan_ids": [
+        "ADNI_116_S_0649_MR_Hippocampal_Mask_Hi_20080303134006883_S37130_I95089_left",
+        "ADNI_116_S_0649_MR_Hippocampal_Mask_Hi_20090701115525579_S42362_I147416_left"
+      ],
+      "subject_id": "116_S_0649",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20090701115548080_S18680_I147418_left",
+      "scan_ids": [
+        "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20090701115548080_S18680_I147418_left",
+        "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20080303134115959_S18066_I95094_left"
+      ],
+      "subject_id": "116_S_0752",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20080303134134603_S26816_I95095_left",
+      "scan_ids": [
+        "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20080303134134603_S26816_I95095_left",
+        "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20090701115622487_S26819_I147419_left"
+      ],
+      "subject_id": "116_S_0752",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20080303134150543_S37126_I95096_left",
+      "scan_ids": [
+        "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20080303134150543_S37126_I95096_left",
+        "ADNI_116_S_0752_MR_Hippocampal_Mask_Hi_20090701115644003_S42375_I147421_left"
+      ],
+      "subject_id": "116_S_0752",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115834552_S27150_I147427_left",
+      "scan_ids": [
+        "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115834552_S27150_I147427_left",
+        "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115812130_S25756_I147426_left"
+      ],
+      "subject_id": "116_S_1232",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115855255_S36796_I147429_left",
+      "scan_ids": [
+        "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115855255_S36796_I147429_left",
+        "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115916818_S36801_I147430_left"
+      ],
+      "subject_id": "116_S_1232",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115937569_S45139_I147432_left",
+      "scan_ids": [
+        "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701115937569_S45139_I147432_left",
+        "ADNI_116_S_1232_MR_Hippocampal_Mask_Hi_20090701120000507_S45145_I147433_left"
+      ],
+      "subject_id": "116_S_1232",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120149509_S27351_I147440_left",
+      "scan_ids": [
+        "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120149509_S27351_I147440_left",
+        "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120127821_S26084_I147439_left"
+      ],
+      "subject_id": "116_S_1249",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120209978_S38244_I147441_left",
+      "scan_ids": [
+        "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120209978_S38244_I147441_left",
+        "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120231853_S38250_I147443_left"
+      ],
+      "subject_id": "116_S_1249",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120252401_S45480_I147444_left",
+      "scan_ids": [
+        "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120252401_S45480_I147444_left",
+        "ADNI_116_S_1249_MR_Hippocampal_Mask_Hi_20090701120314167_S45487_I147445_left"
+      ],
+      "subject_id": "116_S_1249",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20090701120549591_S17816_I147459_left",
+      "scan_ids": [
+        "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20090701120549591_S17816_I147459_left",
+        "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20080303134207124_S17191_I95097_left"
+      ],
+      "subject_id": "126_S_0606",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20080303134223330_S25770_I95098_left",
+      "scan_ids": [
+        "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20080303134223330_S25770_I95098_left",
+        "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20090701120611654_S25749_I147460_left"
+      ],
+      "subject_id": "126_S_0606",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20080303134242678_S36749_I95099_left",
+      "scan_ids": [
+        "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20080303134242678_S36749_I95099_left",
+        "ADNI_126_S_0606_MR_Hippocampal_Mask_Hi_20090701120633389_S36584_I147462_left"
+      ],
+      "subject_id": "126_S_0606",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20090701121035613_S13858_I147473_left",
+      "scan_ids": [
+        "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20090701121035613_S13858_I147473_left",
+        "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20080403164034970_S12419_I100530_left"
+      ],
+      "subject_id": "127_S_0260",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20080403164057922_S21865_I100531_left",
+      "scan_ids": [
+        "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20080403164057922_S21865_I100531_left",
+        "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20090701121057566_S21836_I147474_left"
+      ],
+      "subject_id": "127_S_0260",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20080403164119373_S31942_I100532_left",
+      "scan_ids": [
+        "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20080403164119373_S31942_I100532_left",
+        "ADNI_127_S_0260_MR_Hippocampal_Mask_Hi_20090701121119020_S31931_I147475_left"
+      ],
+      "subject_id": "127_S_0260",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20090701121140879_S14896_I147476_left",
+      "scan_ids": [
+        "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20090701121140879_S14896_I147476_left",
+        "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20080403164141106_S13200_I100533_left"
+      ],
+      "subject_id": "127_S_0393",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20080403164203198_S22874_I100534_left",
+      "scan_ids": [
+        "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20080403164203198_S22874_I100534_left",
+        "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20090701121202520_S22866_I147477_left"
+      ],
+      "subject_id": "127_S_0393",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20080403164225009_S33202_I100535_left",
+      "scan_ids": [
+        "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20080403164225009_S33202_I100535_left",
+        "ADNI_127_S_0393_MR_Hippocampal_Mask_Hi_20090701121224365_S33211_I147478_left"
+      ],
+      "subject_id": "127_S_0393",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20090701121246271_S15986_I147479_left",
+      "scan_ids": [
+        "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20090701121246271_S15986_I147479_left",
+        "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20080303135116097_S15473_I95124_left"
+      ],
+      "subject_id": "127_S_0622",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20080303135132085_S24014_I95125_left",
+      "scan_ids": [
+        "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20080303135132085_S24014_I95125_left",
+        "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20090701121308303_S23999_I147481_left"
+      ],
+      "subject_id": "127_S_0622",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20080303135150913_S34161_I95126_left",
+      "scan_ids": [
+        "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20080303135150913_S34161_I95126_left",
+        "ADNI_127_S_0622_MR_Hippocampal_Mask_Hi_20090701121330210_S34177_I147483_left"
+      ],
+      "subject_id": "127_S_0622",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20090701121352398_S22284_I147490_left",
+      "scan_ids": [
+        "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20090701121352398_S22284_I147490_left",
+        "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20080303135259959_S19874_I95130_left"
+      ],
+      "subject_id": "127_S_0844",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20080303145425634_S32360_I95142_left",
+      "scan_ids": [
+        "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20080303145425634_S32360_I95142_left",
+        "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20090701121414445_S32353_I147495_left"
+      ],
+      "subject_id": "127_S_0844",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20080328105840385_S42000_I99762_left",
+      "scan_ids": [
+        "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20080328105840385_S42000_I99762_left",
+        "ADNI_127_S_0844_MR_Hippocampal_Mask_Hi_20090701121436852_S42006_I147501_left"
+      ],
+      "subject_id": "127_S_0844",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135413169_S15223_I147607_left",
+      "scan_ids": [
+        "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135413169_S15223_I147607_left",
+        "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135337747_S13976_I147606_left"
+      ],
+      "subject_id": "131_S_0457",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135447076_S23386_I147608_left",
+      "scan_ids": [
+        "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135447076_S23386_I147608_left",
+        "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135522390_S23067_I147609_left"
+      ],
+      "subject_id": "131_S_0457",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135557843_S35326_I147610_left",
+      "scan_ids": [
+        "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135557843_S35326_I147610_left",
+        "ADNI_131_S_0457_MR_Hippocampal_Mask_Hi_20090701135631438_S35335_I147611_left"
+      ],
+      "subject_id": "131_S_0457",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135741502_S29824_I147613_left",
+      "scan_ids": [
+        "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135741502_S29824_I147613_left",
+        "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135706423_S26899_I147612_left"
+      ],
+      "subject_id": "131_S_1301",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135816877_S40835_I147614_left",
+      "scan_ids": [
+        "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135816877_S40835_I147614_left",
+        "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135852409_S40855_I147615_left"
+      ],
+      "subject_id": "131_S_1301",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135926629_S47966_I147616_left",
+      "scan_ids": [
+        "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701135926629_S47966_I147616_left",
+        "ADNI_131_S_1301_MR_Hippocampal_Mask_Hi_20090701140001614_S47426_I147617_left"
+      ],
+      "subject_id": "131_S_1301",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20090702082119059_S27659_I147674_left",
+      "scan_ids": [
+        "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20090702082119059_S27659_I147674_left",
+        "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20080401153423871_S16608_I100071_left"
+      ],
+      "subject_id": "133_S_0638",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20080401153517247_S27348_I100072_left",
+      "scan_ids": [
+        "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20080401153517247_S27348_I100072_left",
+        "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20090702082148669_S27382_I147675_left"
+      ],
+      "subject_id": "133_S_0638",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20080401153544138_S39021_I100073_left",
+      "scan_ids": [
+        "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20080401153544138_S39021_I100073_left",
+        "ADNI_133_S_0638_MR_Hippocampal_Mask_Hi_20090702082211185_S38828_I147676_left"
+      ],
+      "subject_id": "133_S_0638",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082250842_S23073_I147678_left",
+      "scan_ids": [
+        "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082250842_S23073_I147678_left",
+        "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082230467_S18620_I147677_left"
+      ],
+      "subject_id": "133_S_0727",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082310358_S28176_I147679_left",
+      "scan_ids": [
+        "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082310358_S28176_I147679_left",
+        "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082332421_S28065_I147680_left"
+      ],
+      "subject_id": "133_S_0727",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082353453_S39528_I147681_left",
+      "scan_ids": [
+        "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082353453_S39528_I147681_left",
+        "ADNI_133_S_0727_MR_Hippocampal_Mask_Hi_20090702082414438_S39434_I147682_left"
+      ],
+      "subject_id": "133_S_0727",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702082454360_S20335_I147684_left",
+      "scan_ids": [
+        "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702082454360_S20335_I147684_left",
+        "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702082433704_S18575_I147683_left"
+      ],
+      "subject_id": "133_S_0771",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083143431_S29296_I147685_left",
+      "scan_ids": [
+        "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083143431_S29296_I147685_left",
+        "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083206197_S29355_I147686_left"
+      ],
+      "subject_id": "133_S_0771",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083227603_S41411_I147687_left",
+      "scan_ids": [
+        "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083227603_S41411_I147687_left",
+        "ADNI_133_S_0771_MR_Hippocampal_Mask_Hi_20090702083249323_S41278_I147688_left"
+      ],
+      "subject_id": "133_S_0771",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083331386_S19279_I147690_left",
+      "scan_ids": [
+        "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083331386_S19279_I147690_left",
+        "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083309729_S18306_I147689_left"
+      ],
+      "subject_id": "133_S_0792",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083352183_S29222_I147691_left",
+      "scan_ids": [
+        "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083352183_S29222_I147691_left",
+        "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083415668_S28469_I147692_left"
+      ],
+      "subject_id": "133_S_0792",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083437168_S39994_I147693_left",
+      "scan_ids": [
+        "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083437168_S39994_I147693_left",
+        "ADNI_133_S_0792_MR_Hippocampal_Mask_Hi_20090702083459091_S39943_I147694_left"
+      ],
+      "subject_id": "133_S_0792",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20090702083521044_S20948_I147695_left",
+      "scan_ids": [
+        "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20090702083521044_S20948_I147695_left",
+        "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20080403165345149_S19884_I100566_left"
+      ],
+      "subject_id": "133_S_0912",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20080403165407569_S30156_I100567_left",
+      "scan_ids": [
+        "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20080403165407569_S30156_I100567_left",
+        "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20090702083547373_S29919_I147696_left"
+      ],
+      "subject_id": "133_S_0912",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20080404081952913_S42205_I100621_left",
+      "scan_ids": [
+        "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20080404081952913_S42205_I100621_left",
+        "ADNI_133_S_0912_MR_Hippocampal_Mask_Hi_20090702083611233_S42194_I147697_left"
+      ],
+      "subject_id": "133_S_0912",
+      "visit_month": 12
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702083947065_S25256_I147705_left",
+      "scan_ids": [
+        "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702083947065_S25256_I147705_left",
+        "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702083922049_S24672_I147704_left"
+      ],
+      "subject_id": "133_S_1170",
+      "visit_month": 0
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084011815_S36669_I147706_left",
+      "scan_ids": [
+        "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084011815_S36669_I147706_left",
+        "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084037535_S36563_I147707_left"
+      ],
+      "subject_id": "133_S_1170",
+      "visit_month": 6
+    },
+    {
+      "kept_scan_id": "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084102707_S44696_I147708_left",
+      "scan_ids": [
+        "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084102707_S44696_I147708_left",
+        "ADNI_133_S_1170_MR_Hippocampal_Mask_Hi_20090702084127926_S45064_I147709_left"
+      ],
+      "subject_id": "133_S_1170",
+      "visit_month": 12
+    }
+  ],
+  "inputs": {
+    "mesh_dir": "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/minimal_scaled_obj_files",
+    "metadata_csv": "/home/jakaria/ADNI/ADNI_1/adni_processed/adni_metadata_filtered.csv",
+    "min_delta_months": 3.0,
+    "sdf_dir": "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/sdf_data/SdfSamples/minimal_scaled_obj_files",
+    "split_dir": "/home/jakaria/INR/Deep3DComp/examples/splits/splits_left_hippocampus_ADNI"
+  },
+  "subjects_excluded_fewer_than_2_visits": [
+    {
+      "candidate_visit_count": 1,
+      "scan_ids": [
+        "ADNI_022_S_0219_MR_Hippocampal_Mask_Hi_20080228130227992_S12375_I93643_left"
+      ],
+      "split": "train",
+      "subject_id": "022_S_0219"
+    },
+    {
+      "candidate_visit_count": 1,
+      "scan_ids": [
+        "ADNI_031_S_0618_MR_Hippocampal_Mask_Hi_20080228141054534_S36607_I93785_left"
+      ],
+      "split": "test",
+      "subject_id": "031_S_0618"
+    },
+    {
+      "candidate_visit_count": 1,
+      "scan_ids": [
+        "ADNI_031_S_1066_MR_Hippocampal_Mask_Hi_20090701092209552_S23507_I147194_left"
+      ],
+      "split": "train",
+      "subject_id": "031_S_1066"
+    },
+    {
+      "candidate_visit_count": 1,
+      "scan_ids": [
+        "ADNI_141_S_0852_MR_Hippocampal_Mask_Hi_20080404082609561_S19395_I100637_left"
+      ],
+      "split": "train",
+      "subject_id": "141_S_0852"
+    }
+  ],
+  "warnings": [
+    {
+      "filename": "ADNI_011_S_0168_MR_Hippocampal_Mask_Hi_20090630142514984_S29769_I146957_left.obj",
+      "image_id": "I146957",
+      "type": "unknown_visit_label",
+      "visit": "uns1"
+    }
+  ]
+}

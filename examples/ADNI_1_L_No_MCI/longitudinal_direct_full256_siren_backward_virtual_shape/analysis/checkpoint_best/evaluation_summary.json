@@ -1,0 +1,23 @@
+{
+  "checkpoint": "best",
+  "checkpoint_epoch": 55,
+  "decoder_epoch": 1975,
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "pairs": 722,
+  "virtual_ratios": [
+    0.25,
+    0.5,
+    0.75
+  ],
+  "mean_model_target_sdf_l1": 0.011505922840500555,
+  "mean_no_change_target_sdf_l1": 0.012037151865274168,
+  "mean_sdf_l1_improvement": 0.0005312290247736132,
+  "model_beats_no_change_fraction": 0.817174515235457,
+  "mean_backward_virtual_latent_mse": 0.0033519840399396715,
+  "mean_future_extrapolation_cocycle_mse": 3.587726192147692e-07,
+  "future_trajectory_region_is_unvalidated": true
+}

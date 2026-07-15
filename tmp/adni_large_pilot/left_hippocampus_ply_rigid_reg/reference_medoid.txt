@@ -1,0 +1,6 @@
+LEFT HIPPOCAMPUS - RIGID REGISTRATION
+========================================================================================
+
+Reference medoid: 158_bl_left
+Registered meshes: 10
+Iterations per pair: 50

@@ -1,0 +1,34 @@
+{
+  "checkpoint": "best",
+  "checkpoint_epoch": 300,
+  "decoder_epoch": 1975,
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "pairs": 722,
+  "virtual_ratios": [
+    0.25,
+    0.5,
+    0.75
+  ],
+  "mean_model_target_sdf_l1": 0.012030492963687286,
+  "mean_no_change_target_sdf_l1": 0.012037151865274168,
+  "mean_sdf_l1_improvement": 6.658901586880975e-06,
+  "mean_displacement_magnitude_abs_error": 0.7739456837114534,
+  "model_beats_no_change_fraction": 0.9168975069252078,
+  "mean_backward_virtual_latent_mse": 0.0024220041923903425,
+  "mean_future_extrapolation_cocycle_mse": 1.4903807916838763e-11,
+  "mean_predicted_latent_zscore_p95": 1.8268477492385293,
+  "mean_predicted_speed_l2_per_normalized_age": 0.046765322647369635,
+  "future_trajectory_region_is_unvalidated": true,
+  "sequence_steps": 483,
+  "mean_sequence_rollout_sdf_l1": 0.012124753457843085,
+  "mean_sequence_no_change_sdf_l1": 0.012132351836247474,
+  "mean_sequence_rollout_improvement": 7.5983784043887635e-06,
+  "mean_sequence_displacement_magnitude_abs_error": 0.7785317685539925,
+  "sequence_rollout_beats_no_change_fraction": 0.9151138716356108,
+  "mean_sequence_cocycle_mse": 8.552327060452525e-12,
+  "mean_sequence_rollout_latent_zscore_p95": 1.8212006311732543
+}

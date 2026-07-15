@@ -1,0 +1,10 @@
+{
+  "groups": {
+    "left": {
+      "input_dir": "/home/jakaria/INR/Deep3DComp/tmp/adni_large_pilot/left_hippocampus_ply/minimal",
+      "output_dir": "/home/jakaria/INR/Deep3DComp/tmp/adni_large_pilot/left_hippocampus_ply_rigid_reg/minimal",
+      "reference_medoid": "158_bl_left",
+      "registered": 10
+    }
+  }
+}

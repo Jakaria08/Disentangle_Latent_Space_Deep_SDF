@@ -1,0 +1,23 @@
+{
+  "checks": {
+    "input_audit_status": "pass",
+    "pca_coefficient_rows": 727,
+    "pca_shapes": {
+      "components": [
+        256,
+        5874
+      ],
+      "faces": [
+        3912,
+        3
+      ],
+      "mean": [
+        5874
+      ]
+    }
+  },
+  "errors": [],
+  "stage": "pca",
+  "status": "pass",
+  "warnings": []
+}

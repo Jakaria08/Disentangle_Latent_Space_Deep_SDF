@@ -614,6 +614,8 @@ def _compute_real_scan_pair_direction_losses(
     target_sdf_data,
     clamp_min,
     clamp_max,
+    compute_reconstruction=True,
+    compute_latent=True,
 ):
     device = z_source.device
     dtype = z_source.dtype
@@ -627,16 +629,24 @@ def _compute_real_scan_pair_direction_losses(
         age_cond=target_condition,
     )
 
-    target_sdf_data = target_sdf_data.to(device=device, dtype=dtype, non_blocking=True)
-    target_xyz = target_sdf_data[:, 0:3]
-    target_sdf = target_sdf_data[:, 3].unsqueeze(1)
-    target_sdf = torch.clamp(target_sdf, float(clamp_min), float(clamp_max))
-    transported_expanded = transported.expand(target_xyz.shape[0], -1)
-    pred_sdf = decoder(torch.cat([transported_expanded, target_xyz], dim=1))
-    pred_sdf = torch.clamp(pred_sdf, float(clamp_min), float(clamp_max))
+    reconstruction_loss = None
+    if compute_reconstruction:
+        if target_sdf_data is None:
+            raise RuntimeError(
+                "target_sdf_data is required when compute_reconstruction=True"
+            )
+        target_sdf_data = target_sdf_data.to(device=device, dtype=dtype, non_blocking=True)
+        target_xyz = target_sdf_data[:, 0:3]
+        target_sdf = target_sdf_data[:, 3].unsqueeze(1)
+        target_sdf = torch.clamp(target_sdf, float(clamp_min), float(clamp_max))
+        transported_expanded = transported.expand(target_xyz.shape[0], -1)
+        pred_sdf = decoder(torch.cat([transported_expanded, target_xyz], dim=1))
+        pred_sdf = torch.clamp(pred_sdf, float(clamp_min), float(clamp_max))
+        reconstruction_loss = torch.mean(torch.abs(pred_sdf - target_sdf))
 
-    reconstruction_loss = torch.mean(torch.abs(pred_sdf - target_sdf))
-    latent_loss = torch.mean((transported - z_target) ** 2)
+    latent_loss = None
+    if compute_latent:
+        latent_loss = torch.mean((transported - z_target) ** 2)
     return reconstruction_loss, latent_loss
 
 
@@ -657,14 +667,26 @@ def _compute_real_scan_pair_batch_losses(
     use_backward,
     clamp_min,
     clamp_max,
+    compute_reconstruction=True,
+    compute_latent=True,
 ):
-    forward_rec_sum = 0.0
-    forward_latent_sum = 0.0
-    backward_rec_sum = 0.0
-    backward_latent_sum = 0.0
+    forward_rec_sum = None
+    forward_latent_sum = None
+    backward_rec_sum = None
+    backward_latent_sum = None
     forward_count = 0
     backward_count = 0
     auxiliary_sample_cache = {}
+
+    if not compute_reconstruction and not compute_latent:
+        return {
+            "forward_reconstruction": None,
+            "forward_latent": None,
+            "backward_reconstruction": None,
+            "backward_latent": None,
+            "forward_count": 0,
+            "backward_count": 0,
+        }
 
     def _samples_for_scan(scan_idx):
         scan_idx = int(scan_idx)
@@ -735,7 +757,11 @@ def _compute_real_scan_pair_batch_losses(
             )
 
             if use_forward:
-                target_sdf_data = _samples_for_scan(forward_target_idx)
+                target_sdf_data = (
+                    _samples_for_scan(forward_target_idx)
+                    if compute_reconstruction
+                    else None
+                )
                 forward_rec, forward_latent = _compute_real_scan_pair_direction_losses(
                     decoder,
                     temporal_flow,
@@ -747,13 +773,29 @@ def _compute_real_scan_pair_batch_losses(
                     target_sdf_data,
                     clamp_min,
                     clamp_max,
+                    compute_reconstruction=compute_reconstruction,
+                    compute_latent=compute_latent,
                 )
-                forward_rec_sum = forward_rec_sum + forward_rec
-                forward_latent_sum = forward_latent_sum + forward_latent
+                if forward_rec is not None:
+                    forward_rec_sum = (
+                        forward_rec
+                        if forward_rec_sum is None
+                        else forward_rec_sum + forward_rec
+                    )
+                if forward_latent is not None:
+                    forward_latent_sum = (
+                        forward_latent
+                        if forward_latent_sum is None
+                        else forward_latent_sum + forward_latent
+                    )
                 forward_count += 1
 
             if use_backward:
-                source_sdf_data = _samples_for_scan(forward_source_idx)
+                source_sdf_data = (
+                    _samples_for_scan(forward_source_idx)
+                    if compute_reconstruction
+                    else None
+                )
                 backward_rec, backward_latent = _compute_real_scan_pair_direction_losses(
                     decoder,
                     temporal_flow,
@@ -765,23 +807,43 @@ def _compute_real_scan_pair_batch_losses(
                     source_sdf_data,
                     clamp_min,
                     clamp_max,
+                    compute_reconstruction=compute_reconstruction,
+                    compute_latent=compute_latent,
                 )
-                backward_rec_sum = backward_rec_sum + backward_rec
-                backward_latent_sum = backward_latent_sum + backward_latent
+                if backward_rec is not None:
+                    backward_rec_sum = (
+                        backward_rec
+                        if backward_rec_sum is None
+                        else backward_rec_sum + backward_rec
+                    )
+                if backward_latent is not None:
+                    backward_latent_sum = (
+                        backward_latent
+                        if backward_latent_sum is None
+                        else backward_latent_sum + backward_latent
+                    )
                 backward_count += 1
 
     return {
         "forward_reconstruction": (
-            forward_rec_sum / forward_count if forward_count > 0 else None
+            forward_rec_sum / forward_count
+            if (forward_count > 0 and forward_rec_sum is not None)
+            else None
         ),
         "forward_latent": (
-            forward_latent_sum / forward_count if forward_count > 0 else None
+            forward_latent_sum / forward_count
+            if (forward_count > 0 and forward_latent_sum is not None)
+            else None
         ),
         "backward_reconstruction": (
-            backward_rec_sum / backward_count if backward_count > 0 else None
+            backward_rec_sum / backward_count
+            if (backward_count > 0 and backward_rec_sum is not None)
+            else None
         ),
         "backward_latent": (
-            backward_latent_sum / backward_count if backward_count > 0 else None
+            backward_latent_sum / backward_count
+            if (backward_count > 0 and backward_latent_sum is not None)
+            else None
         ),
         "forward_count": forward_count,
         "backward_count": backward_count,
@@ -803,7 +865,8 @@ def _parse_subject_and_timepoint(shape_name):
     raise RuntimeError(
         f"Could not parse sid/tp from shape name '{shape_name}'. "
         "Supported patterns are Starmen-style '__sid-0001__tp-03__' "
-        "and Torus-style 'ID_000_t0'."
+        "and Torus-style 'ID_000_t0'. Alternatively provide "
+        "LongitudinalSubjectKey/LongitudinalTimeMetadataFile metadata."
     )
 
 
@@ -812,29 +875,110 @@ def build_longitudinal_metadata(
     time_normalization_mode,
     scan_to_time_map=None,
     time_key_name="time",
+    scan_to_subject_map=None,
+    subject_key_name="subject_id",
 ):
     subject_ids = []
     timepoints = []
     missing_time = []
+    missing_subject = []
     for fpath in npyfiles:
         base = os.path.splitext(os.path.basename(fpath))[0]
-        sid, tp = _parse_subject_and_timepoint(base)
+        sid = None
+        tp = None
+        parse_error = None
+        try:
+            sid_parsed, tp_parsed = _parse_subject_and_timepoint(base)
+        except RuntimeError as exc:
+            sid_parsed = None
+            tp_parsed = None
+            parse_error = exc
+
+        if scan_to_subject_map is not None:
+            sid = scan_to_subject_map.get(base, None)
+            if sid is None:
+                missing_subject.append(base)
+                sid = sid_parsed
+            else:
+                sid = str(sid)
+        else:
+            sid = sid_parsed
+
+        if sid is None:
+            if parse_error is not None:
+                raise RuntimeError(
+                    f"Could not determine longitudinal subject for scan '{base}'. "
+                    f"Provide metadata key '{subject_key_name}' or use a supported filename pattern. "
+                    f"Original parse error: {parse_error}"
+                )
+            raise RuntimeError(
+                f"Could not determine longitudinal subject for scan '{base}'. "
+                f"Provide metadata key '{subject_key_name}'."
+            )
+
         subject_ids.append(sid)
         if scan_to_time_map is not None:
             tval = scan_to_time_map.get(base, None)
             if tval is None:
                 missing_time.append(base)
-                timepoints.append(float(tp))
+                if tp_parsed is not None:
+                    timepoints.append(float(tp_parsed))
+                else:
+                    if parse_error is not None:
+                        raise RuntimeError(
+                            f"Could not determine longitudinal time for scan '{base}'. "
+                            f"Provide metadata key '{time_key_name}' or use a supported filename pattern. "
+                            f"Original parse error: {parse_error}"
+                        )
+                    raise RuntimeError(
+                        f"Could not determine longitudinal time for scan '{base}'. "
+                        f"Provide metadata key '{time_key_name}'."
+                    )
             else:
                 timepoints.append(float(tval))
         else:
-            timepoints.append(float(tp))
+            if tp_parsed is None:
+                if parse_error is not None:
+                    raise RuntimeError(
+                        f"Could not determine longitudinal time for scan '{base}'. "
+                        f"Provide metadata key '{time_key_name}' or use a supported filename pattern. "
+                        f"Original parse error: {parse_error}"
+                    )
+                raise RuntimeError(
+                    f"Could not determine longitudinal time for scan '{base}'. "
+                    f"Provide metadata key '{time_key_name}'."
+                )
+            timepoints.append(float(tp_parsed))
+
+    if scan_to_subject_map is not None and missing_subject:
+        preview = ", ".join(missing_subject[:5])
+        raise RuntimeError(
+            f"Missing longitudinal subject metadata '{subject_key_name}' for {len(missing_subject)} scans. "
+            f"First missing keys: {preview}"
+        )
 
     if scan_to_time_map is not None and missing_time:
         preview = ", ".join(missing_time[:5])
         raise RuntimeError(
             f"Missing longitudinal time metadata '{time_key_name}' for {len(missing_time)} scans. "
             f"First missing keys: {preview}"
+        )
+
+    times_by_subject = {}
+    for sid, tval in zip(subject_ids, timepoints):
+        times_by_subject.setdefault(sid, []).append(float(tval))
+    bad_subjects = []
+    for sid, times_sid in times_by_subject.items():
+        times_sorted = sorted(times_sid)
+        if any(curr <= prev + 1e-8 for prev, curr in zip(times_sorted, times_sorted[1:])):
+            bad_subjects.append((sid, times_sorted))
+    if bad_subjects:
+        preview = ", ".join(
+            f"{sid}: {times[:5]}" for sid, times in bad_subjects[:5]
+        )
+        raise RuntimeError(
+            "Longitudinal time must be strictly increasing within each subject. "
+            f"Found {len(bad_subjects)} invalid subjects. First examples: {preview}"
         )
 
     unique_subject_ids = sorted(set(subject_ids))
@@ -881,47 +1025,91 @@ def _scan_key_from_path(path_str):
     return os.path.splitext(os.path.basename(path_str))[0]
 
 
-def _load_scan_age_map_from_labels(labels_path, age_key):
+def _record_scan_key(rec):
+    if not isinstance(rec, dict):
+        return None
+    for key in ("scan_id", "mesh_path", "sdf_npz_path"):
+        value = rec.get(key, None)
+        if value:
+            return _scan_key_from_path(str(value))
+    return None
+
+
+def _coerce_label_value(value, field_key, value_type):
+    if torch.is_tensor(value):
+        flat = value.detach().cpu().view(-1)
+        if flat.numel() == 0:
+            raise RuntimeError(
+                f"Tensor value for key '{field_key}' has zero elements."
+            )
+        value = flat[0].item()
+    if value_type == "float":
+        return float(value)
+    if value_type == "str":
+        return str(value)
+    raise RuntimeError(f"Unsupported label value type '{value_type}'")
+
+
+def _load_scan_value_map_from_labels(labels_path, field_key, value_type="float"):
     labels_obj = torch.load(labels_path, map_location="cpu")
-    scan_to_age = {}
+    scan_to_value = {}
 
     if isinstance(labels_obj, dict) and "records" in labels_obj and isinstance(labels_obj["records"], list):
         for rec in labels_obj["records"]:
             if not isinstance(rec, dict):
                 continue
-            if age_key not in rec:
+            if field_key not in rec:
                 continue
-            mesh_path = rec.get("mesh_path", None)
-            if mesh_path is None:
+            scan_key = _record_scan_key(rec)
+            if scan_key is None:
                 continue
-            scan_key = _scan_key_from_path(mesh_path)
-            scan_to_age[scan_key] = float(rec[age_key])
+            scan_to_value[scan_key] = _coerce_label_value(
+                rec[field_key], field_key, value_type
+            )
     elif isinstance(labels_obj, dict):
         # Backward-compatible fallback for {"ID_000_t0": ...} maps.
         for key, value in labels_obj.items():
             if isinstance(value, dict):
-                if age_key in value:
-                    scan_to_age[str(key)] = float(value[age_key])
-            elif torch.is_tensor(value):
-                flat = value.detach().cpu().view(-1)
-                if flat.numel() > 0:
-                    scan_to_age[str(key)] = float(flat[0].item())
+                if field_key not in value:
+                    continue
+                scan_to_value[str(key)] = _coerce_label_value(
+                    value[field_key], field_key, value_type
+                )
             else:
-                try:
-                    scan_to_age[str(key)] = float(value)
-                except Exception:
-                    pass
+                scan_to_value[str(key)] = _coerce_label_value(
+                    value, field_key, value_type
+                )
     else:
         raise RuntimeError(
             f"Unsupported labels format at {labels_path}: {type(labels_obj)}"
         )
 
-    if len(scan_to_age) == 0:
+    if len(scan_to_value) == 0:
         raise RuntimeError(
-            f"No scan->age entries could be parsed from {labels_path} with key '{age_key}'."
+            f"No scan metadata entries could be parsed from {labels_path} with key '{field_key}'."
         )
 
-    return scan_to_age
+    return scan_to_value
+
+
+def _load_scan_age_map_from_labels(labels_path, age_key):
+    return _load_scan_value_map_from_labels(labels_path, age_key, value_type="float")
+
+
+def _load_scan_subject_map_from_labels(labels_path, subject_key):
+    return _load_scan_value_map_from_labels(labels_path, subject_key, value_type="str")
+
+
+def _check_input_validation_report(report_path):
+    with open(report_path, "r", encoding="utf-8") as handle:
+        report = json.load(handle)
+    status = str(report.get("status", "")).lower()
+    if status != "pass":
+        raise RuntimeError(
+            f"Input validation report must have status='pass' before training. "
+            f"Got status='{report.get('status', None)}' in {report_path}"
+        )
+    return report
 
 
 def build_scan_age_tensor(npyfiles, scan_to_age_map, age_condition_key):
@@ -1504,6 +1692,18 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
 
     logging.info("Experiment description: \n" + str(specs["Description"]))
 
+    input_validation_report = get_spec_with_default(specs, "InputValidationReport", None)
+    if input_validation_report:
+        input_validation_report = _resolve_existing_file(
+            input_validation_report, experiment_directory
+        )
+        validation_report = _check_input_validation_report(input_validation_report)
+        logging.info(
+            "Input validation report passed: %s (status=%s)",
+            input_validation_report,
+            validation_report.get("status", None),
+        )
+
     if not torch.cuda.is_available():
         raise RuntimeError(
             "CUDA is not available. This training script requires a CUDA-enabled PyTorch setup."
@@ -1792,6 +1992,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     real_scan_pair_latent_lambda = float(
         get_spec_with_default(specs, "RealScanPairLatentLambda", 1e-2)
     )
+    real_scan_pair_use_reconstruction = (
+        use_real_scan_pair_loss and real_scan_pair_reconstruction_lambda > 0.0
+    )
+    real_scan_pair_use_latent = (
+        use_real_scan_pair_loss and real_scan_pair_latent_lambda > 0.0
+    )
     if use_real_scan_pair_loss and not (
         use_real_scan_pair_forward or use_real_scan_pair_backward
     ):
@@ -1800,10 +2006,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             "Disabling real scan pair loss."
         )
         use_real_scan_pair_loss = False
+        real_scan_pair_use_reconstruction = False
+        real_scan_pair_use_latent = False
     if (
         use_real_scan_pair_loss
-        and real_scan_pair_reconstruction_lambda <= 0.0
-        and real_scan_pair_latent_lambda <= 0.0
+        and not real_scan_pair_use_reconstruction
+        and not real_scan_pair_use_latent
     ):
         logging.warning(
             "UseRealScanPairLoss=true but both real-pair lambdas are non-positive. "
@@ -1850,6 +2058,12 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     time_metadata_file = get_spec_with_default(
         specs, "LongitudinalTimeMetadataFile", age_metadata_file
     )
+    subject_metadata_file = get_spec_with_default(
+        specs, "LongitudinalSubjectMetadataFile", time_metadata_file
+    )
+    subject_metadata_key = get_spec_with_default(specs, "LongitudinalSubjectKey", None)
+    if subject_metadata_key is not None:
+        subject_metadata_key = str(subject_metadata_key)
     time_metadata_key = str(get_spec_with_default(specs, "LongitudinalTimeKey", "time_index"))
     age_condition_dim = int(
         get_spec_with_default(
@@ -1924,12 +2138,19 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
             general_cocycle_backward_triplets_per_subject,
         )
     if use_real_scan_pair_loss:
+        if real_scan_pair_use_reconstruction and real_scan_pair_use_latent:
+            real_scan_pair_mode = "reconstruction+latent"
+        elif real_scan_pair_use_reconstruction:
+            real_scan_pair_mode = "reconstruction_only"
+        else:
+            real_scan_pair_mode = "latent_only"
         logging.info(
             "Real scan pair loss enabled: pairs_per_subject=%s, forward=%s, backward=%s, "
-            "target_samples=%s, reconstruction_lambda=%s, latent_lambda=%s",
+            "mode=%s, target_samples=%s, reconstruction_lambda=%s, latent_lambda=%s",
             real_scan_pairs_per_subject,
             use_real_scan_pair_forward,
             use_real_scan_pair_backward,
+            real_scan_pair_mode,
             real_scan_pair_num_samples,
             real_scan_pair_reconstruction_lambda,
             real_scan_pair_latent_lambda,
@@ -2019,10 +2240,19 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     with open(train_split_file, "r") as f:
         train_split = json.load(f)
 
-    torus_path = get_spec_with_default(specs, "TorusPath", "/home/jakaria/torus_two_models_data/torus_two/obj_files")
-    logging.info(f"Torus path: {torus_path}")
-    if not os.path.exists(torus_path): 
-        logging.error(f"Running w/o validation, since the specified Torus path does not exist: {torus_path}")
+    torus_path = get_spec_with_default(
+        specs,
+        "EvaluationMeshSource",
+        get_spec_with_default(
+            specs, "TorusPath", "/home/jakaria/torus_two_models_data/torus_two/obj_files"
+        ),
+    )
+    logging.info(f"Evaluation mesh source: {torus_path}")
+    if torus_path is not None and not os.path.exists(torus_path): 
+        logging.error(
+            "Running w/o reconstruction validation, since the specified evaluation mesh "
+            f"source does not exist: {torus_path}"
+        )
         torus_path = None
     load_ram = get_spec_with_default(specs, "LoadDatasetIntoRAM", False)
     if load_ram:
@@ -2038,7 +2268,9 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
     scan_age_map = {}
     age_metadata_resolved = None
     time_metadata_resolved = None
+    subject_metadata_resolved = None
     scan_time_map = None
+    scan_subject_map = None
 
     if time_metadata_file:
         time_metadata_resolved = _resolve_existing_file(
@@ -2046,6 +2278,31 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
         )
         scan_time_map = _load_scan_age_map_from_labels(
             time_metadata_resolved, time_metadata_key
+        )
+        logging.info(
+            "Loaded longitudinal time metadata '%s' for %d scans from %s.",
+            time_metadata_key,
+            len(scan_time_map),
+            time_metadata_resolved,
+        )
+
+    if subject_metadata_key:
+        if subject_metadata_file is None:
+            raise RuntimeError(
+                "LongitudinalSubjectKey is set but LongitudinalSubjectMetadataFile/"
+                "LongitudinalTimeMetadataFile is not available."
+            )
+        subject_metadata_resolved = _resolve_existing_file(
+            subject_metadata_file, experiment_directory
+        )
+        scan_subject_map = _load_scan_subject_map_from_labels(
+            subject_metadata_resolved, subject_metadata_key
+        )
+        logging.info(
+            "Loaded longitudinal subject metadata '%s' for %d scans from %s.",
+            subject_metadata_key,
+            len(scan_subject_map),
+            subject_metadata_resolved,
         )
 
     if use_age_conditioning:
@@ -2065,6 +2322,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
         time_normalization_mode,
         scan_to_time_map=scan_time_map,
         time_key_name=time_metadata_key,
+        scan_to_subject_map=scan_subject_map,
+        subject_key_name=subject_metadata_key if subject_metadata_key else "parsed_subject_id",
     )
     scan_to_subject_idx_cpu = longitudinal_meta["scan_to_subject_idx"]
     scan_to_subject_idx = scan_to_subject_idx_cpu.to(train_device)
@@ -2275,6 +2534,8 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
         time_normalization_mode,
         scan_to_time_map=scan_time_map,
         time_key_name=time_metadata_key,
+        scan_to_subject_map=scan_subject_map,
+        subject_key_name=subject_metadata_key if subject_metadata_key else "parsed_subject_id",
     )
     test_scan_age_condition = None
     if use_age_conditioning:
@@ -2967,46 +3228,52 @@ def main_function(experiment_directory: str, continue_from, batch_split: int, gp
                             use_backward=use_real_scan_pair_backward,
                             clamp_min=minT,
                             clamp_max=maxT,
+                            compute_reconstruction=real_scan_pair_use_reconstruction,
+                            compute_latent=real_scan_pair_use_latent,
                         )
 
-                        if real_pair_losses["forward_count"] > 0:
+                        if real_pair_losses["forward_reconstruction"] is not None:
                             real_pair_forward_reconstruction_loss = (
                                 real_scan_pair_reconstruction_lambda
                                 * real_pair_losses["forward_reconstruction"]
                             )
-                            real_pair_forward_latent_loss = (
-                                real_scan_pair_latent_lambda
-                                * real_pair_losses["forward_latent"]
-                            )
                             chunk_loss = (
                                 chunk_loss
                                 + real_pair_forward_reconstruction_loss
-                                + real_pair_forward_latent_loss
                             )
                             real_pair_forward_reconstruction_loss_tb += float(
                                 real_pair_forward_reconstruction_loss.item()
                             )
+
+                        if real_pair_losses["forward_latent"] is not None:
+                            real_pair_forward_latent_loss = (
+                                real_scan_pair_latent_lambda
+                                * real_pair_losses["forward_latent"]
+                            )
+                            chunk_loss = chunk_loss + real_pair_forward_latent_loss
                             real_pair_forward_latent_loss_tb += float(
                                 real_pair_forward_latent_loss.item()
                             )
 
-                        if real_pair_losses["backward_count"] > 0:
+                        if real_pair_losses["backward_reconstruction"] is not None:
                             real_pair_backward_reconstruction_loss = (
                                 real_scan_pair_reconstruction_lambda
                                 * real_pair_losses["backward_reconstruction"]
                             )
-                            real_pair_backward_latent_loss = (
-                                real_scan_pair_latent_lambda
-                                * real_pair_losses["backward_latent"]
-                            )
                             chunk_loss = (
                                 chunk_loss
                                 + real_pair_backward_reconstruction_loss
-                                + real_pair_backward_latent_loss
                             )
                             real_pair_backward_reconstruction_loss_tb += float(
                                 real_pair_backward_reconstruction_loss.item()
                             )
+
+                        if real_pair_losses["backward_latent"] is not None:
+                            real_pair_backward_latent_loss = (
+                                real_scan_pair_latent_lambda
+                                * real_pair_losses["backward_latent"]
+                            )
+                            chunk_loss = chunk_loss + real_pair_backward_latent_loss
                             real_pair_backward_latent_loss_tb += float(
                                 real_pair_backward_latent_loss.item()
                             )

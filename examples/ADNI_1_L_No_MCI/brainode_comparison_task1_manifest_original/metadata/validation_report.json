@@ -1,0 +1,58 @@
+{
+  "age_stats": {
+    "age_max_train": 91.0,
+    "age_min_train": 57.0,
+    "age_norm_formula": "(age_years - age_min_train) / (age_max_train - age_min_train)",
+    "clean_age_norm_max_all_splits": 1.0,
+    "clean_age_norm_min_all_splits": 0.0,
+    "train_age_count": 617
+  },
+  "computed_summary": {
+    "clean_diagnosis_scan_count": {
+      "AD": 302,
+      "CN": 425
+    },
+    "clean_scan_count": 727,
+    "clean_scan_count_by_split": {
+      "test": 71,
+      "train": 617,
+      "val": 39
+    },
+    "clean_subject_count": 244,
+    "clean_visit_count_distribution_subjects": {
+      "2": 5,
+      "3": 239
+    },
+    "master_scan_count": 819,
+    "master_scan_count_by_split": {
+      "test": 77,
+      "train": 696,
+      "val": 46
+    },
+    "pair_count": 722,
+    "pair_count_by_split": {
+      "test": 70,
+      "train": 613,
+      "val": 39
+    },
+    "pair_task_count": {
+      "b_to_m06": 241,
+      "b_to_m12": 239,
+      "m06_to_m12": 242
+    },
+    "triplet_count": 239,
+    "triplet_count_by_split": {
+      "test": 23,
+      "train": 203,
+      "val": 13
+    }
+  },
+  "dropped_scan_count": 92,
+  "duplicate_visit_group_count": 89,
+  "errors": [],
+  "missing_file_count": 0,
+  "output_root": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original",
+  "required_file_count": 17,
+  "status": "pass",
+  "warnings": []
+}

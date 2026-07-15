@@ -1,0 +1,13 @@
+{
+  "best_validation_l1": 0.005225608590990305,
+  "device": "cuda:1",
+  "effective_batch_size": 32,
+  "eikonal_points_per_scene": 16384,
+  "final_epoch": 2001,
+  "loss_mode": "surface_normal_sdf",
+  "name": "siren_naisr_enhanced",
+  "off_surface_samples_per_scene": 12288,
+  "scene_chunk_size": 8,
+  "status": "complete",
+  "surface_samples_per_scene": 4096
+}

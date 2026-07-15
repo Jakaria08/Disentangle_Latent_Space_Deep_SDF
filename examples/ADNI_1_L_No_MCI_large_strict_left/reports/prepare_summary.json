@@ -1,0 +1,11 @@
+{
+  "groups": {
+    "left": {
+      "prepared_dir": "/home/jakaria/ADNI/ADNI_1_GO_Large/left_hippocampus_strict_no_mci/left_hippocampus_ply/minimal",
+      "count": 2715,
+      "global_scale_factor": 0.016185459443194116,
+      "distance_unscale_factor": 61.78385009765625,
+      "volume_unscale_factor": 235844.03929261243
+    }
+  }
+}

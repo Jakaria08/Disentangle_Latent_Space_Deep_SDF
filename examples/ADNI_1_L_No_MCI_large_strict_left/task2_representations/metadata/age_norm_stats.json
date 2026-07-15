@@ -1,0 +1,6 @@
+{
+  "age_max": 95.62053388,
+  "age_min": 55.6,
+  "formula": "age_norm = (age_numeric - age_min) / (age_max - age_min)",
+  "source": "train split age_numeric"
+}

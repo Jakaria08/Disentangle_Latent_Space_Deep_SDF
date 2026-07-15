@@ -1,0 +1,44 @@
+{
+  "source_manifest_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original",
+  "source_task2_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast",
+  "num_scans": 727,
+  "num_subjects": 244,
+  "split_counts": {
+    "test": 71,
+    "train": 617,
+    "val": 39
+  },
+  "diagnosis_counts": {
+    "AD": 302,
+    "CN": 425
+  },
+  "subject_visit_count_histogram": {
+    "2": 5,
+    "3": 239
+  },
+  "continuous_age_years": {
+    "min": 57.0,
+    "max": 91.0
+  },
+  "continuous_age_norm": {
+    "min": 0.0,
+    "max": 1.0,
+    "one_year_delta": 0.029411764705882353
+  },
+  "adjacent_age_norm_repeat_counts": {
+    "repeated_original_age_norm_adjacent_pairs": 220,
+    "repeated_continuous_age_norm_adjacent_pairs": 0
+  },
+  "task2_bridge": {
+    "bridge_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf",
+    "checkpoint_epoch": 2000,
+    "train_scan_count": 617,
+    "latent_dim": 256,
+    "bridge_specs_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/specs.json",
+    "bridge_train_split_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/train_split.json",
+    "bridge_model_best_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/ModelParameters/best.pth",
+    "bridge_model_latest_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/ModelParameters/latest.pth",
+    "bridge_latent_best_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/LatentCodes/best.pth",
+    "bridge_latent_latest_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/LatentCodes/latest.pth"
+  }
+}

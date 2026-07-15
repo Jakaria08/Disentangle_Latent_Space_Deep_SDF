@@ -1,0 +1,25 @@
+{
+  "face_count_distribution": {
+    "3912": 727
+  },
+  "finite": 727,
+  "global_coordinate_max": [
+    0.44689833,
+    0.87389367,
+    0.3986717
+  ],
+  "global_coordinate_min": [
+    -0.475771,
+    -0.9,
+    -0.42153277
+  ],
+  "inside_configured_domain": 727,
+  "topology_match": 727,
+  "vertex_count_distribution": {
+    "1958": 727
+  },
+  "volume_max": 0.15692800383953068,
+  "volume_min": 0.04583911574404405,
+  "watertight": 727,
+  "winding_consistent": 727
+}

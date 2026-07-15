@@ -103,12 +103,13 @@ class SirenDecoder(nn.Module):
         latent_size: int,
         dropout: list = None,
         dropout_prob: float = 0.0,
-        norm_layers: list = [],
-        latent_in: list = [],
+        norm_layers: list = None,
+        latent_in: list = None,
         weight_norm: bool = False,
         latent_dropout: bool = False,
         nonlinearity: str = "relu",
         use_tanh: bool = False,
+        final_layer_init: str = "siren",
         ):
         """
         latent_in: starting from layer 1
@@ -121,15 +122,17 @@ class SirenDecoder(nn.Module):
         self.dropout_prob = dropout_prob
         self.dropout = dropout
         self.latent_dropout = nn.Dropout(0.2) if latent_dropout else None
-        self.latent_in = latent_in
-        self.xyz_in = xyz_in
-        self.norm_layers = norm_layers
+        self.latent_in = list(latent_in or [])
+        self.xyz_in = list(xyz_in)
+        self.norm_layers = list(norm_layers or [])
         self.weight_norm = weight_norm
         self.num_layers = len(dims) + 2
         self.xyz_input_dims = xyz_input_dims
+        self.final_layer_init = final_layer_init
 
         # The dimension of the latent_vec input to every hidden i.
-        self.latent_in.append(0)
+        if 0 not in self.latent_in:
+            self.latent_in.append(0)
         latent_input_dims = [latent_size if (i in self.latent_in) else 0 for i in range(self.num_layers-1)] + [0]
         # The dimension of each layer without external inputs.
         fc_dims = [0] + dims + [1]
@@ -172,11 +175,22 @@ class SirenDecoder(nn.Module):
                 # setattr(self, "bn" + str(i), nn.LayerNorm(out_dim))
                 setattr(self, "bn" + str(i), nn.BatchNorm1d(out_dim))
 
-            # Initialize weights.
-            if weight_init is not None:
+            # SIREN initialization applies to sine-activated layers. The final
+            # linear layer can retain PyTorch initialization, as in NAISR's
+            # DeepSDF SIREN, to avoid an initially collapsed output field.
+            is_output_layer = i == self.num_layers - 2
+            if weight_init is not None and not is_output_layer:
                 getattr(self, "lin" + str(i)).apply(weight_init)
 
-        if first_layer_init is not None:        
+        if final_layer_init not in {"siren", "default"}:
+            raise ValueError(
+                "final_layer_init must be either 'siren' or 'default', "
+                f"got {final_layer_init!r}."
+            )
+        if final_layer_init == "siren" and weight_init is not None:
+            getattr(self, "lin" + str(self.num_layers - 2)).apply(weight_init)
+
+        if first_layer_init is not None:
             # Apply special initialization to first i, if applicable.
             getattr(self, "lin0").apply(first_layer_init)
 

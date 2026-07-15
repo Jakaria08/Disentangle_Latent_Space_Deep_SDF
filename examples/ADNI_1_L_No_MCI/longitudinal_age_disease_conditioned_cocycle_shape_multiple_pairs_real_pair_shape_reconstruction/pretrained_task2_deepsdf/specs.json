@@ -1,0 +1,37 @@
+{
+  "Description": [
+    "Compatibility bridge exposing the Task 2 ADNI No-MCI DeepSDF decoder and training scan latents.",
+    "This bridge is intended for pretrained decoder loading and subject-anchor initialization in longitudinal training."
+  ],
+  "NetworkArch": "deep_sdf_decoder",
+  "NetworkSpecs": {
+    "dims": [
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512
+    ],
+    "dropout": [],
+    "dropout_prob": 0.2,
+    "latent_dropout": false,
+    "latent_in": [
+      4
+    ],
+    "norm_layers": [],
+    "use_tanh": false,
+    "weight_norm": true,
+    "xyz_in_all": false
+  },
+  "CodeLength": 256,
+  "ClampingDistance": 0.1,
+  "TrainSplit": "train_split.json",
+  "SourceTask1TrainSplit": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/splits/train_clean.json",
+  "SourceTask2RunConfig": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast/run_config.json",
+  "SourceTask2Checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast/checkpoints/best.pth",
+  "SourceTask2TrainLatents": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast/latents/train_latents.npz",
+  "LongitudinalMetadataFile": "../metadata/adni_no_mci_longitudinal_labels.pt"
+}

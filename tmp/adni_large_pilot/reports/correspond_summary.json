@@ -1,0 +1,10 @@
+{
+  "groups": {
+    "left": {
+      "input_count": 10,
+      "final_subject_count": 10,
+      "reference_medoid": "158_bl_left",
+      "output_base": "/home/jakaria/INR/Deep3DComp/tmp/adni_large_pilot/left_hippocampus_correspondence"
+    }
+  }
+}

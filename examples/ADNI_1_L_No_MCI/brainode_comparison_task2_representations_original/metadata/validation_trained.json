@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "deepsdf_eikonal_training_status": "complete",
+    "input_audit_status": "pass",
+    "minimal_eikonal_checkpoint_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI/minimal_eikonal/ModelParameters/latest.pth",
+    "pca_coefficient_rows": 727,
+    "pca_shapes": {
+      "components": [
+        256,
+        5028
+      ],
+      "faces": [
+        3348,
+        3
+      ],
+      "mean": [
+        5028
+      ]
+    },
+    "siren_eikonal_training_status": "complete"
+  },
+  "errors": [],
+  "stage": "trained",
+  "status": "pass",
+  "warnings": []
+}

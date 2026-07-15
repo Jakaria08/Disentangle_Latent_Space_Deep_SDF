@@ -1,0 +1,10 @@
+{
+  "groups": {
+    "left": {
+      "input_dir": "/home/jakaria/ADNI/ADNI_1_GO_Large/left_hippocampus_strict_no_mci/left_hippocampus_ply/minimal",
+      "output_dir": "/home/jakaria/ADNI/ADNI_1_GO_Large/left_hippocampus_strict_no_mci/left_hippocampus_ply_rigid_reg/minimal",
+      "reference_medoid": "1027_m12_left",
+      "registered": 2715
+    }
+  }
+}

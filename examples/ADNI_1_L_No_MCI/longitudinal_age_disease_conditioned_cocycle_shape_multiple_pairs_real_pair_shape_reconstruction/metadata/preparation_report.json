@@ -1,0 +1,104 @@
+{
+  "source_manifest_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original",
+  "source_task2_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast",
+  "num_scans": 727,
+  "num_subjects": 244,
+  "split_counts": {
+    "test": 71,
+    "train": 617,
+    "val": 39
+  },
+  "diagnosis_counts": {
+    "AD": 302,
+    "CN": 425
+  },
+  "subject_visit_count_histogram": {
+    "2": 5,
+    "3": 239
+  },
+  "metadata_fields_per_scan": [
+    "scan_id",
+    "mesh_path",
+    "sdf_npz_path",
+    "subject_id",
+    "split",
+    "visit_order",
+    "months_from_baseline",
+    "elapsed_years",
+    "baseline_age_years",
+    "continuous_age_years",
+    "continuous_age_norm",
+    "diagnosis",
+    "label_ad"
+  ],
+  "input_split_json_counts": {
+    "train": 617,
+    "val": 39,
+    "test": 71
+  },
+  "input_pair_triplet_counts": {
+    "pairs": {
+      "train": 613,
+      "val": 39,
+      "test": 70,
+      "all": 722
+    },
+    "triplets": {
+      "train": 203,
+      "val": 13,
+      "test": 23,
+      "all": 239
+    }
+  },
+  "split_alignment": {
+    "train": {
+      "count": 617,
+      "set_match": true
+    },
+    "val": {
+      "count": 39,
+      "set_match": true
+    },
+    "test": {
+      "count": 71,
+      "set_match": true
+    }
+  },
+  "continuous_age_years": {
+    "min": 57.0,
+    "max": 91.0
+  },
+  "continuous_age_norm": {
+    "min": 0.0,
+    "max": 1.0,
+    "one_year_delta": 0.029411764705882353
+  },
+  "normalization_constants": {
+    "age_min": 57.0,
+    "age_max": 91.0
+  },
+  "formulas": {
+    "elapsed_years": "months_from_baseline / 12",
+    "continuous_age_years": "baseline_age_years + months_from_baseline / 12",
+    "continuous_age_norm": "(continuous_age_years - 57) / (91 - 57)"
+  },
+  "adjacent_age_norm_repeat_counts": {
+    "repeated_original_age_norm_adjacent_pairs": 220,
+    "repeated_continuous_age_norm_adjacent_pairs": 0
+  },
+  "task2_bridge": {
+    "bridge_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf",
+    "checkpoint_epoch": 2000,
+    "train_scan_count": 617,
+    "latent_dim": 256,
+    "latent_source": "train_latents.npz",
+    "latent_order_matches_task1_train_split": true,
+    "latent_checkpoint_vs_npz_max_abs_diff": 0.10869093239307404,
+    "bridge_specs_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/specs.json",
+    "bridge_train_split_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/train_split.json",
+    "bridge_model_best_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/ModelParameters/best.pth",
+    "bridge_model_latest_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/ModelParameters/latest.pth",
+    "bridge_latent_best_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/LatentCodes/best.pth",
+    "bridge_latent_latest_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/pretrained_task2_deepsdf/LatentCodes/latest.pth"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "task1_dir": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original",
+  "manifest": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/adni_no_mci_left_original_clean.csv",
+  "task1_validation_report": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/validation_report.json",
+  "expected_counts": {
+    "train": 617,
+    "val": 39,
+    "test": 71,
+    "total": 727
+  },
+  "mesh": {
+    "vertex_count": 1676,
+    "face_count": 3348,
+    "coordinate_min": -1.0,
+    "coordinate_max": 1.0
+  },
+  "pca": {
+    "max_components": 256,
+    "report_components": [32, 64, 128, 150, 256],
+    "save_mesh_components": [150, 256],
+    "primary_components": 150,
+    "svd_solver": "full"
+  },
+  "inr_models": {
+    "deepsdf_eikonal": {
+      "config": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/configs/inr_deepsdf_eikonal.json",
+      "output_dir": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast",
+      "checkpoint": "best",
+      "latent_size": 256,
+      "manifest_prefix": "deepsdf",
+      "checkpoint_kind": "task2_trained"
+    },
+    "siren_eikonal": {
+      "config": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/configs/inr_siren_eikonal.json",
+      "output_dir": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/siren_naisr_enhanced",
+      "checkpoint": "best",
+      "latent_size": 256,
+      "manifest_prefix": "siren",
+      "checkpoint_kind": "task2_trained"
+    }
+  },
+  "evaluation": {
+    "surface_points": 30000,
+    "seed": 42,
+    "methods": {
+      "pca_150": "pca/reconstructed_meshes/k150",
+      "pca_256": "pca/reconstructed_meshes/k256",
+      "deepsdf_eikonal": "inr/deepsdf_eikonal_spec_fast/reconstructed_meshes",
+      "siren_eikonal": "inr/siren_naisr_enhanced/reconstructed_meshes"
+    }
+  }
+}

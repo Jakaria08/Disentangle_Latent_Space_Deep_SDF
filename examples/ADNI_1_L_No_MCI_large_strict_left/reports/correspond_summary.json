@@ -1,0 +1,10 @@
+{
+  "groups": {
+    "left": {
+      "input_count": 2715,
+      "final_subject_count": 2715,
+      "reference_medoid": "1027_m12_left",
+      "output_base": "/home/jakaria/ADNI/ADNI_1_GO_Large/left_hippocampus_strict_no_mci/left_hippocampus_correspondence"
+    }
+  }
+}

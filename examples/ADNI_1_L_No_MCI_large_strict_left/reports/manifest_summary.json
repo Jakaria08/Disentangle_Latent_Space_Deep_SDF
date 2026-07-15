@@ -1,0 +1,24 @@
+{
+  "source_ply_dir": "/home/jakaria/ADNI/ADNI_1_GO_Large/adni_hipp_ply_surfs",
+  "clinical_csv": "/home/jakaria/ADNI/ADNI_1_GO_Large/adni_hipp_ply_surfs/clinical_volume_merged.csv",
+  "eligible_scans": 2715,
+  "selected_scans": 2715,
+  "unique_eligible_subjects": 676,
+  "unique_selected_subjects": 676,
+  "selection_mode": "all_eligible_scans",
+  "sample_count": 0,
+  "seed": 42,
+  "require_paired": false,
+  "diagnosis_filter": "strict_no_mci",
+  "diagnosis_counts": {
+    "CN": 1725,
+    "AD": 990
+  },
+  "baseline_diagnosis_counts": {
+    "CN": 1731,
+    "AD": 984
+  },
+  "mesh_volume_filled_from_source_ply": {
+    "left_mesh_volume_mm3": 3
+  }
+}

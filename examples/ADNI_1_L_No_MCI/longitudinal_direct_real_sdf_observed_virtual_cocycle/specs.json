@@ -1,0 +1,104 @@
+{
+  "Description": [
+    "ADNI no-MCI chronological-age direct flow with a frozen Task-2 DeepSDF decoder and frozen 256-dimensional real-scan latents.",
+    "All chronological forward pairs are trained. The only active objectives are real target-SDF prediction, observed-intermediate latent cocycle consistency, and random virtual-intermediate latent cocycle consistency.",
+    "This phase intentionally excludes disentanglement, backward prediction, extrapolation supervision, velocity regularization, eikonal loss, and latent-code optimization."
+  ],
+  "DataSource": "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/sdf_data/SdfSamples/minimal_scaled_obj_files",
+  "DataSourceMesh": "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/minimal_scaled_obj_files",
+  "EvaluationMeshSource": "/home/jakaria/ADNI/ADNI_1/adni_processed/left_hippocampus_correspondence/minimal_scaled_obj_files",
+  "TrainSplit": "../brainode_comparison_task1_manifest_original/splits/train_clean.json",
+  "TestSplit": "../brainode_comparison_task1_manifest_original/splits/val_clean.json",
+  "FinalTestSplit": "../brainode_comparison_task1_manifest_original/splits/test_clean.json",
+  "LongitudinalMetadataFile": "../longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/metadata/adni_no_mci_longitudinal_records.csv",
+  "FrozenLatentFiles": {
+    "train": "../brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast/latents/train_latents.npz",
+    "val": "../brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast/latents/val_latents.npz",
+    "test": "../brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast/latents/test_latents.npz"
+  },
+  "PretrainedDecoderCheckpoint": "../brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast/checkpoints/best.pth",
+  "NetworkArch": "deep_sdf_decoder",
+  "NetworkSpecs": {
+    "dims": [
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512
+    ],
+    "dropout": [],
+    "dropout_prob": 0.2,
+    "norm_layers": [],
+    "latent_in": [
+      4
+    ],
+    "xyz_in_all": false,
+    "use_tanh": false,
+    "latent_dropout": false,
+    "weight_norm": true
+  },
+  "CodeLength": 256,
+  "FlowHiddenDims": [
+    256,
+    256
+  ],
+  "FlowActivation": "relu",
+  "FlowZeroInitializeOutput": true,
+  "ConditionDim": 1,
+  "ConditionKey": "label_ad",
+  "ConditionLegend": {
+    "0": "CN",
+    "1": "AD"
+  },
+  "AgeNormalization": {
+    "input_key": "continuous_age_norm",
+    "formula": "(continuous_age_years - 57.0) / 34.0",
+    "minimum_age_years": 57.0,
+    "age_range_years": 34.0,
+    "meaning": "Chronological age coordinate inherited unchanged from the validated no-MCI metadata."
+  },
+  "NumEpochs": 1000,
+  "ValidationFrequency": 25,
+  "SnapshotFrequency": 100,
+  "LatestFrequency": 10,
+  "LearningRateSchedule": [
+    {
+      "Type": "Step",
+      "Initial": 0.0005,
+      "Interval": 250,
+      "Factor": 0.5
+    }
+  ],
+  "SamplesPerTarget": 4096,
+  "PairsPerBatch": 16,
+  "DataLoaderThreads": 8,
+  "PersistentWorkers": true,
+  "PrefetchFactor": 2,
+  "ClampingDistance": 0.1,
+  "GradientClipNorm": 1.0,
+  "Seed": 42,
+  "ValidationSampleSeed": 991,
+  "UseRealTargetSDFLoss": true,
+  "RealTargetSDFLossLambda": 1.0,
+  "UseObservedCocycleLoss": true,
+  "ObservedCocycleLossLambda": 0.01,
+  "UseVirtualCocycleLoss": true,
+  "VirtualCocycleLossLambda": 0.01,
+  "VirtualTimeRatioMin": 0.1,
+  "VirtualTimeRatioMax": 0.9,
+  "UseRealTargetLatentLoss": false,
+  "UseCocycleShapeLoss": false,
+  "UseBackwardLoss": false,
+  "UseClosureLoss": false,
+  "UseGeneratorConsistencyLoss": false,
+  "UseVelocityMagnitudeLoss": false,
+  "UseVelocitySmoothnessLoss": false,
+  "UseZeroDisplacementLoss": false,
+  "UseEikonal": false,
+  "CodeRegularization": false,
+  "UseDisentanglement": false,
+  "UseExtrapolationLoss": false
+}

@@ -1,0 +1,22 @@
+{
+  "failure_count": 0,
+  "failures": [],
+  "methods": [
+    "pca_150",
+    "pca_256"
+  ],
+  "metric_definitions": {
+    "alignment": "none",
+    "assd": "0.5 * (mean(gt_to_pred_distance) + mean(pred_to_gt_distance))",
+    "chamfer_l2_squared": "mean(gt_to_pred_distance^2) + mean(pred_to_gt_distance^2)",
+    "hd95": "max(q95(gt_to_pred_distance), q95(pred_to_gt_distance))"
+  },
+  "metric_row_count": 1454,
+  "selected_scan_count": 727,
+  "splits": [
+    "test",
+    "train",
+    "val"
+  ],
+  "surface_points": 30000
+}

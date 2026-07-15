@@ -1,0 +1,13 @@
+{
+  "groups": {
+    "left": {
+      "subjects": 676,
+      "train_subjects": 540,
+      "val_subjects": 68,
+      "test_subjects": 68,
+      "train_files": 2183,
+      "val_files": 267,
+      "test_files": 265
+    }
+  }
+}

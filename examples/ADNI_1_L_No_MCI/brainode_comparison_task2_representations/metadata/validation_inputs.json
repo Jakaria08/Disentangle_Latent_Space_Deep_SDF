@@ -1,0 +1,9 @@
+{
+  "checks": {
+    "input_audit_status": "pass"
+  },
+  "errors": [],
+  "stage": "inputs",
+  "status": "pass",
+  "warnings": []
+}

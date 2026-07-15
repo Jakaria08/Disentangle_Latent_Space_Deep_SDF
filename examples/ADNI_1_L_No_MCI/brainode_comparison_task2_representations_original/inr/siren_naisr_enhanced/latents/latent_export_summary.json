@@ -1,0 +1,14 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/siren_naisr_enhanced/checkpoints/best.pth",
+  "checkpoint_epoch": 1975,
+  "checkpoint_sha256": "b01a5d488f967f37946b13edd730b9c15aaefb5e2ee2c573bfcbc439fdba69fc",
+  "converged_scan_count": 727,
+  "exported_scan_count": 727,
+  "mean_heldout_sdf_l1": 0.004548784426414758,
+  "name": "siren_naisr_enhanced",
+  "requested_splits": [
+    "test",
+    "train",
+    "val"
+  ]
+}

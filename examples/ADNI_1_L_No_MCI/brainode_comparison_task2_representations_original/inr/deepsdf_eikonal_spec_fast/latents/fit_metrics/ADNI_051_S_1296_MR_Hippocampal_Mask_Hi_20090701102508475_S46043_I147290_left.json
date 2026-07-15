@@ -1,0 +1,18 @@
+{
+  "attempt": 0,
+  "attempt_count": 1,
+  "best_objective": 0.0014723240165039897,
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/deepsdf_eikonal_spec_fast/checkpoints/best.pth",
+  "checkpoint_sha256": "80c11487ce1246822629a04c3faf0d4fde212cb4a9c2c389e82abec2481a4a6b",
+  "converged": true,
+  "diagnosis": "AD",
+  "final_data_l1": 0.0014838820789009333,
+  "finite": true,
+  "heldout_sdf_l1": 0.0015002874424681067,
+  "initial_data_l1": 0.016572706401348114,
+  "latent_norm": 0.6280882358551025,
+  "scan_id": "ADNI_051_S_1296_MR_Hippocampal_Mask_Hi_20090701102508475_S46043_I147290_left",
+  "split": "train",
+  "steps_completed": 316,
+  "steps_requested": 500
+}

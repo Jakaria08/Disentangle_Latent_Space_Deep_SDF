@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "groups": {
+    "left": {
+      "passed": true,
+      "failures": [],
+      "expected_shapes": 2715,
+      "unique_subjects": 676,
+      "vertex_count": 2206,
+      "face_count": 4408,
+      "topology_identical": true,
+      "max_volume_error_pct": 1.8811218600578178e-06,
+      "scaled_obj_min": -0.9,
+      "scaled_obj_max": 0.9,
+      "sdf_checked": true,
+      "sdf_count": 2715
+    }
+  }
+}

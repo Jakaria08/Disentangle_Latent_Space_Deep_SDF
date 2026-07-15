@@ -1,0 +1,45 @@
+{
+  "selected_checkpoint": "500",
+  "selected_epoch": 500,
+  "selection_metric": "future_chamfer_aligned_mean",
+  "tie_breaker": "future_assd_aligned_mean",
+  "num_validation_subjects": 13,
+  "checkpoint_scores": [
+    {
+      "num_rows": 39,
+      "num_subjects": 13,
+      "future_chamfer_aligned_mean": 0.0006168687687881224,
+      "future_assd_aligned_mean": 0.014064423384662388,
+      "future_hd95_aligned_mean": 0.03289702599139942,
+      "checkpoint": "500",
+      "checkpoint_epoch": 500
+    },
+    {
+      "num_rows": 39,
+      "num_subjects": 13,
+      "future_chamfer_aligned_mean": 0.0006356310248901535,
+      "future_assd_aligned_mean": 0.01443241940375735,
+      "future_hd95_aligned_mean": 0.03366013423101091,
+      "checkpoint": "750",
+      "checkpoint_epoch": 750
+    },
+    {
+      "num_rows": 39,
+      "num_subjects": 13,
+      "future_chamfer_aligned_mean": 0.0006404876414373229,
+      "future_assd_aligned_mean": 0.014459199658053765,
+      "future_hd95_aligned_mean": 0.03389015009142905,
+      "checkpoint": "250",
+      "checkpoint_epoch": 250
+    },
+    {
+      "num_rows": 39,
+      "num_subjects": 13,
+      "future_chamfer_aligned_mean": 0.0006476503551473685,
+      "future_assd_aligned_mean": 0.0144352853032651,
+      "future_hd95_aligned_mean": 0.03363044806380739,
+      "checkpoint": "1000",
+      "checkpoint_epoch": 1000
+    }
+  ]
+}

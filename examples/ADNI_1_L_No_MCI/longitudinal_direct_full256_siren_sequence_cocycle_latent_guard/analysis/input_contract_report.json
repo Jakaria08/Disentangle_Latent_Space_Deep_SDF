@@ -1,0 +1,55 @@
+{
+  "status": "pass",
+  "latent_dim": 256,
+  "splits": {
+    "train": {
+      "scans": 617,
+      "subjects": 207,
+      "pairs": 613,
+      "pairs_with_observed_intermediate": 203,
+      "sequences": 207,
+      "sequence_steps": 410,
+      "diagnosis_scans": {
+        "CN": 353,
+        "AD": 264
+      }
+    },
+    "val": {
+      "scans": 39,
+      "subjects": 13,
+      "pairs": 39,
+      "pairs_with_observed_intermediate": 13,
+      "sequences": 13,
+      "sequence_steps": 26,
+      "diagnosis_scans": {
+        "CN": 27,
+        "AD": 12
+      }
+    },
+    "test": {
+      "scans": 71,
+      "subjects": 24,
+      "pairs": 70,
+      "pairs_with_observed_intermediate": 23,
+      "sequences": 24,
+      "sequence_steps": 47,
+      "diagnosis_scans": {
+        "CN": 45,
+        "AD": 26
+      }
+    }
+  },
+  "subject_split_isolation": true,
+  "loss_scope": [
+    "real_target_sdf_prediction",
+    "observed_intermediate_latent_consistency",
+    "virtual_intermediate_latent_consistency",
+    "future_latent_cocycle_consistency",
+    "sequence_rollout_sdf_prediction",
+    "sequence_direct_vs_rollout_cocycle_consistency",
+    "latent_displacement_direction",
+    "latent_displacement_magnitude",
+    "latent_manifold_guard",
+    "sequence_displacement_magnitude"
+  ]
+}
