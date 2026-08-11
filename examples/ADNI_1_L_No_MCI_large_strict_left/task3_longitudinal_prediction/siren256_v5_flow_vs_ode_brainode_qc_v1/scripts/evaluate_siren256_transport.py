@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test-only subject-macro evaluator shared by the three SIREN-256 transports."""
+"""Validation/test subject-macro evaluator for direct SIREN-256 transports."""
 
 from __future__ import annotations
 
@@ -76,7 +76,7 @@ def subject_slope_metrics(table: pd.DataFrame) -> pd.DataFrame:
         if anchored.empty:
             continue
         base = anchored.iloc[0]
-        predicted = pd.concat((pd.DataFrame({"time": [base.source_time], "volume": [base.source_volume]}), anchored[["target_time", "predicted_decoded_volume"]].rename(columns={"target_time": "time", "predicted_decoded_volume": "volume"})), ignore_index=True).drop_duplicates("time")
+        predicted = pd.concat((pd.DataFrame({"time": [base.source_time], "volume": [base.source_decoded_volume]}), anchored[["target_time", "predicted_decoded_volume"]].rename(columns={"target_time": "time", "predicted_decoded_volume": "volume"})), ignore_index=True).drop_duplicates("time")
         observed = pd.concat((pd.DataFrame({"time": [base.source_time], "volume": [base.source_volume]}), anchored[["target_time", "target_volume"]].rename(columns={"target_time": "time", "target_volume": "volume"})), ignore_index=True).drop_duplicates("time")
         if len(predicted) < 2:
             continue
@@ -143,6 +143,7 @@ def main() -> int:
     parser.add_argument("--run", type=Path, required=True)
     parser.add_argument("--split", choices=("test", "val"), default="test")
     parser.add_argument("--checkpoint", default="best")
+    parser.add_argument("--tag", default=None, help="Optional safe subdirectory tag for comparing validation checkpoints.")
     parser.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--max-pairs", type=int, default=None)
     args = parser.parse_args()
@@ -156,6 +157,8 @@ def main() -> int:
         checkpoint = run / "checkpoints" / "best_candidate.pt"
     if not checkpoint.exists():
         raise FileNotFoundError(checkpoint)
+    if args.tag is not None and Path(args.tag).name != args.tag:
+        raise ValueError("Evaluation tag must be one path component.")
     device = torch.device(args.device)
     cache, basis = load_cache(config), load_basis(root)
     from siren256_common import load_frozen_decoder
@@ -175,6 +178,7 @@ def main() -> int:
     face_array = np.asarray(cache["faces"], dtype=np.int64)
     rows: list[dict[str, Any]] = []
     future_rates: list[dict[str, Any]] = []
+    decoded_source_cache: dict[int, tuple[np.ndarray, np.ndarray, float, float]] = {}
     for row in pairs.itertuples(index=False):
         source_index, target_index = int(row.source_cache_index), int(row.target_cache_index)
         source = torch.from_numpy(np.array(cache["latents"][source_index : source_index + 1], copy=True)).to(device)
@@ -190,6 +194,10 @@ def main() -> int:
         normal_mae = float((displacement - target_displacement).abs().mean().cpu())
         nochange_normal = float(target_displacement.abs().mean().cpu())
         decoded_vertices, decoded_faces = decode_zero_level_mesh(decoder, prediction, resolution, lower, upper)
+        if source_index not in decoded_source_cache:
+            source_decoded_vertices, source_decoded_faces = decode_zero_level_mesh(decoder, source, resolution, lower, upper)
+            decoded_source_cache[source_index] = (source_decoded_vertices, source_decoded_faces, mesh_volume(source_decoded_vertices, source_decoded_faces), mesh_area(source_decoded_vertices, source_decoded_faces))
+        _, _, source_decoded_volume, source_decoded_area = decoded_source_cache[source_index]
         target_vertices_array = target_vertices[0].cpu().numpy()
         seed = source_index * 104729 + target_index
         chamfer, assd, hd95 = nearest_metrics(sample_mesh_surface(decoded_vertices, decoded_faces, surface_samples, seed), sample_mesh_surface(target_vertices_array, face_array, surface_samples, seed + 1))
@@ -197,7 +205,8 @@ def main() -> int:
         predicted_volume_value = mesh_volume(decoded_vertices, decoded_faces)
         gap = max(abs(float(row.gap_years)), 0.05)
         target_rate = np.log(max(target_volume, 1e-8) / max(source_volume, 1e-8)) / gap
-        predicted_rate = np.log(max(predicted_volume_value, 1e-8) / max(source_volume, 1e-8)) / gap
+        predicted_rate = np.log(max(predicted_volume_value, 1e-8) / max(source_decoded_volume, 1e-8)) / gap
+        predicted_rate_legacy = np.log(max(predicted_volume_value, 1e-8) / max(source_volume, 1e-8)) / gap
         decoded_area, target_area = mesh_area(decoded_vertices, decoded_faces), mesh_area(target_vertices_array, face_array)
         inverse = model.transport(prediction, target_time, source_time, condition)
         virtual_time = 0.5 * (source_time + target_time)
@@ -208,13 +217,13 @@ def main() -> int:
             observed_defect = float(torch.mean((prediction - model.transport(model.transport(source, source_time, middle, condition), middle, target_time, condition)) ** 2).cpu())
         predicted_hot = set(torch.topk(displacement[0].abs(), max(1, displacement.shape[1] // 10)).indices.cpu().tolist())
         target_hot = set(torch.topk(target_displacement[0].abs(), max(1, target_displacement.shape[1] // 10)).indices.cpu().tolist())
-        rows.append({"subject_id": str(row.subject_id), "diagnosis": str(row.diagnosis), "source_scan_id": str(row.source_scan_id), "target_scan_id": str(row.target_scan_id), "source_visit_order": int(row.source_visit_order), "target_visit_order": int(row.target_visit_order), "source_time": float(row.source_time), "target_time": float(row.target_time), "is_adjacent": bool(row.is_adjacent), "is_first_last": bool(row.is_first_last), "gap_years": float(row.gap_years), "source_volume": source_volume, "target_volume": target_volume, "predicted_decoded_volume": predicted_volume_value, "registered_normal_mae": normal_mae, "registered_proxy_vertex_mae": float(torch.linalg.vector_norm(proxy - target_vertices, dim=-1).mean().cpu()), "chamfer_l2_squared": chamfer, "assd": assd, "hd95": hd95, "volume_relative_error": abs(predicted_volume_value - target_volume) / max(target_volume, 1e-8), "target_log_volume_rate": target_rate, "predicted_log_volume_rate": predicted_rate, "annual_log_volume_rate_mae": abs(predicted_rate - target_rate), "surface_area_relative_error": abs(decoded_area - target_area) / max(target_area, 1e-8), "semigroup_defect": float(torch.mean((prediction - virtual) ** 2).cpu()), "observed_semigroup_defect": observed_defect, "inverse_defect": float(torch.mean((inverse - source) ** 2).cpu()), "nochange_improvement_ratio": (nochange_normal - normal_mae) / max(nochange_normal, 1e-8), "hotspot_overlap": len(predicted_hot & target_hot) / len(predicted_hot | target_hot)})
+        rows.append({"subject_id": str(row.subject_id), "diagnosis": str(row.diagnosis), "source_scan_id": str(row.source_scan_id), "target_scan_id": str(row.target_scan_id), "source_visit_order": int(row.source_visit_order), "target_visit_order": int(row.target_visit_order), "source_time": float(row.source_time), "target_time": float(row.target_time), "is_adjacent": bool(row.is_adjacent), "is_first_last": bool(row.is_first_last), "gap_years": float(row.gap_years), "source_volume": source_volume, "source_decoded_volume": source_decoded_volume, "target_volume": target_volume, "predicted_decoded_volume": predicted_volume_value, "source_decoder_volume_relative_error": abs(source_decoded_volume - source_volume) / max(source_volume, 1e-8), "registered_normal_mae": normal_mae, "registered_proxy_vertex_mae": float(torch.linalg.vector_norm(proxy - target_vertices, dim=-1).mean().cpu()), "chamfer_l2_squared": chamfer, "assd": assd, "hd95": hd95, "volume_relative_error": abs(predicted_volume_value - target_volume) / max(target_volume, 1e-8), "target_log_volume_rate": target_rate, "predicted_log_volume_rate": predicted_rate, "predicted_log_volume_rate_legacy": predicted_rate_legacy, "annual_log_volume_rate_mae": abs(predicted_rate - target_rate), "surface_area_relative_error": abs(decoded_area - target_area) / max(target_area, 1e-8), "semigroup_defect": float(torch.mean((prediction - virtual) ** 2).cpu()), "observed_semigroup_defect": observed_defect, "inverse_defect": float(torch.mean((inverse - source) ** 2).cpu()), "nochange_improvement_ratio": (nochange_normal - normal_mae) / max(nochange_normal, 1e-8), "hotspot_overlap": len(predicted_hot & target_hot) / len(predicted_hot | target_hot)})
         if bool(row.is_first_last):
             future_time = target_time + (target_time - source_time)
             future_latent = model.transport(source, source_time, future_time, condition)
             future_vertices, future_faces = decode_zero_level_mesh(decoder, future_latent, resolution, lower, upper)
             future_volume = mesh_volume(future_vertices, future_faces)
-            future_rates.append({"diagnosis": str(row.diagnosis), "annual_log_volume_rate": float(np.log(max(future_volume, 1.0e-8) / max(source_volume, 1.0e-8)) / max(2.0 * gap, 0.05)), "volume_estimator": "decoded_SIREN_zero_level_mesh"})
+            future_rates.append({"diagnosis": str(row.diagnosis), "annual_log_volume_rate": float(np.log(max(future_volume, 1.0e-8) / max(source_decoded_volume, 1.0e-8)) / max(2.0 * gap, 0.05)), "volume_estimator": "decoded_SIREN_zero_level_mesh_temporal"})
     table = pd.DataFrame(rows)
     primary = ["registered_normal_mae", "chamfer_l2_squared", "assd", "volume_relative_error", "annual_log_volume_rate_mae"]
     secondary = ["hd95", "surface_area_relative_error", "semigroup_defect", "inverse_defect", "nochange_improvement_ratio", "hotspot_overlap", "registered_proxy_vertex_mae"]
@@ -233,11 +242,13 @@ def main() -> int:
     slope_summary = {"subjects": int(len(slope)), "subject_log_volume_slope_mae": float(slope.subject_log_volume_slope_mae.mean()) if not slope.empty else float("nan"), "by_diagnosis_subject_macro": slope.groupby("diagnosis").subject_log_volume_slope_mae.mean().to_dict() if not slope.empty else {}}
     ordering = test_rate_ordering(table)
     evaluation = run / "evaluation" / args.split
+    if args.tag:
+        evaluation = evaluation / args.tag
     evaluation.mkdir(parents=True, exist_ok=True)
     table.to_csv(evaluation / "per_pair_metrics.csv", index=False)
     sequence.to_csv(evaluation / "sequence_rollout_metrics.csv", index=False)
     slope.to_csv(evaluation / "subject_slope_metrics.csv", index=False)
-    summary = {"run": str(run), "checkpoint": str(checkpoint), "split": args.split, "pair_count": int(len(table)), "subject_macro": panels, "subject_log_volume_slope": slope_summary, "test_rate_ordering": ordering, "direct_vs_rollout": rollout_summary, "ood_future_trends": trend, "primary_metrics": primary, "evaluation_surface": {"method": "frozen_SIREN_zero_level_marching_cubes", "grid_resolution": resolution, "bounds": [lower, upper], "samples_per_surface": surface_samples}, "attention_contract": getattr(model, "attention_contract", "not_applicable")}
+    summary = {"run": str(run), "checkpoint": str(checkpoint), "checkpoint_tag": args.tag, "split": args.split, "pair_count": int(len(table)), "subject_macro": panels, "subject_log_volume_slope": slope_summary, "test_rate_ordering": ordering, "direct_vs_rollout": rollout_summary, "ood_future_trends": trend, "primary_metrics": primary, "volume_rate_definition": "log(decoded predicted volume / decoded source volume) per year; target remains registered target/source volume", "evaluation_surface": {"method": "frozen_SIREN_zero_level_marching_cubes", "grid_resolution": resolution, "bounds": [lower, upper], "samples_per_surface": surface_samples}, "attention_contract": getattr(model, "attention_contract", "not_applicable")}
     write_json(evaluation / "summary.json", summary)
     print(json_dumps_compact({"split": args.split, "pairs": len(table), **panels["all_subject_macro"]}))
     return 0

@@ -9,7 +9,6 @@ import torch.nn.functional as F
 from torch import nn
 
 from siren256_common import decode_sdf, signed_mesh_volume
-from siren256_transport_models import BasisTransport
 
 
 def _masked_mean(value: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
@@ -23,6 +22,8 @@ class C3GeometryLoss(nn.Module):
         super().__init__()
         self.decoder, self.weights, self.age_range_years = decoder, dict(weights), float(age_range_years)
         self.options = dict(options or {})
+        self.weight_schedule = dict(self.options.get("LossWeightSchedule", {}))
+        self.current_epoch = 0
         self.normalized_geometry = bool(self.options.get("NormalizedGeometryHuber", False))
         self.volume_estimator = str(self.options.get("TrainingVolumeEstimator", "registered_normal_proxy")).lower()
         if self.volume_estimator not in {"registered_normal_proxy", "soft_occupancy"}:
@@ -51,6 +52,30 @@ class C3GeometryLoss(nn.Module):
 
     def _scale(self, name: str) -> float:
         return self.scales.get(name, self.scales.get("latent", 1.0))
+
+    def set_epoch(self, epoch: int) -> None:
+        """Set the training epoch used by optional loss-weight curricula."""
+        self.current_epoch = max(0, int(epoch))
+
+    def effective_weight(self, name: str) -> float:
+        """Return a deterministic scheduled weight without changing old configs."""
+        final_weight = float(self.weights.get(name, 0.0))
+        schedule = self.weight_schedule.get(name)
+        if not isinstance(schedule, dict):
+            return final_weight
+        start_epoch = max(1, int(schedule.get("start_epoch", 1)))
+        ramp_epochs = max(0, int(schedule.get("ramp_epochs", 0)))
+        initial_weight = float(schedule.get("initial_weight", 0.0))
+        scheduled_final = float(schedule.get("final_weight", final_weight))
+        if self.current_epoch < start_epoch:
+            return initial_weight
+        if ramp_epochs == 0:
+            return scheduled_final
+        progress = min(1.0, float(self.current_epoch - start_epoch + 1) / float(ramp_epochs))
+        return initial_weight + progress * (scheduled_final - initial_weight)
+
+    def effective_weights(self) -> dict[str, float]:
+        return {name: self.effective_weight(name) for name in self.weights}
 
     def _huber(self, name: str, prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         if self.normalized_geometry and name in {"registered_normal", "volume", "rate", "slope"}:
@@ -101,7 +126,7 @@ class C3GeometryLoss(nn.Module):
             normal = self._huber("registered_normal", displacement, target_displacement)
         return normal, volume, proxy_vertices
 
-    def pair_terms(self, model: BasisTransport, batch: dict[str, Any], vertex_count: int | None, training: bool) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    def pair_terms(self, model: nn.Module, batch: dict[str, Any], vertex_count: int | None, training: bool) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         source, target = batch["source_latent"], batch["target_latent"]
         source_time, target_time, condition = batch["source_time"], batch["target_time"], batch["condition"]
         prediction = model.transport(source, source_time, target_time, condition)
@@ -141,7 +166,7 @@ class C3GeometryLoss(nn.Module):
         terms["slope"] = prediction.sum() * 0.0
         return prediction, terms
 
-    def sequence_terms(self, model: BasisTransport, sequence: dict[str, torch.Tensor], vertex_count: int | None) -> dict[str, torch.Tensor]:
+    def sequence_terms(self, model: nn.Module, sequence: dict[str, torch.Tensor], vertex_count: int | None) -> dict[str, torch.Tensor]:
         latents, times, condition = sequence["latents"], sequence["times"], sequence["condition"]
         vertices, normals, volumes = sequence["vertices"], sequence["normals"], sequence["volumes"]
         if latents.shape[0] < 2:
@@ -193,5 +218,5 @@ class C3GeometryLoss(nn.Module):
             scale_name = aliases.get(name, name)
             already_normalized = self.normalized_geometry and scale_name in {"registered_normal", "volume", "rate", "slope"}
             denominator = 1.0 if already_normalized else self._scale(scale_name)
-            total = total + float(self.weights.get(name, 0.0)) * value / denominator
+            total = total + self.effective_weight(name) * value / denominator
         return total

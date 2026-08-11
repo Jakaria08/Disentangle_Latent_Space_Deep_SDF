@@ -18,7 +18,7 @@ def main() -> int:
     args = parser.parse_args()
     root, device = root_dir(), torch.device(args.device)
     ensure_prepared(root)
-    configs = [root / "configs" / name for name in ("v5_flow_c3.json", "plain_ode_c3_matched.json", "brainode_attention_c3_matched.json", "pca_parity_full_flow_v1.json")]
+    configs = [root / "configs" / name for name in ("v5_flow_c3.json", "plain_ode_c3_matched.json", "brainode_attention_c3_matched.json", "pca_parity_full_flow_v1.json", "pca_parity_full_flow_v2_pareto.json", "pca_parity_full_flow_v2_geometry_curriculum.json", "pca_parity_full_flow_v2_decoder_whitened.json")]
     basis, cache = load_basis(root), load_cache(load_config(configs[0]))
     source = torch.from_numpy(cache["latents"][:2].copy()).to(device).requires_grad_(True)
     source_time = torch.tensor([[0.2], [0.3]], device=device)

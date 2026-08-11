@@ -1,0 +1,8 @@
+{
+  "fit_split": "train",
+  "latent_size": 256,
+  "maximum_scale": 0.06803250312805176,
+  "mean_scale": 0.05297168344259262,
+  "minimum_scale": 0.03484150394797325,
+  "scan_count": 1791
+}

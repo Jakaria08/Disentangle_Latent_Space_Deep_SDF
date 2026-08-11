@@ -83,3 +83,25 @@ docs/_build/
 
 # Parameter Tuning
 examples/CALSNIC_control_L/optuna_reconstruction_search/
+
+# Generated reports and binary experiment artifacts
+*.html
+*.htm
+*.mgz
+*.gii
+*.vtk
+*.pkl
+*.p
+*.jsonl
+*.mp4
+*.webm
+*.svg
+
+# OS metadata
+.DS_Store
+._*
+
+# Generated-output locations
+tmp/
+analysis_*/
+**/tensorboard/

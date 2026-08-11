@@ -1,8 +1,8 @@
 {
   "CommonConfig": "common_qc_siren256.json",
-  "RunName": "pca_parity_full_flow_v1",
+  "RunName": "pca_parity_full_flow_v2_geometry_curriculum",
   "ModelType": "pca_parity_direct_flow",
-  "Description": "Full-dimensional standardized SIREN direct flow matching the successful PCA DirectAgeFlow architecture; no fixed velocity basis.",
+  "Description": "Full-dimensional PCA-parity direct flow with cocycle/semigroup losses active from epoch one and a geometry-first volume/rate curriculum.",
   "HiddenDims": [128, 128],
   "Dropout": 0.05,
   "Epochs": 150,
@@ -19,6 +19,15 @@
   "Seed": 42,
   "ValidationEvery": 1,
   "CheckpointEvery": 1,
+  "SaveValidationSnapshots": true,
+  "UseParetoValidationSelection": true,
+  "ParetoMaxCandidates": 5,
+  "ParetoMaxFirstLastGeometryRatio": 1.01,
+  "ParetoMaxAllPairGeometryRatio": 1.005,
+  "ParetoMaxVolumeRatio": 1.0,
+  "ValidationSurfaceMaxFirstLastGeometryRatio": 1.01,
+  "ValidationSurfaceMaxAllPairGeometryRatio": 1.005,
+  "ValidationSurfaceRequireVolumeImprovement": true,
   "EarlyStopPatience": 50,
   "WriteSharedValidationReport": false,
   "IncludeBackwardPairs": false,
@@ -26,7 +35,7 @@
   "BalancedSequenceSampling": false,
   "SaveEpochZero": true,
   "RequireBeatNoChangeForBest": true,
-  "NoChangeGeometryTolerance": 1.02,
+  "NoChangeGeometryTolerance": 1.01,
   "NoChangeVolumeTolerance": 1.0,
   "SelectionVolumeWeight": 0.2,
   "TrainingVolumeEstimator": "soft_occupancy",
@@ -52,6 +61,11 @@
     "slope": 0.1,
     "group_rate": 0.0,
     "disease_gap": 0.0
+  },
+  "LossWeightSchedule": {
+    "volume": {"start_epoch": 6, "ramp_epochs": 15, "initial_weight": 0.0},
+    "rate": {"start_epoch": 6, "ramp_epochs": 15, "initial_weight": 0.0},
+    "slope": {"start_epoch": 6, "ramp_epochs": 15, "initial_weight": 0.0}
   },
   "Feasibility": {
     "semigroup_max_scaled": 2.0,

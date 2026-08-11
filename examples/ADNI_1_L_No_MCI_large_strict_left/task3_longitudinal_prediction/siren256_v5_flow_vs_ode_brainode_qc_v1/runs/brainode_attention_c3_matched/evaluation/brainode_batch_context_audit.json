@@ -1,0 +1,8 @@
+{
+  "attention_contract": "one_case_one_trajectory; singleton QKV; no cross-subject batch attention",
+  "context_invariant_within_fp32_tolerance": true,
+  "interpretation": "A difference at or below 1e-7 is required: each Q/K/V calculation is a singleton and cannot encode cross-subject biological interaction.",
+  "singleton_attention_weight": 1.0,
+  "source_velocity_max_abs_difference_after_companion_permutation": 0.0,
+  "source_velocity_max_abs_difference_with_companions": 0.0
+}

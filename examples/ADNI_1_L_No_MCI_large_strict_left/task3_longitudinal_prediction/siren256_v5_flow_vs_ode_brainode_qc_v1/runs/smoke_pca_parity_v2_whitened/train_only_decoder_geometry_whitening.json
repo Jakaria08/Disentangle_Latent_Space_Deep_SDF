@@ -1,0 +1,13 @@
+{
+  "anchor_scan_count": 2,
+  "fit_split": "train",
+  "hutchinson_probes_per_anchor": 1,
+  "normalized_sensitivity_max": 4.0,
+  "normalized_sensitivity_min": 0.25,
+  "points_per_anchor": 32,
+  "sensitivity_max": 0.17752458155155182,
+  "sensitivity_median": 0.037899963557720184,
+  "sensitivity_min": 0.005341856274753809,
+  "velocity_scale_max": 0.2260793149471283,
+  "velocity_scale_min": 0.010296055115759373
+}

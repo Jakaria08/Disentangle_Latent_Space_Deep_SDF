@@ -1,0 +1,195 @@
+{
+  "attention_contract": "one_case_one_trajectory; singleton QKV; no cross-subject batch attention",
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1/runs/brainode_attention_c3_matched/checkpoints/best.pt",
+  "direct_vs_rollout": {
+    "direct_normal_mae": 0.024231992475688458,
+    "rollout_minus_direct": 1.8540467135608196e-05,
+    "rollout_normal_mae": 0.024250532942824067,
+    "subjects": 40
+  },
+  "evaluation_surface": {
+    "bounds": [
+      -1.0,
+      1.0
+    ],
+    "grid_resolution": 80,
+    "method": "frozen_SIREN_zero_level_marching_cubes",
+    "samples_per_surface": 30000
+  },
+  "ood_future_trends": {
+    "ad_rate_is_more_negative_than_cn": false,
+    "by_diagnosis": {
+      "AD": 0.03208010074823098,
+      "CN": -0.016121463851558934
+    },
+    "first_last_subjects": 50
+  },
+  "pair_count": 483,
+  "primary_metrics": [
+    "registered_normal_mae",
+    "chamfer_l2_squared",
+    "assd",
+    "volume_relative_error",
+    "annual_log_volume_rate_mae"
+  ],
+  "run": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1/runs/brainode_attention_c3_matched",
+  "split": "test",
+  "subject_log_volume_slope": {
+    "by_diagnosis_subject_macro": {
+      "AD": 2.767268553372605,
+      "CN": 1.2692827625700136
+    },
+    "subject_log_volume_slope_mae": 1.8880160239884751,
+    "subjects": 46
+  },
+  "subject_macro": {
+    "all_subject_macro": {
+      "annual_log_volume_rate_mae": 0.0651127932808285,
+      "assd": 0.025229283417354913,
+      "chamfer_l2_squared": 0.0009930834001354303,
+      "hd95": 0.057109823733051096,
+      "hotspot_overlap": 0.07632765023278107,
+      "inverse_defect": 1.6597445583740305e-06,
+      "nochange_improvement_ratio": -0.17947957714822152,
+      "registered_normal_mae": 0.018917331593613772,
+      "registered_proxy_vertex_mae": 0.028109482829621623,
+      "semigroup_defect": 1.9337570613157733e-08,
+      "surface_area_relative_error": 0.07639041642705008,
+      "volume_relative_error": 0.07500035311325952
+    },
+    "by_diagnosis_subject_macro": {
+      "AD": {
+        "annual_log_volume_rate_mae": 0.08986902571904842,
+        "assd": 0.026092825684624142,
+        "chamfer_l2_squared": 0.0011081206176064777,
+        "hd95": 0.05996879844167703,
+        "hotspot_overlap": 0.0901889970100274,
+        "inverse_defect": 1.697940712330618e-10,
+        "nochange_improvement_ratio": -0.1571504335323826,
+        "registered_normal_mae": 0.020182340982414428,
+        "registered_proxy_vertex_mae": 0.030470352605103505,
+        "semigroup_defect": 1.390495163552646e-11,
+        "surface_area_relative_error": 0.07947708767147724,
+        "volume_relative_error": 0.09312711831581917
+      },
+      "CN": {
+        "annual_log_volume_rate_mae": 0.04718586634280718,
+        "assd": 0.02460395970657374,
+        "chamfer_l2_squared": 0.000909780587483982,
+        "hd95": 0.055039531702666816,
+        "hotspot_overlap": 0.06629012325615442,
+        "inverse_defect": 2.8615055945932977e-06,
+        "nochange_improvement_ratio": -0.19564895700796697,
+        "registered_normal_mae": 0.018001290312068475,
+        "registered_proxy_vertex_mae": 0.02639988747496233,
+        "semigroup_defect": 3.3330569885294505e-08,
+        "surface_area_relative_error": 0.07415524069832696,
+        "volume_relative_error": 0.061874074863130124
+      }
+    },
+    "by_gap_subject_macro": {
+      "1_to_2y": {
+        "annual_log_volume_rate_mae": 0.05568279688605498,
+        "assd": 0.024716006579880108,
+        "chamfer_l2_squared": 0.0009547408681421074,
+        "hd95": 0.056258870238410745,
+        "hotspot_overlap": 0.07574631212621927,
+        "inverse_defect": 4.6258569067175504e-11,
+        "nochange_improvement_ratio": -0.18904296807021395,
+        "registered_normal_mae": 0.018900059648987017,
+        "registered_proxy_vertex_mae": 0.027956053939756156,
+        "semigroup_defect": 1.201356041954036e-11,
+        "surface_area_relative_error": 0.0822374765301807,
+        "volume_relative_error": 0.07819682470873937
+      },
+      "over_2y": {
+        "annual_log_volume_rate_mae": 0.043505613636475246,
+        "assd": 0.027289968902440016,
+        "chamfer_l2_squared": 0.0011861201695755488,
+        "hd95": 0.06324496538966781,
+        "hotspot_overlap": 0.07165198044585246,
+        "inverse_defect": 4.466934675351371e-06,
+        "nochange_improvement_ratio": -0.33873993810586717,
+        "registered_normal_mae": 0.02351335640508627,
+        "registered_proxy_vertex_mae": 0.03299851753822041,
+        "semigroup_defect": 5.2651659736685394e-08,
+        "surface_area_relative_error": 0.12280022303018812,
+        "volume_relative_error": 0.1199494338229917
+      },
+      "under_1y": {
+        "annual_log_volume_rate_mae": 0.0767591320312812,
+        "assd": 0.024600952993578343,
+        "chamfer_l2_squared": 0.0009422060882703189,
+        "hd95": 0.054502815649777964,
+        "hotspot_overlap": 0.07266170501098584,
+        "inverse_defect": 4.2161847312009024e-14,
+        "nochange_improvement_ratio": -0.08396631575398411,
+        "registered_normal_mae": 0.016726284366958437,
+        "registered_proxy_vertex_mae": 0.025960692330682402,
+        "semigroup_defect": 4.8264013729762246e-14,
+        "surface_area_relative_error": 0.043257637893379955,
+        "volume_relative_error": 0.049638564044943656
+      }
+    },
+    "by_pair_type_subject_macro": {
+      "adjacent": {
+        "annual_log_volume_rate_mae": 0.07502853258530641,
+        "assd": 0.024614613593746816,
+        "chamfer_l2_squared": 0.0009360284353051635,
+        "hd95": 0.05502814292520235,
+        "hotspot_overlap": 0.07816277721791183,
+        "inverse_defect": 7.895044858906184e-11,
+        "nochange_improvement_ratio": -0.1031729815381401,
+        "registered_normal_mae": 0.016803869545563226,
+        "registered_proxy_vertex_mae": 0.025798580629854566,
+        "semigroup_defect": 1.4241010847475787e-11,
+        "surface_area_relative_error": 0.056236279516000326,
+        "volume_relative_error": 0.05834092772116489
+      },
+      "non_adjacent": {
+        "annual_log_volume_rate_mae": 0.04773180271947961,
+        "assd": 0.025566832645550718,
+        "chamfer_l2_squared": 0.0010413116348628863,
+        "hd95": 0.05892697050994218,
+        "hotspot_overlap": 0.06526338157771927,
+        "inverse_defect": 2.5957892793716797e-06,
+        "nochange_improvement_ratio": -0.24870866708059772,
+        "registered_normal_mae": 0.0210309901651335,
+        "registered_proxy_vertex_mae": 0.03048178203208076,
+        "semigroup_defect": 3.040693819721278e-08,
+        "surface_area_relative_error": 0.08999102716524213,
+        "volume_relative_error": 0.08732901668403045
+      }
+    },
+    "first_last_subject_macro": {
+      "annual_log_volume_rate_mae": 0.05320538392004162,
+      "assd": 0.026358599736624817,
+      "chamfer_l2_squared": 0.0011134823913691268,
+      "hd95": 0.060965032975570994,
+      "hotspot_overlap": 0.07409976003696427,
+      "inverse_defect": 4.129967185129345e-05,
+      "nochange_improvement_ratio": -0.28655094762077604,
+      "registered_normal_mae": 0.023100792448967695,
+      "registered_proxy_vertex_mae": 0.032700444459915164,
+      "semigroup_defect": 3.522744352106488e-07,
+      "surface_area_relative_error": 0.09981113183790014,
+      "volume_relative_error": 0.10423919590338683
+    }
+  },
+  "test_rate_ordering": {
+    "by_diagnosis_subject_macro": {
+      "AD": {
+        "predicted_log_volume_rate": 0.03394739911006943,
+        "target_log_volume_rate": -0.03818006255579025
+      },
+      "CN": {
+        "predicted_log_volume_rate": 0.003046164830305434,
+        "target_log_volume_rate": -0.002837453533322552
+      }
+    },
+    "observed_ad_rate_is_more_negative_than_cn": true,
+    "predicted_ad_rate_is_more_negative_than_cn": false,
+    "predicted_matches_observed_order": false,
+    "subjects": 50
+  }
+}

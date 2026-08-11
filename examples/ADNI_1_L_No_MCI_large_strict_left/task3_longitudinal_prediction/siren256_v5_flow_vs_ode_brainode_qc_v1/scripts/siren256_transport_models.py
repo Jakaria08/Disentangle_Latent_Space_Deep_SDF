@@ -1,4 +1,4 @@
-"""Matched SIREN-256 transport models restricted to one fixed velocity basis."""
+"""Matched SIREN-256 transports plus the full-dimensional PCA-parity flow."""
 
 from __future__ import annotations
 
@@ -62,6 +62,7 @@ class PCAParityDirectFlow(nn.Module):
         dropout: float,
         latent_mean: torch.Tensor | None = None,
         latent_scale: torch.Tensor | None = None,
+        velocity_scale: torch.Tensor | None = None,
     ) -> None:
         super().__init__()
         self.latent_size = int(latent_size)
@@ -71,6 +72,12 @@ class PCAParityDirectFlow(nn.Module):
             raise ValueError("PCA-parity latent statistics do not match LatentSize.")
         self.register_buffer("latent_mean", mean)
         self.register_buffer("latent_scale", scale.clamp_min(1.0e-6))
+        output_scale = scale if velocity_scale is None else torch.as_tensor(velocity_scale, dtype=torch.float32).reshape(1, -1)
+        if output_scale.shape != (1, self.latent_size):
+            raise ValueError("PCA-parity velocity scale does not match LatentSize.")
+        # Usually this equals latent_scale.  The decoder-whitened direct-flow
+        # variant supplies a train-only geometry-aware output preconditioner.
+        self.register_buffer("velocity_scale", output_scale.clamp_min(1.0e-6))
 
         dims = [self.latent_size + 4, *[int(width) for width in hidden_dims], self.latent_size]
         layers: list[nn.Module] = []
@@ -91,6 +98,24 @@ class PCAParityDirectFlow(nn.Module):
             raise ValueError(f"Expected latent [B,{self.latent_size}], got {tuple(latent.shape)}")
         return (latent - self.latent_mean.to(latent.dtype)) / self.latent_scale.to(latent.dtype)
 
+    def _load_from_state_dict(
+        self,
+        state_dict: dict[str, torch.Tensor],
+        prefix: str,
+        local_metadata: dict[str, Any],
+        strict: bool,
+        missing_keys: list[str],
+        unexpected_keys: list[str],
+        error_msgs: list[str],
+    ) -> None:
+        # Checkpoints created before decoder-whitened output scaling did not
+        # contain this buffer. Their original behavior is exactly recovered by
+        # using latent_scale as velocity_scale.
+        velocity_key, latent_key = prefix + "velocity_scale", prefix + "latent_scale"
+        if velocity_key not in state_dict:
+            state_dict[velocity_key] = state_dict.get(latent_key, self.latent_scale).clone()
+        super()._load_from_state_dict(state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs)
+
     def standardized_velocity(
         self,
         latent: torch.Tensor,
@@ -103,7 +128,7 @@ class PCAParityDirectFlow(nn.Module):
         return self.net(torch.cat((self.standardized(latent), source_time, target_time, delta, condition), dim=1))
 
     def velocity(self, latent: torch.Tensor, time: torch.Tensor, condition: torch.Tensor) -> torch.Tensor:
-        return self.standardized_velocity(latent, time, time, condition) * self.latent_scale.to(latent.dtype)
+        return self.standardized_velocity(latent, time, time, condition) * self.velocity_scale.to(latent.dtype)
 
     def transport(
         self,
@@ -114,7 +139,7 @@ class PCAParityDirectFlow(nn.Module):
     ) -> torch.Tensor:
         source_time, target_time = (_column(value, latent) for value in (source_time, target_time))
         velocity = self.standardized_velocity(latent, source_time, target_time, condition)
-        return latent + (target_time - source_time) * velocity * self.latent_scale.to(latent.dtype)
+        return latent + (target_time - source_time) * velocity * self.velocity_scale.to(latent.dtype)
 
 
 class BasisTransport(nn.Module):
@@ -263,15 +288,16 @@ class BrainODEAttention(RK4BasisODE):
         return torch.cat([self._lift(self.coefficient_velocity(latent[row : row + 1], time[row : row + 1], condition[row : row + 1])) for row in range(latent.shape[0])], dim=0)
 
 
-def build_transport(config: dict[str, Any], basis: dict[str, Any]) -> BasisTransport:
+def build_transport(config: dict[str, Any], basis: dict[str, Any]) -> nn.Module:
     kind = str(config["ModelType"]).lower()
-    if kind == "pca_parity_direct_flow":
+    if kind in {"pca_parity_direct_flow", "pca_parity_geometry_whitened_direct_flow"}:
         return PCAParityDirectFlow(
             latent_size=int(config["LatentSize"]),
             hidden_dims=[int(value) for value in config.get("HiddenDims", [128, 128])],
             dropout=float(config.get("Dropout", 0.05)),
             latent_mean=basis.get("latent_mean"),
             latent_scale=basis.get("latent_scale"),
+            velocity_scale=basis.get("velocity_scale"),
         )
     width, blocks, dropout = int(config["HiddenWidth"]), int(config["ResidualBlocks"]), float(config["Dropout"])
     if kind == "v5_direct_flow":

@@ -91,6 +91,9 @@ Statistics come only from the frozen training latent archive.  The primary run
 uses forward pairs, the original PCA-style unbalanced shuffle, and gradient
 accumulation to reproduce an effective pair batch of 128 without placing 128
 SIREN decodes in memory at once.
+The 150-epoch limit and 50-epoch early-stop patience match the successful PCA
+run; the lower learning rate is conservative for decoder-based geometry
+gradients.
 
 For SIREN-specific geometry, volume is trained from differentiable occupancy
 of the frozen decoder rather than the registered-normal volume approximation.
@@ -99,6 +102,9 @@ Huber loss.  Epoch zero is saved and evaluated as the exact no-change fallback;
 a trained checkpoint replaces it only when it passes semigroup/inverse gates,
 stays within the registered-geometry tolerance, improves volume over no-change,
 and improves the combined validation score.
+Its validation summary records the selected checkpoint/epoch separately from
+the last epoch and stays inside the run directory, so follow-up and smoke runs
+do not overwrite the shared benchmark report.
 
 Run from the repository root:
 
@@ -115,3 +121,59 @@ $PY $ROOT/scripts/evaluate_siren256_transport.py \
 
 The test evaluator remains the same frozen-SIREN marching-cubes evaluator used
 by C3, C4, the plain ODE, and BrainODE.
+
+## Paper-ready direct-flow follow-ups (no ODE)
+
+The three `v2` configurations are direct one-shot transports, not neural ODEs.
+Each retains the full 256-D PCA-parity MLP, observed and virtual cocycle losses,
+sequence rollout/direct agreement, and inverse consistency. They differ only in
+the mechanism used to protect correspondence geometry while learning temporal
+volume change:
+
+| Config | Direct-flow change |
+| --- | --- |
+| `pca_parity_full_flow_v2_pareto.json` | Reference full-dimensional flow with validation snapshots and Pareto selection. |
+| `pca_parity_full_flow_v2_geometry_curriculum.json` | Starts with geometry and cocycle/semigroup losses; ramps volume, rate, and slope losses from epoch 6 through 20. |
+| `pca_parity_full_flow_v2_decoder_whitened.json` | Uses train-only frozen-decoder Jacobian sensitivity to reduce output scale along geometry-sensitive latent coordinates. |
+
+All three retain every validation checkpoint and make a maximum five-checkpoint
+proxy Pareto shortlist. The test split is never opened by training, proxy
+selection, or the validation-surface evaluator.
+
+Run each training configuration separately from the repository root:
+
+```bash
+ROOT=examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1
+PY=/home/jakaria/anaconda3/envs/inr_sdf/bin/python
+
+$PY $ROOT/scripts/train_siren256_transport.py \
+  --config $ROOT/configs/pca_parity_full_flow_v2_pareto.json --device cuda:0
+
+$PY $ROOT/scripts/train_siren256_transport.py \
+  --config $ROOT/configs/pca_parity_full_flow_v2_geometry_curriculum.json --device cuda:0
+
+$PY $ROOT/scripts/train_siren256_transport.py \
+  --config $ROOT/configs/pca_parity_full_flow_v2_decoder_whitened.json --device cuda:0
+```
+
+For each completed run, select exactly one checkpoint on validation before
+opening test. This command evaluates only the retained validation shortlist,
+updates `checkpoints/best.pt`, and records the decision under `selection/`:
+
+```bash
+$PY $ROOT/scripts/evaluate_siren256_validation_frontier.py \
+  --run $ROOT/runs/pca_parity_full_flow_v2_pareto --device cuda:0
+```
+
+Repeat that command with the other two run directories. Only after it completes
+should the selected model be evaluated once on test:
+
+```bash
+$PY $ROOT/scripts/evaluate_siren256_transport.py \
+  --run $ROOT/runs/pca_parity_full_flow_v2_pareto --split test --device cuda:0
+```
+
+The evaluator now reports temporal volume rate as
+`log(decoded predicted volume / decoded source volume) / years`. Therefore an
+identity checkpoint reports exactly zero predicted temporal change; decoder
+calibration error is reported separately and cannot masquerade as atrophy.

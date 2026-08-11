@@ -1,0 +1,136 @@
+{
+  "attention_note": "one_case_one_trajectory; singleton QKV; no cross-subject batch attention",
+  "metric_direction": {
+    "annual_log_volume_rate_mae": "lower_is_better",
+    "assd": "lower_is_better",
+    "chamfer_l2_squared": "lower_is_better",
+    "registered_normal_mae": "lower_is_better",
+    "volume_relative_error": "lower_is_better"
+  },
+  "pre_registered_success_rule_met": false,
+  "subject_macro_test_table": {
+    "brainode_attention_ode": {
+      "annual_log_volume_rate_mae": 0.0651127932808285,
+      "assd": 0.025229283417354913,
+      "chamfer_l2_squared": 0.0009930834001354303,
+      "registered_normal_mae": 0.018917331593613772,
+      "volume_relative_error": 0.07500035311325952
+    },
+    "plain_ode": {
+      "annual_log_volume_rate_mae": 0.06883526459436624,
+      "assd": 0.024911859234084836,
+      "chamfer_l2_squared": 0.0009672979815272308,
+      "registered_normal_mae": 0.019434592112603167,
+      "volume_relative_error": 0.08155900937515684
+    },
+    "v5_direct_flow": {
+      "annual_log_volume_rate_mae": 0.06499469426666155,
+      "assd": 0.02576348096429596,
+      "chamfer_l2_squared": 0.0010381383811499183,
+      "registered_normal_mae": 0.017944768618422723,
+      "volume_relative_error": 0.073235894060618
+    }
+  },
+  "v5_primary_win_count": 3,
+  "v5_test_rate_ordering": {
+    "by_diagnosis_subject_macro": {
+      "AD": {
+        "predicted_log_volume_rate": 0.03518597555685535,
+        "target_log_volume_rate": -0.03818006255579025
+      },
+      "CN": {
+        "predicted_log_volume_rate": 6.023829165096889e-05,
+        "target_log_volume_rate": -0.002837453533322552
+      }
+    },
+    "observed_ad_rate_is_more_negative_than_cn": true,
+    "predicted_ad_rate_is_more_negative_than_cn": false,
+    "predicted_matches_observed_order": false,
+    "subjects": 50
+  },
+  "v5_validation_feasible": true,
+  "v5_wins_against_both_odes": {
+    "annual_log_volume_rate_mae": true,
+    "assd": false,
+    "chamfer_l2_squared": false,
+    "registered_normal_mae": true,
+    "volume_relative_error": true
+  },
+  "validation": {
+    "brainode_attention_ode": {
+      "disease_gap": 0.0005863794612532376,
+      "geometry_ratio_all_pairs": 1.253065591462678,
+      "geometry_ratio_first_last": 1.4426928138156792,
+      "group_rate": 0.0007306027849038913,
+      "inverse": 1.3265637646339343e-05,
+      "inverse_scaled": 0.0034499623641863976,
+      "latent": 0.00266178657472048,
+      "macro_all_pair_geometry": 0.0002673953826471504,
+      "macro_all_pair_nochange_geometry": 0.00021339296559490172,
+      "macro_first_last_geometry": 0.00033865433719116624,
+      "macro_first_last_nochange_geometry": 0.00023473766137053294,
+      "observed_semigroup": 2.0097851947615197e-07,
+      "rate": 0.0011894730670409727,
+      "registered_normal": 0.0003042927762748624,
+      "rows": 522.0,
+      "selection_score": 1.7024055271876772,
+      "semigroup_scaled": 9.748348005441195e-05,
+      "slope": 0.0,
+      "subjects": 52.0,
+      "target_sdf": 0.06008166147545836,
+      "virtual_semigroup": 1.7386050379271415e-07,
+      "volume": 0.0030992355753428577,
+      "volume_ratio": 0.9099595079462646
+    },
+    "plain_ode": {
+      "disease_gap": 0.0005966392267914165,
+      "geometry_ratio_all_pairs": 1.3103962130943072,
+      "geometry_ratio_first_last": 1.4298562960748031,
+      "group_rate": 0.0006032407105257164,
+      "inverse": 0.00016810386042603642,
+      "inverse_scaled": 0.04371836523850075,
+      "latent": 0.002656970638781786,
+      "macro_all_pair_geometry": 0.000279629334016523,
+      "macro_all_pair_nochange_geometry": 0.00021339296559490172,
+      "macro_first_last_geometry": 0.0003356411230365316,
+      "macro_first_last_nochange_geometry": 0.00023473766137053294,
+      "observed_semigroup": 8.54743305955339e-06,
+      "rate": 0.001199861788099464,
+      "registered_normal": 0.0002959660350093511,
+      "rows": 522.0,
+      "selection_score": 1.6998713464530646,
+      "semigroup_scaled": 0.0039081489203747445,
+      "slope": 0.0,
+      "subjects": 52.0,
+      "target_sdf": 0.05984888417053953,
+      "virtual_semigroup": 6.480002597081672e-06,
+      "volume": 0.002355595278309237,
+      "volume_ratio": 0.793580775940005
+    },
+    "v5_direct_flow": {
+      "disease_gap": 0.0007054057164395128,
+      "geometry_ratio_all_pairs": 1.234396127533596,
+      "geometry_ratio_first_last": 1.740282958833685,
+      "group_rate": 0.0008586071787573311,
+      "inverse": 0.0004824131633558097,
+      "inverse_scaled": 0.1254600270213859,
+      "latent": 0.002799152584846392,
+      "macro_all_pair_geometry": 0.00026341145037325655,
+      "macro_all_pair_nochange_geometry": 0.00021339296559490172,
+      "macro_first_last_geometry": 0.00040850995187961066,
+      "macro_first_last_nochange_geometry": 0.00023473766137053294,
+      "observed_semigroup": 3.9463597172397007e-05,
+      "rate": 0.0012585309333012081,
+      "registered_normal": 0.00033404737574019793,
+      "rows": 522.0,
+      "selection_score": 1.9983463662984915,
+      "semigroup_scaled": 0.019653968086264878,
+      "slope": 0.0,
+      "subjects": 52.0,
+      "target_sdf": 0.06144297011624807,
+      "virtual_semigroup": 3.6108942879527114e-05,
+      "volume": 0.005624223058022759,
+      "volume_ratio": 1.1184181958087318
+    }
+  }
+}

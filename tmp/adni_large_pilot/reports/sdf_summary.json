@@ -1,9 +1,0 @@
-{
-  "groups": {
-    "left": {
-      "data_dir": "/home/jakaria/INR/Deep3DComp/tmp/adni_large_pilot/left_hippocampus_correspondence/sdf_data",
-      "npz_dir": "/home/jakaria/INR/Deep3DComp/tmp/adni_large_pilot/left_hippocampus_correspondence/sdf_data/SdfSamples/minimal_scaled_obj_files",
-      "npz_count": 10
-    }
-  }
-}
