@@ -1,0 +1,219 @@
+{
+  "bootstrap_replicates": 2000,
+  "brainode_batch_context_audit": {
+    "hippocampus": {
+      "grouped_batch_size": 32,
+      "independent_batch_size": 1,
+      "interpretation": "Nonzero values mean prediction depends on other cases in the evaluation batch.",
+      "pca_coordinate_mae": 0.013591127470135689,
+      "pca_rmse": 0.02060745656490326,
+      "samples": 32,
+      "vertex_coordinate_mae_mm": 0.014444999297737142,
+      "vertex_euclidean_max_mm": 0.17896283596699644,
+      "vertex_euclidean_mean_mm": 0.028888550038713594
+    },
+    "lateral_ventricle": {
+      "grouped_batch_size": 32,
+      "independent_batch_size": 1,
+      "interpretation": "Nonzero values mean prediction depends on other cases in the evaluation batch.",
+      "pca_coordinate_mae": 0.044633809477090836,
+      "pca_rmse": 0.07619724422693253,
+      "samples": 32,
+      "vertex_coordinate_mae_mm": 0.04921905045239009,
+      "vertex_euclidean_max_mm": 0.8539348631595047,
+      "vertex_euclidean_mean_mm": 0.09978707840768414
+    }
+  },
+  "brainode_included": true,
+  "brainode_primary_inference_batch_size": 1,
+  "device": "cpu",
+  "methods": {
+    "anchored_v4": {
+      "label": "Anchored V4",
+      "role": "primary"
+    },
+    "brainode": {
+      "label": "BrainODE",
+      "role": "primary"
+    },
+    "e3_latest_sensitivity": {
+      "label": "E3 latest (exploratory)",
+      "role": "exploratory_sensitivity"
+    },
+    "e3_selected": {
+      "label": "E3 selected",
+      "role": "primary"
+    },
+    "no_change": {
+      "label": "No change",
+      "role": "primary"
+    },
+    "v1": {
+      "label": "V1",
+      "role": "primary"
+    }
+  },
+  "pair_rows": 14076,
+  "source_artifacts_modified": false,
+  "status": "pass",
+  "structures": {
+    "hippocampus": {
+      "brainode": {
+        "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/brainode/training/brainode_attention_pca150_s42/checkpoints/best.pt",
+        "checkpoint_epoch": 3,
+        "checkpoint_sha256": "a3565c6131316973547930feea8a3fbd740d9a5f31d554f8623fc384c468bf0c",
+        "cross_batch_attention_present": true,
+        "history_epochs": 100,
+        "model_source": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/scripts/brainode_model.py",
+        "model_source_sha256": "d1f4f87eb7106e35661303aba4226d1cb8f0bcbb1a833901628cdd68bf74ea36",
+        "primary_inference": "one case at a time, matching prior BrainODE evaluator",
+        "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/brainode/training/brainode_attention_pca150_s42",
+        "same_archives_as_comparison_models": true,
+        "same_pca_model_as_comparison_models": true,
+        "status": "pass",
+        "strict_no_mci": true,
+        "test_loaded_during_training": false,
+        "validation_selection_metric": "val_first_last_endpoint_vertex_mae_mm",
+        "validation_selection_value": 0.16745890481550185
+      },
+      "checkpoints": {
+        "checkpoints": {
+          "anchored_v4": {
+            "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/training/hippocampus_v1_anchor_v4_s42_v4/checkpoints/best_feasible_volume.pt",
+            "sha256": "bcac81161f58ad5cf5e90a9fdb02a3d43ebb4bed1b5b3848a5290503fcf00249"
+          },
+          "e3_latest_sensitivity": {
+            "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/training/hippocampus_unified_volume_e3_s42/checkpoints/latest.pt",
+            "sha256": "7a8c221980c71a6df64677189498d9da8744802a6459963c305db38e647e8413"
+          },
+          "e3_selected": {
+            "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/training/hippocampus_unified_volume_e3_s42/checkpoints/best_feasible_composite.pt",
+            "sha256": "d3effce777a6660dfc632fb9a418047567272baf9c278ba999c634312b8e9ca2"
+          },
+          "no_change": {
+            "path": null
+          },
+          "v1": {
+            "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/training/hippocampus_v1_anchor_v4_s42_v1/checkpoint_best.pt",
+            "sha256": "e1e4a41c8f1103c3a02ca73108a07f48dc2424c48c92a2a49210a18105687277"
+          }
+        },
+        "e3_latest_is_exploratory_not_primary": true,
+        "e3_single_model_contract": true,
+        "epochs": {
+          "anchored_v4": 38,
+          "e3_latest_sensitivity": 40,
+          "e3_selected": 1,
+          "v1": 1
+        },
+        "frozen_v1_exact_match": true,
+        "status": "pass"
+      },
+      "cohort": {
+        "splits": {
+          "test": {
+            "AD_visits": 94,
+            "CN_visits": 183,
+            "subjects": 61,
+            "visits": 277
+          },
+          "train": {
+            "AD_visits": 707,
+            "CN_visits": 1330,
+            "subjects": 475,
+            "visits": 2037
+          },
+          "val": {
+            "AD_visits": 97,
+            "CN_visits": 172,
+            "subjects": 61,
+            "visits": 269
+          }
+        },
+        "status": "pass",
+        "strict_no_mci": true,
+        "subject_and_scan_disjoint": true
+      }
+    },
+    "lateral_ventricle": {
+      "brainode": {
+        "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/brainode/training/brainode_attention_pca150_s42/checkpoints/best.pt",
+        "checkpoint_epoch": 7,
+        "checkpoint_sha256": "f91509ccafee765f8fc3ee43e6044014cb2dd7827afa90b73d709fee134d3e7a",
+        "cross_batch_attention_present": true,
+        "history_epochs": 100,
+        "model_source": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/scripts/brainode_model.py",
+        "model_source_sha256": "d1f4f87eb7106e35661303aba4226d1cb8f0bcbb1a833901628cdd68bf74ea36",
+        "primary_inference": "one case at a time, matching prior BrainODE evaluator",
+        "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/brainode/training/brainode_attention_pca150_s42",
+        "same_archives_as_comparison_models": true,
+        "same_pca_model_as_comparison_models": true,
+        "status": "pass",
+        "strict_no_mci": true,
+        "test_loaded_during_training": false,
+        "validation_selection_metric": "val_first_last_endpoint_vertex_mae_mm",
+        "validation_selection_value": 0.4312320776650163
+      },
+      "checkpoints": {
+        "checkpoints": {
+          "anchored_v4": {
+            "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/training/lv_v1_anchor_v4_s42_v4/checkpoints/best_feasible_volume.pt",
+            "sha256": "49085634468d7b766bca2c4e191b33b8769a9b970385ef9e3b344166ca86b3a2"
+          },
+          "e3_latest_sensitivity": {
+            "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/training/lv_unified_volume_e3_s42/checkpoints/latest.pt",
+            "sha256": "d3f67e53e49ca0426a2f2a8587bf2387c9c1d5cba755f9f92d1ff304f1b93272"
+          },
+          "e3_selected": {
+            "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/training/lv_unified_volume_e3_s42/checkpoints/best_feasible_composite.pt",
+            "sha256": "d49b4a83f9a95fb73a50810ec8d4f5e64fcefccb277e11facef3f4255eaedfbf"
+          },
+          "no_change": {
+            "path": null
+          },
+          "v1": {
+            "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/training/lv_v1_anchor_v4_s42_v1/checkpoint_best.pt",
+            "sha256": "e131635e70c7f1f62a5733a9ef7e427ac04280231ef7c3c8cd97194de7f0c205"
+          }
+        },
+        "e3_latest_is_exploratory_not_primary": true,
+        "e3_single_model_contract": true,
+        "epochs": {
+          "anchored_v4": 80,
+          "e3_latest_sensitivity": 40,
+          "e3_selected": 1,
+          "v1": 10
+        },
+        "frozen_v1_exact_match": true,
+        "status": "pass"
+      },
+      "cohort": {
+        "splits": {
+          "test": {
+            "AD_visits": 93,
+            "CN_visits": 184,
+            "subjects": 61,
+            "visits": 277
+          },
+          "train": {
+            "AD_visits": 728,
+            "CN_visits": 1316,
+            "subjects": 477,
+            "visits": 2044
+          },
+          "val": {
+            "AD_visits": 97,
+            "CN_visits": 170,
+            "subjects": 61,
+            "visits": 267
+          }
+        },
+        "status": "pass",
+        "strict_no_mci": true,
+        "subject_and_scan_disjoint": true
+      }
+    }
+  },
+  "subject_slope_rows": 1464,
+  "trajectory_rows": 5076
+}

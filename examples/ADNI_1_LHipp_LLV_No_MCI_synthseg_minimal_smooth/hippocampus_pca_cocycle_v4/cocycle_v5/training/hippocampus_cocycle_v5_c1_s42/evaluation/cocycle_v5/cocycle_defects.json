@@ -1,0 +1,14 @@
+{
+  "test": {
+    "relative_inverse_defect_mean": 0.0019885430468950145,
+    "relative_inverse_defect_p95": 0.008347608055919413,
+    "relative_semigroup_defect_mean": 0.0006731923178081447,
+    "relative_semigroup_defect_p95": 0.0029056610073894284
+  },
+  "val": {
+    "relative_inverse_defect_mean": 0.0020391040174025606,
+    "relative_inverse_defect_p95": 0.008113843202590947,
+    "relative_semigroup_defect_mean": 0.0007363563258995584,
+    "relative_semigroup_defect_p95": 0.0032724533695727602
+  }
+}

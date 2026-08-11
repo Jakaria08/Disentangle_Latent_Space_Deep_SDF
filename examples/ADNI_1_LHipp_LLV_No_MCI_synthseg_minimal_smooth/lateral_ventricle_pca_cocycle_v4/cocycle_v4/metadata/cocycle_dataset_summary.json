@@ -1,0 +1,61 @@
+{
+  "all": {
+    "pca_shape": [
+      2588,
+      150
+    ],
+    "subjects": 599,
+    "visits": 2588
+  },
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "pca_archive": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/all_coefficients_safe.npz",
+  "splits": {
+    "test": {
+      "adjacent_pairs": 216,
+      "forward_pairs": 628,
+      "nonadjacent_pairs": 412,
+      "pairs_by_diagnosis": {
+        "AD": 115,
+        "CN": 513
+      },
+      "pca_shape": [
+        277,
+        150
+      ],
+      "subjects": 61,
+      "visits": 277
+    },
+    "train": {
+      "adjacent_pairs": 1567,
+      "forward_pairs": 4218,
+      "nonadjacent_pairs": 2651,
+      "pairs_by_diagnosis": {
+        "AD": 895,
+        "CN": 3323
+      },
+      "pca_shape": [
+        2044,
+        150
+      ],
+      "subjects": 477,
+      "visits": 2044
+    },
+    "val": {
+      "adjacent_pairs": 206,
+      "forward_pairs": 550,
+      "nonadjacent_pairs": 344,
+      "pairs_by_diagnosis": {
+        "AD": 126,
+        "CN": 424
+      },
+      "pca_shape": [
+        267,
+        150
+      ],
+      "subjects": 61,
+      "visits": 267
+    }
+  },
+  "status": "pass",
+  "structure": "left_lateral_ventricle"
+}

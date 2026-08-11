@@ -1,0 +1,11 @@
+{
+  "feature_source": "V1 train AD pairs only",
+  "loss_scales": {
+    "consistency": 0.3275774121284485,
+    "pca": 0.3275774121284485,
+    "rate": 0.06641534715890884,
+    "slope": 0.06641534715890884,
+    "vertex": 0.3327088952064514
+  },
+  "source_meshes_modified": false
+}

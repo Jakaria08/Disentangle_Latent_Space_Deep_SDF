@@ -1,0 +1,75 @@
+{
+  "name": "adni_synthseg_hippocampus_pca150_unified_volume_cocycle_e3",
+  "structure": "left_hippocampus",
+  "method": "unified_single_trainable_volume_aware_temporal_flow_e3",
+  "input_config": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "model_contract": {
+    "trainable_models": 1,
+    "optimizer_count": 1,
+    "teacher_model": false,
+    "frozen_v1": false,
+    "secondary_speed_head": false,
+    "output": "one diagnosis-conditioned direct temporal flow"
+  },
+  "model": {
+    "latent_dim": 150,
+    "hidden_dims": [128, 128],
+    "dropout": 0.05,
+    "activation": "silu",
+    "include_delta_time_input": true,
+    "zero_initialize_output": true
+  },
+  "training": {
+    "epochs": 180,
+    "batch_size": 96,
+    "samples_per_epoch": 4096,
+    "sequence_subjects_per_epoch": 192,
+    "learning_rate": 0.0005,
+    "minimum_learning_rate": 0.000025,
+    "weight_decay": 0.0001,
+    "gradient_clip_norm": 1.0,
+    "auxiliary_ramp_epochs": 10,
+    "validation_frequency": 5,
+    "early_stopping_patience": 40,
+    "early_stopping_min_delta": 0.000001,
+    "seed": 42
+  },
+  "loss": {
+    "pca_forward_weight": 1.0,
+    "pca_backward_weight": 1.0,
+    "vertex_forward_weight": 1.0,
+    "vertex_backward_weight": 1.0,
+    "volume_forward_weight": 0.25,
+    "volume_backward_weight": 0.25,
+    "rate_forward_weight": 0.25,
+    "rate_backward_weight": 0.25,
+    "subject_slope_weight": 0.25,
+    "group_slope_weight": 0.05,
+    "disease_rate_gap_weight": 0.05,
+    "cycle_forward_weight": 0.01,
+    "cycle_backward_weight": 0.01,
+    "composition_weight": 0.05,
+    "zero_displacement_weight": 0.001,
+    "velocity_weight": 0.001,
+    "huber_delta": 1.0,
+    "normalization": "train-only median no-change scales"
+  },
+  "selection": {
+    "pca_weight": 1.0,
+    "vertex_weight": 1.0,
+    "volume_weight": 0.5,
+    "rate_weight": 0.5,
+    "subject_slope_weight": 0.5,
+    "shape_no_change_tolerance": 0.0,
+    "primary_checkpoint": "best feasible validation composite; never selected using test or BrainODE"
+  },
+  "scientific_contract": {
+    "strict_no_mci": true,
+    "subject_level_splits": true,
+    "hippocampus_and_lv_separate": true,
+    "volume_direction": "learn observed rates and slopes; do not hard-code monotonic decline",
+    "backward_transport": true,
+    "test_used_for_selection": false,
+    "source_meshes_modified": false
+  }
+}

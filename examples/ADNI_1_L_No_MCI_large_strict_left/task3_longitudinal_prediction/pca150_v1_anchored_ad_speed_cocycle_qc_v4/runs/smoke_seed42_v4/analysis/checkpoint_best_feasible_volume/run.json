@@ -1,0 +1,78 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/runs/smoke_seed42_v4/checkpoints/best_feasible_volume.pth",
+  "checkpoint_metrics": {
+    "ad_observed_slope_mean": -0.06871823638828252,
+    "ad_predicted_slope_mean": -0.01268052852109951,
+    "ad_slope_pearson": 0.07155402176928416,
+    "ad_subject_slope_abs_error": 0.08418057091972407,
+    "cn_max_abs_delta_from_v1": 0.0,
+    "epoch": 2,
+    "feasible": true,
+    "first_last_groups": {
+      "AD": {
+        "pca_mean": 0.012715015967842191,
+        "rate_mean": 0.0646819481626153,
+        "rows": 8,
+        "speed_mean": 1.0094659626483917,
+        "vertex_mean": 0.01219970581587404,
+        "volume_relative_mean": 0.07670943535049446
+      },
+      "CN": {
+        "pca_mean": 0.013230406446382403,
+        "rate_mean": 0.018806956883054227,
+        "rows": 8,
+        "speed_mean": 1.0,
+        "vertex_mean": 0.01244079414755106,
+        "volume_relative_mean": 0.048252335691358894
+      },
+      "overall": {
+        "pca_mean": 0.012972711207112297,
+        "rate_mean": 0.04174445252283476,
+        "rows": 16,
+        "speed_mean": 1.0047329813241959,
+        "vertex_mean": 0.01232024998171255,
+        "volume_relative_mean": 0.06248088552092668
+      }
+    },
+    "global_speed": 1.0090131759643555,
+    "groups": {
+      "AD": {
+        "pca_mean": 0.015816321305464953,
+        "rate_mean": 0.08457446354441345,
+        "rows": 8,
+        "speed_mean": 1.009375274181366,
+        "vertex_mean": 0.012370112584903836,
+        "volume_relative_mean": 0.07749534776667133
+      },
+      "CN": {
+        "pca_mean": 0.03155270672868937,
+        "rate_mean": 0.06274025049060583,
+        "rows": 8,
+        "speed_mean": 1.0,
+        "vertex_mean": 0.01837165839970112,
+        "volume_relative_mean": 0.07003944600000978
+      },
+      "overall": {
+        "pca_mean": 0.023684514017077163,
+        "rate_mean": 0.07365735701750964,
+        "rows": 16,
+        "speed_mean": 1.004687637090683,
+        "vertex_mean": 0.015370885492302477,
+        "volume_relative_mean": 0.07376739688334055
+      }
+    },
+    "subjects": 17.0,
+    "volume_score": 0.2075027083474732
+  },
+  "device": "cpu",
+  "rows": 32,
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/runs/smoke_seed42_v4",
+  "sequence_rows": 32,
+  "splits": [
+    "val"
+  ],
+  "transport_methods": [
+    "direct",
+    "composed_observed"
+  ]
+}

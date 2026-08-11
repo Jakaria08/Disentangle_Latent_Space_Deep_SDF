@@ -1,0 +1,12 @@
+{
+  "brainode_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/training/core_attention_pca150_qc_stable/checkpoints/best.pth",
+  "device": "cuda:0",
+  "rows": 14055,
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "v1_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1/checkpoints/best_val_endpoint_vertex_mae.pth",
+  "v4_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/runs/v1_anchor_ad_speed_seed42/checkpoints/best_feasible_volume.pth"
+}

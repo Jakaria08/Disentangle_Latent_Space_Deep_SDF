@@ -1,0 +1,13 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_latent_skip_warmstart/checkpoints/best.pth",
+  "face_count": 148066,
+  "latent_source": "checkpoint_train_latent",
+  "mesh_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_latent_skip_warmstart/chamfer_20_per_split_best/meshes/train/1016_m72_left.ply",
+  "scan_id": "1016_m72_left",
+  "sdf_grid_max": 0.1432156264781952,
+  "sdf_grid_min": -0.13890840113162994,
+  "split": "train",
+  "vertex_count": 74019,
+  "watertight": true,
+  "winding_consistent": true
+}

@@ -1,0 +1,54 @@
+{
+  "checkpoint": "best",
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/run_config.json",
+  "counts": {
+    "failed": 0,
+    "missing": 0,
+    "ok": 2715
+  },
+  "manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/metadata/adni_large_strict_no_mci_left_manifest.csv",
+  "max_batch": 262144,
+  "new_latents_created": false,
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/reconstructed_meshes",
+  "overwrite": false,
+  "progress_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/reconstruction_progress",
+  "reconstruction_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/reconstruction_progress/reconstructed_meshes.csv",
+  "report_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/reconstruction_reports",
+  "resolution": 256,
+  "run_finished_at": "2026-07-21T20:48:23.920509+00:00",
+  "run_started_at": "2026-07-21T19:20:45.608809+00:00",
+  "selected_scans": 2715,
+  "worker_devices": [
+    0,
+    1,
+    2
+  ],
+  "worker_exit_codes": {
+    "decode-gpu-0": 0,
+    "decode-gpu-1": 0,
+    "decode-gpu-2": 0
+  },
+  "worker_results": [
+    {
+      "assigned": 905,
+      "failed": 0,
+      "ok": 905,
+      "skipped_valid": 0,
+      "worker": "gpu_1"
+    },
+    {
+      "assigned": 905,
+      "failed": 0,
+      "ok": 905,
+      "skipped_valid": 0,
+      "worker": "gpu_0"
+    },
+    {
+      "assigned": 905,
+      "failed": 0,
+      "ok": 905,
+      "skipped_valid": 0,
+      "worker": "gpu_2"
+    }
+  ]
+}

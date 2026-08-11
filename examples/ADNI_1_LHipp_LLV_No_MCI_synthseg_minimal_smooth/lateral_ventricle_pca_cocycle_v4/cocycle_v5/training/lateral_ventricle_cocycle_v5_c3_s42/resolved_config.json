@@ -1,0 +1,79 @@
+{
+  "experiment": "c3",
+  "input_config": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "loss": {
+    "disease_gap_weight": 0.0,
+    "group_rate_weight": 0.0,
+    "inverse_weight": 0.05,
+    "normalization": "fixed train-only median no-change scales",
+    "observed_semigroup_weight": 0.1,
+    "rate_weight": 0.1,
+    "real_pca_weight": 0.25,
+    "real_vertex_weight": 1.0,
+    "sequence_pca_weight": 0.0625,
+    "sequence_semigroup_weight": 0.1,
+    "sequence_vertex_weight": 0.25,
+    "slope_weight": 0.05,
+    "virtual_semigroup_weight": 0.1,
+    "volume_weight": 0.1
+  },
+  "method": "direct_pca_cocycle_v5",
+  "model": {
+    "architecture": "direct shared-CN plus AD-residual average-velocity flow",
+    "attention_used": false,
+    "latent_dim": 150,
+    "ode_used": false,
+    "residual_blocks": 2,
+    "transport": "Phi(z,s,t,d)=z+(t-s)*phi(z,s,t,d)",
+    "width": 256
+  },
+  "name": "adni_synthseg_lv_direct_cocycle_v5_c3",
+  "representation": {
+    "components": 150,
+    "condition": "stable diagnosis label_ad; CN=0, AD=1",
+    "pca_basis": "existing fixed train-only structure-specific PCA basis",
+    "time_key": "visit_age_norm_train",
+    "training_key": "visit_pca_standardized_150"
+  },
+  "scientific_contract": {
+    "all_current_qc_passed_subjects_retained": true,
+    "forward_and_backward_real_pairs": true,
+    "individual_anatomical_supervision": true,
+    "observed_and_virtual_semigroup_losses": true,
+    "sequence_one_shot_and_rollout": true,
+    "source_meshes_modified": false,
+    "strict_no_mci": true,
+    "subject_level_splits": true,
+    "test_loaded_during_training": false
+  },
+  "selection": {
+    "all_pair_shape_weight": 0.2,
+    "coordinate_nochange_tolerance": 0.01,
+    "max_relative_inverse_defect": 0.25,
+    "max_relative_semigroup_defect": 0.25,
+    "pca_nochange_tolerance": 0.01,
+    "primary": "macro AD/CN first-to-last decoded vertex shape ratio",
+    "test_used_for_selection": false,
+    "volume_tiebreak_weight": 0.001
+  },
+  "structure": "left_lateral_ventricle",
+  "training": {
+    "anatomy_ramp_epochs": 15,
+    "batch_size": 96,
+    "consistency_ramp_epochs": 10,
+    "early_stopping_min_delta": 1e-05,
+    "early_stopping_patience": 30,
+    "epochs": 180,
+    "evaluation_batch_size": 512,
+    "gradient_clip_norm": 1.0,
+    "learning_rate": 0.0003,
+    "minimum_learning_rate": 3e-05,
+    "progress_every_batches": 20,
+    "run_name": "lateral_ventricle_cocycle_v5_c3_s42",
+    "samples_per_epoch": 4096,
+    "sampling": "equal CN/AD, equal adjacent/nonadjacent, equal subject within each stratum",
+    "save_every_epochs": 10,
+    "seed": 42,
+    "weight_decay": 0.0001
+  }
+}

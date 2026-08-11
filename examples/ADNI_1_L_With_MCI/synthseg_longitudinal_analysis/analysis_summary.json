@@ -1,0 +1,119 @@
+{
+  "source_meshes_modified": false,
+  "cohort_definition": {
+    "selected": "baseline",
+    "meaning": "CN/AD are participant baseline cohorts after excluding every baseline-MCI, unknown-baseline, and MCI-visit subject."
+  },
+  "cohort_filter": "strict_no_mci",
+  "input": {
+    "input_root": "/home/jakaria/ADNI/ADNI_1_GO_Large/synthseg_minimal_correspondence/full",
+    "records": 5430,
+    "subjects": 676,
+    "structures": [
+      "left_hippocampus",
+      "left_lateral_ventricle"
+    ],
+    "cohort_diagnosis_counts_per_structure": {
+      "CN": 3462,
+      "AD": 1968
+    },
+    "pipeline_validation": {
+      "passed": true,
+      "structures": {
+        "left_hippocampus": {
+          "passed": true,
+          "failures": [],
+          "successful_meshes": 4155,
+          "failed_or_blocked_meshes": 0,
+          "non_watertight_minimal_smooth_meshes": [],
+          "vertex_count": 2746,
+          "face_count": 5488,
+          "identical_face_connectivity": true,
+          "max_normalized_volume_error_pct": 1.4066643614446733e-06,
+          "max_final_vs_smooth_volume_error_pct": 2.1292926230618615e-06,
+          "scaled_obj_min": -0.9,
+          "scaled_obj_max": 0.9,
+          "scaled_obj_target_range": [
+            -0.9,
+            0.9
+          ]
+        },
+        "left_lateral_ventricle": {
+          "passed": true,
+          "failures": [],
+          "successful_meshes": 4155,
+          "failed_or_blocked_meshes": 0,
+          "non_watertight_minimal_smooth_meshes": [],
+          "vertex_count": 8346,
+          "face_count": 16688,
+          "identical_face_connectivity": true,
+          "max_normalized_volume_error_pct": 1.0633816693592279e-06,
+          "max_final_vs_smooth_volume_error_pct": 1.9280247769668823e-06,
+          "scaled_obj_min": -0.9,
+          "scaled_obj_max": 0.9,
+          "scaled_obj_target_range": [
+            -0.9,
+            0.9
+          ]
+        }
+      }
+    }
+  },
+  "qc": {
+    "qc_policy": "all",
+    "qc_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc",
+    "rows_before": 5430,
+    "rows_after": 5430,
+    "qc_applied": false
+  },
+  "analysis_records": 5430,
+  "adjacent_pairs": 4078,
+  "subject_rate_rows": 1216,
+  "within_subject_trend_rows": 4,
+  "cohort_counts": [
+    {
+      "structure": "left_hippocampus",
+      "cohort_diagnosis": "AD",
+      "scan_count": 984,
+      "subject_count": 333,
+      "mean_age_years": 75.71294942197154,
+      "adjacent_pair_count": 651,
+      "longitudinal_subject_count": 279
+    },
+    {
+      "structure": "left_hippocampus",
+      "cohort_diagnosis": "CN",
+      "scan_count": 1731,
+      "subject_count": 343,
+      "mean_age_years": 76.75920270165801,
+      "adjacent_pair_count": 1388,
+      "longitudinal_subject_count": 329
+    },
+    {
+      "structure": "left_lateral_ventricle",
+      "cohort_diagnosis": "AD",
+      "scan_count": 984,
+      "subject_count": 333,
+      "mean_age_years": 75.71294942197154,
+      "adjacent_pair_count": 651,
+      "longitudinal_subject_count": 279
+    },
+    {
+      "structure": "left_lateral_ventricle",
+      "cohort_diagnosis": "CN",
+      "scan_count": 1731,
+      "subject_count": 343,
+      "mean_age_years": 76.75920270165801,
+      "adjacent_pair_count": 1388,
+      "longitudinal_subject_count": 329
+    }
+  ],
+  "shape_maps_written": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_longitudinal_analysis/local_shape_speed_maps.npz",
+  "shape_summary_rows": 4,
+  "volume_definition": "Physical mm\u00b3 volume from the minimally smoothed mesh, whose volume is preserved by final_ply_mm correspondence meshes.",
+  "trajectory_safeguard": "Use within_subject_trend_summary.csv for the primary longitudinal direction/rate. Visit-wise cohort means are descriptive and can change composition at later follow-up.",
+  "interpretation": {
+    "left_hippocampus": "Negative signed log-volume rate indicates shrinkage; positive values indicate enlargement.",
+    "left_lateral_ventricle": "Positive signed log-volume rate indicates ventricular enlargement; do not relabel this as atrophy."
+  }
+}

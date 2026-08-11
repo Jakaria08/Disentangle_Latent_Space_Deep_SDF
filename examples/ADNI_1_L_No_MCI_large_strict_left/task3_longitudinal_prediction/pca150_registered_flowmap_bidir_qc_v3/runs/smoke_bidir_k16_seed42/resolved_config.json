@@ -1,0 +1,112 @@
+{
+  "args": {
+    "activation": "silu",
+    "backward_loss_weight": 0.5,
+    "backward_volume_rate_weight": 0.2,
+    "balanced_sampling": true,
+    "batch_size": 16,
+    "cocycle_ramp_epochs": 15,
+    "components": 150,
+    "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/configs/core_brainode.json",
+    "device": "auto",
+    "dropout": 0.05,
+    "dynamic_basis": null,
+    "dynamic_dim": 16,
+    "dynamic_rate_weight": 0.2,
+    "early_stopping_min_delta": 1e-06,
+    "early_stopping_patience": 10,
+    "ema_cocycle_weight": 0.2,
+    "ema_decay": 0.995,
+    "epochs": 3,
+    "experiment_name": "pca150_registered_flowmap_bidir_qc_v3",
+    "gradient_clip_norm": 1.0,
+    "group_volume_weight": 0.25,
+    "hidden_dims": [
+      256,
+      256
+    ],
+    "identity_weight": 0.05,
+    "include_backward_pairs": true,
+    "include_sequence_loss": true,
+    "inverse_weight": 0.1,
+    "latent_condition_dim": 32,
+    "latent_guard_threshold": 3.5,
+    "latent_guard_weight": 0.02,
+    "latest_frequency": 1,
+    "learning_rate": 0.0005,
+    "local_normal_weight": 0.25,
+    "local_weights": null,
+    "max_sequences_per_epoch": 24,
+    "max_train_pairs": 0,
+    "max_val_pairs": 40,
+    "num_workers": 0,
+    "output_dir": null,
+    "pareto_local_weight": 0.2,
+    "pareto_volume_weight": 1.0,
+    "pca_weight": 0.25,
+    "rate_targets": null,
+    "residual_scale": 0.0,
+    "reverse_sequence_weight": 0.5,
+    "run_name": "smoke_bidir_k16_seed42",
+    "samples_per_epoch": 64,
+    "seed": 42,
+    "sequence_batch_size": 8,
+    "sequence_cocycle_weight": 0.1,
+    "sequence_rollout_weight": 0.25,
+    "snapshot_frequency": 999,
+    "train_max_gap_years": 0.0,
+    "train_pair_type": "all",
+    "validation_frequency": 1,
+    "vertex_weight": 1.0,
+    "volume_rate_weight": 1.0,
+    "weight_decay": 0.0001
+  },
+  "basis_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_bidir_qc_v3/metadata/dynamic_pca_velocity_k16.npz",
+  "local_weights_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_bidir_qc_v3/metadata/local_ad_cn_change_weights.npy",
+  "pca_model_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/pca/model",
+  "rate_targets_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_bidir_qc_v3/metadata/empirical_rate_targets.json",
+  "record_summary": {
+    "train_base": {
+      "pair_count": 7360,
+      "pair_count_by_diagnosis": {
+        "AD": 1152,
+        "CN": 6208
+      },
+      "pair_count_by_direction": {
+        "backward": 3680,
+        "forward": 3680
+      },
+      "pair_count_by_gap_bin": {
+        "adjacent": 2740,
+        "long": 3074,
+        "short": 1546
+      },
+      "pair_count_by_pair_type": {
+        "adjacent": 2740,
+        "nonadjacent": 4620
+      }
+    },
+    "train_sequence_count": 949,
+    "val": {
+      "pair_count": 40,
+      "pair_count_by_diagnosis": {
+        "AD": 7,
+        "CN": 33
+      },
+      "pair_count_by_direction": {
+        "forward": 40
+      },
+      "pair_count_by_gap_bin": {
+        "adjacent": 14,
+        "long": 15,
+        "short": 11
+      },
+      "pair_count_by_pair_type": {
+        "adjacent": 14,
+        "nonadjacent": 26
+      }
+    }
+  },
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_bidir_qc_v3/runs/smoke_bidir_k16_seed42",
+  "task_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable"
+}

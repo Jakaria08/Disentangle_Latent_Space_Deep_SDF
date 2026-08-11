@@ -1,0 +1,14 @@
+{
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/configs/unified_single_flow_e3_primary.json",
+  "frozen_model": false,
+  "input_config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "optimizer_count": 1,
+  "output": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/training/lv_unified_volume_e3_s42",
+  "secondary_speed_head": false,
+  "seed": 42,
+  "source_meshes_modified": false,
+  "status": "complete",
+  "strict_no_mci": true,
+  "teacher_model": false,
+  "trainable_models": 1
+}

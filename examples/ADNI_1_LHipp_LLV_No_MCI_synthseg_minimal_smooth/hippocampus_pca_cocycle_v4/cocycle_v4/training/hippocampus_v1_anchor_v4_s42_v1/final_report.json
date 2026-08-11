@@ -1,0 +1,95 @@
+{
+  "backward_transport_used": true,
+  "best_epoch": 1,
+  "best_val_real_pair_bidir_mse": 1.4918512940406798,
+  "brainode_trained": false,
+  "decoded_metrics": {
+    "test": {
+      "by_gap": {
+        "long_gt_1y": {
+          "decoded_vertex_mae_mm_mean": 0.16687393725326616,
+          "decoded_volume_relative_error_pct_mean": 4.450625135147408,
+          "pairs": 365,
+          "standardized_pca_mse_mean": 0.8020598863085655
+        },
+        "short_le_1y": {
+          "decoded_vertex_mae_mm_mean": 0.14408263663841983,
+          "decoded_volume_relative_error_pct_mean": 2.569949217277944,
+          "pairs": 254,
+          "standardized_pca_mse_mean": 0.6615039604151343
+        }
+      },
+      "decoded_vertex_mae_mm_mean": 0.1575217718959625,
+      "decoded_vertex_mae_mm_p95": 0.23724428862333302,
+      "decoded_volume_relative_error_pct_mean": 3.678909976603234,
+      "decoded_volume_relative_error_pct_p95": 10.34919261932373,
+      "pairs": 619,
+      "standardized_pca_mse_mean": 0.7443842721293547,
+      "volume_speed_mm3_per_year": {
+        "AD": {
+          "observed_volume_change_mm3_per_year_mean": -156.1391359146032,
+          "pairs": 118,
+          "predicted_volume_change_mm3_per_year_mean": -2.993193097303143
+        },
+        "AD_minus_CN_observed_volume_change_mm3_per_year": -111.55803310286618,
+        "AD_minus_CN_predicted_volume_change_mm3_per_year": 1.8632018292449466,
+        "CN": {
+          "observed_volume_change_mm3_per_year_mean": -44.58110281173703,
+          "pairs": 501,
+          "predicted_volume_change_mm3_per_year_mean": -4.85639492654809
+        }
+      }
+    },
+    "val": {
+      "by_gap": {
+        "long_gt_1y": {
+          "decoded_vertex_mae_mm_mean": 0.16447448892981414,
+          "decoded_volume_relative_error_pct_mean": 5.029634705994703,
+          "pairs": 298,
+          "standardized_pca_mse_mean": 0.7549871494306014
+        },
+        "short_le_1y": {
+          "decoded_vertex_mae_mm_mean": 0.1447944140647987,
+          "decoded_volume_relative_error_pct_mean": 2.4029058660473304,
+          "pairs": 251,
+          "standardized_pca_mse_mean": 0.6943856198711699
+        }
+      },
+      "decoded_vertex_mae_mm_mean": 0.1554768590734956,
+      "decoded_vertex_mae_mm_p95": 0.22685971558094026,
+      "decoded_volume_relative_error_pct_mean": 3.828707677166305,
+      "decoded_volume_relative_error_pct_p95": 11.78109760284424,
+      "pairs": 549,
+      "standardized_pca_mse_mean": 0.7272804391948686,
+      "volume_speed_mm3_per_year": {
+        "AD": {
+          "observed_volume_change_mm3_per_year_mean": -130.54735569222265,
+          "pairs": 126,
+          "predicted_volume_change_mm3_per_year_mean": -3.1155040276744375
+        },
+        "AD_minus_CN_observed_volume_change_mm3_per_year": -85.55508346900348,
+        "AD_minus_CN_predicted_volume_change_mm3_per_year": 0.6355006917194386,
+        "CN": {
+          "observed_volume_change_mm3_per_year_mean": -44.99227222321917,
+          "pairs": 423,
+          "predicted_volume_change_mm3_per_year_mean": -3.751004719393876
+        }
+      }
+    }
+  },
+  "elapsed_minutes": 0.29885802666346234,
+  "epochs_completed": 50,
+  "pca_refitted": false,
+  "source_meshes_modified": false,
+  "status": "complete",
+  "structure": "left_hippocampus",
+  "test_losses": {
+    "backward_cocycle": 2.310656678494727e-09,
+    "backward_target": 0.7438150763511657,
+    "forward_cocycle": 2.479168184632563e-09,
+    "forward_target": 0.7437333941459656,
+    "speed_guard": 0.007375941798090935,
+    "total": 1.4875484704971313,
+    "zero_displacement": 0.0
+  }
+}

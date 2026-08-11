@@ -1,0 +1,46 @@
+{
+  "clean_scan_count": 2229,
+  "clean_subject_count": 523,
+  "outputs": {
+    "age_norm_stats": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/age_norm_stats.json",
+    "clean_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_clean_manifest.csv",
+    "filtered_pca_coefficients_csv": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_pca_coefficients.csv",
+    "filtered_representation_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_representation_manifest.csv",
+    "trajectory_json": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_subject_trajectories.json"
+  },
+  "scan_count_by_split": {
+    "test": 214,
+    "train": 1791,
+    "val": 224
+  },
+  "scan_diagnosis_count": {
+    "AD": 633,
+    "CN": 1596
+  },
+  "skipped_subject_count": 0,
+  "skipped_subjects": [],
+  "source_metadata": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/metadata/adni_large_strict_no_mci_left_direct_flow_records_qc_drop_bad_scans_min2.csv",
+  "source_metadata_sha256": "ab2f66041b789bb94f47b99f0a275b052246644ff192ac71d9bc47b3d504f2c1",
+  "status": "pass",
+  "subject_count_by_split": {
+    "test": 50,
+    "train": 421,
+    "val": 52
+  },
+  "subject_diagnosis_count": {
+    "AD": 205,
+    "CN": 318
+  },
+  "visit_count_distribution_subjects": {
+    "2": 91,
+    "3": 103,
+    "4": 159,
+    "5": 92,
+    "6": 16,
+    "7": 10,
+    "8": 13,
+    "9": 22,
+    "10": 13,
+    "11": 4
+  }
+}

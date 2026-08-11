@@ -1,0 +1,42 @@
+{
+  "checks": {
+    "minimum_visits": 2,
+    "strict_no_mci": true,
+    "subject_split_leakage": false
+  },
+  "counts": {
+    "direct_CN_AD_changers_excluded": 3,
+    "scans": 2625,
+    "split_subjects": {
+      "test": 61,
+      "train": 483,
+      "val": 61
+    },
+    "subjects": 605
+  },
+  "master_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/cohort_master/metadata/master_strict_no_mci_stable_min2_manifest.csv",
+  "master_manifest_sha256": "f5db70ea0b8d6b51db92b5a335fd0163b7d0eae47f97fda02e6045c674cfaf69",
+  "passed": true,
+  "policy": "strict no-MCI, stable CN/AD diagnosis, minimum two visits, subject-level diagnosis-stratified split",
+  "seed": 42,
+  "source_meshes_modified": false,
+  "split_ratios": {
+    "test": 0.1,
+    "train": 0.8,
+    "val": 0.1
+  },
+  "subject_counts_by_split_diagnosis": {
+    "test": {
+      "AD": 28,
+      "CN": 33
+    },
+    "train": {
+      "AD": 223,
+      "CN": 260
+    },
+    "val": {
+      "AD": 28,
+      "CN": 33
+    }
+  }
+}

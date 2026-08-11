@@ -1,0 +1,128 @@
+{
+  "source_manifest": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/metadata/adni_large_strict_no_mci_left_manifest.csv",
+  "metadata_output": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle/metadata/adni_large_strict_no_mci_left_direct_flow_records.csv",
+  "filter_rule": "Keep only subjects with exactly one stable diagnosis in {CN, AD}; skip all scans for subjects with diagnosis progression/change.",
+  "original_rows": 2715,
+  "filtered_rows": 2693,
+  "removed_rows": 22,
+  "original_subjects": 676,
+  "filtered_subjects": 673,
+  "removed_subjects": 3,
+  "skipped_subjects": [
+    {
+      "subject_id": "230",
+      "diagnoses": [
+        "AD",
+        "CN"
+      ],
+      "scan_count": 7,
+      "scan_ids": [
+        "230_bl_left",
+        "230_m06_left",
+        "230_m12_left",
+        "230_m24_left",
+        "230_m72_left",
+        "230_m84_left",
+        "230_m96_left"
+      ]
+    },
+    {
+      "subject_id": "898",
+      "diagnoses": [
+        "AD",
+        "CN"
+      ],
+      "scan_count": 5,
+      "scan_ids": [
+        "898_bl_left",
+        "898_m06_left",
+        "898_m12_left",
+        "898_m24_left",
+        "898_m36_left"
+      ]
+    },
+    {
+      "subject_id": "984",
+      "diagnoses": [
+        "AD",
+        "CN"
+      ],
+      "scan_count": 10,
+      "scan_ids": [
+        "984_bl_left",
+        "984_m06_left",
+        "984_m12_left",
+        "984_m24_left",
+        "984_m36_left",
+        "984_m48_left",
+        "984_m60_left",
+        "984_m72_left",
+        "984_m84_left",
+        "984_m96_left"
+      ]
+    }
+  ],
+  "split_counts": {
+    "test": 265,
+    "train": 2161,
+    "val": 267
+  },
+  "diagnosis_counts": {
+    "AD": 984,
+    "CN": 1709
+  },
+  "pair_counts": {
+    "train": {
+      "scans": 2161,
+      "subjects": 537,
+      "pairs": 4362,
+      "pairs_with_observed_intermediate": 2738,
+      "diagnosis_scans": {
+        "AD": 764,
+        "CN": 1397
+      }
+    },
+    "val": {
+      "scans": 267,
+      "subjects": 68,
+      "pairs": 571,
+      "pairs_with_observed_intermediate": 372,
+      "diagnosis_scans": {
+        "AD": 111,
+        "CN": 156
+      }
+    },
+    "test": {
+      "scans": 265,
+      "subjects": 68,
+      "pairs": 555,
+      "pairs_with_observed_intermediate": 358,
+      "diagnosis_scans": {
+        "AD": 109,
+        "CN": 156
+      }
+    }
+  },
+  "latent_archives": {
+    "train": {
+      "source_count": 2183,
+      "kept_count": 2161,
+      "removed_count": 22,
+      "output": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle/latents/train_latents.npz"
+    },
+    "val": {
+      "source_count": 267,
+      "kept_count": 267,
+      "removed_count": 0,
+      "output": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle/latents/val_latents.npz"
+    },
+    "test": {
+      "source_count": 265,
+      "kept_count": 265,
+      "removed_count": 0,
+      "output": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle/latents/test_latents.npz"
+    }
+  },
+  "continuous_age_norm": "copied from age_norm",
+  "continuous_age_years": "copied from age_years"
+}

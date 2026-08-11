@@ -140,3 +140,32 @@ def test_three_scans_create_all_forward_pairs_and_one_real_midpoint() -> None:
     assert midpoint_pairs[0].observed_intermediate_times == (
         (70.5 - 57.0) / 34.0,
     )
+
+
+def test_first_only_pairs_use_subject_anchor_as_source() -> None:
+    ages = [70.0, 70.5, 71.0, 73.0]
+    frame = pd.DataFrame(
+        {
+            "scan_id": ["scan_70", "scan_70_5", "scan_71", "scan_73"],
+            "subject_id": ["subject"] * 4,
+            "diagnosis": ["AD"] * 4,
+            "label_ad": [1] * 4,
+            "visit_order": [0, 1, 2, 3],
+            "continuous_age_norm": [(age - 57.0) / 34.0 for age in ages],
+            "sdf_npz_path": ["unused"] * 4,
+        }
+    )
+
+    pairs = build_forward_pairs(frame, source_mode="first_only")
+
+    assert [
+        (pair.source_scan_id, pair.target_scan_id) for pair in pairs
+    ] == [
+        ("scan_70", "scan_70_5"),
+        ("scan_70", "scan_71"),
+        ("scan_70", "scan_73"),
+    ]
+    assert pairs[-1].observed_intermediate_times == (
+        (70.5 - 57.0) / 34.0,
+        (71.0 - 57.0) / 34.0,
+    )

@@ -1,0 +1,20 @@
+{
+  "all_current_qc_passed_subjects_retained": true,
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/brainode_paper_core/training/brainode_paper_core_raw_pca150_s42/checkpoints/best.pt",
+  "checkpoint_epoch": 5,
+  "checkpoint_sha256": "72297445ca51ba7e62bd50897d9fa8dbcfe2df66a5f8fafc9f6d9e89a9d268da",
+  "cognition_estimator": false,
+  "evaluation_splits": [
+    "val",
+    "test"
+  ],
+  "method": "brainode_paper_core_stable_cn_ad_raw_pca150",
+  "one_subject_inference": true,
+  "pseudo_cognitive_embedding": false,
+  "raw_pca_150": true,
+  "rows": 284,
+  "source_artifacts_modified": false,
+  "status": "pass",
+  "structure": "left_hippocampus",
+  "test_loaded_during_training": false
+}

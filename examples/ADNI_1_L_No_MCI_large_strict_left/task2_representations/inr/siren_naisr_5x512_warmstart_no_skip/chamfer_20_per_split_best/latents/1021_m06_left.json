@@ -1,0 +1,13 @@
+{
+  "best_objective": 0.0022163051180541515,
+  "final_data_l1": 0.002286736387759447,
+  "finite": true,
+  "heldout_sdf_l1": 0.0022866190411150455,
+  "initial_data_l1": 0.027860045433044434,
+  "latent_norm": 1.0,
+  "scan_id": "1021_m06_left",
+  "source": "optimized_temporary_latent",
+  "split": "val",
+  "steps_completed": 500,
+  "steps_requested": 500
+}

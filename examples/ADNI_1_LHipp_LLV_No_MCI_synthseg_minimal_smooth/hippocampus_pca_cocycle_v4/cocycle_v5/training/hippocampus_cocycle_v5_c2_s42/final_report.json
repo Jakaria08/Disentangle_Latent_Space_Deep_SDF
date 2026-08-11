@@ -1,0 +1,115 @@
+{
+  "epochs_completed": 33,
+  "epochs_requested": 180,
+  "experiment": "c2",
+  "parameter_count": 381228,
+  "run_name": "hippocampus_cocycle_v5_c2_s42",
+  "selected_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v5/training/hippocampus_cocycle_v5_c2_s42/checkpoints/best_shape.pt",
+  "selected_epoch": 3,
+  "selected_validation": {
+    "all_pairs": {
+      "groups": {
+        "AD": {
+          "coordinate_mean": 0.162100013049822,
+          "euclidean_mean": 0.3224776278412531,
+          "nochange_coordinate_mean": 0.17199612799144925,
+          "nochange_euclidean_mean": 0.3413838330242369,
+          "nochange_pca_mean": 0.8356041574761981,
+          "nochange_rate_mean": 0.051519830390812815,
+          "nochange_volume_relative_mean": 0.04938297460155029,
+          "pca_mean": 0.835983374289104,
+          "rate_mean": 0.03266919291548667,
+          "rows": 126.0,
+          "volume_relative_mean": 0.026912140316978497
+        },
+        "CN": {
+          "coordinate_mean": 0.14282155195449261,
+          "euclidean_mean": 0.28526462057944446,
+          "nochange_coordinate_mean": 0.15195837549988542,
+          "nochange_euclidean_mean": 0.3033616176099642,
+          "nochange_pca_mean": 0.6953168521254339,
+          "nochange_rate_mean": 0.016871409585601602,
+          "nochange_volume_relative_mean": 0.03728175433235452,
+          "pca_mean": 0.6955268228025865,
+          "rate_mean": 0.012518501552782915,
+          "rows": 423.0,
+          "volume_relative_mean": 0.020270785686793597
+        },
+        "overall": {
+          "coordinate_mean": 0.14724611679604363,
+          "euclidean_mean": 0.2938053107706793,
+          "nochange_coordinate_mean": 0.1565572039405722,
+          "nochange_euclidean_mean": 0.3120880277050432,
+          "nochange_pca_mean": 0.7275139385993797,
+          "nochange_rate_mean": 0.024823506163846796,
+          "nochange_volume_relative_mean": 0.040059083574465026,
+          "pca_mean": 0.7277627526519511,
+          "rate_mean": 0.01714325039012476,
+          "rows": 549.0,
+          "volume_relative_mean": 0.021795031011754066
+        }
+      }
+    },
+    "defects": {
+      "relative_inverse_defect_mean": 0.0007623945015453858,
+      "relative_inverse_defect_p95": 0.002797594526782632,
+      "relative_semigroup_defect_mean": 0.00030426998076764356,
+      "relative_semigroup_defect_p95": 0.0012035734951496124
+    },
+    "feasible": true,
+    "first_last": {
+      "groups": {
+        "AD": {
+          "coordinate_mean": 0.17788291669317655,
+          "euclidean_mean": 0.35390582042081015,
+          "nochange_coordinate_mean": 0.1970364177333457,
+          "nochange_euclidean_mean": 0.3900651234601225,
+          "nochange_pca_mean": 0.9505789216075625,
+          "nochange_rate_mean": 0.045300074986049106,
+          "nochange_volume_relative_mean": 0.07183604349224229,
+          "pca_mean": 0.9504637856568608,
+          "rate_mean": 0.018358477524348667,
+          "rows": 28.0,
+          "volume_relative_mean": 0.028560933361794532
+        },
+        "CN": {
+          "coordinate_mean": 0.148892086112138,
+          "euclidean_mean": 0.2975569484811841,
+          "nochange_coordinate_mean": 0.16487050372542758,
+          "nochange_euclidean_mean": 0.3293806260282343,
+          "nochange_pca_mean": 0.7041473686695099,
+          "nochange_rate_mean": 0.015568357038622102,
+          "nochange_volume_relative_mean": 0.053840661590749565,
+          "pca_mean": 0.7020892049327041,
+          "rate_mean": 0.009578510885176278,
+          "rows": 33.0,
+          "volume_relative_mean": 0.024784345791858592
+        },
+        "overall": {
+          "coordinate_mean": 0.16219935260835242,
+          "euclidean_mean": 0.32342200445347147,
+          "nochange_coordinate_mean": 0.1796351855651277,
+          "nochange_euclidean_mean": 0.35723580517729775,
+          "nochange_pca_mean": 0.8172634913295996,
+          "nochange_rate_mean": 0.02921570298170335,
+          "nochange_volume_relative_mean": 0.06210083688979541,
+          "pca_mean": 0.8160972091995302,
+          "rate_mean": 0.013608659506435736,
+          "rows": 61.0,
+          "volume_relative_mean": 0.026517861397730828
+        }
+      }
+    },
+    "ratios": {
+      "all_pair_shape": 0.9409720255314592,
+      "all_pair_volume": 0.5440721321355173,
+      "macro_first_last_shape": 0.9041399281701588,
+      "score": 1.092878405408586
+    },
+    "score": 1.092878405408586
+  },
+  "source_meshes_modified": false,
+  "status": "complete",
+  "structure": "left_hippocampus",
+  "test_loaded_during_training": false
+}

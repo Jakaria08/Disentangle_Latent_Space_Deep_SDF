@@ -1,0 +1,86 @@
+{
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/configs/core_brainode.json",
+  "continuous_age_norm": {
+    "max": 1.0,
+    "min": -0.0124935865
+  },
+  "continuous_age_years": {
+    "max": 95.62053388,
+    "min": 55.1
+  },
+  "counts": {
+    "clean_split_counts": {
+      "test": 214,
+      "train": 1791,
+      "val": 224
+    },
+    "diagnosis_scan_counts": {
+      "AD": 633,
+      "CN": 1596
+    },
+    "expected_scans": {
+      "test": 214,
+      "total": 2229,
+      "train": 1791,
+      "val": 224
+    },
+    "expected_subjects": {
+      "test": 50,
+      "total": 523,
+      "train": 421,
+      "val": 52
+    },
+    "pca_split_counts": {
+      "test": 214,
+      "train": 1791,
+      "val": 224
+    },
+    "representation_split_counts": {
+      "test": 214,
+      "train": 1791,
+      "val": 224
+    },
+    "subject_split_counts": {
+      "test": 50,
+      "train": 421,
+      "val": 52
+    },
+    "visit_count_distribution": {
+      "2": 91,
+      "3": 103,
+      "4": 159,
+      "5": 92,
+      "6": 16,
+      "7": 10,
+      "8": 13,
+      "9": 22,
+      "10": 13,
+      "11": 4
+    }
+  },
+  "errors": [],
+  "pca_shapes": {
+    "coefficient_mean": [
+      256
+    ],
+    "coefficient_std": [
+      256
+    ],
+    "components": [
+      256,
+      6618
+    ],
+    "faces": [
+      4408,
+      3
+    ],
+    "mean": [
+      6618
+    ]
+  },
+  "status": "pass",
+  "task1_clean_manifest_sha256": "cdf034f0732341f2bc38d37f1460e7b1bf36d6c97b9638b42c302ed9d6b1926d",
+  "task2_pca_coefficients_csv_sha256": "dd66c20dad3d23777beb37fe6db1d0f3d8e12153391bddcce10ed4c1db367517",
+  "task2_representation_manifest_sha256": "baf2cf7b10e37aa8208f292f598ad72f8e72e4527953d818835f19596ddb977a",
+  "warnings": []
+}

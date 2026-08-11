@@ -1,0 +1,29 @@
+{
+  "backward_pair_file": "not required; reverse transport derives from the observed forward rows",
+  "best_epoch": 1,
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "device": "cuda:0",
+  "epochs_requested": 150,
+  "legacy_checkpoint_used": false,
+  "pca_refitted": false,
+  "prior_v4_losses": {
+    "CocycleBackwardLossLambda": 0.01,
+    "CocycleLossLambda": 0.01,
+    "UseCocycleBackwardLoss": true,
+    "UseCocycleLoss": true,
+    "UseGeneralCocycleBackwardLoss": false,
+    "UseGeneralCocycleLoss": false,
+    "UsePairBackwardLoss": false,
+    "UsePairForwardLoss": false,
+    "UseRealScanPairBackward": true,
+    "UseRealScanPairForward": true,
+    "UseRealScanPairLoss": true,
+    "ZeroDisplacementLambda": 0.001,
+    "adaptation_note": "PCA standardized-score endpoint MSE replaces SDF reconstruction/latent supervision; its forward and backward weights are 1.0 because it is the primary observed-pair objective.",
+    "source_experiment": "ADNI longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction"
+  },
+  "seed": 42,
+  "source_meshes_modified": false,
+  "status": "complete",
+  "structure": "left_hippocampus"
+}

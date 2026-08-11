@@ -1,0 +1,47 @@
+{
+  "train": {
+    "age_filter_applied": false,
+    "all_qc_passed_current_subjects_retained": true,
+    "by_diagnosis": {
+      "AD": 215,
+      "CN": 260
+    },
+    "by_visits": {
+      "10": 12,
+      "11": 5,
+      "2": 51,
+      "3": 116,
+      "4": 166,
+      "5": 78,
+      "6": 14,
+      "7": 4,
+      "8": 15,
+      "9": 14
+    },
+    "forward_plus_backward_trajectories": 3124,
+    "representation": "raw train-PCA-150 coefficients",
+    "subjects": 475
+  },
+  "val": {
+    "age_filter_applied": false,
+    "all_qc_passed_current_subjects_retained": true,
+    "by_diagnosis": {
+      "AD": 28,
+      "CN": 33
+    },
+    "by_visits": {
+      "10": 1,
+      "2": 4,
+      "3": 12,
+      "4": 26,
+      "5": 10,
+      "6": 2,
+      "7": 2,
+      "8": 1,
+      "9": 3
+    },
+    "forward_plus_backward_trajectories": 416,
+    "representation": "raw train-PCA-150 coefficients",
+    "subjects": 61
+  }
+}

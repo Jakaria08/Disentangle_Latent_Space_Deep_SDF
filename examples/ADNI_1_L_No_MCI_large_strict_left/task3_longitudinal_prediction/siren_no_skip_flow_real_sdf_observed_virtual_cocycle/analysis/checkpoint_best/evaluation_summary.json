@@ -1,0 +1,26 @@
+{
+  "checkpoint": "best",
+  "checkpoint_epoch": 10,
+  "decoder_epoch": 1975,
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "pairs": 5488,
+  "virtual_ratios": [
+    0.25,
+    0.5,
+    0.75
+  ],
+  "mean_model_target_sdf_l1": 0.016102691189913382,
+  "mean_no_change_target_sdf_l1": 0.01726269848471977,
+  "mean_sdf_l1_improvement": 0.0011600072948063883,
+  "mean_displacement_magnitude_abs_error": 0.713737888299689,
+  "model_beats_no_change_fraction": 0.782798833819242,
+  "mean_backward_virtual_latent_mse": 0.005113719641207242,
+  "mean_future_extrapolation_cocycle_mse": 2.956308962175504e-06,
+  "mean_predicted_latent_zscore_p95": 2.158250245990628,
+  "mean_predicted_speed_l2_per_normalized_age": 7.1897714497092515,
+  "future_trajectory_region_is_unvalidated": true
+}

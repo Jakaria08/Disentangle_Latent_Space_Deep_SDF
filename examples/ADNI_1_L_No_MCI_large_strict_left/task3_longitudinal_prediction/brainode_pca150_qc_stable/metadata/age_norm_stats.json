@@ -1,0 +1,7 @@
+{
+  "age_max_train": 95.62053388,
+  "age_min_train": 55.6,
+  "age_range_train": 40.020533879999995,
+  "formula": "age_norm = (age_numeric - age_min) / (age_max - age_min)",
+  "source": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/metadata/age_norm_stats.json"
+}

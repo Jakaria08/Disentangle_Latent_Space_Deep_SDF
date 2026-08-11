@@ -1,0 +1,11 @@
+{
+  "best_ad_volume_rate": 0.046743624710610936,
+  "best_pareto": 0.07764233883786281,
+  "best_vertex": 0.02792659664992243,
+  "elapsed_seconds": 1.6998181343078613,
+  "epochs": 3,
+  "finished_at_unix": 1785885892.833264,
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_qc_v2/runs/smoke_k16_seed42",
+  "run_name": "smoke_k16_seed42",
+  "status": "completed"
+}

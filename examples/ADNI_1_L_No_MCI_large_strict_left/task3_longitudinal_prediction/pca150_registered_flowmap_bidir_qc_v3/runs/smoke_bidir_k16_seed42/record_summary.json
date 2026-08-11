@@ -1,0 +1,42 @@
+{
+  "train_base": {
+    "pair_count": 7360,
+    "pair_count_by_diagnosis": {
+      "AD": 1152,
+      "CN": 6208
+    },
+    "pair_count_by_direction": {
+      "backward": 3680,
+      "forward": 3680
+    },
+    "pair_count_by_gap_bin": {
+      "adjacent": 2740,
+      "long": 3074,
+      "short": 1546
+    },
+    "pair_count_by_pair_type": {
+      "adjacent": 2740,
+      "nonadjacent": 4620
+    }
+  },
+  "train_sequence_count": 949,
+  "val": {
+    "pair_count": 40,
+    "pair_count_by_diagnosis": {
+      "AD": 7,
+      "CN": 33
+    },
+    "pair_count_by_direction": {
+      "forward": 40
+    },
+    "pair_count_by_gap_bin": {
+      "adjacent": 14,
+      "long": 15,
+      "short": 11
+    },
+    "pair_count_by_pair_type": {
+      "adjacent": 14,
+      "nonadjacent": 26
+    }
+  }
+}

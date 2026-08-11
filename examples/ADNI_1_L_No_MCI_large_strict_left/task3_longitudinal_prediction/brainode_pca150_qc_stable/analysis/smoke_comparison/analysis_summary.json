@@ -1,0 +1,11 @@
+{
+  "brainode_metric_rows": 164,
+  "brainode_summary_rows": 17,
+  "comparison_rows": 7,
+  "evaluation_dir": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/training/smoke_test/evaluation/best",
+  "outputs": {
+    "brainode_summary_csv": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/analysis/smoke_comparison/brainode_summary.csv",
+    "brainode_vs_siren_flow_csv": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/analysis/smoke_comparison/brainode_vs_siren_flow.csv"
+  },
+  "siren_analysis_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_seq_rollout_v1/analysis/checkpoint_best"
+}

@@ -1,0 +1,53 @@
+{
+  "basis_files": [
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_qc_v2/metadata/dynamic_pca_velocity_k8.npz",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_qc_v2/metadata/dynamic_pca_velocity_k16.npz",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_qc_v2/metadata/dynamic_pca_velocity_k32.npz"
+  ],
+  "components": 150,
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/configs/core_brainode.json",
+  "dynamic_pca_cumulative_energy": {
+    "16": 0.5365137196920742,
+    "32": 0.7327472450416048,
+    "8": 0.36200440152256175
+  },
+  "local_ad_cn_change_weights": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_qc_v2/metadata/local_ad_cn_change_weights.npy",
+  "log_volume_rate_per_year": {
+    "AD": {
+      "count": 336.0,
+      "mean": -0.04649373814984962,
+      "median": -0.05054498280269965,
+      "std": 0.07970075765279488
+    },
+    "CN": {
+      "count": 1034.0,
+      "mean": -0.010074741199818861,
+      "median": -0.01050264199918793,
+      "std": 0.06290503001597092
+    }
+  },
+  "max_gap_years": 0.0,
+  "pair_count": 1370,
+  "pair_type": "adjacent",
+  "pca_model_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/pca/model",
+  "relative_volume_rate_per_year": {
+    "AD": {
+      "count": 336.0,
+      "mean": -0.0439363627539192,
+      "median": -0.0490653889772944,
+      "std": 0.0781129675621717
+    },
+    "CN": {
+      "count": 1034.0,
+      "mean": -0.008653659510259913,
+      "median": -0.010447053126058006,
+      "std": 0.0626969551475808
+    }
+  },
+  "velocity_norm_per_year": {
+    "count": 1370.0,
+    "mean": 1.861793560606259,
+    "median": 1.8018667870065381,
+    "std": 0.9586038130675134
+  }
+}

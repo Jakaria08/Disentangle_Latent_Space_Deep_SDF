@@ -1,0 +1,42 @@
+{
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren",
+  "analysis_stage": "existing_meshes_cpu",
+  "mesh_cache": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/mesh_volume_cache.csv",
+  "large_siren_mesh_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/reconstructed_meshes",
+  "decoder_loaded": false,
+  "large_deepsdf_available": false,
+  "new_latents_created": false,
+  "large_siren_artifact_counts": {
+    "full_multi_gpu": 2715
+  },
+  "cohorts": {
+    "large_all": {
+      "scans": 2715,
+      "subjects": 676
+    },
+    "large_stable": {
+      "scans": 2693,
+      "subjects": 673
+    },
+    "large_qc": {
+      "scans": 2229,
+      "subjects": 523
+    },
+    "old_small": {
+      "scans": 727,
+      "subjects": 244
+    }
+  },
+  "output_files": [
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren/scan_volumes.csv",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren/pair_volume_rates.csv",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren/subject_volume_summary.csv",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren/group_volume_summary.csv",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren/representation_subject_comparison.csv",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren/representation_group_comparison.csv",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren/latent_pair_diagnostics.csv",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren/latent_subject_diagnostics.csv",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren/availability.csv",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/analysis/available_representation_volume_audit/full_large_siren/report.html"
+  ]
+}

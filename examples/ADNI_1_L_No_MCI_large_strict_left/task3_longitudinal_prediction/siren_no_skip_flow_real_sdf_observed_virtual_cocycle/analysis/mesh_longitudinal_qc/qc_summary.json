@@ -1,0 +1,64 @@
+{
+  "scan_count": 2693,
+  "subject_count": 673,
+  "adjacent_pair_count": 2020,
+  "bad_adjacent_pair_count": 179,
+  "bad_scan_count": 346,
+  "bad_subject_any_pair_count": 137,
+  "exclude_subject_count": 87,
+  "mesh_shape_metrics_enabled": true,
+  "scan_counts_by_split": {
+    "test": 265,
+    "train": 2161,
+    "val": 267
+  },
+  "subject_counts_by_split": {
+    "test": 68,
+    "train": 537,
+    "val": 68
+  },
+  "bad_pair_counts_by_split_diagnosis": {
+    "('test', 'AD')": 16,
+    "('test', 'CN')": 3,
+    "('train', 'AD')": 110,
+    "('train', 'CN')": 34,
+    "('val', 'AD')": 14,
+    "('val', 'CN')": 2
+  },
+  "bad_scan_counts_by_split_diagnosis": {
+    "('test', 'AD')": 30,
+    "('test', 'CN')": 6,
+    "('train', 'AD')": 197,
+    "('train', 'CN')": 83,
+    "('val', 'AD')": 26,
+    "('val', 'CN')": 4
+  },
+  "filtered_outputs": {
+    "bad_scan_count": 346,
+    "bad_subject_any_bad_pair_count": 137,
+    "exclude_subject_count": 87,
+    "metadata_drop_any_bad_subject_rows": 2149,
+    "metadata_drop_exclude_subject_rows": 2391,
+    "metadata_drop_bad_scans_rows": 2347,
+    "metadata_drop_bad_scans_min_visits_rows": 2229,
+    "paths": {
+      "metadata_drop_any_bad_subject": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle/analysis/mesh_longitudinal_qc/metadata_drop_any_bad_subject.csv",
+      "metadata_drop_exclude_subject": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle/analysis/mesh_longitudinal_qc/metadata_drop_exclude_subject.csv",
+      "metadata_drop_bad_scans": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle/analysis/mesh_longitudinal_qc/metadata_drop_bad_scans.csv",
+      "metadata_drop_bad_scans_min_visits": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle/analysis/mesh_longitudinal_qc/metadata_drop_bad_scans_min2.csv"
+    }
+  },
+  "thresholds": {
+    "mesh_mask_ratio_low_q0.005": 0.6587949741816862,
+    "mesh_mask_ratio_high_q0.995": 0.9516451075693254,
+    "surface_area_volume_ratio_low_q0.005": 7.018886770728194,
+    "surface_area_volume_ratio_high_q0.995": 9.330487000859137,
+    "mesh_rate_threshold_pct_per_year": 20.0,
+    "mask_rate_threshold_pct_per_year": 20.0,
+    "mesh_mask_ratio_jump_threshold_pct": 8.0,
+    "surface_area_jump_threshold_pct": 20.0,
+    "sign_disagreement_min_delta_pct": 5.0,
+    "shape_p95_displacement_per_year_q0.995": 0.43454666806838094,
+    "shape_rms_displacement_per_year_q0.995": 0.238945654213024
+  }
+}

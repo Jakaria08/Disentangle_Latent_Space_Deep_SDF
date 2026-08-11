@@ -1,0 +1,11 @@
+{
+  "best_ad_volume_rate": 0.06478857735902825,
+  "best_pareto": 0.09246256064377688,
+  "best_vertex": 0.024748996224868116,
+  "elapsed_seconds": 109.35825991630554,
+  "epochs": 95,
+  "finished_at_unix": 1785887823.5392752,
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_qc_v2/runs/e05_dynpca_k16_registered_flowmap_seed42",
+  "run_name": "e05_dynpca_k16_registered_flowmap_seed42",
+  "status": "completed"
+}

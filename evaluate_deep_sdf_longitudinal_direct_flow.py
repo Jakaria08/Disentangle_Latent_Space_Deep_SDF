@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Sequence
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -20,10 +20,12 @@ from train_deep_sdf_longitudinal_direct_flow import (
     build_loss,
     load_frozen_decoder,
     load_specs,
+    make_volume_probe_points,
     make_loader,
     make_sequence_loader,
     sequence_losses_enabled,
     sequence_to_device,
+    soft_volume_proxy,
     to_device,
     validate_loss_scope,
 )
@@ -54,6 +56,42 @@ def _as_list(value) -> List:
     return list(value)
 
 
+def transport_composed_fixed_step(
+    flow,
+    source_latent: torch.Tensor,
+    source_time: torch.Tensor,
+    target_time: torch.Tensor,
+    condition: torch.Tensor,
+    *,
+    step_norm: float,
+) -> torch.Tensor:
+    """Transport source latents to target times through fixed small age steps."""
+
+    if float(step_norm) <= 0.0:
+        raise ValueError("step_norm must be positive")
+    current_latent = source_latent
+    current_time = source_time.view(-1, 1)
+    final_time = target_time.view(-1, 1)
+    max_steps = int(
+        torch.ceil((final_time - current_time).abs().max() / float(step_norm)).item()
+    )
+    if max_steps <= 0:
+        return current_latent
+
+    step_size = torch.full_like(current_time, float(step_norm))
+    for _ in range(max_steps):
+        remaining = final_time - current_time
+        active = remaining.abs() > 1.0e-8
+        if not bool(active.any().item()):
+            break
+        step_delta = torch.minimum(remaining.abs(), step_size) * torch.sign(remaining)
+        next_time = current_time + step_delta
+        candidate = flow.transport(current_latent, current_time, next_time, condition)
+        current_latent = torch.where(active, candidate, current_latent)
+        current_time = torch.where(active, next_time, current_time)
+    return current_latent
+
+
 def evaluate_split(
     *,
     split: str,
@@ -64,6 +102,8 @@ def evaluate_split(
     device: torch.device,
     virtual_ratios: Sequence[float],
     regularizer_stats,
+    composed_step_years: float,
+    volume_probe_points: Optional[torch.Tensor],
 ) -> pd.DataFrame:
     """Return one diagnostic row for every chronological forward pair."""
 
@@ -72,6 +112,9 @@ def evaluate_split(
     age_spec = specs.get("AgeNormalization", {})
     age_origin = float(age_spec.get("minimum_age_years", 57.0))
     age_range = float(age_spec.get("age_range_years", 34.0))
+    composed_step_norm = float(composed_step_years) / age_range
+    if composed_step_norm <= 0.0:
+        raise ValueError("--composed-step-years must be positive")
     rows: List[Dict[str, object]] = []
 
     with torch.no_grad():
@@ -91,20 +134,181 @@ def evaluate_split(
                 direct,
                 batch["target_samples"],
             )
+            direct_change_losses = loss_module.change_aware_sdf_losses_per_row(
+                source_latent=source_latent,
+                predicted_latent=direct,
+                target_samples=batch["target_samples"],
+            )
             no_change_error = loss_module.decode_target_sdf_loss_per_row(
                 source_latent,
                 batch["target_samples"],
             )
+            composed = transport_composed_fixed_step(
+                flow,
+                source_latent,
+                source_time,
+                target_time,
+                condition,
+                step_norm=composed_step_norm,
+            )
+            composed_prediction_error = loss_module.decode_target_sdf_loss_per_row(
+                composed,
+                batch["target_samples"],
+            )
+            composed_change_losses = loss_module.change_aware_sdf_losses_per_row(
+                source_latent=source_latent,
+                predicted_latent=composed,
+                target_samples=batch["target_samples"],
+            )
             target_latent = batch["target_latent"]
             target_latent_mse = per_row_latent_mse(direct, target_latent)
+            composed_target_latent_mse = per_row_latent_mse(composed, target_latent)
+            direct_vs_composed_latent_mse = per_row_latent_mse(direct, composed)
             predicted_displacement = torch.linalg.vector_norm(
                 direct - source_latent,
+                dim=1,
+            )
+            composed_predicted_displacement = torch.linalg.vector_norm(
+                composed - source_latent,
                 dim=1,
             )
             real_displacement = torch.linalg.vector_norm(
                 target_latent - source_latent,
                 dim=1,
             )
+
+            volume_metrics = None
+            if volume_probe_points is not None:
+                temperature = float(specs.get("VolumeProbeTemperature", 0.01))
+                inside_sdf_sign = float(specs.get("VolumeProbeInsideSDFSign", -1.0))
+                chunk_size = int(specs.get("VolumeProbeChunkSize", 4096))
+                source_proxy = soft_volume_proxy(
+                    loss_module,
+                    source_latent,
+                    volume_probe_points,
+                    temperature=temperature,
+                    inside_sdf_sign=inside_sdf_sign,
+                    chunk_size=chunk_size,
+                )
+                direct_proxy = soft_volume_proxy(
+                    loss_module,
+                    direct,
+                    volume_probe_points,
+                    temperature=temperature,
+                    inside_sdf_sign=inside_sdf_sign,
+                    chunk_size=chunk_size,
+                )
+                composed_proxy = soft_volume_proxy(
+                    loss_module,
+                    composed,
+                    volume_probe_points,
+                    temperature=temperature,
+                    inside_sdf_sign=inside_sdf_sign,
+                    chunk_size=chunk_size,
+                )
+                model_log_ratio = torch.log(direct_proxy / source_proxy)
+                composed_log_ratio = torch.log(composed_proxy / source_proxy)
+                source_real_volume = batch.get("source_mesh_volume_mm3")
+                target_real_volume = batch.get("target_mesh_volume_mm3")
+                if source_real_volume is None or target_real_volume is None:
+                    real_log_ratio = torch.full_like(model_log_ratio, float("nan"))
+                    valid_real_volume = torch.zeros_like(
+                        model_log_ratio,
+                        dtype=torch.bool,
+                    )
+                else:
+                    source_real_volume = source_real_volume.to(
+                        device=device,
+                        dtype=source_latent.dtype,
+                    ).view(-1)
+                    target_real_volume = target_real_volume.to(
+                        device=device,
+                        dtype=source_latent.dtype,
+                    ).view(-1)
+                    valid_real_volume = (
+                        torch.isfinite(source_real_volume)
+                        & torch.isfinite(target_real_volume)
+                        & (source_real_volume > 0.0)
+                        & (target_real_volume > 0.0)
+                    )
+                    real_log_ratio = torch.full_like(
+                        model_log_ratio,
+                        float("nan"),
+                    )
+                    real_log_ratio[valid_real_volume] = torch.log(
+                        target_real_volume[valid_real_volume]
+                        / source_real_volume[valid_real_volume]
+                    )
+                model_ratio_error = torch.abs(model_log_ratio - real_log_ratio)
+                composed_ratio_error = torch.abs(composed_log_ratio - real_log_ratio)
+                gap_years_tensor = (
+                    (target_time.view(-1) - source_time.view(-1)).abs()
+                    * age_range
+                ).clamp_min(1.0e-6)
+                real_annual = real_log_ratio / gap_years_tensor
+                model_annual = model_log_ratio / gap_years_tensor
+                composed_annual = composed_log_ratio / gap_years_tensor
+                model_annual_error = torch.abs(model_annual - real_annual)
+                composed_annual_error = torch.abs(composed_annual - real_annual)
+                model_direction_correct = (
+                    torch.sign(model_log_ratio) == torch.sign(real_log_ratio)
+                ) & valid_real_volume
+                composed_direction_correct = (
+                    torch.sign(composed_log_ratio) == torch.sign(real_log_ratio)
+                ) & valid_real_volume
+
+                cn_condition = torch.zeros_like(condition)
+                ad_condition = torch.ones_like(condition)
+                cn_latent = flow.transport(
+                    source_latent,
+                    source_time,
+                    target_time,
+                    cn_condition,
+                )
+                ad_latent = flow.transport(
+                    source_latent,
+                    source_time,
+                    target_time,
+                    ad_condition,
+                )
+                cn_proxy = soft_volume_proxy(
+                    loss_module,
+                    cn_latent,
+                    volume_probe_points,
+                    temperature=temperature,
+                    inside_sdf_sign=inside_sdf_sign,
+                    chunk_size=chunk_size,
+                )
+                ad_proxy = soft_volume_proxy(
+                    loss_module,
+                    ad_latent,
+                    volume_probe_points,
+                    temperature=temperature,
+                    inside_sdf_sign=inside_sdf_sign,
+                    chunk_size=chunk_size,
+                )
+                cn_log_ratio = torch.log(cn_proxy / source_proxy)
+                ad_log_ratio = torch.log(ad_proxy / source_proxy)
+                volume_metrics = {
+                    "source_proxy_volume": source_proxy,
+                    "model_proxy_volume": direct_proxy,
+                    "composed_proxy_volume": composed_proxy,
+                    "real_log_volume_ratio": real_log_ratio,
+                    "model_proxy_log_volume_ratio": model_log_ratio,
+                    "composed_proxy_log_volume_ratio": composed_log_ratio,
+                    "model_proxy_log_volume_ratio_abs_error": model_ratio_error,
+                    "composed_proxy_log_volume_ratio_abs_error": composed_ratio_error,
+                    "real_annualized_log_volume_change": real_annual,
+                    "model_proxy_annualized_log_volume_change": model_annual,
+                    "composed_proxy_annualized_log_volume_change": composed_annual,
+                    "model_proxy_annualized_log_volume_change_abs_error": model_annual_error,
+                    "composed_proxy_annualized_log_volume_change_abs_error": composed_annual_error,
+                    "model_volume_direction_correct": model_direction_correct,
+                    "composed_volume_direction_correct": composed_direction_correct,
+                    "cn_condition_proxy_log_volume_ratio": cn_log_ratio,
+                    "ad_condition_proxy_log_volume_ratio": ad_log_ratio,
+                    "ad_more_atrophy_than_cn": ad_log_ratio < cn_log_ratio,
+                }
 
             _, _, observed_composed = direct_and_composed(
                 flow,
@@ -201,12 +405,19 @@ def evaluate_split(
                 dtype=direct.dtype,
             )
             direct_zscore = torch.abs((direct - latent_mean) / latent_std)
+            composed_zscore = torch.abs((composed - latent_mean) / latent_std)
             direct_zscore_p95 = torch.quantile(
                 direct_zscore,
                 0.95,
                 dim=1,
             )
             direct_zscore_max = direct_zscore.max(dim=1).values
+            composed_zscore_p95 = torch.quantile(
+                composed_zscore,
+                0.95,
+                dim=1,
+            )
+            composed_zscore_max = composed_zscore.max(dim=1).values
             normalized_gap = (
                 target_time.view(-1) - source_time.view(-1)
             ).abs().clamp_min(1.0e-6)
@@ -214,6 +425,11 @@ def evaluate_split(
                 torch.linalg.vector_norm(direct - source_latent, dim=1)
                 / normalized_gap
             )
+            composed_predicted_speed = (
+                torch.linalg.vector_norm(composed - source_latent, dim=1)
+                / normalized_gap
+            )
+            composed_steps = torch.ceil(normalized_gap / composed_step_norm)
 
             batch_size = source_latent.shape[0]
             source_order = _as_list(raw_batch["source_visit_order"])
@@ -222,10 +438,10 @@ def evaluate_split(
                 source_norm = float(source_time[index].item())
                 target_norm = float(target_time[index].item())
                 model_error = float(prediction_error[index].item())
+                composed_error = float(composed_prediction_error[index].item())
                 baseline_error = float(no_change_error[index].item())
                 has_observed = bool(observed_mask[index].item())
-                rows.append(
-                    {
+                row = {
                         "split": split,
                         "subject_id": raw_batch["subject_id"][index],
                         "diagnosis": raw_batch["diagnosis"][index],
@@ -245,15 +461,69 @@ def evaluate_split(
                         "target_age_years": age_origin + age_range * target_norm,
                         "gap_norm": target_norm - source_norm,
                         "gap_years": age_range * (target_norm - source_norm),
+                        "source_mesh_volume_mm3": float(
+                            batch["source_mesh_volume_mm3"][index].item()
+                        )
+                        if "source_mesh_volume_mm3" in batch
+                        else np.nan,
+                        "target_mesh_volume_mm3": float(
+                            batch["target_mesh_volume_mm3"][index].item()
+                        )
+                        if "target_mesh_volume_mm3" in batch
+                        else np.nan,
                         "model_target_sdf_l1": model_error,
+                        "composed_target_sdf_l1": composed_error,
                         "no_change_target_sdf_l1": baseline_error,
+                        "model_change_weighted_sdf_l1": float(
+                            direct_change_losses["change_weighted_sdf"][index].item()
+                        ),
+                        "composed_change_weighted_sdf_l1": float(
+                            composed_change_losses["change_weighted_sdf"][
+                                index
+                            ].item()
+                        ),
+                        "model_delta_sdf_direction": float(
+                            direct_change_losses["delta_sdf_direction"][index].item()
+                        ),
+                        "composed_delta_sdf_direction": float(
+                            composed_change_losses["delta_sdf_direction"][
+                                index
+                            ].item()
+                        ),
+                        "model_delta_sdf_rmae": float(
+                            direct_change_losses["delta_sdf_rmae"][index].item()
+                        ),
+                        "composed_delta_sdf_rmae": float(
+                            composed_change_losses["delta_sdf_rmae"][index].item()
+                        ),
+                        "model_no_change_margin_loss": float(
+                            direct_change_losses["no_change_margin"][index].item()
+                        ),
+                        "composed_no_change_margin_loss": float(
+                            composed_change_losses["no_change_margin"][index].item()
+                        ),
                         "sdf_l1_improvement": baseline_error - model_error,
+                        "composed_sdf_l1_improvement": baseline_error
+                        - composed_error,
+                        "composed_sdf_l1_gain_vs_direct": model_error
+                        - composed_error,
                         "model_beats_no_change": model_error < baseline_error,
+                        "composed_beats_no_change": composed_error < baseline_error,
+                        "composed_beats_direct": composed_error < model_error,
                         "target_latent_mse_diagnostic": float(
                             target_latent_mse[index].item()
                         ),
+                        "composed_target_latent_mse_diagnostic": float(
+                            composed_target_latent_mse[index].item()
+                        ),
+                        "direct_vs_composed_latent_mse": float(
+                            direct_vs_composed_latent_mse[index].item()
+                        ),
                         "predicted_displacement_l2": float(
                             predicted_displacement[index].item()
+                        ),
+                        "composed_predicted_displacement_l2": float(
+                            composed_predicted_displacement[index].item()
                         ),
                         "real_displacement_l2": float(
                             real_displacement[index].item()
@@ -261,6 +531,12 @@ def evaluate_split(
                         "displacement_magnitude_abs_error": float(
                             torch.abs(
                                 predicted_displacement[index]
+                                - real_displacement[index]
+                            ).item()
+                        ),
+                        "composed_displacement_magnitude_abs_error": float(
+                            torch.abs(
+                                composed_predicted_displacement[index]
                                 - real_displacement[index]
                             ).item()
                         ),
@@ -285,9 +561,20 @@ def evaluate_split(
                         "predicted_latent_zscore_max": float(
                             direct_zscore_max[index].item()
                         ),
+                        "composed_latent_zscore_p95": float(
+                            composed_zscore_p95[index].item()
+                        ),
+                        "composed_latent_zscore_max": float(
+                            composed_zscore_max[index].item()
+                        ),
                         "predicted_speed_l2_per_normalized_age": float(
                             predicted_speed[index].item()
                         ),
+                        "composed_speed_l2_per_normalized_age": float(
+                            composed_predicted_speed[index].item()
+                        ),
+                        "composed_step_years": float(composed_step_years),
+                        "composed_steps": int(composed_steps[index].item()),
                         "train_speed_guard_threshold_p95": float(
                             regularizer_stats.speed_percentile
                         ),
@@ -302,29 +589,66 @@ def evaluate_split(
                             ).item()
                         ),
                     }
-                )
+                if volume_metrics is not None:
+                    for key, value in volume_metrics.items():
+                        if value.dtype == torch.bool:
+                            row[key] = bool(value[index].item())
+                        else:
+                            row[key] = float(value[index].item())
+                rows.append(row)
     return pd.DataFrame(rows)
 
 
 def summarize_pairs(frame: pd.DataFrame) -> pd.DataFrame:
-    metrics = [
+    candidate_metrics = [
         "model_target_sdf_l1",
+        "composed_target_sdf_l1",
         "no_change_target_sdf_l1",
+        "model_change_weighted_sdf_l1",
+        "composed_change_weighted_sdf_l1",
+        "model_delta_sdf_direction",
+        "composed_delta_sdf_direction",
+        "model_delta_sdf_rmae",
+        "composed_delta_sdf_rmae",
+        "model_no_change_margin_loss",
+        "composed_no_change_margin_loss",
         "sdf_l1_improvement",
+        "composed_sdf_l1_improvement",
+        "composed_sdf_l1_gain_vs_direct",
         "target_latent_mse_diagnostic",
+        "composed_target_latent_mse_diagnostic",
+        "direct_vs_composed_latent_mse",
         "predicted_displacement_l2",
+        "composed_predicted_displacement_l2",
         "real_displacement_l2",
         "displacement_magnitude_abs_error",
+        "composed_displacement_magnitude_abs_error",
         "observed_cocycle_mse",
         "virtual_cocycle_mse",
         "backward_virtual_latent_mse",
         "future_extrapolation_cocycle_mse",
         "predicted_latent_zscore_p95",
         "predicted_latent_zscore_max",
+        "composed_latent_zscore_p95",
+        "composed_latent_zscore_max",
         "predicted_speed_l2_per_normalized_age",
+        "composed_speed_l2_per_normalized_age",
         "source_velocity_l2_per_normalized_age",
         "target_velocity_l2_per_normalized_age",
+        "real_log_volume_ratio",
+        "model_proxy_log_volume_ratio",
+        "composed_proxy_log_volume_ratio",
+        "model_proxy_log_volume_ratio_abs_error",
+        "composed_proxy_log_volume_ratio_abs_error",
+        "real_annualized_log_volume_change",
+        "model_proxy_annualized_log_volume_change",
+        "composed_proxy_annualized_log_volume_change",
+        "model_proxy_annualized_log_volume_change_abs_error",
+        "composed_proxy_annualized_log_volume_change_abs_error",
+        "cn_condition_proxy_log_volume_ratio",
+        "ad_condition_proxy_log_volume_ratio",
     ]
+    metrics = [metric for metric in candidate_metrics if metric in frame.columns]
     grouping_sets: Iterable[tuple[str, List[str]]] = (
         ("overall", []),
         ("diagnosis", ["diagnosis"]),
@@ -341,6 +665,12 @@ def summarize_pairs(frame: pd.DataFrame) -> pd.DataFrame:
                 "rows": int(len(group)),
                 "model_beats_no_change_fraction": float(
                     group["model_beats_no_change"].mean()
+                ),
+                "composed_beats_no_change_fraction": float(
+                    group["composed_beats_no_change"].mean()
+                ),
+                "composed_beats_direct_fraction": float(
+                    group["composed_beats_direct"].mean()
                 ),
             }
             for column, value in zip(columns, key_values):
@@ -849,6 +1179,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--subjects-per-diagnosis", type=int, default=1)
     parser.add_argument("--future-years", type=float, default=2.0)
     parser.add_argument("--trajectory-points", type=int, default=41)
+    parser.add_argument(
+        "--composed-step-years",
+        type=float,
+        default=0.5,
+        help="Step size in years for composed pair prediction metrics.",
+    )
     parser.add_argument("--export-example-meshes", action="store_true")
     parser.add_argument("--mesh-resolution", type=int, default=256)
     return parser.parse_args()
@@ -877,6 +1213,7 @@ def main(args: argparse.Namespace) -> None:
         split="train",
         speed_percentile=float(specs.get("SpeedGuardPercentile", 95.0)),
     )
+    volume_probe_points = make_volume_probe_points(specs, device)
     ratios = [float(value) for value in args.virtual_ratios.split(",")]
     if args.split == "both":
         splits = ("val", "test")
@@ -899,6 +1236,8 @@ def main(args: argparse.Namespace) -> None:
             device=device,
             virtual_ratios=ratios,
             regularizer_stats=regularizer_stats,
+            composed_step_years=float(args.composed_step_years),
+            volume_probe_points=volume_probe_points,
         )
         pair_frame.to_csv(output_dir / f"{split}_pair_metrics.csv", index=False)
         summarize_pairs(pair_frame).to_csv(
@@ -983,8 +1322,12 @@ def main(args: argparse.Namespace) -> None:
         "splits": list(splits),
         "pairs": int(len(combined_pairs)),
         "virtual_ratios": ratios,
+        "composed_step_years": float(args.composed_step_years),
         "mean_model_target_sdf_l1": float(
             combined_pairs["model_target_sdf_l1"].mean()
+        ),
+        "mean_composed_target_sdf_l1": float(
+            combined_pairs["composed_target_sdf_l1"].mean()
         ),
         "mean_no_change_target_sdf_l1": float(
             combined_pairs["no_change_target_sdf_l1"].mean()
@@ -992,11 +1335,26 @@ def main(args: argparse.Namespace) -> None:
         "mean_sdf_l1_improvement": float(
             combined_pairs["sdf_l1_improvement"].mean()
         ),
+        "mean_composed_sdf_l1_improvement": float(
+            combined_pairs["composed_sdf_l1_improvement"].mean()
+        ),
+        "mean_composed_sdf_l1_gain_vs_direct": float(
+            combined_pairs["composed_sdf_l1_gain_vs_direct"].mean()
+        ),
         "mean_displacement_magnitude_abs_error": float(
             combined_pairs["displacement_magnitude_abs_error"].mean()
         ),
+        "mean_composed_displacement_magnitude_abs_error": float(
+            combined_pairs["composed_displacement_magnitude_abs_error"].mean()
+        ),
         "model_beats_no_change_fraction": float(
             combined_pairs["model_beats_no_change"].mean()
+        ),
+        "composed_beats_no_change_fraction": float(
+            combined_pairs["composed_beats_no_change"].mean()
+        ),
+        "composed_beats_direct_fraction": float(
+            combined_pairs["composed_beats_direct"].mean()
         ),
         "mean_backward_virtual_latent_mse": float(
             combined_pairs["backward_virtual_latent_mse"].mean()
@@ -1007,11 +1365,36 @@ def main(args: argparse.Namespace) -> None:
         "mean_predicted_latent_zscore_p95": float(
             combined_pairs["predicted_latent_zscore_p95"].mean()
         ),
+        "mean_composed_latent_zscore_p95": float(
+            combined_pairs["composed_latent_zscore_p95"].mean()
+        ),
         "mean_predicted_speed_l2_per_normalized_age": float(
             combined_pairs["predicted_speed_l2_per_normalized_age"].mean()
         ),
+        "mean_composed_speed_l2_per_normalized_age": float(
+            combined_pairs["composed_speed_l2_per_normalized_age"].mean()
+        ),
         "future_trajectory_region_is_unvalidated": True,
     }
+    for metric in (
+        "model_proxy_log_volume_ratio_abs_error",
+        "composed_proxy_log_volume_ratio_abs_error",
+        "model_proxy_annualized_log_volume_change_abs_error",
+        "composed_proxy_annualized_log_volume_change_abs_error",
+        "cn_condition_proxy_log_volume_ratio",
+        "ad_condition_proxy_log_volume_ratio",
+    ):
+        if metric in combined_pairs.columns:
+            summary[f"mean_{metric}"] = float(combined_pairs[metric].mean())
+    for metric in (
+        "model_volume_direction_correct",
+        "composed_volume_direction_correct",
+        "ad_more_atrophy_than_cn",
+    ):
+        if metric in combined_pairs.columns:
+            summary[f"{metric}_fraction"] = float(
+                combined_pairs[metric].astype(float).mean()
+            )
     if not combined_sequences.empty:
         summary.update(
             {

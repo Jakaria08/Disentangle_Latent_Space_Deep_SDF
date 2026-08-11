@@ -1,0 +1,52 @@
+{
+  "full_brainode": {
+    "autoregressive_loss_lambda": 0.1,
+    "cognition_dropout": 0.05,
+    "cognition_hidden_dims": [
+      256,
+      128
+    ],
+    "cognition_loss_lambda": 0.1,
+    "notes": [
+      "This old no-MCI dataset has fixed CN/AD labels per subject, so pseudo-cognitive transition loss is active only if transition trajectories are present.",
+      "The cognition estimator and autoregressive rollout remain active on fixed-label trajectories."
+    ],
+    "pseudo_cognition_loss_lambda": 0.05,
+    "require_transition_trajectories": false,
+    "shape_loss_lambda": 1.0,
+    "use_autoregressive_rollout": true,
+    "use_cognition_estimator": true,
+    "use_pseudo_cognitive_sampling": true
+  },
+  "train": {
+    "count": 12,
+    "count_by_direction": {
+      "backward": 6,
+      "forward": 6
+    },
+    "count_by_length": {
+      "2": 6,
+      "3": 6
+    }
+  },
+  "train_transition_records": 0,
+  "val_first_last": {
+    "count": 6,
+    "count_by_direction": {
+      "forward": 6
+    },
+    "count_by_length": {
+      "3": 6
+    }
+  },
+  "val_forward": {
+    "count": 6,
+    "count_by_direction": {
+      "forward": 6
+    },
+    "count_by_length": {
+      "2": 3,
+      "3": 3
+    }
+  }
+}

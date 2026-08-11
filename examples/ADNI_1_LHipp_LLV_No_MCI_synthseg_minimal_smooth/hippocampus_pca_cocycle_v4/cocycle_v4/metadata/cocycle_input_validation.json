@@ -1,0 +1,75 @@
+{
+  "all_sequences": {
+    "pca_shape": [
+      2583,
+      150
+    ],
+    "subjects": 597,
+    "visits": 2583
+  },
+  "brainode_trained": false,
+  "checks": {
+    "allow_pickle_false": true,
+    "condition_is_diagnosis_not_cognition": true,
+    "cross_structure_features": false,
+    "cross_subject_pairs": false,
+    "legacy_checkpoint_used": false,
+    "minimum_visits": 2,
+    "strictly_increasing_time": true,
+    "subject_split_leakage": false
+  },
+  "cocycle_trained": false,
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "passed": true,
+  "pca_refitted": false,
+  "safe_pca_archive": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/coefficients/all_coefficients_safe.npz",
+  "source_meshes_modified": false,
+  "splits": {
+    "test": {
+      "adjacent_pairs": 216,
+      "forward_pairs": 619,
+      "nonadjacent_pairs": 403,
+      "pairs_by_diagnosis": {
+        "AD": 118,
+        "CN": 501
+      },
+      "pca_shape": [
+        277,
+        150
+      ],
+      "subjects": 61,
+      "visits": 277
+    },
+    "train": {
+      "adjacent_pairs": 1562,
+      "forward_pairs": 4208,
+      "nonadjacent_pairs": 2646,
+      "pairs_by_diagnosis": {
+        "AD": 863,
+        "CN": 3345
+      },
+      "pca_shape": [
+        2037,
+        150
+      ],
+      "subjects": 475,
+      "visits": 2037
+    },
+    "val": {
+      "adjacent_pairs": 208,
+      "forward_pairs": 549,
+      "nonadjacent_pairs": 341,
+      "pairs_by_diagnosis": {
+        "AD": 126,
+        "CN": 423
+      },
+      "pca_shape": [
+        269,
+        150
+      ],
+      "subjects": 61,
+      "visits": 269
+    }
+  },
+  "structure": "left_hippocampus"
+}

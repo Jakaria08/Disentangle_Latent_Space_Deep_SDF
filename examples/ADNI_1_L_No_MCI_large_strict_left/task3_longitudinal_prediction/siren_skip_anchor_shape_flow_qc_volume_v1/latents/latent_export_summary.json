@@ -1,0 +1,16 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_latent_skip_warmstart/checkpoints/best.pth",
+  "checkpoint_epoch": 1775,
+  "checkpoint_sha256": "57937c923b04bf38a4180ed6b1bf5ba5dcd4b11dbce88ef6c045dfd23425bae4",
+  "converged_scan_count": 2229,
+  "exported_scan_count": 2229,
+  "mean_heldout_sdf_l1": 0.0022714085285296687,
+  "metadata_filter": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/metadata/adni_large_strict_no_mci_left_direct_flow_records_qc_drop_bad_scans_min2.csv",
+  "name": "siren_naisr_5x512_latent_skip_warmstart",
+  "requested_splits": [
+    "test",
+    "train",
+    "val"
+  ],
+  "used_checkpoint_train_latents": true
+}

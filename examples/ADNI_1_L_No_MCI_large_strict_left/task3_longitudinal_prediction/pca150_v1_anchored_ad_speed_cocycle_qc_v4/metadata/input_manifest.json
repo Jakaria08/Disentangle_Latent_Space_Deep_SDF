@@ -1,0 +1,11 @@
+{
+  "base_v1_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1/checkpoints/best_val_endpoint_vertex_mae.pth",
+  "brainode_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/training/core_attention_pca150_qc_stable/checkpoints/best.pth",
+  "components": 150,
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/configs/v1_anchored_ad_speed_primary.json",
+  "device": "cuda:0",
+  "max_train_pairs": 0,
+  "max_val_pairs": 0,
+  "pca_model_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/pca/model",
+  "registered_mesh_tensors": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_bidir_qc_v3/metadata/registered_mesh_tensors.npz"
+}

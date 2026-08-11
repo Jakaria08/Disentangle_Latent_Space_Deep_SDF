@@ -1,0 +1,52 @@
+{
+  "base_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1/checkpoints/best_val_endpoint_vertex_mae.pth",
+  "base_checkpoint_epoch": 120,
+  "base_checkpoint_sha256": "04cbc60254473fafff895fe053d8a74d939399337b9526d4ab30443e37d14151",
+  "created_at_unix": 1785896662.9163263,
+  "elapsed_seconds": 0.48197340965270996,
+  "loss_scales": {
+    "consistency": 0.011141564697027206,
+    "pca": 0.011141564697027206,
+    "rate": 0.06753712892532349,
+    "slope": 0.06731194852592241,
+    "vertex": 0.011406619101762772
+  },
+  "train_ad_pair_count": 16,
+  "train_ad_subject_slope_count": 113,
+  "val_all_pairs": {
+    "AD": {
+      "endpoint_pca_mse": NaN,
+      "endpoint_vertex_mae": NaN,
+      "rows": 0
+    },
+    "CN": {
+      "endpoint_pca_mse": 0.022613377077504992,
+      "endpoint_vertex_mae": 0.014976569334976375,
+      "rows": 16
+    },
+    "overall": {
+      "endpoint_pca_mse": 0.022613377077504992,
+      "endpoint_vertex_mae": 0.014976569334976375,
+      "rows": 16
+    },
+    "split": "val"
+  },
+  "val_first_last": {
+    "AD": {
+      "endpoint_pca_mse": 0.013976198388263583,
+      "endpoint_vertex_mae": 0.012222164077684283,
+      "rows": 4
+    },
+    "CN": {
+      "endpoint_pca_mse": 0.012826815557976564,
+      "endpoint_vertex_mae": 0.012308309630801281,
+      "rows": 12
+    },
+    "overall": {
+      "endpoint_pca_mse": 0.013114161265548319,
+      "endpoint_vertex_mae": 0.012286773242522031,
+      "rows": 16
+    },
+    "split": "val_first_last"
+  }
+}

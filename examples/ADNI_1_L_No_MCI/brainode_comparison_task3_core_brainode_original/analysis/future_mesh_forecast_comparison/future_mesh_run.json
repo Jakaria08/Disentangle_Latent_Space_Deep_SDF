@@ -1,0 +1,37 @@
+{
+  "balanced_subject_selection": false,
+  "composed_step_years": 0.5,
+  "exported_predicted_meshes": 8569,
+  "failure_rows": 0,
+  "internal_predicted_mesh_rows": 8569,
+  "max_pairs_per_split": 0,
+  "mesh_max_batch": 262144,
+  "mesh_resolution": 80,
+  "models_requested": [
+    "old_brainode_pca150",
+    "qc_brainode_pca150",
+    "old_pca32_siren",
+    "old_smallnet_deepsdf",
+    "old_siren_full256_direct",
+    "qc_siren_drop_bad_min2",
+    "qc_siren_local_decomp_volume",
+    "qc_siren_latent_ode"
+  ],
+  "note": "This is the fair real-mesh future forecast comparison. BrainODE endpoint predictions are inverse-PCA meshes; SIREN/DeepSDF predictions are decoded SDF meshes. All rows compare to the same true target mesh with sampled surface points.",
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/future_mesh_forecast_comparison",
+  "pair_type": "all",
+  "per_pair_rows": 8569,
+  "save_meshes": true,
+  "selected_pair_source_mode": "baseline_only",
+  "selected_subject_groups": 6,
+  "selected_subject_rows": 227,
+  "selected_subjects_csv": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/unified_longitudinal_visual_report/generated_artifacts/selected_subject_manifest.csv",
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "subjects_per_diagnosis": 25,
+  "summary_rows": 264,
+  "surface_samples": 30000
+}

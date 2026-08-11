@@ -1,0 +1,50 @@
+{
+  "status": "pass",
+  "latent_dim": 256,
+  "splits": {
+    "train": {
+      "scans": 1791,
+      "subjects": 421,
+      "pairs": 3680,
+      "pairs_with_observed_intermediate": 2310,
+      "sequences": 1370,
+      "sequence_steps": 3680,
+      "diagnosis_scans": {
+        "CN": 1295,
+        "AD": 496
+      }
+    },
+    "val": {
+      "scans": 224,
+      "subjects": 52,
+      "pairs": 522,
+      "pairs_with_observed_intermediate": 350,
+      "sequences": 172,
+      "sequence_steps": 522,
+      "diagnosis_scans": {
+        "CN": 152,
+        "AD": 72
+      }
+    },
+    "test": {
+      "scans": 214,
+      "subjects": 50,
+      "pairs": 483,
+      "pairs_with_observed_intermediate": 319,
+      "sequences": 164,
+      "sequence_steps": 483,
+      "diagnosis_scans": {
+        "CN": 149,
+        "AD": 65
+      }
+    }
+  },
+  "subject_split_isolation": true,
+  "loss_scope": [
+    "real_target_sdf_prediction",
+    "observed_intermediate_latent_consistency",
+    "virtual_intermediate_latent_consistency",
+    "relative_soft_volume_change",
+    "cn_ad_counterfactual_volume_ordering"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "brainode_trained": false,
+  "cocycle_trained": false,
+  "coefficient_outputs": {
+    "all": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/coefficients/all_coefficients.npz",
+    "splits": {
+      "test": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/coefficients/test_coefficients.npz",
+      "train": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/coefficients/train_coefficients.npz",
+      "val": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/coefficients/val_coefficients.npz"
+    },
+    "standardization": "per-PC mean/std from train scans only"
+  },
+  "elapsed_minutes": 0.29393070538838706,
+  "evaluation_components": [
+    32,
+    64,
+    100,
+    128,
+    150
+  ],
+  "fit_scans": 2037,
+  "input_contract": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/configs/pca_input_contract.json",
+  "input_contract_sha256": "6f705bf9ae667de1c736b314de74da89c7e872d029b38d75fdf66fad107daa08",
+  "manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+  "manifest_sha256": "e12cf0cb6bb720d1e169c658e5131beb115cac0d1112112086fbdbbd664252d6",
+  "max_components": 150,
+  "passed": true,
+  "pca_fitted": true,
+  "scans": 2583,
+  "source_meshes_modified": false,
+  "structure": "left_hippocampus",
+  "subjects": 597
+}

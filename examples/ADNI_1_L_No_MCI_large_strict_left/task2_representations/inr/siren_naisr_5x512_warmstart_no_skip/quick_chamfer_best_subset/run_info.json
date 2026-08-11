@@ -1,0 +1,26 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/checkpoints/best.pth",
+  "checkpoint_best_validation_l1": 0.003467724920483306,
+  "checkpoint_epoch": 775,
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/configs/inr_siren_eikonal_warmstart_no_skip.json",
+  "failure_count": 0,
+  "failures": [],
+  "max_batch": 262144,
+  "metric_definitions": {
+    "assd": "0.5 * chamfer_l1",
+    "chamfer_l1": "mean(gt_to_pred_distance) + mean(pred_to_gt_distance)",
+    "chamfer_l2_squared": "mean(gt_to_pred_distance^2) + mean(pred_to_gt_distance^2)",
+    "hd95": "max(q95(gt_to_pred_distance), q95(pred_to_gt_distance))"
+  },
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/quick_chamfer_best_subset",
+  "per_split": 5,
+  "resolution": 256,
+  "seed": 42,
+  "selection": "first",
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "surface_points": 30000
+}

@@ -1,0 +1,69 @@
+{
+  "completed_at": "2026-08-05T05:28:23.403730+00:00",
+  "created_at": "2026-08-05T05:28:18.185474+00:00",
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/analysis/notebook_brainode_vs_cocycle_all_data/prepared_cache_v1",
+  "required_files": [
+    "provenance.json",
+    "selected_examples.json",
+    "tables/cohort_counts.csv",
+    "tables/metric_summary.csv",
+    "tables/paired_metric_comparison.csv",
+    "tables/paired_bootstrap_ci.csv",
+    "tables/gap_summary.csv",
+    "tables/subject_volume_trends.csv",
+    "tables/cohort_volume_trend_summary.csv",
+    "tables/selected_volume_trajectories.csv",
+    "tables/counterfactual_trajectories.csv",
+    "tables/selected_mesh_metrics.csv",
+    "tables/group_hotspot_metrics.csv",
+    "meshes/template_faces.csv",
+    "meshes/selected_cn_vertices.csv",
+    "meshes/selected_ad_vertices.csv",
+    "meshes/group_cn_change_maps.csv",
+    "meshes/group_ad_change_maps.csv"
+  ],
+  "rows": {
+    "brainode_cocycle": 9370,
+    "paired_metrics": 37480,
+    "subject_trends": 1046
+  },
+  "schema_version": 1,
+  "selected_examples": {
+    "AD": {
+      "diagnosis": "AD",
+      "future_visits": 3,
+      "maximum_followup_years": 2.1409988403320312,
+      "selection_rule": "most future visits, then longest follow-up, then subject ID",
+      "split": "test",
+      "subject_id": "1339"
+    },
+    "CN": {
+      "diagnosis": "CN",
+      "future_visits": 9,
+      "maximum_followup_years": 10.195762634277344,
+      "selection_rule": "most future visits, then longest follow-up, then subject ID",
+      "split": "test",
+      "subject_id": "113"
+    }
+  },
+  "stages": {
+    "group_change_maps": {
+      "completed_at": "2026-08-05T05:28:23.403711+00:00",
+      "maximum_pairs_per_diagnosis": 0,
+      "status": "complete"
+    },
+    "scalar_tables": {
+      "brainode_cocycle_rows": 9370,
+      "completed_at": "2026-08-05T05:28:20.193466+00:00",
+      "paired_rows": 37480,
+      "status": "complete"
+    },
+    "selected_examples": {
+      "completed_at": "2026-08-05T05:28:21.838225+00:00",
+      "device": "cuda:0",
+      "status": "complete"
+    }
+  },
+  "status": "complete",
+  "updated_at": "2026-08-05T05:28:23.403735+00:00"
+}

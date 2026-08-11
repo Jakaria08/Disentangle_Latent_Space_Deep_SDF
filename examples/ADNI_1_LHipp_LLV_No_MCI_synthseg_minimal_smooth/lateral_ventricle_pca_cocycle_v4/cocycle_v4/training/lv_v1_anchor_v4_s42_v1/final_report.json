@@ -1,0 +1,95 @@
+{
+  "backward_transport_used": true,
+  "best_epoch": 10,
+  "best_val_real_pair_bidir_mse": 0.860963237285614,
+  "brainode_trained": false,
+  "decoded_metrics": {
+    "test": {
+      "by_gap": {
+        "long_gt_1y": {
+          "decoded_vertex_mae_mm_mean": 0.41059482706123285,
+          "decoded_volume_relative_error_pct_mean": 6.545223851730881,
+          "pairs": 371,
+          "standardized_pca_mse_mean": 0.4240284059447741
+        },
+        "short_le_1y": {
+          "decoded_vertex_mae_mm_mean": 0.3325069185476823,
+          "decoded_volume_relative_error_pct_mean": 3.7516446682164295,
+          "pairs": 257,
+          "standardized_pca_mse_mean": 0.34749871964932416
+        }
+      },
+      "decoded_vertex_mae_mm_mean": 0.37863846959629255,
+      "decoded_vertex_mae_mm_p95": 0.8340795189142226,
+      "decoded_volume_relative_error_pct_mean": 5.401991606248056,
+      "decoded_volume_relative_error_pct_p95": 16.562332916259766,
+      "pairs": 628,
+      "standardized_pca_mse_mean": 0.39270972859138137,
+      "volume_speed_mm3_per_year": {
+        "AD": {
+          "observed_volume_change_mm3_per_year_mean": 2233.843466089221,
+          "pairs": 115,
+          "predicted_volume_change_mm3_per_year_mean": 604.6910433650363
+        },
+        "AD_minus_CN_observed_volume_change_mm3_per_year": 1424.2183047065814,
+        "AD_minus_CN_predicted_volume_change_mm3_per_year": -35.67348536569568,
+        "CN": {
+          "observed_volume_change_mm3_per_year_mean": 809.6251613826394,
+          "pairs": 513,
+          "predicted_volume_change_mm3_per_year_mean": 640.364528730732
+        }
+      }
+    },
+    "val": {
+      "by_gap": {
+        "long_gt_1y": {
+          "decoded_vertex_mae_mm_mean": 0.41250393019859183,
+          "decoded_volume_relative_error_pct_mean": 7.024171072525588,
+          "pairs": 301,
+          "standardized_pca_mse_mean": 0.41593956457222026
+        },
+        "short_le_1y": {
+          "decoded_vertex_mae_mm_mean": 0.3490630813750876,
+          "decoded_volume_relative_error_pct_mean": 4.02826054124199,
+          "pairs": 249,
+          "standardized_pca_mse_mean": 0.3645995031279254
+        }
+      },
+      "decoded_vertex_mae_mm_mean": 0.38378252773122357,
+      "decoded_vertex_mae_mm_p95": 0.9015730142593378,
+      "decoded_volume_relative_error_pct_mean": 5.66784066836265,
+      "decoded_volume_relative_error_pct_p95": 17.012298679351797,
+      "pairs": 550,
+      "standardized_pca_mse_mean": 0.392696518572894,
+      "volume_speed_mm3_per_year": {
+        "AD": {
+          "observed_volume_change_mm3_per_year_mean": 2771.125408838666,
+          "pairs": 126,
+          "predicted_volume_change_mm3_per_year_mean": 582.0975193245702
+        },
+        "AD_minus_CN_observed_volume_change_mm3_per_year": 2135.504821354762,
+        "AD_minus_CN_predicted_volume_change_mm3_per_year": 43.568971206255924,
+        "CN": {
+          "observed_volume_change_mm3_per_year_mean": 635.6205874839037,
+          "pairs": 424,
+          "predicted_volume_change_mm3_per_year_mean": 538.5285481183142
+        }
+      }
+    }
+  },
+  "elapsed_minutes": 0.4161168336868286,
+  "epochs_completed": 60,
+  "pca_refitted": false,
+  "source_meshes_modified": false,
+  "status": "complete",
+  "structure": "left_lateral_ventricle",
+  "test_losses": {
+    "backward_cocycle": 5.308238141878974e-05,
+    "backward_target": 0.3910393178462982,
+    "forward_cocycle": 4.279782638150209e-05,
+    "forward_target": 0.3914052486419678,
+    "speed_guard": 0.7760402083396911,
+    "total": 0.7824455142021179,
+    "zero_displacement": 0.0
+  }
+}

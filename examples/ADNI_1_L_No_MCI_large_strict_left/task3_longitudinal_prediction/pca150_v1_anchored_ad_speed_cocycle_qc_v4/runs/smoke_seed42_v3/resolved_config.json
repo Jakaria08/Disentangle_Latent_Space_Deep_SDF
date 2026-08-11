@@ -1,0 +1,78 @@
+{
+  "args": {
+    "batch_size": null,
+    "config": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/configs/v1_anchored_ad_speed_smoke.json",
+    "device": "cpu",
+    "epochs": null,
+    "max_train_pairs": 16,
+    "max_val_pairs": 16,
+    "metadata_dir": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/metadata/smoke_v2",
+    "output_dir": null,
+    "resume": false,
+    "run_name": "smoke_seed42_v3",
+    "samples_per_epoch": null,
+    "seed": null
+  },
+  "config": {
+    "_config_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/configs/v1_anchored_ad_speed_smoke.json",
+    "base_v1_checkpoint": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1/checkpoints/best_val_endpoint_vertex_mae.pth",
+    "brainode_checkpoint": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/training/core_attention_pca150_qc_stable/checkpoints/best.pth",
+    "components": 150,
+    "evaluation": {
+      "bootstrap_replicates": 100,
+      "long_gap_years": 2.0,
+      "top_change_fraction": 0.2
+    },
+    "experiment_name": "pca150_v1_anchored_ad_speed_cocycle_qc_v4",
+    "loss": {
+      "cocycle_weight": 0.1,
+      "group_slope_weight": 0.05,
+      "huber_delta": 1.0,
+      "inverse_weight": 0.05,
+      "no_degradation_tolerance": 0.005,
+      "no_degradation_weight": 1.0,
+      "pair_rate_weight": 0.25,
+      "pca_weight": 1.0,
+      "speed_regularization_weight": 0.01,
+      "subject_slope_weight": 0.25,
+      "vertex_weight": 1.0
+    },
+    "model": {
+      "dropout": 0.0,
+      "feature_pcs": 32,
+      "hidden_dims": [
+        32,
+        16
+      ],
+      "individual_log_span": 0.25,
+      "initial_ad_speed": 1.0,
+      "maximum_speed": 4.0,
+      "minimum_speed": 0.25
+    },
+    "registered_mesh_tensors": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_bidir_qc_v3/metadata/registered_mesh_tensors.npz",
+    "selection": {
+      "endpoint_tolerance": 0.005,
+      "first_last_tolerance": 0.01,
+      "volume_relative_error_weight": 0.5
+    },
+    "training": {
+      "batch_size": 8,
+      "consistency_ramp_epochs": 1,
+      "early_stopping_min_delta": 1e-06,
+      "early_stopping_patience": 2,
+      "epochs": 2,
+      "gradient_clip_norm": 1.0,
+      "learning_rate_global": 0.005,
+      "learning_rate_head": 0.001,
+      "samples_per_epoch": 16,
+      "seed": 42,
+      "sequence_subjects_per_epoch": 4,
+      "snapshot_frequency": 1,
+      "validation_frequency": 1,
+      "warmup_global_epochs": 1,
+      "weight_decay": 0.001
+    }
+  },
+  "device": "cpu",
+  "seed": 42
+}

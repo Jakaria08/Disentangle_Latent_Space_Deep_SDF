@@ -30,7 +30,11 @@
     }
   },
   "pca": {
-    "max_components": 256
+    "max_components": 256,
+    "report_components": [32, 64, 128, 150, 256],
+    "save_mesh_components": [150, 256],
+    "primary_components": 150,
+    "svd_solver": "full"
   },
   "evaluation": {
     "methods": {

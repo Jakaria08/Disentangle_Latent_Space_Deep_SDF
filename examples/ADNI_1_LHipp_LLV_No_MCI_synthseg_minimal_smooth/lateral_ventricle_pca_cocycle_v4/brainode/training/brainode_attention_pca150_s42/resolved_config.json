@@ -1,0 +1,155 @@
+{
+  "batch_size": 64,
+  "brainode_model_source": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/scripts/brainode_model.py",
+  "brainode_model_source_sha256": "d1f4f87eb7106e35661303aba4226d1cb8f0bcbb1a833901628cdd68bf74ea36",
+  "config": {
+    "input_config": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+    "method": "previous_attention_brainode_current_strict_pca150",
+    "model": {
+      "architecture": "ODEFuncWithAttention",
+      "attention_dim": 256,
+      "condition_dim": 1,
+      "hidden_dim": 512,
+      "integrator": "fixed-step RK4"
+    },
+    "name": "adni_synthseg_left_lateral_ventricle_previous_attention_brainode_pca150",
+    "representation": {
+      "components": 150,
+      "condition": "stable diagnosis label_ad; CN=0, AD=1",
+      "pca_basis": "structure-specific fixed train PCA basis",
+      "time_key": "visit_age_norm_train",
+      "training_key": "visit_pca_standardized_150"
+    },
+    "scientific_contract": {
+      "forward_and_backward_training": true,
+      "matches_previous_attention_brainode": true,
+      "shape_only_primary_baseline": true,
+      "source_meshes_modified": false,
+      "strict_no_mci": true,
+      "subject_level_splits": true,
+      "test_loaded_during_training": false
+    },
+    "structure": "left_lateral_ventricle",
+    "training": {
+      "batch_size": 64,
+      "best_metric": "validation first-to-last decoded vertex MAE",
+      "epochs": 100,
+      "gradient_clip_norm": 1.0,
+      "integration_substeps": 1,
+      "learning_rate": 0.0005,
+      "noise_std": 0.01,
+      "num_workers": 0,
+      "objective": "full standardized-PCA trajectory MSE only",
+      "run_name": "brainode_attention_pca150_s42",
+      "save_every": 10,
+      "scale_max": 1.02,
+      "scale_min": 0.98,
+      "scheduler_gamma": 0.5,
+      "scheduler_step_size": 20,
+      "seed": 42,
+      "weight_decay": 0.01
+    }
+  },
+  "config_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/brainode/configs/brainode_attention_primary.json",
+  "device": "cuda:1",
+  "epochs": 100,
+  "input_config": {
+    "dataset": {
+      "all_sequences": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/dataset/all_subject_sequences.npz",
+      "condition": "stable diagnosis label_ad (CN=0, AD=1)",
+      "pair_policy": "store each observed within-subject pair once in chronological order; derive reverse transport from the same endpoints during training; retain adjacent/nonadjacent labels; no cross-subject pairs",
+      "split_unit": "subject",
+      "test_pairs": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/pairs/test_forward_pairs.csv",
+      "test_sequences": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/dataset/test_subject_sequences.npz",
+      "time": "absolute age_norm_train for transport; elapsed years retained for reporting",
+      "train_pairs": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/pairs/train_forward_pairs.csv",
+      "train_sequences": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/dataset/train_subject_sequences.npz",
+      "val_pairs": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/pairs/val_forward_pairs.csv",
+      "val_sequences": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/dataset/val_subject_sequences.npz"
+    },
+    "evaluation": {
+      "biological_check": "hippocampus expected to decline and LV expected to expand on average; this is evaluated, not hard-constrained",
+      "metrics": [
+        "standardized_pca_mse",
+        "decoded_vertex_mae_mm",
+        "decoded_volume_relative_error_pct",
+        "adjacent_and_long_gap_error",
+        "CN_AD_speed_difference"
+      ],
+      "splits": [
+        "val",
+        "test"
+      ]
+    },
+    "loss": {
+      "cocycle_backward_weight": 0.01,
+      "cocycle_forward_weight": 0.01,
+      "general_cocycle_enabled": false,
+      "pair_backward_enabled": false,
+      "pair_forward_enabled": false,
+      "real_pair_backward_weight": 1.0,
+      "real_pair_forward_weight": 1.0,
+      "speed_guard_weight": 0.0,
+      "zero_displacement_weight": 0.001
+    },
+    "model": {
+      "activation": "silu",
+      "condition_dim": 1,
+      "dropout": 0.05,
+      "hidden_dims": [
+        128,
+        128
+      ],
+      "include_delta_time_input": true,
+      "latent_dim": 150,
+      "legacy_checkpoint_used": false,
+      "type": "standalone_direct_age_disease_cocycle_v4",
+      "zero_initialize_output": true
+    },
+    "name": "adni_synthseg_lateral_ventricle_pca150_age_disease_cocycle_v4",
+    "pca_validation": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/all_coefficients_safe.npz",
+    "prior_v4_losses": {
+      "CocycleBackwardLossLambda": 0.01,
+      "CocycleLossLambda": 0.01,
+      "UseCocycleBackwardLoss": true,
+      "UseCocycleLoss": true,
+      "UseGeneralCocycleBackwardLoss": false,
+      "UseGeneralCocycleLoss": false,
+      "UsePairBackwardLoss": false,
+      "UsePairForwardLoss": false,
+      "UseRealScanPairBackward": true,
+      "UseRealScanPairForward": true,
+      "UseRealScanPairLoss": true,
+      "ZeroDisplacementLambda": 0.001,
+      "adaptation_note": "PCA standardized-score endpoint MSE replaces SDF reconstruction/latent supervision; its forward and backward weights are 1.0 because it is the primary observed-pair objective.",
+      "source_experiment": "ADNI longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction"
+    },
+    "representation": {
+      "components": 150,
+      "pca_archive": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/all_coefficients_safe.npz",
+      "pca_archive_finalization": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/metadata/pca_archive_finalization.json",
+      "pca_model_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/model",
+      "pca_refitted": false,
+      "reconstruction_latent_key": "visit_pca_150",
+      "standardization": "train PCA-score mean/std only",
+      "training_latent_key": "visit_pca_standardized_150"
+    },
+    "status": "prior-v4 trainer ready; no training has run",
+    "structure": "left_lateral_ventricle",
+    "training": {
+      "batch_size": 128,
+      "early_stopping_patience": 50,
+      "epochs": 150,
+      "gradient_clip_norm": 1.0,
+      "learning_rate": 0.0005,
+      "pair_sampling": "mixed_adjacent_nonadjacent with equal 0.5 probability, adapted from prior v4 mixed_adjacent_far sampling",
+      "seed": 42,
+      "sequence_batch_size": 32,
+      "validation_frequency": 5,
+      "weight_decay": 0.0001
+    }
+  },
+  "input_config_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "seed": 42,
+  "test_data_loaded": false
+}

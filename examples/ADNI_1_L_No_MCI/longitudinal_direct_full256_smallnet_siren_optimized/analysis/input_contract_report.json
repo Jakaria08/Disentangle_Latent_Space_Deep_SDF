@@ -7,6 +7,8 @@
       "subjects": 207,
       "pairs": 613,
       "pairs_with_observed_intermediate": 203,
+      "sequences": 410,
+      "sequence_steps": 613,
       "diagnosis_scans": {
         "CN": 353,
         "AD": 264
@@ -17,6 +19,8 @@
       "subjects": 13,
       "pairs": 39,
       "pairs_with_observed_intermediate": 13,
+      "sequences": 26,
+      "sequence_steps": 39,
       "diagnosis_scans": {
         "CN": 27,
         "AD": 12
@@ -27,6 +31,8 @@
       "subjects": 24,
       "pairs": 70,
       "pairs_with_observed_intermediate": 23,
+      "sequences": 47,
+      "sequence_steps": 70,
       "diagnosis_scans": {
         "CN": 45,
         "AD": 26

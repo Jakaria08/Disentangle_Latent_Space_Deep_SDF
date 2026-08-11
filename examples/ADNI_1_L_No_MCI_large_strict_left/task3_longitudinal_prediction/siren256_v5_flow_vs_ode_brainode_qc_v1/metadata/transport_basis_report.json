@@ -1,0 +1,20 @@
+{
+  "adjacent_velocity_counts": {
+    "AD": {
+      "adjacent_pairs": 336,
+      "subjects": 160
+    },
+    "CN": {
+      "adjacent_pairs": 1034,
+      "subjects": 261
+    }
+  },
+  "adjacent_velocity_weighting": "one median adjacent velocity per subject; diagnosis totals equalized by sqrt(max_subjects/n_subjects) before SVD",
+  "balanced_velocity_subject_rows_per_diagnosis": 261,
+  "feature_dimensions": 64,
+  "feature_explained_energy": 0.5544342852414845,
+  "fit_split": "train",
+  "rank": 32,
+  "subject_slopes": 421,
+  "velocity_explained_energy": 0.5795588724751376
+}

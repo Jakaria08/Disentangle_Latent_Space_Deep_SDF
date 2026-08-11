@@ -1,0 +1,56 @@
+{
+  "experiment_name": "pca150_v1_anchored_ad_speed_cocycle_qc_v4",
+  "components": 150,
+  "base_v1_checkpoint": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1/checkpoints/best_val_endpoint_vertex_mae.pth",
+  "brainode_checkpoint": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/training/core_attention_pca150_qc_stable/checkpoints/best.pth",
+  "registered_mesh_tensors": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_bidir_qc_v3/metadata/registered_mesh_tensors.npz",
+  "model": {
+    "feature_pcs": 32,
+    "hidden_dims": [64, 32],
+    "dropout": 0.1,
+    "minimum_speed": 0.25,
+    "maximum_speed": 4.0,
+    "initial_ad_speed": 2.5,
+    "individual_log_span": 0.25
+  },
+  "training": {
+    "epochs": 80,
+    "batch_size": 128,
+    "samples_per_epoch": 1024,
+    "sequence_subjects_per_epoch": 160,
+    "learning_rate_global": 0.005,
+    "learning_rate_head": 0.001,
+    "weight_decay": 0.001,
+    "gradient_clip_norm": 1.0,
+    "warmup_global_epochs": 15,
+    "consistency_ramp_epochs": 15,
+    "validation_frequency": 1,
+    "snapshot_frequency": 10,
+    "early_stopping_patience": 20,
+    "early_stopping_min_delta": 0.000001,
+    "seed": 42
+  },
+  "loss": {
+    "pca_weight": 1.0,
+    "vertex_weight": 1.0,
+    "pair_rate_weight": 0.25,
+    "subject_slope_weight": 0.25,
+    "group_slope_weight": 0.05,
+    "cocycle_weight": 0.1,
+    "inverse_weight": 0.05,
+    "no_degradation_weight": 1.0,
+    "speed_regularization_weight": 0.01,
+    "no_degradation_tolerance": 0.005,
+    "huber_delta": 1.0
+  },
+  "selection": {
+    "endpoint_tolerance": 0.005,
+    "first_last_tolerance": 0.01,
+    "volume_relative_error_weight": 0.5
+  },
+  "evaluation": {
+    "top_change_fraction": 0.2,
+    "long_gap_years": 2.0,
+    "bootstrap_replicates": 10000
+  }
+}

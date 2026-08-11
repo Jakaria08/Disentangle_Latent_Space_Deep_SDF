@@ -1,0 +1,52 @@
+{
+  "decoder_epoch": 1975,
+  "experiment_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_structured_subject_latents_local_decomposed_flow_qc_volume_v1",
+  "exported_latents": {
+    "test": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_structured_subject_latents_local_decomposed_flow_qc_volume_v1/latents/test_latents.npz",
+    "train": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_structured_subject_latents_local_decomposed_flow_qc_volume_v1/latents/train_latents.npz",
+    "val": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_structured_subject_latents_local_decomposed_flow_qc_volume_v1/latents/val_latents.npz"
+  },
+  "rank": 32,
+  "raw_latent_source": {
+    "test": "../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/latents/test_latents.npz",
+    "train": "../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/latents/train_latents.npz",
+    "val": "../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/latents/val_latents.npz"
+  },
+  "smoke_batches": 0,
+  "splits": [
+    {
+      "latent_count": 1791,
+      "mean_adjacent_structured_delta_norm": 0.407611538487341,
+      "mean_adjacent_structured_speed_norm": 22.376246967994458,
+      "mean_consecutive_delta_cosine": -0.17007973849370267,
+      "mean_raw_norm": 0.8649909973038468,
+      "mean_raw_to_structured_l2": 0.9257057142999725,
+      "mean_structured_norm": 0.9968345788142603,
+      "median_raw_to_structured_l2": 0.9518667530895947,
+      "split": "train"
+    },
+    {
+      "latent_count": 224,
+      "mean_adjacent_structured_delta_norm": 0.403322572831776,
+      "mean_adjacent_structured_speed_norm": 22.57473099125429,
+      "mean_consecutive_delta_cosine": -0.21958996981902132,
+      "mean_raw_norm": 0.9638479130642313,
+      "mean_raw_to_structured_l2": 0.8696276477436137,
+      "mean_structured_norm": 0.9736223711188935,
+      "median_raw_to_structured_l2": 0.9601726030876427,
+      "split": "val"
+    },
+    {
+      "latent_count": 214,
+      "mean_adjacent_structured_delta_norm": 0.4143764414185237,
+      "mean_adjacent_structured_speed_norm": 22.939349860121656,
+      "mean_consecutive_delta_cosine": -0.2076356606951579,
+      "mean_raw_norm": 0.9710441199660992,
+      "mean_raw_to_structured_l2": 0.8941456839537564,
+      "mean_structured_norm": 0.9741802562252073,
+      "median_raw_to_structured_l2": 0.9989781368895931,
+      "split": "test"
+    }
+  ],
+  "train_basis_split": "train"
+}

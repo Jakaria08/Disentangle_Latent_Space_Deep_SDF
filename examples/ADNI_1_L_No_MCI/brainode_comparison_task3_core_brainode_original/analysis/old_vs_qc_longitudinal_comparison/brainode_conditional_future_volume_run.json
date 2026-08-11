@@ -1,0 +1,48 @@
+{
+  "note": "Volumes are computed from PCA inverse-transform meshes, not SDF decoder meshes.",
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/old_vs_qc_longitudinal_comparison",
+  "prediction_rows": 96,
+  "summary_rows": 48,
+  "tasks": [
+    {
+      "age_max_train": 91.0,
+      "age_min_train": 57.0,
+      "age_norm_source": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/age_norm_stats.json",
+      "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/training/core_attention_pca150/checkpoints/best.pth",
+      "dataset": "old_adni",
+      "future_years": [
+        0.0,
+        1.0,
+        2.0,
+        5.0,
+        10.0,
+        15.0
+      ],
+      "rows": 48,
+      "selected_subjects": 4,
+      "split": "test",
+      "substeps": 8,
+      "task_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original"
+    },
+    {
+      "age_max_train": 95.62053388,
+      "age_min_train": 55.6,
+      "age_norm_source": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/age_norm_stats.json",
+      "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/training/core_attention_pca150_qc_stable/checkpoints/best.pth",
+      "dataset": "qc_large",
+      "future_years": [
+        0.0,
+        1.0,
+        2.0,
+        5.0,
+        10.0,
+        15.0
+      ],
+      "rows": 48,
+      "selected_subjects": 4,
+      "split": "test",
+      "substeps": 8,
+      "task_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+[
+  {
+    "epoch": 1,
+    "learning_rate": 0.0005,
+    "seconds": 0.14189434051513672,
+    "train_autoregressive_pca_mse": 0.0023530664232869944,
+    "train_batches": 4.0,
+    "train_cognition_bce": 0.6890891492366791,
+    "train_endpoint_pca_mse": 0.0041659914422780275,
+    "train_full_pca_mse": 0.0023530905600637197,
+    "train_pseudo_cognition_bce": 0.0,
+    "train_pseudo_transition_trajectories": 0.0,
+    "train_total_loss": 0.07149731367826462,
+    "train_trajectories": 12.0,
+    "val_first_last_cognition_bce": 0.6824295918146769,
+    "val_first_last_pca_mse": 0.00600464828312397,
+    "val_first_last_records": 6.0,
+    "val_first_last_vertex_mae": 0.010086885653436184,
+    "val_forward_cognition_bce": 0.6776365637779236,
+    "val_forward_endpoint_pca_mse": 0.005554093047976494,
+    "val_forward_endpoint_vertex_mae": 0.009450057987123728,
+    "val_forward_records": 6.0
+  }
+]

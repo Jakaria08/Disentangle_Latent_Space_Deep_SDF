@@ -1,0 +1,115 @@
+{
+  "epochs_completed": 32,
+  "epochs_requested": 180,
+  "experiment": "c1",
+  "parameter_count": 381228,
+  "run_name": "lateral_ventricle_cocycle_v5_c1_s42",
+  "selected_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v5/training/lateral_ventricle_cocycle_v5_c1_s42/checkpoints/best_shape.pt",
+  "selected_epoch": 2,
+  "selected_validation": {
+    "all_pairs": {
+      "groups": {
+        "AD": {
+          "coordinate_mean": 0.3615796488547136,
+          "euclidean_mean": 0.722283688329515,
+          "nochange_coordinate_mean": 0.4319701593310114,
+          "nochange_euclidean_mean": 0.8646196519571637,
+          "nochange_pca_mean": 0.5438877739130504,
+          "nochange_rate_mean": 0.10708298738158885,
+          "nochange_volume_relative_mean": 0.09565080552812784,
+          "pca_mean": 0.5435709197015043,
+          "rate_mean": 0.053329438848849685,
+          "rows": 126.0,
+          "volume_relative_mean": 0.04602540663443737
+        },
+        "CN": {
+          "coordinate_mean": 0.36780563898314284,
+          "euclidean_mean": 0.7488106443845438,
+          "nochange_coordinate_mean": 0.42057596855216994,
+          "nochange_euclidean_mean": 0.8571563683590799,
+          "nochange_pca_mean": 0.35058356248685774,
+          "nochange_rate_mean": 0.04086156654993142,
+          "nochange_volume_relative_mean": 0.08779316223794836,
+          "pca_mean": 0.34966723200917804,
+          "rate_mean": 0.023631183922571956,
+          "rows": 424.0,
+          "volume_relative_mean": 0.04274083250996073
+        },
+        "overall": {
+          "coordinate_mean": 0.36637932124462996,
+          "euclidean_mean": 0.7427335599064827,
+          "nochange_coordinate_mean": 0.42318627407605,
+          "nochange_euclidean_mean": 0.8588661387833681,
+          "nochange_pca_mean": 0.3948678000135855,
+          "nochange_rate_mean": 0.05603229204954749,
+          "nochange_volume_relative_mean": 0.08959327688260765,
+          "pca_mean": 0.3940888040986928,
+          "rate_mean": 0.03043478414204649,
+          "rows": 550.0,
+          "volume_relative_mean": 0.04349329858211356
+        }
+      }
+    },
+    "defects": {
+      "relative_inverse_defect_mean": 0.003741186625087597,
+      "relative_inverse_defect_p95": 0.016578910686075678,
+      "relative_semigroup_defect_mean": 0.001003269692375232,
+      "relative_semigroup_defect_p95": 0.004466950218193229
+    },
+    "feasible": true,
+    "first_last": {
+      "groups": {
+        "AD": {
+          "coordinate_mean": 0.366023201495409,
+          "euclidean_mean": 0.7258781088250024,
+          "nochange_coordinate_mean": 0.5032754801213741,
+          "nochange_euclidean_mean": 1.0049125807625907,
+          "nochange_pca_mean": 0.4722855719072478,
+          "nochange_rate_mean": 0.10845558983939034,
+          "nochange_volume_relative_mean": 0.14379091294748442,
+          "pca_mean": 0.4723973087966442,
+          "rate_mean": 0.0493309668132237,
+          "rows": 28.0,
+          "volume_relative_mean": 0.06618327837454022
+        },
+        "CN": {
+          "coordinate_mean": 0.41955053535374726,
+          "euclidean_mean": 0.8659865720705553,
+          "nochange_coordinate_mean": 0.5063722648403861,
+          "nochange_euclidean_mean": 1.0405338216911664,
+          "nochange_pca_mean": 0.4723051023302656,
+          "nochange_rate_mean": 0.03996379856923313,
+          "nochange_volume_relative_mean": 0.12477564123092276,
+          "pca_mean": 0.4717581430167863,
+          "rate_mean": 0.018179184820672326,
+          "rows": 33.0,
+          "volume_relative_mean": 0.05433241800038201
+        },
+        "overall": {
+          "coordinate_mean": 0.39498061161549364,
+          "euclidean_mean": 0.8016744905807933,
+          "nochange_coordinate_mean": 0.5049507898873971,
+          "nochange_euclidean_mean": 1.0241830881501808,
+          "nochange_pca_mean": 0.4722961375459296,
+          "nochange_rate_mean": 0.07140265357848562,
+          "nochange_volume_relative_mean": 0.13350396267459042,
+          "pca_mean": 0.47205153058786864,
+          "rate_mean": 0.032478363440204105,
+          "rows": 61.0,
+          "volume_relative_mean": 0.0597721571885202
+        }
+      }
+    },
+    "ratios": {
+      "all_pair_shape": 0.8652737794235799,
+      "all_pair_volume": 0.4854527046611097,
+      "macro_first_last_shape": 0.7776013799121864,
+      "score": 0.9511415885015635
+    },
+    "score": 0.9511415885015635
+  },
+  "source_meshes_modified": false,
+  "status": "complete",
+  "structure": "left_lateral_ventricle",
+  "test_loaded_during_training": false
+}

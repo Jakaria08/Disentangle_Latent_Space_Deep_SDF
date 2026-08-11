@@ -1,0 +1,20 @@
+{
+  "all_current_qc_passed_subjects_retained": true,
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/brainode_paper_core/training/brainode_paper_core_raw_pca150_s42/checkpoints/best.pt",
+  "checkpoint_epoch": 4,
+  "checkpoint_sha256": "96039e3f7d2683bacdafeb71919c28d71ede37f60c35ac372f60e52c70835410",
+  "cognition_estimator": false,
+  "evaluation_splits": [
+    "val",
+    "test"
+  ],
+  "method": "brainode_paper_core_stable_cn_ad_raw_pca150",
+  "one_subject_inference": true,
+  "pseudo_cognitive_embedding": false,
+  "raw_pca_150": true,
+  "rows": 285,
+  "source_artifacts_modified": false,
+  "status": "pass",
+  "structure": "left_lateral_ventricle",
+  "test_loaded_during_training": false
+}

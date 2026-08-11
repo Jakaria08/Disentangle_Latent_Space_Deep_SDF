@@ -1,0 +1,23 @@
+{
+  "checkpoint": "best",
+  "checkpoint_epoch": 5,
+  "decoder_epoch": 1775,
+  "splits": [
+    "val",
+    "test"
+  ],
+  "horizons_years": [
+    0.5,
+    1.0,
+    2.0,
+    3.0,
+    5.0,
+    7.0,
+    10.0
+  ],
+  "rows": 1995,
+  "outputs": [
+    "anchor_long_horizon_trajectories.csv",
+    "anchor_long_horizon_summary.csv"
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "train": {
+    "by_diagnosis": {
+      "AD": 1016,
+      "CN": 2118
+    },
+    "by_direction": {
+      "backward": 1567,
+      "forward": 1567
+    },
+    "by_length": {
+      "10": 34,
+      "11": 10,
+      "2": 954,
+      "3": 854,
+      "4": 618,
+      "5": 280,
+      "6": 128,
+      "7": 102,
+      "8": 90,
+      "9": 64
+    },
+    "subjects": 477,
+    "trajectories": 3134
+  },
+  "val_first_last": {
+    "by_diagnosis": {
+      "AD": 28,
+      "CN": 33
+    },
+    "by_direction": {
+      "forward": 61
+    },
+    "by_length": {
+      "10": 2,
+      "2": 5,
+      "3": 13,
+      "4": 24,
+      "5": 10,
+      "6": 2,
+      "7": 2,
+      "8": 1,
+      "9": 2
+    },
+    "subjects": 61,
+    "trajectories": 61
+  },
+  "val_forward": {
+    "by_diagnosis": {
+      "AD": 69,
+      "CN": 137
+    },
+    "by_direction": {
+      "forward": 206
+    },
+    "by_length": {
+      "10": 2,
+      "2": 61,
+      "3": 56,
+      "4": 43,
+      "5": 19,
+      "6": 9,
+      "7": 7,
+      "8": 5,
+      "9": 4
+    },
+    "subjects": 61,
+    "trajectories": 206
+  }
+}

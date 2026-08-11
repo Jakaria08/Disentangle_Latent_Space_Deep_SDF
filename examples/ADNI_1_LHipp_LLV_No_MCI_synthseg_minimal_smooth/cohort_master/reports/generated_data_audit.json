@@ -1,0 +1,75 @@
+{
+  "artifacts": [
+    {
+      "action": "preserve; do not reference",
+      "artifact": "prior left-hippocampus Task2 representations",
+      "exists": true,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations",
+      "reason": "legacy single-structure source has 2,206 hippocampus vertices, not the current 2,746-vertex correspondence topology",
+      "scope": "generated PCA/INR data",
+      "status": "superseded"
+    },
+    {
+      "action": "preserve; do not reference",
+      "artifact": "prior left-hippocampus PCA outputs",
+      "exists": true,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/pca",
+      "reason": "PCA basis, scores, and train split belong to the legacy topology/source and cannot be reused",
+      "scope": "generated PCA model/coefficients",
+      "status": "superseded"
+    },
+    {
+      "action": "preserve; do not reference",
+      "artifact": "older Brain-ODE comparison PCA outputs",
+      "exists": true,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations",
+      "reason": "older ADNI preparation is not the current strict no-MCI structure-specific correspondence cohort",
+      "scope": "generated PCA/Brain-ODE inputs",
+      "status": "superseded"
+    },
+    {
+      "action": "preserve; do not reference",
+      "artifact": "joint hippocampus+LV PCA-Cocycle-v4 input bundle",
+      "exists": true,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_pca_cocycle_v4",
+      "reason": "uses the joint 2,550-scan cohort and a combined 75+75 feature contract; the new plan has independent structure-specific cohorts and PCA models",
+      "scope": "generated manifest/splits/configuration",
+      "status": "superseded"
+    },
+    {
+      "action": "create/use for active pipeline",
+      "artifact": "new master cohort",
+      "exists": true,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/cohort_master",
+      "reason": "required new shared identity split for structure-specific experiments",
+      "scope": "generated manifest/splits",
+      "status": "active"
+    },
+    {
+      "action": "create/use for active pipeline",
+      "artifact": "new hippocampus pipeline inputs",
+      "exists": true,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4",
+      "reason": "requires current hippocampus-only QC scan set and master split",
+      "scope": "generated manifests/PCA inputs",
+      "status": "active"
+    },
+    {
+      "action": "create/use for active pipeline",
+      "artifact": "new LV pipeline inputs",
+      "exists": true,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4",
+      "reason": "requires current LV-only QC scan set and master split",
+      "scope": "generated manifests/PCA inputs",
+      "status": "active"
+    }
+  ],
+  "note": "Superseded generated artifacts are retained on disk and excluded from active inputs.",
+  "source_meshes_modified": false,
+  "superseded_paths_preserved": [
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/pca",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_pca_cocycle_v4"
+  ]
+}

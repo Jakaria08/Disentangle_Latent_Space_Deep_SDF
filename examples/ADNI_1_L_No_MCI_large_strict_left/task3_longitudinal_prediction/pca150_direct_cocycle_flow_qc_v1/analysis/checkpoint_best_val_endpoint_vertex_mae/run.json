@@ -1,0 +1,20 @@
+{
+  "baseline_rows": 24,
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1/checkpoints/best_val_endpoint_vertex_mae.pth",
+  "components": 150,
+  "device": "cuda:1",
+  "experiment_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1",
+  "failure_rows": 0,
+  "ood_rows": 8368,
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1/analysis/checkpoint_best_val_endpoint_vertex_mae",
+  "pair_rows": 14055,
+  "pair_type": "all",
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "summary_rows": 70,
+  "surface_samples": 30000,
+  "volume_trend_rows": 6687
+}

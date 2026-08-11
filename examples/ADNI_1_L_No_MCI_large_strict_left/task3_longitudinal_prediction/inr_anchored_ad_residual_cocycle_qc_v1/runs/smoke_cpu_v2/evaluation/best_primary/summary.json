@@ -1,0 +1,18 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/inr_anchored_ad_residual_cocycle_qc_v1/runs/smoke_cpu_v2/checkpoints/best_primary.pth",
+  "checkpoint_epoch": 1,
+  "metric_direction": {
+    "ad_speed": "descriptive calibration factor, bounded by config",
+    "ground_truth_volume_rate_pct_per_year": "reference only; sign follows mesh-volume convention",
+    "predicted_volume_rate_pct_per_year": "compare against ground truth; not independently optimized as higher/lower",
+    "registered_normal_mae": "lower is better",
+    "registered_vertex_mae": "lower is better",
+    "sdf_l1": "lower is better",
+    "volume_rate_absolute_error_pct_per_year": "lower is better",
+    "volume_relative_error_pct": "lower is better"
+  },
+  "pair_rows": 4,
+  "splits": [
+    "test"
+  ]
+}

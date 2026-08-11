@@ -1,0 +1,11 @@
+{
+  "best_ad_volume_rate": 0.06758336242453396,
+  "best_pareto": 0.09452718448464298,
+  "best_vertex": 0.024314139657421928,
+  "elapsed_seconds": 120.69670271873474,
+  "epochs": 70,
+  "finished_at_unix": 1785889953.7635577,
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_bidir_qc_v3/runs/bidir_e04_k16_full_volume_local_seed42",
+  "run_name": "bidir_e04_k16_full_volume_local_seed42",
+  "status": "completed"
+}

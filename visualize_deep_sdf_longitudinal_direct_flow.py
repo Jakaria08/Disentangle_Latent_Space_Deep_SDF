@@ -137,10 +137,11 @@ def build_dashboard(
             col=1,
         )
 
+    pair_metric_columns = ["model_target_sdf_l1", "no_change_target_sdf_l1"]
+    if "composed_target_sdf_l1" in pairs.columns:
+        pair_metric_columns.insert(1, "composed_target_sdf_l1")
     grouped = (
-        pairs.groupby(["diagnosis", "pair_type"], as_index=False)[
-            ["model_target_sdf_l1", "no_change_target_sdf_l1"]
-        ]
+        pairs.groupby(["diagnosis", "pair_type"], as_index=False)[pair_metric_columns]
         .mean()
     )
     grouped["group"] = grouped["diagnosis"] + " / " + grouped["pair_type"]
@@ -148,11 +149,21 @@ def build_dashboard(
         go.Bar(
             x=grouped["group"],
             y=grouped["model_target_sdf_l1"],
-            name="predicted target",
+            name="direct target",
         ),
         row=1,
         col=2,
     )
+    if "composed_target_sdf_l1" in grouped.columns:
+        figure.add_trace(
+            go.Bar(
+                x=grouped["group"],
+                y=grouped["composed_target_sdf_l1"],
+                name="composed target",
+            ),
+            row=1,
+            col=2,
+        )
     figure.add_trace(
         go.Bar(
             x=grouped["group"],

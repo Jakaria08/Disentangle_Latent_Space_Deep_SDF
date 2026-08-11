@@ -1,0 +1,10 @@
+{
+  "components": 150,
+  "faces": 4408,
+  "output": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_qc_v2/metadata/registered_mesh_tensors.npz",
+  "pca_model_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/pca/model",
+  "scans": 2229,
+  "surface_area_mean": 2.9095964431762695,
+  "vertices_per_mesh": 2206,
+  "volume_mean": 0.23786482214927673
+}

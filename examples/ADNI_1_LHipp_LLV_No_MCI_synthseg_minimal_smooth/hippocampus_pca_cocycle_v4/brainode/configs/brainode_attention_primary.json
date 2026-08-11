@@ -1,0 +1,48 @@
+{
+  "name": "adni_synthseg_hippocampus_previous_attention_brainode_pca150",
+  "structure": "left_hippocampus",
+  "method": "previous_attention_brainode_current_strict_pca150",
+  "input_config": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "representation": {
+    "components": 150,
+    "training_key": "visit_pca_standardized_150",
+    "time_key": "visit_age_norm_train",
+    "condition": "stable diagnosis label_ad; CN=0, AD=1",
+    "pca_basis": "structure-specific fixed train PCA basis"
+  },
+  "model": {
+    "architecture": "ODEFuncWithAttention",
+    "condition_dim": 1,
+    "attention_dim": 256,
+    "hidden_dim": 512,
+    "integrator": "fixed-step RK4"
+  },
+  "training": {
+    "run_name": "brainode_attention_pca150_s42",
+    "epochs": 100,
+    "batch_size": 64,
+    "learning_rate": 0.0005,
+    "weight_decay": 0.01,
+    "scheduler_step_size": 20,
+    "scheduler_gamma": 0.5,
+    "noise_std": 0.01,
+    "scale_min": 0.98,
+    "scale_max": 1.02,
+    "integration_substeps": 1,
+    "gradient_clip_norm": 1.0,
+    "save_every": 10,
+    "num_workers": 0,
+    "seed": 42,
+    "objective": "full standardized-PCA trajectory MSE only",
+    "best_metric": "validation first-to-last decoded vertex MAE"
+  },
+  "scientific_contract": {
+    "matches_previous_attention_brainode": true,
+    "shape_only_primary_baseline": true,
+    "forward_and_backward_training": true,
+    "test_loaded_during_training": false,
+    "strict_no_mci": true,
+    "subject_level_splits": true,
+    "source_meshes_modified": false
+  }
+}

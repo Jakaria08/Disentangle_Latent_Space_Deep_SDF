@@ -1,0 +1,34 @@
+{
+  "train": {
+    "pair_count": 3680,
+    "pair_count_by_diagnosis": {
+      "AD": 576,
+      "CN": 3104
+    },
+    "pair_count_by_pair_type": {
+      "adjacent": 1370,
+      "nonadjacent": 2310
+    },
+    "sequence_count": 1370,
+    "sequence_count_by_diagnosis": {
+      "AD": 336,
+      "CN": 1034
+    }
+  },
+  "val": {
+    "pair_count": 522,
+    "pair_count_by_diagnosis": {
+      "AD": 79,
+      "CN": 443
+    },
+    "pair_count_by_pair_type": {
+      "adjacent": 172,
+      "nonadjacent": 350
+    },
+    "sequence_count": 172,
+    "sequence_count_by_diagnosis": {
+      "AD": 48,
+      "CN": 124
+    }
+  }
+}

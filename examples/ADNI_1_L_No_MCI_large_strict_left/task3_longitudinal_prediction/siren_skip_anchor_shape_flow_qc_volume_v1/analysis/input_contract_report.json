@@ -1,0 +1,55 @@
+{
+  "status": "pass",
+  "latent_dim": 256,
+  "pair_source_mode": "first_only",
+  "allow_extra_latents": false,
+  "splits": {
+    "train": {
+      "scans": 1791,
+      "subjects": 421,
+      "pairs": 1370,
+      "pair_source_mode": "first_only",
+      "pairs_with_observed_intermediate": 949,
+      "sequences": 421,
+      "sequence_steps": 1370,
+      "diagnosis_scans": {
+        "CN": 1295,
+        "AD": 496
+      }
+    },
+    "val": {
+      "scans": 224,
+      "subjects": 52,
+      "pairs": 172,
+      "pair_source_mode": "first_only",
+      "pairs_with_observed_intermediate": 120,
+      "sequences": 52,
+      "sequence_steps": 172,
+      "diagnosis_scans": {
+        "CN": 152,
+        "AD": 72
+      }
+    },
+    "test": {
+      "scans": 214,
+      "subjects": 50,
+      "pairs": 164,
+      "pair_source_mode": "first_only",
+      "pairs_with_observed_intermediate": 114,
+      "sequences": 50,
+      "sequence_steps": 164,
+      "diagnosis_scans": {
+        "CN": 149,
+        "AD": 65
+      }
+    }
+  },
+  "subject_split_isolation": true,
+  "loss_scope": [
+    "real_target_sdf_prediction",
+    "observed_intermediate_latent_consistency",
+    "virtual_intermediate_latent_consistency",
+    "relative_soft_volume_change",
+    "cn_ad_counterfactual_volume_ordering"
+  ]
+}

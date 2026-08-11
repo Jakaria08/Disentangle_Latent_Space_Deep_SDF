@@ -1,0 +1,24 @@
+{
+  "checks": {
+    "age_max_train": 95.62053388,
+    "age_min_train": 55.6,
+    "clean_manifest_rows": 2229,
+    "filtered_pca_rows": 2229,
+    "filtered_representation_rows": 2229,
+    "scan_count_by_split": {
+      "test": 214,
+      "train": 1791,
+      "val": 224
+    },
+    "source_metadata_rows": 2229,
+    "subject_count": 523,
+    "subject_count_by_split": {
+      "test": 50,
+      "train": 421,
+      "val": 52
+    }
+  },
+  "errors": [],
+  "status": "pass",
+  "warnings": []
+}

@@ -1,0 +1,61 @@
+{
+  "experiment_name": "pca150_registered_flowmap_bidir_qc_v3",
+  "primary_run": "bidir_e04_k16_full_volume_local_seed42",
+  "components": 150,
+  "dynamic_dim": 16,
+  "model": {
+    "family": "bidirectional registered PCA two-time flow map",
+    "transport": "z_target = z_source + delta_years * annualized_rate_theta",
+    "latent_condition_dim": 32,
+    "hidden_dims": [256, 256],
+    "activation": "silu",
+    "dropout": 0.05,
+    "residual_scale": 0.0
+  },
+  "training": {
+    "epochs": 150,
+    "batch_size": 64,
+    "samples_per_epoch": 4096,
+    "sequence_batch_size": 16,
+    "max_sequences_per_epoch": 512,
+    "learning_rate": 0.0005,
+    "weight_decay": 0.0001,
+    "include_backward_pairs": true,
+    "include_sequence_loss": true,
+    "balanced_sampling": "diagnosis x gap-bin x direction, subject-uniform within bucket",
+    "checkpoint_selection": ["best_vertex", "best_ad_volume_rate", "best_pareto"]
+  },
+  "loss_weights": {
+    "backward_loss": 0.5,
+    "backward_volume_rate": 0.2,
+    "vertex": 1.0,
+    "pca": 0.25,
+    "dynamic_rate": 0.2,
+    "volume_rate": 1.0,
+    "group_volume": 0.25,
+    "local_normal": 0.25,
+    "ema_cocycle": 0.2,
+    "sequence_rollout": 0.25,
+    "sequence_cocycle": 0.1,
+    "reverse_sequence": 0.5,
+    "inverse": 0.1,
+    "identity": 0.05,
+    "latent_guard": 0.02
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "endpoint_vertex_euclidean",
+      "hd95_or_assd_from_existing_surface_eval_if_needed",
+      "AD relative volume slope MAE",
+      "local normal change correlation and top-20 Dice",
+      "true long-gap OOD endpoint and volume error"
+    ],
+    "transport_methods": ["direct", "composed_observed"],
+    "secondary_diagnostics": [
+      "backward endpoint error",
+      "cycle consistency",
+      "multi-visit sequence rollout"
+    ],
+    "ood_min_gap_years": 2.0
+  }
+}

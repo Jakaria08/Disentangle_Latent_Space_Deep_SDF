@@ -1,0 +1,87 @@
+{
+  "best_epoch": 3,
+  "best_metric": "val_first_last_vertex_mae",
+  "best_metric_value": 0.01222550650485433,
+  "device": "cuda:0",
+  "epochs_completed": 100,
+  "epochs_requested": 100,
+  "last_epoch": {
+    "epoch": 100,
+    "learning_rate": 1.5625e-05,
+    "seconds": 1.8132576942443848,
+    "train_autoregressive_pca_mse": 0.0,
+    "train_batches": 48.0,
+    "train_cognition_bce": 0.0,
+    "train_endpoint_pca_mse": 0.013264780760960259,
+    "train_full_pca_mse": 0.008497292475679713,
+    "train_pseudo_cognition_bce": 0.0,
+    "train_pseudo_transition_trajectories": 0.0,
+    "train_total_loss": 0.008497292475679713,
+    "train_trajectories": 2740.0,
+    "val_first_last_cognition_bce": 0.0,
+    "val_first_last_pca_mse": 0.013760310382797169,
+    "val_first_last_records": 52.0,
+    "val_first_last_vertex_mae": 0.01264446284263753,
+    "val_forward_cognition_bce": 0.0,
+    "val_forward_endpoint_pca_mse": 0.013235026688943075,
+    "val_forward_endpoint_vertex_mae": 0.012336472049355507,
+    "val_forward_records": 172.0
+  },
+  "resolved_config_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/training/core_attention_pca150_qc_stable/resolved_config.json",
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/training/core_attention_pca150_qc_stable",
+  "status": "complete",
+  "train_record_summary": {
+    "count": 2740,
+    "count_by_direction": {
+      "backward": 1370,
+      "forward": 1370
+    },
+    "count_by_length": {
+      "10": 18,
+      "11": 4,
+      "2": 842,
+      "3": 702,
+      "4": 544,
+      "5": 282,
+      "6": 122,
+      "7": 94,
+      "8": 78,
+      "9": 54
+    }
+  },
+  "val_first_last_record_summary": {
+    "count": 52,
+    "count_by_direction": {
+      "forward": 52
+    },
+    "count_by_length": {
+      "10": 2,
+      "11": 2,
+      "2": 11,
+      "3": 12,
+      "4": 14,
+      "5": 7,
+      "7": 1,
+      "8": 1,
+      "9": 2
+    }
+  },
+  "val_forward_record_summary": {
+    "count": 172,
+    "count_by_direction": {
+      "forward": 172
+    },
+    "count_by_length": {
+      "10": 4,
+      "11": 2,
+      "2": 52,
+      "3": 41,
+      "4": 29,
+      "5": 15,
+      "6": 8,
+      "7": 8,
+      "8": 7,
+      "9": 6
+    }
+  }
+}

@@ -28,6 +28,8 @@ class PairRecord:
     source_visit_order: int
     target_visit_order: int
     observed_intermediate_times: Tuple[float, ...]
+    source_mesh_volume_mm3: float = float("nan")
+    target_mesh_volume_mm3: float = float("nan")
 
     @property
     def has_observed_intermediate(self) -> bool:
@@ -130,7 +132,27 @@ def load_latent_map(path: str | Path, expected_dim: int) -> Dict[str, torch.Tens
     return result
 
 
-def build_forward_pairs(frame: pd.DataFrame) -> List[PairRecord]:
+def build_forward_pairs(
+    frame: pd.DataFrame,
+    *,
+    source_mode: str = "all_forward_starts",
+) -> List[PairRecord]:
+    """Build chronological source-target records.
+
+    ``all_forward_starts`` keeps the historical scan-to-scan contract: every
+    earlier scan can supervise every later scan.  ``first_only`` is the
+    anchor/one-shot contract: only the first scan for each subject is used as a
+    source, while every later scan remains a target.
+    """
+
+    normalized_mode = str(source_mode).strip().lower()
+    if normalized_mode in {"anchor", "baseline", "one_shot"}:
+        normalized_mode = "first_only"
+    if normalized_mode not in {"all_forward_starts", "first_only"}:
+        raise ValueError(
+            "Pair source_mode must be all_forward_starts or first_only; "
+            f"got {source_mode!r}"
+        )
     records: List[PairRecord] = []
     for subject_id, subject_rows in frame.groupby("subject_id", sort=True):
         subject_rows = subject_rows.sort_values(
@@ -139,10 +161,13 @@ def build_forward_pairs(frame: pd.DataFrame) -> List[PairRecord]:
         times = subject_rows["continuous_age_norm"].to_numpy(dtype=float)
         if any(current <= previous for previous, current in zip(times[:-1], times[1:])):
             raise ValueError(f"Non-increasing time for subject {subject_id}")
-        for source_index, target_index in itertools.combinations(
-            range(len(subject_rows)),
-            2,
-        ):
+        if normalized_mode == "first_only":
+            index_pairs = (
+                (0, target_index) for target_index in range(1, len(subject_rows))
+            )
+        else:
+            index_pairs = itertools.combinations(range(len(subject_rows)), 2)
+        for source_index, target_index in index_pairs:
             source = subject_rows.iloc[source_index]
             target = subject_rows.iloc[target_index]
             if str(source["diagnosis"]) != str(target["diagnosis"]):
@@ -167,6 +192,16 @@ def build_forward_pairs(frame: pd.DataFrame) -> List[PairRecord]:
                     source_visit_order=int(source["visit_order"]),
                     target_visit_order=int(target["visit_order"]),
                     observed_intermediate_times=intermediate_times,
+                    source_mesh_volume_mm3=float(
+                        source["left_mesh_volume_mm3"]
+                    )
+                    if "left_mesh_volume_mm3" in frame.columns
+                    else float("nan"),
+                    target_mesh_volume_mm3=float(
+                        target["left_mesh_volume_mm3"]
+                    )
+                    if "left_mesh_volume_mm3" in frame.columns
+                    else float("nan"),
                 )
             )
     return records
@@ -347,6 +382,14 @@ class DirectFlowPairDataset(Dataset):
                 observed_mask,
                 dtype=torch.bool,
             ),
+            "source_mesh_volume_mm3": torch.tensor(
+                record.source_mesh_volume_mm3,
+                dtype=torch.float32,
+            ),
+            "target_mesh_volume_mm3": torch.tensor(
+                record.target_mesh_volume_mm3,
+                dtype=torch.float32,
+            ),
             "subject_id": record.subject_id,
             "diagnosis": record.diagnosis,
             "source_scan_id": record.source_scan_id,
@@ -504,10 +547,15 @@ def build_contract(
     latent_paths: Mapping[str, str | Path],
     expected_latent_dim: int,
     *,
+    pair_source_mode: str = "all_forward_starts",
     sequence_min_length: int = 2,
     sequence_start_mode: str = "all_forward_starts",
+    allow_extra_latents: bool = False,
 ) -> DirectFlowDataContract:
     metadata = load_metadata(metadata_path)
+    normalized_pair_source_mode = str(pair_source_mode).strip().lower()
+    if normalized_pair_source_mode in {"anchor", "baseline", "one_shot"}:
+        normalized_pair_source_mode = "first_only"
     latent_maps: Dict[str, Mapping[str, torch.Tensor]] = {}
     pair_records: Dict[str, Sequence[PairRecord]] = {}
     sequence_records: Dict[str, Sequence[SequenceRecord]] = {}
@@ -535,7 +583,7 @@ def build_contract(
         scan_ids = set(split_frame["scan_id"].astype(str))
         missing = sorted(scan_ids.difference(latent_map))
         extras = sorted(set(latent_map).difference(scan_ids))
-        if missing or extras:
+        if missing or (extras and not bool(allow_extra_latents)):
             raise ValueError(
                 f"Latent/metadata mismatch for {split}: "
                 f"missing={len(missing)}, extras={len(extras)}"
@@ -549,7 +597,10 @@ def build_contract(
             raise FileNotFoundError(
                 f"{len(bad_sdf)} missing SDF files for {split}; first={bad_sdf[0]}"
             )
-        pairs = build_forward_pairs(split_frame)
+        pairs = build_forward_pairs(
+            split_frame,
+            source_mode=normalized_pair_source_mode,
+        )
         sequences = build_forward_sequences(
             split_frame,
             min_length=int(sequence_min_length),
@@ -562,6 +613,7 @@ def build_contract(
             "scans": int(len(split_frame)),
             "subjects": int(split_frame["subject_id"].nunique()),
             "pairs": int(len(pairs)),
+            "pair_source_mode": normalized_pair_source_mode,
             "pairs_with_observed_intermediate": int(
                 sum(record.has_observed_intermediate for record in pairs)
             ),
@@ -576,6 +628,8 @@ def build_contract(
     report = {
         "status": "pass",
         "latent_dim": int(expected_latent_dim),
+        "pair_source_mode": normalized_pair_source_mode,
+        "allow_extra_latents": bool(allow_extra_latents),
         "splits": split_report,
         "subject_split_isolation": True,
         "loss_scope": [

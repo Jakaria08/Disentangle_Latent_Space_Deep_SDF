@@ -1,0 +1,73 @@
+{
+  "automatic_reasons": {
+    "hard_mesh_scans": 18,
+    "post_qc_singleton_scans": 4,
+    "strong_pair_endpoint_scans": 21,
+    "strong_pairs": 12
+  },
+  "checks": {
+    "age_norm_train_max": 95.62053388,
+    "age_norm_train_min": 55.1,
+    "all_mesh_paths_exist": true,
+    "face_counts": [
+      5488
+    ],
+    "hard_qc_failures_in_keep_manifest": 0,
+    "strong_pair_endpoints_in_keep_manifest": 0,
+    "topology_hash": "a8485554b4637ef929b5b05da9e34e10cdb7997a8e861aa6558c3847d7fd9d57",
+    "vertex_counts": [
+      2746
+    ]
+  },
+  "counts": {
+    "automatic_excluded_scans": 42,
+    "scans": 2583,
+    "subjects": 597,
+    "subjects_removed_from_master": 8
+  },
+  "failures": [],
+  "manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+  "manifest_sha256": "e12cf0cb6bb720d1e169c658e5131beb115cac0d1112112086fbdbbd664252d6",
+  "passed": true,
+  "pca_policy": {
+    "candidate_components": [
+      32,
+      64,
+      100,
+      128,
+      150
+    ],
+    "coordinate_space": "final_ply_mm",
+    "fit_split": "train",
+    "independent_structure_pca": true,
+    "max_components": 150,
+    "no_cross_structure_features": true
+  },
+  "split_counts": {
+    "test": {
+      "scans": 277,
+      "subjects": 61,
+      "subjects_by_diagnosis": {
+        "AD": 28,
+        "CN": 33
+      }
+    },
+    "train": {
+      "scans": 2037,
+      "subjects": 475,
+      "subjects_by_diagnosis": {
+        "AD": 215,
+        "CN": 260
+      }
+    },
+    "val": {
+      "scans": 269,
+      "subjects": 61,
+      "subjects_by_diagnosis": {
+        "AD": 28,
+        "CN": 33
+      }
+    }
+  },
+  "structure": "left_hippocampus"
+}

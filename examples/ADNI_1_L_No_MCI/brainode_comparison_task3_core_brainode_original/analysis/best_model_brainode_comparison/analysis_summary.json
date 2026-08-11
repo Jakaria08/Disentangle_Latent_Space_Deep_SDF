@@ -1,0 +1,14 @@
+{
+  "artifact_rows": 120,
+  "coverage_gap_rows": 5,
+  "direct_vs_composed_rows": 12,
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/best_model_brainode_comparison",
+  "qc_pca_chamfer_computed": true,
+  "reconstruction_per_scan_rows": 3088,
+  "reconstruction_summary_rows": 42,
+  "split_metric_rows": 21,
+  "subject_volume_rows": 267,
+  "surface_area_computed": true,
+  "surface_samples": 30000,
+  "volume_trend_rows": 66
+}

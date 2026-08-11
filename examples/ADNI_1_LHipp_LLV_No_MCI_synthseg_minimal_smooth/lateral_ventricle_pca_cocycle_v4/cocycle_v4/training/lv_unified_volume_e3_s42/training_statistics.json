@@ -1,0 +1,21 @@
+{
+  "ad_minus_cn_log_volume_rate_target": 0.05616040154554374,
+  "group_log_volume_rate_targets": {
+    "AD": 0.09467054438957183,
+    "CN": 0.03851014284402809
+  },
+  "normalization_scales": {
+    "consistency": 0.2775746285915375,
+    "pca": 0.2775746285915375,
+    "rate": 0.04165635257959366,
+    "slope": 0.04165635257959366,
+    "vertex": 0.364610880613327,
+    "volume": 0.07197011634707451
+  },
+  "pair_rows": 4218,
+  "statistics_source": "train split only; observed forward pairs; subject-balanced group means",
+  "subjects_by_diagnosis": {
+    "AD": 220,
+    "CN": 257
+  }
+}

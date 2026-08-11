@@ -1,0 +1,61 @@
+{
+  "fit_split": "train",
+  "input_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_pca_cocycle_v4/metadata/adni_synthseg_lhipp_llv_strict_no_mci_manifest.csv",
+  "input_manifest_sha256": "0340bb60e42ae6fada654e965703cc0e4eb0aff08cee87fcb36d1842721b25f8",
+  "longitudinal_policy": {
+    "direct_CN_AD_changers_excluded": true,
+    "minimum_visits": 2,
+    "strict_no_mci": true,
+    "strictly_increasing_visit_month": true
+  },
+  "name": "adni_synthseg_lhipp_llv_strict_no_mci_pca_cocycle_v4_input",
+  "qc_keep_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_synthseg_minimal_smooth_qc/manifests/strict_no_mci_longitudinal_keep_conservative.csv",
+  "qc_keep_manifest_sha256": "3801402acff3002b4c98de34c1cdacee2ecbdfdcc8b4003b3180ea8fdff8325c",
+  "representation_policy": {
+    "candidate_max_components_per_structure": 150,
+    "candidate_report_dimensions_per_structure": [
+      32,
+      64,
+      75,
+      100,
+      128,
+      150
+    ],
+    "coordinate_space": "final_ply_mm",
+    "initial_block_allocation_after_pca": {
+      "left_hippocampus": 75,
+      "left_lateral_ventricle": 75
+    },
+    "initial_shared_cocycle_dimension": 150,
+    "pca_fit": "separate PCA per structure, fit on training scans only",
+    "reconstruction_features": "unstandardised PCA scores and both PCA bases",
+    "shared_model_features": "selected PCA scores standardised using training-split mean and standard deviation within each structure block",
+    "why_not_raw_joint_vertex_pca": "the two structures use separate atlases and the ventricle has 8,346 vertices versus 2,746 for hippocampus; raw concatenation would over-weight ventricle coordinates"
+  },
+  "split_policy": {
+    "ratios": {
+      "test": 0.1,
+      "train": 0.8,
+      "val": 0.1
+    },
+    "seed": 42,
+    "stratified_by": "stable baseline diagnosis (CN/AD)",
+    "subject_leakage": false,
+    "unit": "subject"
+  },
+  "status": "input_bundle_only; PCA and model training have not run",
+  "structures": {
+    "left_hippocampus": {
+      "coordinate_space": "final_ply_mm (rigidly aligned + Deformetrica correspondence; physical mm volume restored)",
+      "correspondence_topology_hash": "a8485554b4637ef929b5b05da9e34e10cdb7997a8e861aa6558c3847d7fd9d57",
+      "face_count": 5488,
+      "vertex_count": 2746
+    },
+    "left_lateral_ventricle": {
+      "coordinate_space": "final_ply_mm (rigidly aligned + Deformetrica correspondence; physical mm volume restored)",
+      "correspondence_topology_hash": "9cf6370ea3ec3898efa8443f5de879b6e2d8c740dac2e3387c966ac725cd7c0e",
+      "face_count": 16688,
+      "vertex_count": 8346
+    }
+  }
+}

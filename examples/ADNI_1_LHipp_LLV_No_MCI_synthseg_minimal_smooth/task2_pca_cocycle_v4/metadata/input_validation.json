@@ -1,0 +1,78 @@
+{
+  "age_norm_train": {
+    "maximum": 95.62053388,
+    "minimum": 55.1
+  },
+  "checks": {
+    "all_manifest_mesh_paths_exist": true,
+    "both_structures_per_scan": true,
+    "duplicate_scan_ids": 0,
+    "duplicate_subject_time_points": 0,
+    "hard_mesh_qc_failures_in_manifest": 0,
+    "nonpositive_adjacent_time_intervals": 0,
+    "subject_split_leakage": false,
+    "subjects_with_fewer_than_two_visits": 0,
+    "topology": {
+      "left_hippocampus": {
+        "coordinate_space": "final_ply_mm (rigidly aligned + Deformetrica correspondence; physical mm volume restored)",
+        "correspondence_topology_hash": "a8485554b4637ef929b5b05da9e34e10cdb7997a8e861aa6558c3847d7fd9d57",
+        "face_count": 5488,
+        "vertex_count": 2746
+      },
+      "left_lateral_ventricle": {
+        "coordinate_space": "final_ply_mm (rigidly aligned + Deformetrica correspondence; physical mm volume restored)",
+        "correspondence_topology_hash": "9cf6370ea3ec3898efa8443f5de879b6e2d8c740dac2e3387c966ac725cd7c0e",
+        "face_count": 16688,
+        "vertex_count": 8346
+      }
+    }
+  },
+  "counts": {
+    "scans": 2550,
+    "subjects": 592
+  },
+  "manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_pca_cocycle_v4/metadata/adni_synthseg_lhipp_llv_strict_no_mci_manifest.csv",
+  "model_trained": false,
+  "passed": true,
+  "pca_fitted": false,
+  "source_meshes_modified": false,
+  "split_summary": {
+    "test": {
+      "scans": 249,
+      "scans_by_diagnosis": {
+        "AD": 87,
+        "CN": 162
+      },
+      "subjects": 59,
+      "subjects_by_diagnosis": {
+        "AD": 27,
+        "CN": 32
+      }
+    },
+    "train": {
+      "scans": 2061,
+      "scans_by_diagnosis": {
+        "AD": 716,
+        "CN": 1345
+      },
+      "subjects": 474,
+      "subjects_by_diagnosis": {
+        "AD": 215,
+        "CN": 259
+      }
+    },
+    "val": {
+      "scans": 240,
+      "scans_by_diagnosis": {
+        "AD": 87,
+        "CN": 153
+      },
+      "subjects": 59,
+      "subjects_by_diagnosis": {
+        "AD": 27,
+        "CN": 32
+      }
+    }
+  },
+  "subject_assignments": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_pca_cocycle_v4/metadata/subject_split_assignments.csv"
+}

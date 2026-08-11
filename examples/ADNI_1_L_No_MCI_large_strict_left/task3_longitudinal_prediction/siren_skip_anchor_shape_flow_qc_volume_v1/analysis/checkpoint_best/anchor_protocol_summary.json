@@ -1,0 +1,11 @@
+{
+  "analysis_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_skip_anchor_shape_flow_qc_volume_v1/analysis/checkpoint_best",
+  "pairs": 1706,
+  "ood_horizon_years": 3.0,
+  "outputs": [
+    "anchor_pair_metrics_with_protocol.csv",
+    "anchor_protocol_summary.csv",
+    "anchor_subject_volume_trend.csv",
+    "anchor_subject_volume_summary.csv"
+  ]
+}

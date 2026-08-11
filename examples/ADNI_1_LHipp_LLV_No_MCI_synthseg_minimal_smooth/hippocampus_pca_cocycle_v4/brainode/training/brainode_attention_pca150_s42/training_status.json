@@ -1,0 +1,18 @@
+{
+  "best_epoch": 3,
+  "best_metric": "val_first_last_endpoint_vertex_mae_mm",
+  "best_metric_value": 0.16745890481550185,
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/brainode/training/brainode_attention_pca150_s42/checkpoints/best.pt",
+  "epochs_completed": 100,
+  "epochs_requested": 100,
+  "forward_and_backward_training": true,
+  "method": "previous_attention_brainode_current_strict_pca150",
+  "pca_refitted": false,
+  "representation": "train-standardized PCA-150",
+  "shape_only_training": true,
+  "source_meshes_modified": false,
+  "status": "complete",
+  "strict_no_mci": true,
+  "structure": "left_hippocampus",
+  "test_data_loaded": false
+}

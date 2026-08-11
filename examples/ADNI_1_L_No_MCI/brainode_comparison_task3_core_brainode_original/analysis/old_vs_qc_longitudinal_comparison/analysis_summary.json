@@ -1,0 +1,12 @@
+{
+  "method_rows": 16,
+  "notes": [
+    "BrainODE error is PCA inverse-transform vertex MAE; SIREN/DeepSDF flow error is decoder SDF L1.",
+    "Missing method rows mean no checkpoint_best/test_summary.csv was present, not that the model is invalid.",
+    "Volume trend rows mix directly computed old-ADNI volume rates and existing QC selected_speed_summary outputs."
+  ],
+  "ood_future_artifacts": 177,
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/old_vs_qc_longitudinal_comparison",
+  "sequence_rows": 2,
+  "volume_rows": 30
+}

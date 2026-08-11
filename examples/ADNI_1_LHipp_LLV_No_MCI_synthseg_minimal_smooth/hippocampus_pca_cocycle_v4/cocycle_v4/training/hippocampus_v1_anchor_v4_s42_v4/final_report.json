@@ -1,0 +1,45 @@
+{
+  "epochs_completed": 58,
+  "epochs_requested": 80,
+  "method": "frozen_v1_anchored_ad_speed_calibration",
+  "pca_refitted": false,
+  "selected_epoch": 38,
+  "selected_global_ad_speed": 3.281830072402954,
+  "selected_is_exact_v1_identity": false,
+  "selected_v4_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/training/hippocampus_v1_anchor_v4_s42_v4/checkpoints/best_feasible_volume.pt",
+  "source_meshes_modified": false,
+  "status": "complete",
+  "stopped_early": true,
+  "structure": "left_hippocampus",
+  "test": {
+    "cn_max_abs_delta_from_v1": 0.0,
+    "groups": {
+      "AD": {
+        "pca_mean": 0.7192002931388758,
+        "rate_mean": 0.054181443012351074,
+        "rows": 118,
+        "speed_mean": 3.963166976379136,
+        "vertex_mean": 0.1662797156910775,
+        "volume_relative_mean": 0.0523196847115888
+      },
+      "CN": {
+        "pca_mean": 0.7503161957401954,
+        "rate_mean": 0.014455186784222992,
+        "rows": 501,
+        "speed_mean": 1.0,
+        "vertex_mean": 0.1551758981720654,
+        "volume_relative_mean": 0.032622181726923966
+      },
+      "overall": {
+        "pca_mean": 0.7443845697192653,
+        "rate_mean": 0.022028204934334647,
+        "rows": 619,
+        "speed_mean": 1.564868664317832,
+        "vertex_mean": 0.15729261944386416,
+        "volume_relative_mean": 0.03637711767553536
+      }
+    }
+  },
+  "v1_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/training/hippocampus_v1_anchor_v4_s42_v1/checkpoint_best.pt",
+  "v1_frozen_verified": true
+}

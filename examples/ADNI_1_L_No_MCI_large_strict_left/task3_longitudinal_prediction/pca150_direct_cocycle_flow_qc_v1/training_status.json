@@ -1,0 +1,10 @@
+{
+  "analysis_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1/analysis",
+  "best_val_endpoint_vertex_mae": 0.011368637605680874,
+  "best_val_endpoint_vertex_mae_improvement": 0.0007901597693134313,
+  "completed_at_unix": 1784999662.268097,
+  "elapsed_seconds": 129.40233635902405,
+  "history_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1/history.json",
+  "run_name": "pca150_direct_cocycle_flow_qc_v1",
+  "status": "completed"
+}

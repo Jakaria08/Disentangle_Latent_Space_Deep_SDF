@@ -1,0 +1,29 @@
+{
+  "case_strategy": "best_mean_improvement",
+  "change_sample_count": 3000,
+  "device": "cuda:0",
+  "future_mesh_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/future_mesh_forecast_comparison",
+  "mesh_resolution": 80,
+  "models": {
+    "old_adni": [
+      "old_brainode_pca150",
+      "old_pca32_siren",
+      "old_smallnet_deepsdf"
+    ],
+    "qc_large": [
+      "qc_brainode_pca150",
+      "qc_siren_latent_ode",
+      "qc_siren_drop_bad_min2",
+      "qc_siren_local_decomp_volume"
+    ]
+  },
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/future_mesh_rich_visualization",
+  "pages": [
+    "old_adni_ad_021_S_0642.html",
+    "old_adni_cn_073_S_0089.html",
+    "qc_large_ad_1296.html",
+    "qc_large_cn_298.html"
+  ],
+  "pair_type": "nonadjacent",
+  "split": "test"
+}

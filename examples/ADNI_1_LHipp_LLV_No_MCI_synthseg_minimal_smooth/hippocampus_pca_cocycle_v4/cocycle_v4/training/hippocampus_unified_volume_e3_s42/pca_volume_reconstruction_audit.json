@@ -1,0 +1,26 @@
+{
+  "test": {
+    "decoded_volume_max_mm3": 5618.14208984375,
+    "decoded_volume_min_mm3": 1969.369140625,
+    "relative_error_mean": 0.0005194703117012978,
+    "relative_error_median": 0.0004608575545717031,
+    "relative_error_p95": 0.001264518219977617,
+    "visits": 277
+  },
+  "train": {
+    "decoded_volume_max_mm3": 5340.29541015625,
+    "decoded_volume_min_mm3": 1684.89794921875,
+    "relative_error_mean": 0.00039249451947398484,
+    "relative_error_median": 0.00032765144715085626,
+    "relative_error_p95": 0.0009678943781182168,
+    "visits": 2037
+  },
+  "val": {
+    "decoded_volume_max_mm3": 4796.62451171875,
+    "decoded_volume_min_mm3": 1869.795166015625,
+    "relative_error_mean": 0.0005314645241014659,
+    "relative_error_median": 0.0004659188271034509,
+    "relative_error_p95": 0.0013235777849331493,
+    "visits": 269
+  }
+}

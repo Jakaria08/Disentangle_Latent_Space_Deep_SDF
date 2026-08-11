@@ -1,0 +1,9 @@
+{
+  "best_epoch": 6,
+  "best_validation_score": 0.9546222696593855,
+  "epoch": 36,
+  "epochs_requested": 180,
+  "stale_epochs": 30,
+  "status": "complete",
+  "test_data_loaded": false
+}

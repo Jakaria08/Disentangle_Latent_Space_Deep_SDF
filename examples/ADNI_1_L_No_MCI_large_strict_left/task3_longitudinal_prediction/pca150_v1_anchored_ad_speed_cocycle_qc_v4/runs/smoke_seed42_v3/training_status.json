@@ -1,0 +1,6 @@
+{
+  "best_feasible_volume": 0.20750273765674243,
+  "epochs_completed": 2,
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/runs/smoke_seed42_v3",
+  "status": "completed"
+}

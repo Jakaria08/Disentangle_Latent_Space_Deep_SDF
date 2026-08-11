@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Structured Latent Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #1f2933; }
+    table { border-collapse: collapse; font-size: 13px; }
+    th, td { border: 1px solid #d0d7de; padding: 6px 8px; text-align: right; }
+    th { background: #f6f8fa; }
+    td:first-child, td:nth-child(2), th:first-child, th:nth-child(2) { text-align: left; }
+    code { background: #f6f8fa; padding: 2px 4px; }
+  </style>
+</head>
+<body>
+  <h1>Structured Latent Audit</h1>
+  <p>Summary by split and diagnosis. Detailed CSV files are in this directory.</p>
+  <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>split</th>
+      <th>diagnosis</th>
+      <th>adjacent_pairs</th>
+      <th>subjects</th>
+      <th>mean_volume_pct_rate_per_year</th>
+      <th>median_volume_pct_rate_per_year</th>
+      <th>volume_decrease_fraction</th>
+      <th>mean_raw_delta_norm</th>
+      <th>mean_structured_delta_norm</th>
+      <th>mean_raw_speed_norm_per_year</th>
+      <th>mean_structured_speed_norm_per_year</th>
+      <th>mean_raw_structured_delta_cosine</th>
+      <th>mean_source_raw_to_structured_l2</th>
+      <th>mean_target_raw_to_structured_l2</th>
+      <th>raw_speed_vs_volume_rate_corr</th>
+      <th>structured_speed_vs_volume_rate_corr</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>test</td>
+      <td>AD</td>
+      <td>44</td>
+      <td>21</td>
+      <td>-3.68559</td>
+      <td>-4.56597</td>
+      <td>0.727273</td>
+      <td>1.12257</td>
+      <td>0.447574</td>
+      <td>1.86891</td>
+      <td>0.734118</td>
+      <td>0.184132</td>
+      <td>0.727136</td>
+      <td>1.00719</td>
+      <td>0.0642114</td>
+      <td>0.11218</td>
+    </tr>
+    <tr>
+      <td>test</td>
+      <td>CN</td>
+      <td>120</td>
+      <td>29</td>
+      <td>-0.928171</td>
+      <td>-1.9552</td>
+      <td>0.608333</td>
+      <td>1.13149</td>
+      <td>0.402204</td>
+      <td>1.51938</td>
+      <td>0.514182</td>
+      <td>0.161464</td>
+      <td>0.894017</td>
+      <td>1.03647</td>
+      <td>0.131479</td>
+      <td>0.0555261</td>
+    </tr>
+    <tr>
+      <td>train</td>
+      <td>AD</td>
+      <td>336</td>
+      <td>160</td>
+      <td>-4.3889</td>
+      <td>-5.02949</td>
+      <td>0.729167</td>
+      <td>1.00725</td>
+      <td>0.448367</td>
+      <td>1.70182</td>
+      <td>0.725535</td>
+      <td>0.191215</td>
+      <td>0.882354</td>
+      <td>1.04108</td>
+      <td>0.067598</td>
+      <td>-0.045411</td>
+    </tr>
+    <tr>
+      <td>train</td>
+      <td>CN</td>
+      <td>1034</td>
+      <td>261</td>
+      <td>-0.862395</td>
+      <td>-1.05062</td>
+      <td>0.582205</td>
+      <td>0.99968</td>
+      <td>0.394368</td>
+      <td>1.35463</td>
+      <td>0.505042</td>
+      <td>0.176561</td>
+      <td>0.897214</td>
+      <td>0.97757</td>
+      <td>-0.0121449</td>
+      <td>0.00865862</td>
+    </tr>
+    <tr>
+      <td>val</td>
+      <td>AD</td>
+      <td>48</td>
+      <td>24</td>
+      <td>-5.47342</td>
+      <td>-7.43793</td>
+      <td>0.666667</td>
+      <td>1.09215</td>
+      <td>0.447137</td>
+      <td>1.90117</td>
+      <td>0.751208</td>
+      <td>0.185009</td>
+      <td>0.713213</td>
+      <td>0.994857</td>
+      <td>0.0506545</td>
+      <td>0.0743864</td>
+    </tr>
+    <tr>
+      <td>val</td>
+      <td>CN</td>
+      <td>124</td>
+      <td>28</td>
+      <td>-1.30417</td>
+      <td>-1.36416</td>
+      <td>0.637097</td>
+      <td>1.09269</td>
+      <td>0.386362</td>
+      <td>1.46879</td>
+      <td>0.491642</td>
+      <td>0.160478</td>
+      <td>0.869717</td>
+      <td>0.99778</td>
+      <td>0.0640648</td>
+      <td>-0.0419084</td>
+    </tr>
+  </tbody>
+</table>
+  <p>Files: <code>adjacent_pair_metrics.csv</code>, <code>subject_metrics.csv</code>, <code>summary.csv</code>, optional <code>sdf_summary.csv</code>.</p>
+</body>
+</html>

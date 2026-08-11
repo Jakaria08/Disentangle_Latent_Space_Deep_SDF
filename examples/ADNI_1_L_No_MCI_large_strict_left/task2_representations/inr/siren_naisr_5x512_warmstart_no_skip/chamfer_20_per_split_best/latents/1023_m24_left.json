@@ -1,0 +1,6 @@
+{
+  "latent_norm": 0.9997906684875488,
+  "scan_id": "1023_m24_left",
+  "source": "checkpoint_train_latent",
+  "split": "train"
+}

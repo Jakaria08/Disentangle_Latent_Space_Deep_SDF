@@ -1,0 +1,18 @@
+{
+  "attempt": 0,
+  "attempt_count": 1,
+  "best_objective": 0.004641169216483831,
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/checkpoints/best.pth",
+  "checkpoint_sha256": "f042fefbfd5936978107aad29036765e492daa9693db9c0f5955bb6a1f3f6979",
+  "converged": true,
+  "diagnosis": "AD",
+  "final_data_l1": 0.0048131756484508514,
+  "finite": true,
+  "heldout_sdf_l1": 0.004772430285811424,
+  "initial_data_l1": 0.043273791670799255,
+  "latent_norm": 0.9999999403953552,
+  "scan_id": "400_m24_left",
+  "split": "val",
+  "steps_completed": 469,
+  "steps_requested": 500
+}

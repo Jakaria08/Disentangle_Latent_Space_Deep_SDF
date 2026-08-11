@@ -1,0 +1,49 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/training/smoke_full_pseudo_cognition/checkpoints/best.pth",
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/configs/full_brainode_pseudo_cognition.json",
+  "endpoint_pca_improvement": {
+    "count": 24.0,
+    "max": 4.0119048207998276e-05,
+    "mean": -2.3669757259388766e-06,
+    "median": -6.1996979638934135e-06,
+    "min": -3.173714503645897e-05
+  },
+  "endpoint_pca_mse": {
+    "count": 24.0,
+    "max": 0.027955202385783195,
+    "mean": 0.008493744971929118,
+    "median": 0.006280964240431786,
+    "min": 0.0032382975332438946
+  },
+  "endpoint_vertex_mae": {
+    "count": 24.0,
+    "max": 0.02236412651836872,
+    "mean": 0.01161223923554644,
+    "median": 0.010155827272683382,
+    "min": 0.007362164091318846
+  },
+  "endpoint_vertex_mae_improvement": {
+    "count": 24.0,
+    "max": 3.888504579663277e-05,
+    "mean": -1.484489378829797e-06,
+    "median": -5.88688999414444e-06,
+    "min": -2.7321279048919678e-05
+  },
+  "no_change_pca_mse": {
+    "count": 24.0,
+    "max": 0.02796027436852455,
+    "mean": 0.008491377996203179,
+    "median": 0.006276856642216444,
+    "min": 0.0032392831053584814
+  },
+  "no_change_vertex_mae": {
+    "count": 24.0,
+    "max": 0.022358465939760208,
+    "mean": 0.01161075474616761,
+    "median": 0.010142752435058355,
+    "min": 0.007369454950094223
+  },
+  "record_count": 24,
+  "split": "test",
+  "use_autoregressive_rollout": true
+}

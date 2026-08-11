@@ -1,0 +1,75 @@
+{
+  "large_qc": {
+    "source_metadata": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/metadata/adni_large_strict_no_mci_left_direct_flow_records_qc_drop_bad_scans_min2.csv",
+    "source_representation_manifest": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/metadata/representation_manifest.csv",
+    "source_pca_coefficients_csv": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/pca/coefficients/pca_coefficients.csv",
+    "source_pca_validation_report": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/metadata/validation_pca.json",
+    "source_age_norm_stats": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/metadata/age_norm_stats.json"
+  },
+  "task1": {
+    "dir": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable",
+    "clean_manifest": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_clean_manifest.csv",
+    "trajectory_json": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_subject_trajectories.json",
+    "split_summary": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_split_summary.json",
+    "age_norm_stats": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/age_norm_stats.json",
+    "validation_report": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/input_validation_report.json"
+  },
+  "task2": {
+    "dir": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations",
+    "representation_manifest": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_representation_manifest.csv",
+    "pca_coefficients_csv": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_pca_coefficients.csv",
+    "validation_report": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/metadata/validation_pca.json",
+    "pca_model_dir": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/pca/model"
+  },
+  "expected_counts": {
+    "train": 1791,
+    "val": 224,
+    "test": 214,
+    "total": 2229
+  },
+  "expected_subject_counts": {
+    "train": 421,
+    "val": 52,
+    "test": 50,
+    "total": 523
+  },
+  "brainode": {
+    "available_components": 256,
+    "primary_components": 150,
+    "condition_values": {
+      "CN": 0.0,
+      "AD": 1.0
+    },
+    "continuous_age_formula": "continuous_age_years from QC metadata",
+    "continuous_age_norm_formula": "(continuous_age_years - age_min_train) / (age_max_train - age_min_train)"
+  },
+  "model": {
+    "architecture": "ODEFuncWithAttention",
+    "condition_dim": 1,
+    "attention_dim": 256,
+    "hidden_dim": 512
+  },
+  "training": {
+    "output_root": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/training",
+    "run_name": "core_attention_pca150_qc_stable",
+    "random_seed": 42,
+    "epochs": 100,
+    "batch_size": 64,
+    "learning_rate": 0.0005,
+    "weight_decay": 0.01,
+    "scheduler_step_size": 20,
+    "scheduler_gamma": 0.5,
+    "noise_std": 0.01,
+    "scale_min": 0.98,
+    "scale_max": 1.02,
+    "integration_substeps": 1,
+    "gradient_clip_norm": 1.0,
+    "save_every": 10,
+    "num_workers": 0,
+    "best_metric": "val_first_last_vertex_mae",
+    "device": "cuda:0"
+  },
+  "analysis": {
+    "siren_flow_analysis_dir": "examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_seq_rollout_v1/analysis/checkpoint_best"
+  }
+}

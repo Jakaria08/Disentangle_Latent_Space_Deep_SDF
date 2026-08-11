@@ -1,0 +1,24 @@
+{
+  "hippocampus": {
+    "grouped_batch_size": 32,
+    "independent_batch_size": 1,
+    "interpretation": "Nonzero values mean prediction depends on other cases in the evaluation batch.",
+    "pca_coordinate_mae": 0.013591127470135689,
+    "pca_rmse": 0.02060745656490326,
+    "samples": 32,
+    "vertex_coordinate_mae_mm": 0.014444999297737142,
+    "vertex_euclidean_max_mm": 0.17896283596699644,
+    "vertex_euclidean_mean_mm": 0.028888550038713594
+  },
+  "lateral_ventricle": {
+    "grouped_batch_size": 32,
+    "independent_batch_size": 1,
+    "interpretation": "Nonzero values mean prediction depends on other cases in the evaluation batch.",
+    "pca_coordinate_mae": 0.044633809477090836,
+    "pca_rmse": 0.07619724422693253,
+    "samples": 32,
+    "vertex_coordinate_mae_mm": 0.04921905045239009,
+    "vertex_euclidean_max_mm": 0.8539348631595047,
+    "vertex_euclidean_mean_mm": 0.09978707840768414
+  }
+}

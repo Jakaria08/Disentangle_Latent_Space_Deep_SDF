@@ -1,0 +1,93 @@
+{
+  "batch_size": 4,
+  "config": {
+    "_config_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/configs/full_brainode_pseudo_cognition.json",
+    "brainode": {
+      "available_components": 256,
+      "condition_values": {
+        "AD": 1.0,
+        "CN": 0.0
+      },
+      "continuous_age_formula": "baseline_age_years + months_from_baseline / 12.0",
+      "continuous_age_norm_formula": "(continuous_age_years - age_min_train) / (age_max_train - age_min_train)",
+      "primary_components": 150
+    },
+    "expected_counts": {
+      "test": 71,
+      "total": 727,
+      "train": 617,
+      "val": 39
+    },
+    "expected_subject_counts": {
+      "test": 24,
+      "total": 244,
+      "train": 207,
+      "val": 13
+    },
+    "full_brainode": {
+      "autoregressive_loss_lambda": 0.1,
+      "cognition_dropout": 0.05,
+      "cognition_hidden_dims": [
+        256,
+        128
+      ],
+      "cognition_loss_lambda": 0.1,
+      "notes": [
+        "This old no-MCI dataset has fixed CN/AD labels per subject, so pseudo-cognitive transition loss is active only if transition trajectories are present.",
+        "The cognition estimator and autoregressive rollout remain active on fixed-label trajectories."
+      ],
+      "pseudo_cognition_loss_lambda": 0.05,
+      "require_transition_trajectories": false,
+      "shape_loss_lambda": 1.0,
+      "use_autoregressive_rollout": true,
+      "use_cognition_estimator": true,
+      "use_pseudo_cognitive_sampling": true
+    },
+    "model": {
+      "architecture": "BrainODEWithCognition",
+      "attention_dim": 256,
+      "condition_dim": 1,
+      "hidden_dim": 512
+    },
+    "task1": {
+      "age_norm_stats": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/age_norm_stats.json",
+      "clean_manifest": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/adni_no_mci_left_original_clean.csv",
+      "dir": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original",
+      "split_summary": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/split_summary.json",
+      "trajectory_json": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/adni_no_mci_left_original_subject_trajectories.json",
+      "validation_report": "examples/ADNI_1_L_No_MCI/brainode_comparison_task1_manifest_original/metadata/validation_report.json"
+    },
+    "task2": {
+      "dir": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original",
+      "pca_coefficients_csv": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/pca/coefficients/pca_coefficients.csv",
+      "pca_model_dir": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/pca/model",
+      "representation_manifest": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/metadata/representation_manifest.csv",
+      "validation_report": "examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/metadata/validation_pca.json"
+    },
+    "training": {
+      "batch_size": 64,
+      "best_metric": "val_first_last_vertex_mae",
+      "device": "cuda:0",
+      "epochs": 100,
+      "gradient_clip_norm": 1.0,
+      "integration_substeps": 1,
+      "learning_rate": 0.0005,
+      "noise_std": 0.01,
+      "num_workers": 0,
+      "output_root": "examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/training",
+      "random_seed": 42,
+      "run_name": "full_attention_pca150_pseudo_cognition",
+      "save_every": 10,
+      "scale_max": 1.02,
+      "scale_min": 0.98,
+      "scheduler_gamma": 0.5,
+      "scheduler_step_size": 20,
+      "weight_decay": 0.01
+    }
+  },
+  "config_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/configs/full_brainode_pseudo_cognition.json",
+  "device": "cpu",
+  "epochs": 1,
+  "run_name": "smoke_full_pseudo_cognition",
+  "seed": 42
+}

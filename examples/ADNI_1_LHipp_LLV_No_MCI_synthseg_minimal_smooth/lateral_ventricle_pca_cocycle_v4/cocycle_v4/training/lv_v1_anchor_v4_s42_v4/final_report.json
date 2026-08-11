@@ -1,0 +1,45 @@
+{
+  "epochs_completed": 80,
+  "epochs_requested": 80,
+  "method": "frozen_v1_anchored_ad_speed_calibration",
+  "pca_refitted": false,
+  "selected_epoch": 80,
+  "selected_global_ad_speed": 3.1113884449005127,
+  "selected_is_exact_v1_identity": false,
+  "selected_v4_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/training/lv_v1_anchor_v4_s42_v4/checkpoints/best_feasible_volume.pt",
+  "source_meshes_modified": false,
+  "status": "complete",
+  "stopped_early": false,
+  "structure": "left_lateral_ventricle",
+  "test": {
+    "cn_max_abs_delta_from_v1": 0.0,
+    "groups": {
+      "AD": {
+        "pca_mean": 0.38410178967144176,
+        "rate_mean": 0.05871145377193739,
+        "rows": 115,
+        "speed_mean": 3.19870548248291,
+        "vertex_mean": 0.35076240327047264,
+        "volume_relative_mean": 0.05101836758321556
+      },
+      "CN": {
+        "pca_mean": 0.3953369054761779,
+        "rate_mean": 0.025329348047963548,
+        "rows": 513,
+        "speed_mean": 1.0,
+        "vertex_mean": 0.38321369280766326,
+        "volume_relative_mean": 0.051802416944522985
+      },
+      "overall": {
+        "pca_mean": 0.39327951962021507,
+        "rate_mean": 0.03144231326811799,
+        "rows": 628,
+        "speed_mean": 1.4026291886712337,
+        "vertex_mean": 0.377271179596235,
+        "volume_relative_mean": 0.05165884102644917
+      }
+    }
+  },
+  "v1_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/training/lv_v1_anchor_v4_s42_v1/checkpoint_best.pt",
+  "v1_frozen_verified": true
+}

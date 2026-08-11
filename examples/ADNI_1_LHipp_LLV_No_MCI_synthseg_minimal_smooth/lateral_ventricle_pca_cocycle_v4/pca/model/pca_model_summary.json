@@ -1,0 +1,14 @@
+{
+  "cumulative_explained_variance": {
+    "100": 0.9996999502182007,
+    "128": 0.9998944997787476,
+    "150": 0.9999483823776245,
+    "32": 0.99043869972229,
+    "64": 0.9984979629516602
+  },
+  "features": 25038,
+  "fit_scans": 2044,
+  "fit_split": "train",
+  "max_components": 150,
+  "structure": "left_lateral_ventricle"
+}

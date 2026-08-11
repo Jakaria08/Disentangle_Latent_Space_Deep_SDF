@@ -1,0 +1,1207 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>All Available Metrics</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; color: #17202a; background: #f7f8fb; }
+header { padding: 22px 28px; background: white; border-bottom: 1px solid #d9dee7; }
+main { max-width: 1440px; margin: 0 auto; padding: 22px 28px 40px; }
+nav a { display: inline-block; margin: 0 16px 8px 0; color: #0f5f8f; text-decoration: none; }
+section { background: white; border: 1px solid #d9dee7; border-radius: 6px; margin: 0 0 22px; padding: 18px; overflow: hidden; }
+h1 { margin: 0 0 8px; font-size: 24px; }
+h2 { margin: 0 0 12px; font-size: 19px; }
+h3 { margin: 16px 0 10px; font-size: 16px; }
+.note { color: #52606d; line-height: 1.45; max-width: 1080px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 18px; align-items: start; }
+.table-wrap { overflow-x: auto; max-width: 100%; }
+table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: auto; }
+.data-table th, .data-table td { border-bottom: 1px solid #e5e9f0; padding: 6px 8px; text-align: left; white-space: nowrap; }
+.data-table th { background: #eef2f7; }
+code { background: #eef2f7; padding: 2px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<header>
+<h1>All Available Metrics</h1>
+
+<nav>
+<a href="../index.html">Overview</a>
+<a href="../pages/metrics_by_split.html">Metrics</a>
+<a href="../pages/loss_curves.html">Loss</a>
+<a href="../pages/all_metrics.html">All Metrics</a>
+<a href="../pages/volume_trends.html">Volume</a>
+<a href="../pages/velocity.html">Velocity</a>
+<a href="../pages/ood_future_volume.html">OOD</a>
+<a href="../pages/surface_change_cases.html">Surface Change</a>
+<a href="../pages/coverage_and_missing.html">Coverage</a>
+</nav>
+
+</header>
+<main>
+
+<section>
+<h2>Mesh Summary</h2>
+<div class="table-wrap"><table border="1" class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>dataset_label</th>
+      <th>split</th>
+      <th>model_label</th>
+      <th>transport_label</th>
+      <th>chamfer_l2_squared_mean</th>
+      <th>chamfer_l1_mean</th>
+      <th>assd_mean</th>
+      <th>hd95_mean</th>
+      <th>volume_relative_error_mean</th>
+      <th>surface_area_relative_error_mean</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>test</td>
+      <td>Old BrainODE PCA150</td>
+      <td>endpoint</td>
+      <td>0.000552376</td>
+      <td>0.0265335</td>
+      <td>0.0132668</td>
+      <td>0.0306519</td>
+      <td>0.0497316</td>
+      <td>0.0320094</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>test</td>
+      <td>Old PCA32 SIREN flow</td>
+      <td>composed</td>
+      <td>0.00160876</td>
+      <td>0.0465009</td>
+      <td>0.0232504</td>
+      <td>0.052537</td>
+      <td>0.0504416</td>
+      <td>0.0871</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>test</td>
+      <td>Old PCA32 SIREN flow</td>
+      <td>direct</td>
+      <td>0.00159017</td>
+      <td>0.0462412</td>
+      <td>0.0231206</td>
+      <td>0.0522342</td>
+      <td>0.0493535</td>
+      <td>0.0867681</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>test</td>
+      <td>Old small-net DeepSDF</td>
+      <td>composed</td>
+      <td>0.00186544</td>
+      <td>0.0500049</td>
+      <td>0.0250025</td>
+      <td>0.0550107</td>
+      <td>0.0485329</td>
+      <td>0.0501999</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>test</td>
+      <td>Old small-net DeepSDF</td>
+      <td>direct</td>
+      <td>0.00186402</td>
+      <td>0.0499955</td>
+      <td>0.0249978</td>
+      <td>0.0550209</td>
+      <td>0.0488012</td>
+      <td>0.0500098</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>test</td>
+      <td>Old full256 SIREN flow</td>
+      <td>composed</td>
+      <td>0.00160269</td>
+      <td>0.0464669</td>
+      <td>0.0232335</td>
+      <td>0.0526858</td>
+      <td>0.0478663</td>
+      <td>0.0862571</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>test</td>
+      <td>Old full256 SIREN flow</td>
+      <td>direct</td>
+      <td>0.00159719</td>
+      <td>0.0463904</td>
+      <td>0.0231952</td>
+      <td>0.0525892</td>
+      <td>0.0477307</td>
+      <td>0.0860244</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>train</td>
+      <td>Old BrainODE PCA150</td>
+      <td>endpoint</td>
+      <td>0.000466491</td>
+      <td>0.024945</td>
+      <td>0.0124725</td>
+      <td>0.0287411</td>
+      <td>0.0485849</td>
+      <td>0.0332801</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>train</td>
+      <td>Old PCA32 SIREN flow</td>
+      <td>composed</td>
+      <td>0.00183518</td>
+      <td>0.050216</td>
+      <td>0.025108</td>
+      <td>0.0551737</td>
+      <td>0.0565767</td>
+      <td>0.0710455</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>train</td>
+      <td>Old PCA32 SIREN flow</td>
+      <td>direct</td>
+      <td>0.00181204</td>
+      <td>0.0499185</td>
+      <td>0.0249593</td>
+      <td>0.0547588</td>
+      <td>0.0538166</td>
+      <td>0.0692916</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>train</td>
+      <td>Old small-net DeepSDF</td>
+      <td>composed</td>
+      <td>0.00195928</td>
+      <td>0.0520143</td>
+      <td>0.0260071</td>
+      <td>0.0559281</td>
+      <td>0.0452957</td>
+      <td>0.0418769</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>train</td>
+      <td>Old small-net DeepSDF</td>
+      <td>direct</td>
+      <td>0.00195522</td>
+      <td>0.0519593</td>
+      <td>0.0259797</td>
+      <td>0.05586</td>
+      <td>0.0453712</td>
+      <td>0.0418242</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>train</td>
+      <td>Old full256 SIREN flow</td>
+      <td>composed</td>
+      <td>0.00183988</td>
+      <td>0.050284</td>
+      <td>0.025142</td>
+      <td>0.0552483</td>
+      <td>0.055024</td>
+      <td>0.0732283</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>train</td>
+      <td>Old full256 SIREN flow</td>
+      <td>direct</td>
+      <td>0.00183416</td>
+      <td>0.0502101</td>
+      <td>0.025105</td>
+      <td>0.0551289</td>
+      <td>0.0543494</td>
+      <td>0.0727051</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>val</td>
+      <td>Old BrainODE PCA150</td>
+      <td>endpoint</td>
+      <td>0.000536403</td>
+      <td>0.0264759</td>
+      <td>0.0132379</td>
+      <td>0.0311192</td>
+      <td>0.051097</td>
+      <td>0.0299605</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>val</td>
+      <td>Old PCA32 SIREN flow</td>
+      <td>composed</td>
+      <td>0.00169627</td>
+      <td>0.0474282</td>
+      <td>0.0237141</td>
+      <td>0.0530826</td>
+      <td>0.0586046</td>
+      <td>0.0611452</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>val</td>
+      <td>Old PCA32 SIREN flow</td>
+      <td>direct</td>
+      <td>0.00167682</td>
+      <td>0.0471741</td>
+      <td>0.023587</td>
+      <td>0.0527894</td>
+      <td>0.0558287</td>
+      <td>0.0613812</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>val</td>
+      <td>Old small-net DeepSDF</td>
+      <td>composed</td>
+      <td>0.00186097</td>
+      <td>0.0497238</td>
+      <td>0.0248619</td>
+      <td>0.0542796</td>
+      <td>0.0436732</td>
+      <td>0.0402505</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>val</td>
+      <td>Old small-net DeepSDF</td>
+      <td>direct</td>
+      <td>0.00186108</td>
+      <td>0.049701</td>
+      <td>0.0248505</td>
+      <td>0.0543119</td>
+      <td>0.0439043</td>
+      <td>0.040033</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>val</td>
+      <td>Old full256 SIREN flow</td>
+      <td>composed</td>
+      <td>0.001694</td>
+      <td>0.0475143</td>
+      <td>0.0237571</td>
+      <td>0.0529136</td>
+      <td>0.0523397</td>
+      <td>0.0555072</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>val</td>
+      <td>Old full256 SIREN flow</td>
+      <td>direct</td>
+      <td>0.00168685</td>
+      <td>0.0474157</td>
+      <td>0.0237079</td>
+      <td>0.0528217</td>
+      <td>0.0516535</td>
+      <td>0.0553131</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>test</td>
+      <td>QC PCA150 cocycle flow</td>
+      <td>composed</td>
+      <td>0.000860844</td>
+      <td>0.032308</td>
+      <td>0.016154</td>
+      <td>0.0387363</td>
+      <td>0.0525524</td>
+      <td>0.0313288</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>test</td>
+      <td>QC PCA150 cocycle flow</td>
+      <td>direct</td>
+      <td>0.000864316</td>
+      <td>0.0323987</td>
+      <td>0.0161993</td>
+      <td>0.0388759</td>
+      <td>0.0486118</td>
+      <td>0.0297814</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>test</td>
+      <td>QC BrainODE PCA150</td>
+      <td>endpoint</td>
+      <td>0.000995063</td>
+      <td>0.034111</td>
+      <td>0.0170555</td>
+      <td>0.0412312</td>
+      <td>0.0462649</td>
+      <td>0.0304162</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>test</td>
+      <td>QC SIREN direct flow</td>
+      <td>composed</td>
+      <td>0.0016115</td>
+      <td>0.0446738</td>
+      <td>0.0223369</td>
+      <td>0.0507807</td>
+      <td>0.0573485</td>
+      <td>0.0535737</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>test</td>
+      <td>QC SIREN direct flow</td>
+      <td>direct</td>
+      <td>0.00161036</td>
+      <td>0.0446316</td>
+      <td>0.0223158</td>
+      <td>0.0507667</td>
+      <td>0.0573601</td>
+      <td>0.0522727</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>test</td>
+      <td>QC SIREN latent ODE</td>
+      <td>composed</td>
+      <td>0.00155849</td>
+      <td>0.0438184</td>
+      <td>0.0219092</td>
+      <td>0.0501512</td>
+      <td>0.0624999</td>
+      <td>0.0616746</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>test</td>
+      <td>QC SIREN latent ODE</td>
+      <td>direct</td>
+      <td>0.00155986</td>
+      <td>0.0438291</td>
+      <td>0.0219145</td>
+      <td>0.0501705</td>
+      <td>0.0624994</td>
+      <td>0.0616718</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>test</td>
+      <td>QC local-decomp SIREN</td>
+      <td>composed</td>
+      <td>0.00172263</td>
+      <td>0.0465959</td>
+      <td>0.023298</td>
+      <td>0.0518607</td>
+      <td>0.0423176</td>
+      <td>0.0339593</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>test</td>
+      <td>QC local-decomp SIREN</td>
+      <td>direct</td>
+      <td>0.00172264</td>
+      <td>0.0465977</td>
+      <td>0.0232988</td>
+      <td>0.0518618</td>
+      <td>0.0423176</td>
+      <td>0.0339593</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>train</td>
+      <td>QC PCA150 cocycle flow</td>
+      <td>composed</td>
+      <td>0.000769544</td>
+      <td>0.0308854</td>
+      <td>0.0154427</td>
+      <td>0.0366442</td>
+      <td>0.0437038</td>
+      <td>0.0276142</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>train</td>
+      <td>QC PCA150 cocycle flow</td>
+      <td>direct</td>
+      <td>0.000765476</td>
+      <td>0.0308531</td>
+      <td>0.0154265</td>
+      <td>0.0364868</td>
+      <td>0.0439098</td>
+      <td>0.0282954</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>train</td>
+      <td>QC BrainODE PCA150</td>
+      <td>endpoint</td>
+      <td>0.000958827</td>
+      <td>0.0343648</td>
+      <td>0.0171824</td>
+      <td>0.0414279</td>
+      <td>0.059408</td>
+      <td>0.0372101</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>train</td>
+      <td>QC SIREN direct flow</td>
+      <td>composed</td>
+      <td>0.00156395</td>
+      <td>0.0447841</td>
+      <td>0.022392</td>
+      <td>0.0511297</td>
+      <td>0.05988</td>
+      <td>0.096369</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>train</td>
+      <td>QC SIREN direct flow</td>
+      <td>direct</td>
+      <td>0.00155266</td>
+      <td>0.0445798</td>
+      <td>0.0222899</td>
+      <td>0.0509718</td>
+      <td>0.0595815</td>
+      <td>0.0923274</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>train</td>
+      <td>QC SIREN latent ODE</td>
+      <td>composed</td>
+      <td>0.00153215</td>
+      <td>0.0443101</td>
+      <td>0.022155</td>
+      <td>0.0505323</td>
+      <td>0.0576031</td>
+      <td>0.0900339</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>train</td>
+      <td>QC SIREN latent ODE</td>
+      <td>direct</td>
+      <td>0.00153176</td>
+      <td>0.0443051</td>
+      <td>0.0221525</td>
+      <td>0.0505114</td>
+      <td>0.0576051</td>
+      <td>0.0900231</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>train</td>
+      <td>QC local-decomp SIREN</td>
+      <td>composed</td>
+      <td>0.00172194</td>
+      <td>0.0473009</td>
+      <td>0.0236505</td>
+      <td>0.0525979</td>
+      <td>0.0521291</td>
+      <td>0.0349753</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>train</td>
+      <td>QC local-decomp SIREN</td>
+      <td>direct</td>
+      <td>0.0017226</td>
+      <td>0.0473072</td>
+      <td>0.0236536</td>
+      <td>0.0526131</td>
+      <td>0.052129</td>
+      <td>0.0349753</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>val</td>
+      <td>QC PCA150 cocycle flow</td>
+      <td>composed</td>
+      <td>0.000754173</td>
+      <td>0.0311324</td>
+      <td>0.0155662</td>
+      <td>0.0368756</td>
+      <td>0.050879</td>
+      <td>0.0341186</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>val</td>
+      <td>QC PCA150 cocycle flow</td>
+      <td>direct</td>
+      <td>0.000771325</td>
+      <td>0.0314152</td>
+      <td>0.0157076</td>
+      <td>0.0372038</td>
+      <td>0.0457869</td>
+      <td>0.0316425</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>val</td>
+      <td>QC BrainODE PCA150</td>
+      <td>endpoint</td>
+      <td>0.000806592</td>
+      <td>0.0320782</td>
+      <td>0.0160391</td>
+      <td>0.037946</td>
+      <td>0.0464695</td>
+      <td>0.0324157</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>val</td>
+      <td>QC SIREN direct flow</td>
+      <td>composed</td>
+      <td>0.00146839</td>
+      <td>0.0436565</td>
+      <td>0.0218283</td>
+      <td>0.0489674</td>
+      <td>0.0563314</td>
+      <td>0.061859</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>val</td>
+      <td>QC SIREN direct flow</td>
+      <td>direct</td>
+      <td>0.00146866</td>
+      <td>0.0436236</td>
+      <td>0.0218118</td>
+      <td>0.0489875</td>
+      <td>0.0559083</td>
+      <td>0.0600825</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>val</td>
+      <td>QC SIREN latent ODE</td>
+      <td>composed</td>
+      <td>0.00147945</td>
+      <td>0.0437508</td>
+      <td>0.0218754</td>
+      <td>0.0493037</td>
+      <td>0.0606591</td>
+      <td>0.0677271</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>val</td>
+      <td>QC SIREN latent ODE</td>
+      <td>direct</td>
+      <td>0.00147869</td>
+      <td>0.0437262</td>
+      <td>0.0218631</td>
+      <td>0.0493021</td>
+      <td>0.0606602</td>
+      <td>0.0677208</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>val</td>
+      <td>QC local-decomp SIREN</td>
+      <td>composed</td>
+      <td>0.00149317</td>
+      <td>0.0443588</td>
+      <td>0.0221794</td>
+      <td>0.0487095</td>
+      <td>0.0434016</td>
+      <td>0.0331597</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>val</td>
+      <td>QC local-decomp SIREN</td>
+      <td>direct</td>
+      <td>0.00149249</td>
+      <td>0.0443557</td>
+      <td>0.0221778</td>
+      <td>0.0487121</td>
+      <td>0.0434016</td>
+      <td>0.0331597</td>
+    </tr>
+  </tbody>
+</table></div>
+</section>
+<section>
+<h2>SDF Summary</h2>
+<div class="table-wrap"><table border="1" class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>dataset_label</th>
+      <th>model_label</th>
+      <th>split</th>
+      <th>rows</th>
+      <th>model_target_sdf_l1_mean</th>
+      <th>composed_target_sdf_l1_mean</th>
+      <th>no_change_target_sdf_l1_mean</th>
+      <th>sdf_l1_improvement_mean</th>
+      <th>composed_sdf_l1_improvement_mean</th>
+      <th>model_beats_no_change_fraction</th>
+      <th>composed_beats_no_change_fraction</th>
+      <th>target_latent_mse_diagnostic_mean</th>
+      <th>displacement_magnitude_abs_error_mean</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN direct flow</td>
+      <td>train</td>
+      <td>3680</td>
+      <td>0.0152799</td>
+      <td>0.0152795</td>
+      <td>0.0161145</td>
+      <td>0.000834659</td>
+      <td>0.000835035</td>
+      <td>0.761413</td>
+      <td>0.767935</td>
+      <td>0.0042316</td>
+      <td>0.817729</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN direct flow</td>
+      <td>val</td>
+      <td>522</td>
+      <td>0.0153417</td>
+      <td>0.0153142</td>
+      <td>0.0159207</td>
+      <td>0.000578988</td>
+      <td>0.000606458</td>
+      <td>0.704981</td>
+      <td>0.703065</td>
+      <td>0.00509027</td>
+      <td>0.889882</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN direct flow</td>
+      <td>test</td>
+      <td>483</td>
+      <td>0.0158562</td>
+      <td>0.0158493</td>
+      <td>0.0167282</td>
+      <td>0.000872009</td>
+      <td>0.000878871</td>
+      <td>0.73913</td>
+      <td>0.751553</td>
+      <td>0.00530884</td>
+      <td>0.919721</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN latent ODE</td>
+      <td>train</td>
+      <td>3680</td>
+      <td>0.0146926</td>
+      <td>0.0146926</td>
+      <td>0.0161145</td>
+      <td>0.00142192</td>
+      <td>0.0014219</td>
+      <td>0.807065</td>
+      <td>0.807065</td>
+      <td>0.00457495</td>
+      <td>0.668669</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN latent ODE</td>
+      <td>val</td>
+      <td>522</td>
+      <td>0.0153258</td>
+      <td>0.0153258</td>
+      <td>0.0159207</td>
+      <td>0.000594908</td>
+      <td>0.000594926</td>
+      <td>0.676245</td>
+      <td>0.676245</td>
+      <td>0.00550891</td>
+      <td>0.726742</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN latent ODE</td>
+      <td>test</td>
+      <td>483</td>
+      <td>0.015755</td>
+      <td>0.015755</td>
+      <td>0.0167282</td>
+      <td>0.000973176</td>
+      <td>0.000973184</td>
+      <td>0.650104</td>
+      <td>0.650104</td>
+      <td>0.00580559</td>
+      <td>0.734612</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC local-decomp SIREN</td>
+      <td>train</td>
+      <td>3680</td>
+      <td>0.0160041</td>
+      <td>0.0160041</td>
+      <td>0.0161145</td>
+      <td>0.000110385</td>
+      <td>0.000110385</td>
+      <td>0.529076</td>
+      <td>0.529076</td>
+      <td>0.00400356</td>
+      <td>0.991976</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC local-decomp SIREN</td>
+      <td>val</td>
+      <td>522</td>
+      <td>0.0156611</td>
+      <td>0.0156611</td>
+      <td>0.0159207</td>
+      <td>0.000259632</td>
+      <td>0.000259632</td>
+      <td>0.582375</td>
+      <td>0.582375</td>
+      <td>0.00480759</td>
+      <td>1.08866</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC local-decomp SIREN</td>
+      <td>test</td>
+      <td>483</td>
+      <td>0.0165136</td>
+      <td>0.0165136</td>
+      <td>0.0167282</td>
+      <td>0.000214551</td>
+      <td>0.000214551</td>
+      <td>0.587992</td>
+      <td>0.587992</td>
+      <td>0.00502435</td>
+      <td>1.11364</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN seq rollout</td>
+      <td>train</td>
+      <td>3680</td>
+      <td>0.0155107</td>
+      <td>0.0152477</td>
+      <td>0.0161145</td>
+      <td>0.000603827</td>
+      <td>0.000866834</td>
+      <td>0.63125</td>
+      <td>0.696196</td>
+      <td>0.00797431</td>
+      <td>0.367972</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN seq rollout</td>
+      <td>val</td>
+      <td>522</td>
+      <td>0.0157858</td>
+      <td>0.0154369</td>
+      <td>0.0159207</td>
+      <td>0.000134919</td>
+      <td>0.000483831</td>
+      <td>0.549808</td>
+      <td>0.609195</td>
+      <td>0.0101568</td>
+      <td>0.425662</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN seq rollout</td>
+      <td>test</td>
+      <td>483</td>
+      <td>0.0162489</td>
+      <td>0.0158239</td>
+      <td>0.0167282</td>
+      <td>0.000479298</td>
+      <td>0.000904258</td>
+      <td>0.600414</td>
+      <td>0.674948</td>
+      <td>0.0106017</td>
+      <td>0.44124</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC structured-latent SIREN</td>
+      <td>train</td>
+      <td>3680</td>
+      <td>0.0154425</td>
+      <td>0.0154425</td>
+      <td>0.015537</td>
+      <td>9.44994e-05</td>
+      <td>9.44994e-05</td>
+      <td>0.527446</td>
+      <td>0.527446</td>
+      <td>0.000968475</td>
+      <td>0.461977</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC structured-latent SIREN</td>
+      <td>val</td>
+      <td>522</td>
+      <td>0.014911</td>
+      <td>0.014911</td>
+      <td>0.0151883</td>
+      <td>0.000277256</td>
+      <td>0.000277256</td>
+      <td>0.563218</td>
+      <td>0.563218</td>
+      <td>0.00093921</td>
+      <td>0.455565</td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC structured-latent SIREN</td>
+      <td>test</td>
+      <td>483</td>
+      <td>0.0155385</td>
+      <td>0.0155385</td>
+      <td>0.0157683</td>
+      <td>0.000229822</td>
+      <td>0.000229822</td>
+      <td>0.57764</td>
+      <td>0.57764</td>
+      <td>0.000974696</td>
+      <td>0.465485</td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old PCA32 SIREN flow</td>
+      <td>train</td>
+      <td>613</td>
+      <td>0.0112957</td>
+      <td>0.0113106</td>
+      <td>0.0120157</td>
+      <td>0.000720041</td>
+      <td>0.000705112</td>
+      <td>0.794454</td>
+      <td>0.786297</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old PCA32 SIREN flow</td>
+      <td>val</td>
+      <td>39</td>
+      <td>0.0114953</td>
+      <td>0.0115004</td>
+      <td>0.0121136</td>
+      <td>0.000618224</td>
+      <td>0.000613119</td>
+      <td>0.74359</td>
+      <td>0.74359</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old PCA32 SIREN flow</td>
+      <td>test</td>
+      <td>70</td>
+      <td>0.0117357</td>
+      <td>0.0117433</td>
+      <td>0.012182</td>
+      <td>0.000446347</td>
+      <td>0.000438764</td>
+      <td>0.685714</td>
+      <td>0.685714</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old small-net DeepSDF</td>
+      <td>train</td>
+      <td>613</td>
+      <td>0.0104869</td>
+      <td>0.0104961</td>
+      <td>0.0115025</td>
+      <td>0.00101559</td>
+      <td>0.0010064</td>
+      <td>0.849918</td>
+      <td>0.853181</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old small-net DeepSDF</td>
+      <td>val</td>
+      <td>39</td>
+      <td>0.011181</td>
+      <td>0.0111833</td>
+      <td>0.0116757</td>
+      <td>0.000494633</td>
+      <td>0.000492386</td>
+      <td>0.717949</td>
+      <td>0.74359</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old small-net DeepSDF</td>
+      <td>test</td>
+      <td>70</td>
+      <td>0.0114127</td>
+      <td>0.0114008</td>
+      <td>0.0116482</td>
+      <td>0.000235473</td>
+      <td>0.000247382</td>
+      <td>0.542857</td>
+      <td>0.557143</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old full256 SIREN flow</td>
+      <td>train</td>
+      <td>613</td>
+      <td>0.0114488</td>
+      <td></td>
+      <td>0.0120157</td>
+      <td>0.000566964</td>
+      <td></td>
+      <td>0.833605</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old full256 SIREN flow</td>
+      <td>val</td>
+      <td>39</td>
+      <td>0.0115986</td>
+      <td></td>
+      <td>0.0121136</td>
+      <td>0.000514938</td>
+      <td></td>
+      <td>0.846154</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old full256 SIREN flow</td>
+      <td>test</td>
+      <td>70</td>
+      <td>0.0118381</td>
+      <td></td>
+      <td>0.012182</td>
+      <td>0.000343891</td>
+      <td></td>
+      <td>0.728571</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN direct flow</td>
+      <td>train</td>
+      <td>3680</td>
+      <td>0.0152799</td>
+      <td>0.0152795</td>
+      <td>0.0161145</td>
+      <td>0.000834659</td>
+      <td>0.000835035</td>
+      <td>0.761413</td>
+      <td>0.767935</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN direct flow</td>
+      <td>val</td>
+      <td>522</td>
+      <td>0.0153417</td>
+      <td>0.0153142</td>
+      <td>0.0159207</td>
+      <td>0.000578988</td>
+      <td>0.000606458</td>
+      <td>0.704981</td>
+      <td>0.703065</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC SIREN direct flow</td>
+      <td>test</td>
+      <td>483</td>
+      <td>0.0158562</td>
+      <td>0.0158493</td>
+      <td>0.0167282</td>
+      <td>0.000872009</td>
+      <td>0.000878871</td>
+      <td>0.73913</td>
+      <td>0.751553</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC local-decomp SIREN</td>
+      <td>train</td>
+      <td>3680</td>
+      <td>0.0160041</td>
+      <td>0.0160041</td>
+      <td>0.0161145</td>
+      <td>0.000110385</td>
+      <td>0.000110385</td>
+      <td>0.529076</td>
+      <td>0.529076</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC local-decomp SIREN</td>
+      <td>val</td>
+      <td>522</td>
+      <td>0.0156611</td>
+      <td>0.0156611</td>
+      <td>0.0159207</td>
+      <td>0.000259632</td>
+      <td>0.000259632</td>
+      <td>0.582375</td>
+      <td>0.582375</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC local-decomp SIREN</td>
+      <td>test</td>
+      <td>483</td>
+      <td>0.0165136</td>
+      <td>0.0165136</td>
+      <td>0.0167282</td>
+      <td>0.000214551</td>
+      <td>0.000214551</td>
+      <td>0.587992</td>
+      <td>0.587992</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old BrainODE PCA150</td>
+      <td>train</td>
+      <td>613</td>
+      <td>0.0107052</td>
+      <td></td>
+      <td>0.0107419</td>
+      <td>3.67833e-05</td>
+      <td></td>
+      <td>0.611746</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old BrainODE PCA150</td>
+      <td>val</td>
+      <td>39</td>
+      <td>0.0106921</td>
+      <td></td>
+      <td>0.0107105</td>
+      <td>1.83727e-05</td>
+      <td></td>
+      <td>0.512821</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Old ADNI subset</td>
+      <td>Old BrainODE PCA150</td>
+      <td>test</td>
+      <td>70</td>
+      <td>0.0109226</td>
+      <td></td>
+      <td>0.0109336</td>
+      <td>1.10273e-05</td>
+      <td></td>
+      <td>0.542857</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC BrainODE PCA150</td>
+      <td>train</td>
+      <td>3680</td>
+      <td>0.0121097</td>
+      <td></td>
+      <td>0.0123284</td>
+      <td>0.000218612</td>
+      <td></td>
+      <td>0.634783</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC BrainODE PCA150</td>
+      <td>val</td>
+      <td>522</td>
+      <td>0.0117292</td>
+      <td></td>
+      <td>0.0121588</td>
+      <td>0.000429593</td>
+      <td></td>
+      <td>0.691571</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>QC-large strict-left</td>
+      <td>QC BrainODE PCA150</td>
+      <td>test</td>
+      <td>483</td>
+      <td>0.0122055</td>
+      <td></td>
+      <td>0.012614</td>
+      <td>0.000408505</td>
+      <td></td>
+      <td>0.701863</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table></div>
+</section>
+
+</main>
+</body>
+</html>

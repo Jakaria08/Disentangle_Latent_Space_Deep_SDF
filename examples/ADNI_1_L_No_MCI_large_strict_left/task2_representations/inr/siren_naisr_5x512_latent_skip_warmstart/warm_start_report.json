@@ -1,0 +1,105 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task2_representations_original/inr/siren_naisr_enhanced/checkpoints/best.pth",
+  "details": [
+    {
+      "key": "decoder.lin0.weight",
+      "shape": [
+        512,
+        259
+      ],
+      "status": "exact"
+    },
+    {
+      "key": "decoder.lin0.bias",
+      "shape": [
+        512
+      ],
+      "status": "exact"
+    },
+    {
+      "key": "decoder.lin1.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "status": "exact"
+    },
+    {
+      "key": "decoder.lin1.bias",
+      "shape": [
+        512
+      ],
+      "status": "exact"
+    },
+    {
+      "key": "decoder.lin2.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "status": "exact"
+    },
+    {
+      "key": "decoder.lin2.bias",
+      "shape": [
+        512
+      ],
+      "status": "exact"
+    },
+    {
+      "key": "decoder.lin3.weight",
+      "source_shape": [
+        512,
+        512
+      ],
+      "status": "partial_top_left_zero_extra_columns",
+      "target_shape": [
+        512,
+        768
+      ]
+    },
+    {
+      "key": "decoder.lin3.bias",
+      "shape": [
+        512
+      ],
+      "status": "exact"
+    },
+    {
+      "key": "decoder.lin4.weight",
+      "shape": [
+        512,
+        512
+      ],
+      "status": "exact"
+    },
+    {
+      "key": "decoder.lin4.bias",
+      "shape": [
+        512
+      ],
+      "status": "exact"
+    },
+    {
+      "key": "decoder.lin5.weight",
+      "shape": [
+        1,
+        512
+      ],
+      "status": "exact"
+    },
+    {
+      "key": "decoder.lin5.bias",
+      "shape": [
+        1
+      ],
+      "status": "exact"
+    }
+  ],
+  "exact_loaded": 11,
+  "partial_loaded": 1,
+  "skipped": 0,
+  "source_best_validation_l1": 0.005225608590990305,
+  "source_epoch": 1975,
+  "transfer_mode": "partial"
+}

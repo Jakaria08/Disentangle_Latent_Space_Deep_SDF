@@ -1,0 +1,76 @@
+{
+  "checks": {
+    "all_subject_count": 523,
+    "all_visit_count": 2229,
+    "all_visit_pca_150_shape": [
+      2229,
+      150
+    ],
+    "all_visit_pca_256_shape": [
+      2229,
+      256
+    ],
+    "all_visit_split_counts": {
+      "test": 214,
+      "train": 1791,
+      "val": 224
+    },
+    "dataset_summary_status": "pass",
+    "input_audit_status": "pass",
+    "scan_manifest_rows": 2229,
+    "scan_manifest_split_counts": {
+      "test": 214,
+      "train": 1791,
+      "val": 224
+    },
+    "subject_sequence_count": 523,
+    "subject_sequence_split_counts": {
+      "test": 50,
+      "train": 421,
+      "val": 52
+    },
+    "test_subject_count": 50,
+    "test_visit_count": 214,
+    "test_visit_pca_150_shape": [
+      214,
+      150
+    ],
+    "test_visit_pca_256_shape": [
+      214,
+      256
+    ],
+    "test_visit_split_counts": {
+      "test": 214
+    },
+    "train_subject_count": 421,
+    "train_visit_count": 1791,
+    "train_visit_pca_150_shape": [
+      1791,
+      150
+    ],
+    "train_visit_pca_256_shape": [
+      1791,
+      256
+    ],
+    "train_visit_split_counts": {
+      "train": 1791
+    },
+    "val_subject_count": 52,
+    "val_visit_count": 224,
+    "val_visit_pca_150_shape": [
+      224,
+      150
+    ],
+    "val_visit_pca_256_shape": [
+      224,
+      256
+    ],
+    "val_visit_split_counts": {
+      "val": 224
+    }
+  },
+  "errors": [],
+  "stage": "dataset",
+  "status": "pass",
+  "warnings": []
+}

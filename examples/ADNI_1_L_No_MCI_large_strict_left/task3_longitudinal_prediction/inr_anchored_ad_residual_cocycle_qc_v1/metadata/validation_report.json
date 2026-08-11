@@ -1,0 +1,28 @@
+{
+  "cache_face_shape": [
+    4408,
+    3
+  ],
+  "cache_vertex_shape": [
+    2229,
+    2206,
+    3
+  ],
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/inr_anchored_ad_residual_cocycle_qc_v1/configs/large_siren_primary.json",
+  "device": "cuda:0",
+  "feature_pca_shape": [
+    32,
+    256
+  ],
+  "initial_ad_max_abs_error_vs_base": 0.0,
+  "initial_cn_max_abs_error_vs_base": 0.0,
+  "residual_basis_shape": [
+    17,
+    256
+  ],
+  "source_latent_shape": [
+    2229,
+    256
+  ],
+  "source_scan_count": 2229
+}

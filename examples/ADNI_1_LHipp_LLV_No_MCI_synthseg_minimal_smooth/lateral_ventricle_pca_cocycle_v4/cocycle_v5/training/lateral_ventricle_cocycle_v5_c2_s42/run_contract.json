@@ -1,0 +1,14 @@
+{
+  "all_current_qc_passed_subjects_retained": true,
+  "attention_used": false,
+  "cross_subject_operations": false,
+  "experiment": "c2",
+  "input_config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "input_config_sha256": "76b0547ac3379191739ba9e15f944e871077581182df986b910b9a75ecfbdeb6",
+  "method": "direct_pca_cocycle_v5",
+  "ode_used": false,
+  "source_meshes_modified": false,
+  "structure": "left_lateral_ventricle",
+  "test_loaded_during_training": false,
+  "transport": "Phi(z,s,t,d)=z+(t-s)*phi(z,s,t,d)"
+}

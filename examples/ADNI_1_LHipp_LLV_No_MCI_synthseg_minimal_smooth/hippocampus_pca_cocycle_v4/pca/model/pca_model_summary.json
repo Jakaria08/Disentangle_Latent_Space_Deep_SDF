@@ -1,0 +1,14 @@
+{
+  "cumulative_explained_variance": {
+    "100": 0.9941546320915222,
+    "128": 0.9972093105316162,
+    "150": 0.9983145594596863,
+    "32": 0.9327395558357239,
+    "64": 0.9812819361686707
+  },
+  "features": 8238,
+  "fit_scans": 2037,
+  "fit_split": "train",
+  "max_components": 150,
+  "structure": "left_hippocampus"
+}

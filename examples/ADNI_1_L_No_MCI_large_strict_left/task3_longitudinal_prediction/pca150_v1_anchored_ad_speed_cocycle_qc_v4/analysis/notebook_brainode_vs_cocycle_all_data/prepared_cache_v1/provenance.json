@@ -1,0 +1,49 @@
+{
+  "bootstrap_replicates": 10000,
+  "brainode_checkpoint": {
+    "mtime_ns": 1784853013338213876,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/training/core_attention_pca150_qc_stable/checkpoints/best.pth",
+    "sha256": "7a0bbf08facd2cc6852281f53c96b08207d1f618edffd444a1bfb964894e36e8",
+    "size": 3928175
+  },
+  "config": {
+    "mtime_ns": 1785897103351854288,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/configs/v1_anchored_ad_speed_primary.json",
+    "sha256": "e9071c450d3e7113d48d5d8c316ebd7b9e92738a9eb08f168554528e2d82ec98",
+    "size": 1919
+  },
+  "example_split": "test",
+  "group_map_max_pairs_per_diagnosis": 0,
+  "metadata": {
+    "mtime_ns": 1785897572147344249,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/metadata/speed_feature_stats.npz",
+    "sha256": "bc36bde6c1f233ef85e810218d895c60146168b5c58ed5c47980b3bca68bebb0",
+    "size": 2076
+  },
+  "schema_version": 1,
+  "seed": 42,
+  "skip_group_maps": false,
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "unified_per_pair": {
+    "mtime_ns": 1785905865361075374,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/analysis/notebook_brainode_vs_cocycle_all_data/unified_baselines_all_data/unified_registered_per_pair.csv",
+    "sha256": "02244d375c251cc53c707aa7ae33d2b965cfa0f35f46c290ef1d289e0bc39f64",
+    "size": 11232387
+  },
+  "unified_run": {
+    "mtime_ns": 1785905865594088244,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/analysis/notebook_brainode_vs_cocycle_all_data/unified_baselines_all_data/run.json",
+    "sha256": "79dace259c8fe8c431760aa29acb93e89286f5d6151de9024069dfb9309358a3",
+    "size": 750
+  },
+  "v4_checkpoint": {
+    "mtime_ns": 1785897789520016146,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/runs/v1_anchor_ad_speed_seed42/checkpoints/best_feasible_volume.pth",
+    "sha256": "5bf11c5a8535a7897aa126f680973abeeb01156f53ab1885c9669f3b8eb00de7",
+    "size": 4401197
+  }
+}

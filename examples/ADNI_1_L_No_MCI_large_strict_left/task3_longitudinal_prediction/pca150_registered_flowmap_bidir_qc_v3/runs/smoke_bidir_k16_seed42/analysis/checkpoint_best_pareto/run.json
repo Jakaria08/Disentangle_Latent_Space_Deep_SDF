@@ -1,0 +1,27 @@
+{
+  "backward_rows": 20,
+  "baseline_comparison_rows": 60,
+  "baseline_comparison_summary_rows": 18,
+  "brainode_comparison_rows": 40,
+  "brainode_comparison_summary_rows": 12,
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_bidir_qc_v3/runs/smoke_bidir_k16_seed42/checkpoints/best_pareto.pth",
+  "cycle_rows": 20,
+  "cycle_summary_rows": 3,
+  "forward_rows": 20,
+  "ood_gt_rows": 4,
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_registered_flowmap_bidir_qc_v3/runs/smoke_bidir_k16_seed42/analysis/checkpoint_best_pareto",
+  "pair_rows": 40,
+  "pca_model_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/pca/model",
+  "sequence_rows": 20,
+  "sequence_summary_rows": 4,
+  "splits": [
+    "val",
+    "test"
+  ],
+  "summary_rows": 29,
+  "transport_methods": [
+    "direct",
+    "composed_observed"
+  ],
+  "volume_trend_rows": 4
+}

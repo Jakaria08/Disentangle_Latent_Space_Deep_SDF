@@ -1,0 +1,18 @@
+{
+  "future_mesh_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/future_mesh_forecast_comparison",
+  "generated_artifact_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/unified_longitudinal_visual_report/generated_artifacts",
+  "latent_velocity_rows": 23425,
+  "mesh_rows": 22624,
+  "ood_rows": 8392,
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/unified_longitudinal_visual_report",
+  "pca_flow_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1",
+  "sdf_summary_rows": 156,
+  "selected_subject_rows": 227,
+  "selected_volume_trend_rows": 14923,
+  "selected_volume_velocity_rows": 9759,
+  "training_rows": 27396,
+  "volume_trend_rows": 20533,
+  "volume_velocity_rows": 14823,
+  "whole_dataset_volume_audit_group_rows": 56,
+  "whole_dataset_volume_audit_scan_rows": 17455
+}

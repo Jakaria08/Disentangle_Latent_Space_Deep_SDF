@@ -1,0 +1,35 @@
+{
+  "checkpoint": "best",
+  "checkpoint_epoch": 140,
+  "decoder_epoch": 1975,
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "pairs": 722,
+  "virtual_ratios": [
+    0.25,
+    0.5,
+    0.75
+  ],
+  "composed_step_years": 0.5,
+  "mean_model_target_sdf_l1": 0.011349145964128572,
+  "mean_composed_target_sdf_l1": 0.011362832002831917,
+  "mean_no_change_target_sdf_l1": 0.012037151865274168,
+  "mean_sdf_l1_improvement": 0.0006880059011455966,
+  "mean_composed_sdf_l1_improvement": 0.000674319862442251,
+  "mean_composed_sdf_l1_gain_vs_direct": -1.3686038703345525e-05,
+  "mean_displacement_magnitude_abs_error": 0.2935439384132211,
+  "mean_composed_displacement_magnitude_abs_error": 0.2890519385027423,
+  "model_beats_no_change_fraction": 0.7811634349030471,
+  "composed_beats_no_change_fraction": 0.7742382271468145,
+  "composed_beats_direct_fraction": 0.13988919667590027,
+  "mean_backward_virtual_latent_mse": 0.004294023468059815,
+  "mean_future_extrapolation_cocycle_mse": 7.461559083229778e-06,
+  "mean_predicted_latent_zscore_p95": 2.354033204657219,
+  "mean_composed_latent_zscore_p95": 2.3480990903859653,
+  "mean_predicted_speed_l2_per_normalized_age": 32.93981258228545,
+  "mean_composed_speed_l2_per_normalized_age": 32.81580810467622,
+  "future_trajectory_region_is_unvalidated": true
+}

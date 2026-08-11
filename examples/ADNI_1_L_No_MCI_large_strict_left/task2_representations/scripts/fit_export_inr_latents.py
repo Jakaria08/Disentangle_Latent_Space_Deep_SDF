@@ -57,6 +57,23 @@ def parse_args() -> argparse.Namespace:
         help="Override config output_dir for exported latents and reports.",
     )
     parser.add_argument(
+        "--metadata-filter",
+        default=None,
+        help=(
+            "Optional CSV containing scan_id rows to export. This is useful for "
+            "QC-filtered longitudinal experiments that are a subset of the "
+            "Task-2 manifest."
+        ),
+    )
+    parser.add_argument(
+        "--use-checkpoint-train-latents",
+        action="store_true",
+        help=(
+            "For train-split scans present in checkpoint train_scan_ids, export "
+            "the checkpoint latent code instead of refitting."
+        ),
+    )
+    parser.add_argument(
         "--name",
         default=None,
         help="Optional display name override for summaries.",
@@ -77,11 +94,45 @@ def converged(stats: dict) -> bool:
     )
 
 
+def load_scan_id_filter(path: str | None) -> set[str] | None:
+    if path is None:
+        return None
+    selected: set[str] = set()
+    with Path(path).open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if "scan_id" not in (reader.fieldnames or []):
+            raise ValueError(f"Metadata filter lacks scan_id column: {path}")
+        for row in reader:
+            selected.add(str(row["scan_id"]))
+    if not selected:
+        raise ValueError(f"Metadata filter has no scan IDs: {path}")
+    return selected
+
+
+def checkpoint_train_latent_map(checkpoint_payload: dict) -> dict[str, np.ndarray]:
+    scan_ids = checkpoint_payload.get("train_scan_ids") or []
+    latent_state = checkpoint_payload.get("latent_codes") or {}
+    weights = latent_state.get("weight")
+    if not scan_ids or weights is None:
+        return {}
+    if hasattr(weights, "detach"):
+        array = weights.detach().cpu().numpy().astype(np.float32)
+    else:
+        array = np.asarray(weights, dtype=np.float32)
+    if len(scan_ids) != len(array):
+        raise ValueError(
+            "Checkpoint train_scan_ids and latent_codes.weight have different "
+            f"lengths: {len(scan_ids)} vs {len(array)}."
+        )
+    return {
+        str(scan_id): np.asarray(array[index], dtype=np.float32)
+        for index, scan_id in enumerate(scan_ids)
+    }
+
+
 def main() -> int:
     args = parse_args()
     config = load_config(args.config)
-    if args.output_dir:
-        config["output_dir"] = args.output_dir
     if args.name:
         config["name"] = args.name
     device = choose_device(args.device)
@@ -96,11 +147,22 @@ def main() -> int:
     invalid = requested_splits.difference({"train", "val", "test"})
     if invalid:
         raise ValueError(f"Unknown splits: {sorted(invalid)}")
+    scan_id_filter = load_scan_id_filter(args.metadata_filter)
     selected = [row for row in rows if row["split"] in requested_splits]
+    if scan_id_filter is not None:
+        selected = [row for row in selected if row["scan_id"] in scan_id_filter]
+        manifest_scan_ids = {row["scan_id"] for row in rows}
+        missing = sorted(scan_id_filter.difference(manifest_scan_ids))
+        if missing:
+            raise ValueError(
+                f"{len(missing)} filtered scan IDs are absent from the Task-2 "
+                f"manifest; first={missing[0]}"
+            )
     if args.limit > 0:
         selected = selected[: args.limit]
+    selected_by_scan_id = {row["scan_id"]: row for row in selected}
 
-    output_dir = resolve_repo_path(config["output_dir"])
+    output_dir = resolve_repo_path(args.output_dir or config["output_dir"])
     per_scan_dir = output_dir / "latents" / "per_scan"
     metric_dir = output_dir / "latents" / "fit_metrics"
     per_scan_dir.mkdir(parents=True, exist_ok=True)
@@ -109,6 +171,11 @@ def main() -> int:
     if args.steps is not None:
         fit_config["steps"] = int(args.steps)
     seed = int(config["seed"])
+    checkpoint_train_latents = (
+        checkpoint_train_latent_map(checkpoint_payload)
+        if args.use_checkpoint_train_latents
+        else {}
+    )
 
     print(
         f"Fitting {len(selected)} {config['name']} latents from {checkpoint_path} "
@@ -117,6 +184,28 @@ def main() -> int:
     for index, row in enumerate(selected, start=1):
         latent_path = per_scan_dir / f"{row['scan_id']}.npy"
         stats_path = metric_dir / f"{row['scan_id']}.json"
+        if (
+            args.use_checkpoint_train_latents
+            and row["split"] == "train"
+            and row["scan_id"] in checkpoint_train_latents
+        ):
+            latent = checkpoint_train_latents[row["scan_id"]]
+            stats = {
+                "scan_id": row["scan_id"],
+                "split": row["split"],
+                "diagnosis": row["diagnosis"],
+                "source": "checkpoint_train_latent",
+                "checkpoint": str(checkpoint_path),
+                "checkpoint_sha256": checkpoint_hash,
+                "latent_norm": float(np.linalg.norm(latent)),
+                "finite": bool(np.all(np.isfinite(latent))),
+                "heldout_sdf_l1": float("nan"),
+                "converged": True,
+            }
+            np.save(latent_path, latent)
+            write_json(stats_path, stats)
+            print(f"[{index}/{len(selected)}] checkpoint {row['scan_id']}")
+            continue
         if args.skip_existing and latent_path.is_file() and stats_path.is_file():
             print(f"[{index}/{len(selected)}] existing {row['scan_id']}")
             continue
@@ -163,9 +252,7 @@ def main() -> int:
         )
 
     export_rows = []
-    for row in rows:
-        if row["split"] not in requested_splits:
-            continue
+    for row in selected:
         latent_path = per_scan_dir / f"{row['scan_id']}.npy"
         stats_path = metric_dir / f"{row['scan_id']}.json"
         if not latent_path.is_file() or not stats_path.is_file():
@@ -184,8 +271,9 @@ def main() -> int:
                 "age_norm": row["age_norm"],
                 "latent_dimension": int(latent.size),
                 "latent_norm": float(np.linalg.norm(latent)),
-                "heldout_sdf_l1": stats["heldout_sdf_l1"],
-                "converged": stats["converged"],
+                "heldout_sdf_l1": stats.get("heldout_sdf_l1", float("nan")),
+                "converged": stats.get("converged", False),
+                "source": stats.get("source", "optimized_fit"),
                 "latent_path": str(latent_path),
                 "checkpoint_path": str(checkpoint_path),
                 "checkpoint_sha256": checkpoint_hash,
@@ -201,8 +289,14 @@ def main() -> int:
 
     for split in ("train", "val", "test"):
         split_rows = [row for row in export_rows if row["split"] == split]
-        expected_rows = [row for row in rows if row["split"] == split]
-        if split not in requested_splits or len(split_rows) != len(expected_rows):
+        expected_rows = [
+            row for row in selected_by_scan_id.values() if row["split"] == split
+        ]
+        if (
+            split not in requested_splits
+            or not split_rows
+            or len(split_rows) != len(expected_rows)
+        ):
             continue
         np.savez_compressed(
             output_dir / "latents" / f"{split}_latents.npz",
@@ -216,13 +310,29 @@ def main() -> int:
         "checkpoint_epoch": checkpoint_payload.get("epoch"),
         "checkpoint_sha256": checkpoint_hash,
         "requested_splits": sorted(requested_splits),
+        "metadata_filter": args.metadata_filter,
+        "used_checkpoint_train_latents": bool(args.use_checkpoint_train_latents),
         "exported_scan_count": len(export_rows),
         "converged_scan_count": sum(
             str(row["converged"]).lower() == "true" for row in export_rows
         ),
         "mean_heldout_sdf_l1": (
-            float(np.mean([float(row["heldout_sdf_l1"]) for row in export_rows]))
-            if export_rows
+            float(
+                np.mean(
+                    [
+                        value
+                        for value in (
+                            float(row["heldout_sdf_l1"])
+                            for row in export_rows
+                        )
+                        if np.isfinite(value)
+                    ]
+                )
+            )
+            if any(
+                np.isfinite(float(row["heldout_sdf_l1"]))
+                for row in export_rows
+            )
             else None
         ),
     }

@@ -1,0 +1,78 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/runs/v1_anchor_ad_speed_seed42/checkpoints/best_feasible_volume.pth",
+  "checkpoint_metrics": {
+    "ad_observed_slope_mean": -0.06871825527153252,
+    "ad_predicted_slope_mean": -0.036817685427034605,
+    "ad_slope_pearson": 0.05416237818061397,
+    "ad_subject_slope_abs_error": 0.0774479280499851,
+    "cn_max_abs_delta_from_v1": 0.0,
+    "epoch": 21,
+    "feasible": true,
+    "first_last_groups": {
+      "AD": {
+        "pca_mean": 0.01273569903181245,
+        "rate_mean": 0.0577578063433369,
+        "rows": 24,
+        "speed_mean": 2.8887129028638205,
+        "vertex_mean": 0.012143677178149423,
+        "volume_relative_mean": 0.0730318849722001
+      },
+      "CN": {
+        "pca_mean": 0.011746277384060835,
+        "rate_mean": 0.018296611778038954,
+        "rows": 28,
+        "speed_mean": 1.0,
+        "vertex_mean": 0.01181557887632932,
+        "volume_relative_mean": 0.042332119341673594
+      },
+      "overall": {
+        "pca_mean": 0.012202933529176964,
+        "rate_mean": 0.036509470808176465,
+        "rows": 52,
+        "speed_mean": 1.8717136474756093,
+        "vertex_mean": 0.011967008861784752,
+        "volume_relative_mean": 0.05650124194037814
+      }
+    },
+    "global_speed": 2.83778977394104,
+    "groups": {
+      "AD": {
+        "pca_mean": 0.01159594892936794,
+        "rate_mean": 0.07212435286727888,
+        "rows": 79,
+        "speed_mean": 2.895594448982915,
+        "vertex_mean": 0.011434469460450772,
+        "volume_relative_mean": 0.060994345529735844
+      },
+      "CN": {
+        "pca_mean": 0.01100554557109323,
+        "rate_mean": 0.022056314190042902,
+        "rows": 443,
+        "speed_mean": 1.0,
+        "vertex_mean": 0.011302898504453844,
+        "volume_relative_mean": 0.04088722904815446
+      },
+      "overall": {
+        "pca_mean": 0.011094897803475803,
+        "rate_mean": 0.029633661039662904,
+        "rows": 522,
+        "speed_mean": 1.2868811522407093,
+        "vertex_mean": 0.011322810584001272,
+        "volume_relative_mean": 0.04393026008655471
+      }
+    },
+    "subjects": 17.0,
+    "volume_score": 0.1800694536821319
+  },
+  "device": "cuda:0",
+  "rows": 2088,
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/runs/v1_anchor_ad_speed_seed42",
+  "sequence_rows": 322,
+  "splits": [
+    "val"
+  ],
+  "transport_methods": [
+    "direct",
+    "composed_observed"
+  ]
+}

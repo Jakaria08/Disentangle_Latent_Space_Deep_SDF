@@ -1,0 +1,152 @@
+{
+  "archives": {
+    "all_coefficients.npz": {
+      "keys": [
+        "age_norm_train",
+        "age_years",
+        "diagnoses",
+        "label_ad",
+        "pca_150",
+        "pca_standardized_150",
+        "scan_ids",
+        "splits",
+        "subject_ids",
+        "train_pca_mean_150",
+        "train_pca_std_150",
+        "visit_months",
+        "visit_orders"
+      ],
+      "original": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/all_coefficients.npz",
+      "replacement": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/all_coefficients_safe.npz",
+      "safe_dtypes": {
+        "age_norm_train": "float32",
+        "age_years": "float32",
+        "diagnoses": "<U2",
+        "label_ad": "int8",
+        "pca_150": "float32",
+        "pca_standardized_150": "float32",
+        "scan_ids": "<U9",
+        "splits": "<U5",
+        "subject_ids": "<U4",
+        "train_pca_mean_150": "float32",
+        "train_pca_std_150": "float32",
+        "visit_months": "float32",
+        "visit_orders": "int16"
+      }
+    },
+    "test_coefficients.npz": {
+      "keys": [
+        "age_norm_train",
+        "age_years",
+        "diagnoses",
+        "label_ad",
+        "pca_150",
+        "pca_standardized_150",
+        "scan_ids",
+        "splits",
+        "subject_ids",
+        "train_pca_mean_150",
+        "train_pca_std_150",
+        "visit_months",
+        "visit_orders"
+      ],
+      "original": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/test_coefficients.npz",
+      "replacement": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/test_coefficients_safe.npz",
+      "safe_dtypes": {
+        "age_norm_train": "float32",
+        "age_years": "float32",
+        "diagnoses": "<U2",
+        "label_ad": "int8",
+        "pca_150": "float32",
+        "pca_standardized_150": "float32",
+        "scan_ids": "<U8",
+        "splits": "<U4",
+        "subject_ids": "<U4",
+        "train_pca_mean_150": "float32",
+        "train_pca_std_150": "float32",
+        "visit_months": "float32",
+        "visit_orders": "int16"
+      }
+    },
+    "train_coefficients.npz": {
+      "keys": [
+        "age_norm_train",
+        "age_years",
+        "diagnoses",
+        "label_ad",
+        "pca_150",
+        "pca_standardized_150",
+        "scan_ids",
+        "splits",
+        "subject_ids",
+        "train_pca_mean_150",
+        "train_pca_std_150",
+        "visit_months",
+        "visit_orders"
+      ],
+      "original": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/train_coefficients.npz",
+      "replacement": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/train_coefficients_safe.npz",
+      "safe_dtypes": {
+        "age_norm_train": "float32",
+        "age_years": "float32",
+        "diagnoses": "<U2",
+        "label_ad": "int8",
+        "pca_150": "float32",
+        "pca_standardized_150": "float32",
+        "scan_ids": "<U9",
+        "splits": "<U5",
+        "subject_ids": "<U4",
+        "train_pca_mean_150": "float32",
+        "train_pca_std_150": "float32",
+        "visit_months": "float32",
+        "visit_orders": "int16"
+      }
+    },
+    "val_coefficients.npz": {
+      "keys": [
+        "age_norm_train",
+        "age_years",
+        "diagnoses",
+        "label_ad",
+        "pca_150",
+        "pca_standardized_150",
+        "scan_ids",
+        "splits",
+        "subject_ids",
+        "train_pca_mean_150",
+        "train_pca_std_150",
+        "visit_months",
+        "visit_orders"
+      ],
+      "original": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/val_coefficients.npz",
+      "replacement": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/val_coefficients_safe.npz",
+      "safe_dtypes": {
+        "age_norm_train": "float32",
+        "age_years": "float32",
+        "diagnoses": "<U2",
+        "label_ad": "int8",
+        "pca_150": "float32",
+        "pca_standardized_150": "float32",
+        "scan_ids": "<U8",
+        "splits": "<U3",
+        "subject_ids": "<U4",
+        "train_pca_mean_150": "float32",
+        "train_pca_std_150": "float32",
+        "visit_months": "float32",
+        "visit_orders": "int16"
+      }
+    }
+  },
+  "load_policy": "all safe archives validated with numpy.load(..., allow_pickle=False)",
+  "manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/metadata/lateral_ventricle_qc_keep_manifest.csv",
+  "original_archive_status": "superseded_for_downstream_loading_only",
+  "original_archives_preserved": true,
+  "passed": true,
+  "pca_refitted": false,
+  "safe_all_archive": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/coefficients/all_coefficients_safe.npz",
+  "safe_archive_status": "active_for_downstream_loading",
+  "scans": 2588,
+  "source_meshes_modified": false,
+  "structure": "lateral_ventricle",
+  "subjects": 599
+}

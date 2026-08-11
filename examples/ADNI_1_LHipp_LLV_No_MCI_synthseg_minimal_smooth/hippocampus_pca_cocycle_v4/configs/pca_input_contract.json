@@ -1,0 +1,25 @@
+{
+  "candidate_components": [
+    32,
+    64,
+    100,
+    128,
+    150
+  ],
+  "coordinate_space": "final_ply_mm",
+  "fit_split": "train",
+  "master_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/cohort_master/metadata/master_strict_no_mci_stable_min2_manifest.csv",
+  "master_manifest_sha256": "f5db70ea0b8d6b51db92b5a335fd0163b7d0eae47f97fda02e6045c674cfaf69",
+  "max_components": 150,
+  "name": "adni_synthseg_hippocampus_strict_no_mci_pca_input",
+  "source_meshes_modified": false,
+  "status": "PCA input prepared; PCA/Cocycle/Brain-ODE not fitted",
+  "structure": "left_hippocampus",
+  "structure_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+  "structure_manifest_sha256": "e12cf0cb6bb720d1e169c658e5131beb115cac0d1112112086fbdbbd664252d6",
+  "topology": {
+    "correspondence_topology_hash": "a8485554b4637ef929b5b05da9e34e10cdb7997a8e861aa6558c3847d7fd9d57",
+    "face_count": 5488,
+    "vertex_count": 2746
+  }
+}

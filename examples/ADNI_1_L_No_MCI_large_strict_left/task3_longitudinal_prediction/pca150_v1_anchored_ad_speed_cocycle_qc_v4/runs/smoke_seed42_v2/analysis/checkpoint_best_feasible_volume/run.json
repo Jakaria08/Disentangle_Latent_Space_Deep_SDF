@@ -1,0 +1,52 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/runs/smoke_seed42_v2/checkpoints/best_feasible_volume.pth",
+  "checkpoint_metrics": {
+    "ad_observed_slope_mean": -0.06871823638828252,
+    "ad_predicted_slope_mean": -0.012680469080805779,
+    "ad_slope_pearson": 0.07154131791557257,
+    "ad_subject_slope_abs_error": 0.08418060883003123,
+    "cn_max_abs_delta_from_v1": 0.0,
+    "epoch": 2,
+    "feasible": true,
+    "global_speed": 1.0090134143829346,
+    "groups": {
+      "AD": {
+        "pca_mean": 0.015816321596503258,
+        "rate_mean": 0.08457447378896177,
+        "rows": 8,
+        "speed_mean": 1.009375512599945,
+        "vertex_mean": 0.01237011223565787,
+        "volume_relative_mean": 0.07749534776667133
+      },
+      "CN": {
+        "pca_mean": 0.03155270672868937,
+        "rate_mean": 0.06274025049060583,
+        "rows": 8,
+        "speed_mean": 1.0,
+        "vertex_mean": 0.01837165839970112,
+        "volume_relative_mean": 0.07003944600000978
+      },
+      "overall": {
+        "pca_mean": 0.023684514162596315,
+        "rate_mean": 0.0736573621397838,
+        "rows": 16,
+        "speed_mean": 1.0046877562999725,
+        "vertex_mean": 0.015370885317679495,
+        "volume_relative_mean": 0.07376739688334055
+      }
+    },
+    "subjects": 17.0,
+    "volume_score": 0.20750275650232866
+  },
+  "device": "cpu",
+  "rows": 32,
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_v1_anchored_ad_speed_cocycle_qc_v4/runs/smoke_seed42_v2",
+  "sequence_rows": 32,
+  "splits": [
+    "val"
+  ],
+  "transport_methods": [
+    "direct",
+    "composed_observed"
+  ]
+}

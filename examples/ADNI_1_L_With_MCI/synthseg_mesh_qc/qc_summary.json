@@ -1,0 +1,140 @@
+{
+  "source_meshes_modified": false,
+  "input": {
+    "input_root": "/home/jakaria/ADNI/ADNI_1_GO_Large/synthseg_minimal_correspondence/full",
+    "records": 5430,
+    "subjects": 676,
+    "structures": [
+      "left_hippocampus",
+      "left_lateral_ventricle"
+    ],
+    "cohort_diagnosis_counts_per_structure": {
+      "CN": 3462,
+      "AD": 1968
+    },
+    "pipeline_validation": {
+      "passed": true,
+      "structures": {
+        "left_hippocampus": {
+          "passed": true,
+          "failures": [],
+          "successful_meshes": 4155,
+          "failed_or_blocked_meshes": 0,
+          "non_watertight_minimal_smooth_meshes": [],
+          "vertex_count": 2746,
+          "face_count": 5488,
+          "identical_face_connectivity": true,
+          "max_normalized_volume_error_pct": 1.4066643614446733e-06,
+          "max_final_vs_smooth_volume_error_pct": 2.1292926230618615e-06,
+          "scaled_obj_min": -0.9,
+          "scaled_obj_max": 0.9,
+          "scaled_obj_target_range": [
+            -0.9,
+            0.9
+          ]
+        },
+        "left_lateral_ventricle": {
+          "passed": true,
+          "failures": [],
+          "successful_meshes": 4155,
+          "failed_or_blocked_meshes": 0,
+          "non_watertight_minimal_smooth_meshes": [],
+          "vertex_count": 8346,
+          "face_count": 16688,
+          "identical_face_connectivity": true,
+          "max_normalized_volume_error_pct": 1.0633816693592279e-06,
+          "max_final_vs_smooth_volume_error_pct": 1.9280247769668823e-06,
+          "scaled_obj_min": -0.9,
+          "scaled_obj_max": 0.9,
+          "scaled_obj_target_range": [
+            -0.9,
+            0.9
+          ]
+        }
+      }
+    }
+  },
+  "cohort_filter": "strict_no_mci",
+  "cohort_label": "baseline",
+  "structures": [
+    "left_hippocampus",
+    "left_lateral_ventricle"
+  ],
+  "scan_records": 5430,
+  "adjacent_pairs": 4078,
+  "scan_actions": {
+    "pass": 4448,
+    "review_scan": 922,
+    "review_pair_context": 60
+  },
+  "strong_flagged_pairs": 26,
+  "subject_actions": {
+    "pass": 1001,
+    "review_subject": 340,
+    "exclude_subject": 11
+  },
+  "scan_thresholds": {
+    "left_hippocampus.raw_vs_mask_volume_pct": {
+      "median": -0.9233780316957948,
+      "mad": 0.08780149327957043,
+      "low": -1.5742505013772503,
+      "high": -0.2725055620143393
+    },
+    "left_hippocampus.smooth_vs_mask_volume_pct_actual": {
+      "median": -2.0396594749166157,
+      "mad": 0.22333533953589502,
+      "low": -3.6952443468962053,
+      "high": -0.3840746029370261
+    },
+    "left_hippocampus.smooth_surface_area_volume_ratio": {
+      "median": 8.4740030512281,
+      "mad": 0.20884658693657343,
+      "low": 6.925823302267282,
+      "high": 10.022182800188919
+    },
+    "left_lateral_ventricle.raw_vs_mask_volume_pct": {
+      "median": -0.3344982526210684,
+      "mad": 0.09704651516933097,
+      "low": -1.0539040695713189,
+      "high": 0.384907564329182
+    },
+    "left_lateral_ventricle.smooth_vs_mask_volume_pct_actual": {
+      "median": -0.7211902040491955,
+      "mad": 0.2375142385058181,
+      "low": -2.481883254092825,
+      "high": 1.0395028459944338
+    },
+    "left_lateral_ventricle.smooth_surface_area_volume_ratio": {
+      "median": 8.465050114228303,
+      "mad": 0.48882138469004843,
+      "low": 4.841417189520974,
+      "high": 12.088683038935631
+    }
+  },
+  "pair_thresholds": {
+    "left_hippocampus.shape_rms_displacement_mm_per_year_q0.995": 1.181178710244891,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_q0.995": 2.217780298118669,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_q0.995": 3.5934106704017386,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_q0.995": 5.618036342783959
+  },
+  "notes": [
+    "Raw multiple-component meshes are review-only because the raw segmentation is preserved and the correspondence pipeline uses a one-component smooth mesh.",
+    "The QC recommendation tables do not delete or modify source meshes.",
+    "The default strict_no_mci filter retains only baseline-CN/AD subjects with no MCI-labelled meshed visit; it excludes MCI converters/reverters and unknown baseline groups."
+  ],
+  "top_pair_overlays": [
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/01_left_lateral_ventricle_4448_bl_to_4448_m06.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/02_left_lateral_ventricle_337_m60_to_337_m72.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/03_left_lateral_ventricle_743_bl_to_743_m06.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/04_left_lateral_ventricle_502_m06_to_502_m12.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/05_left_lateral_ventricle_4591_m06_to_4591_m12.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/06_left_lateral_ventricle_372_m06_to_372_m12.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/07_left_lateral_ventricle_1397_m06_to_1397_m12.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/08_left_lateral_ventricle_5059_bl_to_5059_m06.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/09_left_lateral_ventricle_829_m06_to_829_m12.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/10_left_lateral_ventricle_4136_m06_to_4136_m12.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/11_left_lateral_ventricle_4386_m06_to_4386_m12.html",
+    "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/top_pair_overlays/12_left_lateral_ventricle_829_m12_to_829_m24.html"
+  ],
+  "html_index": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_With_MCI/synthseg_mesh_qc/index.html"
+}

@@ -1,0 +1,24 @@
+{
+  "backward_train_pairs": true,
+  "base_flow": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/inr_anchored_ad_residual_cocycle_siren_original_v1/../longitudinal_direct_full256_siren_sequence_cocycle_latent_guard/ModelParameters/best.pth",
+  "basis_fit_split": "train",
+  "basis_pair_type": "adjacent",
+  "decoder": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/inr_anchored_ad_residual_cocycle_siren_original_v1/../brainode_comparison_task2_representations_original/inr/siren_naisr_enhanced/checkpoints/best.pth",
+  "experiment": "original_siren_anchored_ad_residual_cocycle_v1",
+  "metadata": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/inr_anchored_ad_residual_cocycle_siren_original_v1/../longitudinal_age_disease_conditioned_cocycle_shape_multiple_pairs_real_pair_shape_reconstruction/metadata/adni_no_mci_longitudinal_records.csv",
+  "pair_counts": {
+    "test": 70,
+    "train": 613,
+    "val": 39
+  },
+  "registered_face_count": 3348,
+  "registered_vertex_count": 1676,
+  "scan_counts": {
+    "test": 71,
+    "train": 617,
+    "val": 39
+  },
+  "source_experiment": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/inr_anchored_ad_residual_cocycle_siren_original_v1/../longitudinal_direct_full256_siren_sequence_cocycle_latent_guard",
+  "train_ad_adjacent_pair_count": 176,
+  "volume_unit": "mesh_coordinates; relative-volume trends/rates are scale-invariant"
+}

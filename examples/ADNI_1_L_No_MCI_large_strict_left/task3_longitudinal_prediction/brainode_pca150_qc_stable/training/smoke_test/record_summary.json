@@ -1,0 +1,59 @@
+{
+  "full_brainode": {
+    "autoregressive_loss_lambda": 0.0,
+    "cognition_dropout": 0.0,
+    "cognition_hidden_dims": [
+      256,
+      128
+    ],
+    "cognition_loss_lambda": 0.0,
+    "pseudo_cognition_loss_lambda": 0.0,
+    "require_transition_trajectories": false,
+    "shape_loss_lambda": 1.0,
+    "use_autoregressive_rollout": false,
+    "use_cognition_estimator": false,
+    "use_pseudo_cognitive_sampling": false
+  },
+  "train": {
+    "count": 16,
+    "count_by_direction": {
+      "backward": 7,
+      "forward": 9
+    },
+    "count_by_length": {
+      "2": 5,
+      "3": 5,
+      "4": 2,
+      "6": 1,
+      "7": 1,
+      "8": 1,
+      "9": 1
+    }
+  },
+  "train_transition_records": 0,
+  "val_first_last": {
+    "count": 8,
+    "count_by_direction": {
+      "forward": 8
+    },
+    "count_by_length": {
+      "10": 1,
+      "11": 1,
+      "2": 2,
+      "4": 2,
+      "5": 2
+    }
+  },
+  "val_forward": {
+    "count": 8,
+    "count_by_direction": {
+      "forward": 8
+    },
+    "count_by_length": {
+      "2": 2,
+      "3": 2,
+      "4": 3,
+      "5": 1
+    }
+  }
+}

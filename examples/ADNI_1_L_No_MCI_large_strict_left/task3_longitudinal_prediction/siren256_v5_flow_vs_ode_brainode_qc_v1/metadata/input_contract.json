@@ -1,0 +1,46 @@
+{
+  "backward_train_pairs": 3680,
+  "basis_fit_split": "train_only",
+  "experiment": "siren256_v5_flow_vs_ode_brainode_qc_v1",
+  "forward_pair_counts": {
+    "test": 483,
+    "train": 3680,
+    "val": 522
+  },
+  "immutable_source_paths": {
+    "decoder": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1/../../task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/checkpoints/best.pth",
+    "latents_test": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1/../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/latents/test_latents.npz",
+    "latents_train": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1/../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/latents/train_latents.npz",
+    "latents_val": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1/../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/latents/val_latents.npz",
+    "metadata": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1/../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/metadata/adni_large_strict_no_mci_left_direct_flow_records_qc_drop_bad_scans_min2.csv",
+    "registered_mesh_cache": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1/../inr_anchored_ad_residual_cocycle_qc_v1/metadata/registered_meshes.npz"
+  },
+  "latent_dimension": 256,
+  "registered_face_count": 4408,
+  "registered_vertex_count": 2206,
+  "scan_counts": {
+    "test": 214,
+    "train": 1791,
+    "val": 224
+  },
+  "sequence_subject_counts": {
+    "test": 50,
+    "train": 421,
+    "val": 52
+  },
+  "sha256": {
+    "decoder": "f042fefbfd5936978107aad29036765e492daa9693db9c0f5955bb6a1f3f6979",
+    "latents_test": "eef452d65b8fce883b8df0d910a42124b26551f998c8bc247f6388f9c24a1be4",
+    "latents_train": "b71db5f8f6931f4dbd16e3a7c96d903e64b9440a19eda52c487391d26c265bed",
+    "latents_val": "070cca7acf1554087b6b77b1b970fe38d95cba34fd22e55848893001f8ca5220",
+    "metadata": "ab2f66041b789bb94f47b99f0a275b052246644ff192ac71d9bc47b3d504f2c1",
+    "registered_mesh_cache": "38659890f6a870a0148fef6ac28334d8bc246cbde4f8c1909338fd069713c820"
+  },
+  "subject_counts": {
+    "test": 50,
+    "train": 421,
+    "val": 52
+  },
+  "training_mesh_access": "train_val_only_direct_registered_OBJ; all_split_registered_cache_is_evaluator_only",
+  "training_must_not_load_test": true
+}

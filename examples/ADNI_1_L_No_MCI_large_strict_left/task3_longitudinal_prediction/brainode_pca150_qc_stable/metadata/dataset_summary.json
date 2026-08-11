@@ -1,0 +1,63 @@
+{
+  "age_max_train": 95.62053388,
+  "age_min_train": 55.6,
+  "brainode_available_components": 256,
+  "brainode_primary_components": 150,
+  "continuous_age_norm_max": 1.0,
+  "continuous_age_norm_min": -0.0124935865,
+  "directed_pair_count_by_split": {
+    "test": 966,
+    "train": 7360,
+    "val": 1044
+  },
+  "files": {
+    "all_subject_sequences_npz": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/dataset/all_subject_sequences.npz",
+    "scan_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/core_brainode_scan_manifest.csv",
+    "subject_sequences_json": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/core_brainode_subject_sequences.json",
+    "test_subject_sequences_npz": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/dataset/test_subject_sequences.npz",
+    "train_subject_sequences_npz": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/dataset/train_subject_sequences.npz",
+    "val_subject_sequences_npz": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/dataset/val_subject_sequences.npz"
+  },
+  "forward_pair_count_by_split": {
+    "test": 483,
+    "train": 3680,
+    "val": 522
+  },
+  "scan_count": 2229,
+  "scan_count_by_split": {
+    "test": 214,
+    "train": 1791,
+    "val": 224
+  },
+  "scan_diagnosis_count": {
+    "AD": 633,
+    "CN": 1596
+  },
+  "source_task1_clean_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_clean_manifest.csv",
+  "source_task1_clean_manifest_sha256": "cdf034f0732341f2bc38d37f1460e7b1bf36d6c97b9638b42c302ed9d6b1926d",
+  "source_task2_representation_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/metadata/large_qc_representation_manifest.csv",
+  "source_task2_representation_manifest_sha256": "baf2cf7b10e37aa8208f292f598ad72f8e72e4527953d818835f19596ddb977a",
+  "status": "pass",
+  "subject_count": 523,
+  "subject_count_by_split": {
+    "test": 50,
+    "train": 421,
+    "val": 52
+  },
+  "subject_diagnosis_count": {
+    "AD": 205,
+    "CN": 318
+  },
+  "visit_count_distribution_subjects": {
+    "2": 91,
+    "3": 103,
+    "4": 159,
+    "5": 92,
+    "6": 16,
+    "7": 10,
+    "8": 13,
+    "9": 22,
+    "10": 13,
+    "11": 4
+  }
+}

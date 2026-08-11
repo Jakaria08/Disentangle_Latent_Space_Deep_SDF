@@ -1,0 +1,28 @@
+{
+  "cache_face_shape": [
+    3348,
+    3
+  ],
+  "cache_vertex_shape": [
+    727,
+    1676,
+    3
+  ],
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/inr_anchored_ad_residual_cocycle_deepsdf_original_v1/configs/original_deepsdf_primary.json",
+  "device": "cuda:1",
+  "feature_pca_shape": [
+    32,
+    256
+  ],
+  "initial_ad_max_abs_error_vs_base": 0.0,
+  "initial_cn_max_abs_error_vs_base": 0.0,
+  "residual_basis_shape": [
+    13,
+    256
+  ],
+  "source_latent_shape": [
+    727,
+    256
+  ],
+  "source_scan_count": 727
+}

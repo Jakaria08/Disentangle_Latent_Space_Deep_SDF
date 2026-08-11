@@ -1,0 +1,52 @@
+{
+  "name": "adni_synthseg_left_hippocampus_brainode_paper_core_raw_pca150",
+  "structure": "left_hippocampus",
+  "method": "brainode_paper_core_stable_cn_ad_raw_pca150",
+  "input_config": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "representation": {
+    "components": 150,
+    "training_key": "visit_pca_150",
+    "pca_basis": "existing fixed train-only structure-specific PCA basis",
+    "standardization": "none; raw PCA coefficients, matching the released paper code",
+    "time_key": "visit_age_norm_train",
+    "age_policy": "retain_all_current_qc_passed_subjects_train_range_normalization",
+    "condition": "stable diagnosis condition; CN=0, AD=1"
+  },
+  "model": {
+    "architecture": "official ODEFuncWithAttention semantics",
+    "latent_dim": 150,
+    "condition_dim": 1,
+    "attention_dim": 256,
+    "hidden_dim": 512,
+    "integrator": "fixed-step RK4",
+    "optimization_batch_size": 1
+  },
+  "training": {
+    "run_name": "brainode_paper_core_raw_pca150_s42",
+    "epochs": 100,
+    "learning_rate": 0.0005,
+    "weight_decay": 0.01,
+    "scheduler_step_size": 20,
+    "scheduler_gamma": 0.5,
+    "noise_std": 0.01,
+    "scale_min": 0.98,
+    "scale_max": 1.02,
+    "integration_substeps": 1,
+    "save_every": 10,
+    "progress_every_subjects": 50,
+    "seed": 42,
+    "objective": "per-subject mean over every forward suffix and backward prefix PCA-space L2 trajectory loss",
+    "best_metric": "validation one-shot endpoint mean vertex Euclidean distance"
+  },
+  "scientific_contract": {
+    "paper_core_algorithm_1": true,
+    "pseudo_cognitive_embedding": false,
+    "cognition_estimator": false,
+    "reason_full_method_not_enabled": "current cohort contains stable CN and stable AD subjects only; no genuine within-subject converters",
+    "strict_no_mci": true,
+    "all_current_qc_passed_subjects_retained": true,
+    "test_loaded_during_training": false,
+    "subject_level_splits": true,
+    "source_meshes_modified": false
+  }
+}

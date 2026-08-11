@@ -1,0 +1,89 @@
+{
+  "args": {
+    "activation": "silu",
+    "batch_size": 128,
+    "components": 150,
+    "condition_dim": 1,
+    "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/configs/core_brainode.json",
+    "device": "cuda:1",
+    "direction_weight": 0.1,
+    "dropout": 0.05,
+    "early_stopping_min_delta": 1e-06,
+    "early_stopping_patience": 50,
+    "epochs": 150,
+    "gap_weight_max": 2.0,
+    "gap_weight_min": 0.5,
+    "gradient_clip_norm": 1.0,
+    "hidden_dims": [
+      128,
+      128
+    ],
+    "include_delta_time_input": true,
+    "latent_guard_threshold": 3.0,
+    "latent_guard_weight": 0.05,
+    "latest_frequency": 5,
+    "learning_rate": 0.0005,
+    "magnitude_weight": 0.1,
+    "max_train_pairs": 0,
+    "max_val_pairs": 0,
+    "num_workers": 0,
+    "observed_cocycle_weight": 1.0,
+    "output_dir": null,
+    "resume": false,
+    "run_name": "pca150_direct_cocycle_flow_qc_v1",
+    "seed": 42,
+    "sequence_batch_size": 32,
+    "sequence_cocycle_weight": 0.25,
+    "sequence_rollout_weight": 0.5,
+    "snapshot_frequency": 25,
+    "speed_guard_percentile": 95.0,
+    "speed_guard_weight": 0.05,
+    "target_loss_weight": 1.0,
+    "use_gap_weighted_loss": true,
+    "validation_frequency": 5,
+    "virtual_cocycle_weight": 0.5,
+    "virtual_ratio_max": 0.9,
+    "virtual_ratio_min": 0.1,
+    "weight_decay": 0.0001
+  },
+  "config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable/configs/core_brainode.json",
+  "max_gap_norm": 0.25626814365386963,
+  "pca_model_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/pca/model",
+  "record_summary": {
+    "train": {
+      "pair_count": 3680,
+      "pair_count_by_diagnosis": {
+        "AD": 576,
+        "CN": 3104
+      },
+      "pair_count_by_pair_type": {
+        "adjacent": 1370,
+        "nonadjacent": 2310
+      },
+      "sequence_count": 1370,
+      "sequence_count_by_diagnosis": {
+        "AD": 336,
+        "CN": 1034
+      }
+    },
+    "val": {
+      "pair_count": 522,
+      "pair_count_by_diagnosis": {
+        "AD": 79,
+        "CN": 443
+      },
+      "pair_count_by_pair_type": {
+        "adjacent": 172,
+        "nonadjacent": 350
+      },
+      "sequence_count": 172,
+      "sequence_count_by_diagnosis": {
+        "AD": 48,
+        "CN": 124
+      }
+    }
+  },
+  "run_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/pca150_direct_cocycle_flow_qc_v1",
+  "speed_threshold_norm_units": 114.81585459189486,
+  "task_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/brainode_pca150_qc_stable"
+}

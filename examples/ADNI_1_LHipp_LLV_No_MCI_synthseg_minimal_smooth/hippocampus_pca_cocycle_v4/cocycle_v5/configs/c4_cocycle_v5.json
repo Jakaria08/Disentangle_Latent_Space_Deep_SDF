@@ -1,0 +1,13 @@
+{
+  "name": "adni_synthseg_hippocampus_direct_cocycle_v5_c4",
+  "structure": "left_hippocampus",
+  "method": "direct_pca_cocycle_v5",
+  "experiment": "c4",
+  "input_config": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "representation": {"components": 150, "training_key": "visit_pca_standardized_150", "time_key": "visit_age_norm_train", "condition": "stable diagnosis label_ad; CN=0, AD=1", "pca_basis": "existing fixed train-only structure-specific PCA basis"},
+  "model": {"latent_dim": 150, "width": 256, "residual_blocks": 2, "architecture": "direct shared-CN plus AD-residual average-velocity flow", "transport": "Phi(z,s,t,d)=z+(t-s)*phi(z,s,t,d)", "ode_used": false, "attention_used": false},
+  "training": {"run_name": "hippocampus_cocycle_v5_c4_s42", "epochs": 180, "batch_size": 96, "samples_per_epoch": 4096, "learning_rate": 0.0003, "minimum_learning_rate": 0.00003, "weight_decay": 0.0001, "gradient_clip_norm": 1.0, "consistency_ramp_epochs": 10, "anatomy_ramp_epochs": 15, "progress_every_batches": 20, "evaluation_batch_size": 512, "save_every_epochs": 10, "early_stopping_patience": 30, "early_stopping_min_delta": 0.00001, "seed": 42, "sampling": "equal CN/AD, equal adjacent/nonadjacent, equal subject within each stratum"},
+  "loss": {"real_pca_weight": 0.25, "real_vertex_weight": 1.0, "observed_semigroup_weight": 0.1, "virtual_semigroup_weight": 0.1, "inverse_weight": 0.05, "sequence_pca_weight": 0.0625, "sequence_vertex_weight": 0.25, "sequence_semigroup_weight": 0.1, "volume_weight": 0.1, "rate_weight": 0.1, "slope_weight": 0.05, "group_rate_weight": 0.02, "disease_gap_weight": 0.02, "normalization": "fixed train-only median no-change scales"},
+  "selection": {"primary": "macro AD/CN first-to-last decoded vertex shape ratio", "all_pair_shape_weight": 0.2, "volume_tiebreak_weight": 0.001, "pca_nochange_tolerance": 0.01, "coordinate_nochange_tolerance": 0.01, "max_relative_semigroup_defect": 0.25, "max_relative_inverse_defect": 0.25, "test_used_for_selection": false},
+  "scientific_contract": {"strict_no_mci": true, "subject_level_splits": true, "all_current_qc_passed_subjects_retained": true, "forward_and_backward_real_pairs": true, "observed_and_virtual_semigroup_losses": true, "sequence_one_shot_and_rollout": true, "individual_anatomical_supervision": true, "weak_diagnosis_population_supervision": true, "source_meshes_modified": false, "test_loaded_during_training": false}
+}

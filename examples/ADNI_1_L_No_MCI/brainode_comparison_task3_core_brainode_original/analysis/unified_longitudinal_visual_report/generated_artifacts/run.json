@@ -1,0 +1,20 @@
+{
+  "device": "cuda",
+  "failure_rows": 0,
+  "finite_difference_eps_years": 0.05,
+  "models_requested": [
+    "pca150_flow",
+    "qc_siren_drop_bad_min2",
+    "qc_siren_latent_ode",
+    "qc_siren_local_decomp_volume"
+  ],
+  "output_dir": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/unified_longitudinal_visual_report/generated_artifacts",
+  "selected_pair_source_mode": "baseline_only",
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "subjects_per_diagnosis": 25,
+  "surface_change_case_manifest_rows": 779
+}

@@ -1,0 +1,75 @@
+{
+  "source_meshes_modified": false,
+  "source_root": "/home/jakaria/ADNI/ADNI_1_GO_Large/synthseg_minimal_correspondence/full",
+  "structures": [
+    "left_hippocampus",
+    "left_lateral_ventricle"
+  ],
+  "policy": {
+    "clinical": "baseline CN/AD and strict_subject_no_mci from the source manifest; direct CN<->AD changers excluded",
+    "longitudinal": "at least two visits before and after automatic QC",
+    "automatic_mesh_exclusions": "hard final smooth/correspondence geometry failure in either structure, or endpoint of a strong adjacent correspondence-shape failure",
+    "not_automatically_excluded": "distributional volume/compactness outliers and ordinary trajectory warnings; retained in separate warning manifests because they can be biological"
+  },
+  "counts": {
+    "strict_no_mci_input": {
+      "scans": 2715,
+      "subjects": 676,
+      "scans_by_baseline_group": {
+        "AD": 984,
+        "CN": 1731
+      },
+      "subjects_by_baseline_group": {
+        "AD": 333,
+        "CN": 343
+      }
+    },
+    "after_direct_CN_AD_change_exclusion": {
+      "scans": 2693,
+      "subjects": 673,
+      "scans_by_baseline_group": {
+        "AD": 984,
+        "CN": 1709
+      },
+      "subjects_by_baseline_group": {
+        "AD": 333,
+        "CN": 340
+      }
+    },
+    "longitudinal_before_mesh_qc": {
+      "scans": 2625,
+      "subjects": 605,
+      "scans_by_baseline_group": {
+        "AD": 930,
+        "CN": 1695
+      },
+      "subjects_by_baseline_group": {
+        "AD": 279,
+        "CN": 326
+      }
+    },
+    "recommended_keep": {
+      "scans": 2550,
+      "subjects": 592,
+      "scans_by_baseline_group": {
+        "AD": 890,
+        "CN": 1660
+      },
+      "subjects_by_baseline_group": {
+        "AD": 269,
+        "CN": 323
+      }
+    },
+    "direct_CN_AD_changer_subjects": 3,
+    "single_visit_scans_before_mesh_qc": 68,
+    "automatic_scan_exclusions": 75,
+    "subjects_lost_after_mesh_qc": 13,
+    "kept_scan_warnings": 826,
+    "kept_pair_warnings": 822
+  },
+  "files": {
+    "recommended_manifest": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_synthseg_minimal_smooth_qc/manifests/strict_no_mci_longitudinal_keep_conservative.csv",
+    "automatic_exclusions": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_synthseg_minimal_smooth_qc/manifests/auto_excluded_scans_conservative.csv",
+    "mesh_qc_summary": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_synthseg_minimal_smooth_qc/mesh_qc/qc_summary.json"
+  }
+}

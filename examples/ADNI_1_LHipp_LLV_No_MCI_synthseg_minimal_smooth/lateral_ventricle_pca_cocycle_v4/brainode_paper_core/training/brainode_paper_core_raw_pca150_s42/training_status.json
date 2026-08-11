@@ -1,0 +1,21 @@
+{
+  "all_current_qc_passed_subjects_retained": true,
+  "best_epoch": 4,
+  "best_metric": "val_one_shot_endpoint_vertex_euclidean_mean_mm",
+  "best_metric_value": 0.84318244848095,
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/brainode_paper_core/training/brainode_paper_core_raw_pca150_s42/checkpoints/best.pt",
+  "cognition_estimator": false,
+  "epochs_completed": 100,
+  "epochs_requested": 100,
+  "forward_and_backward_training": true,
+  "method": "brainode_paper_core_stable_cn_ad_raw_pca150",
+  "pca_refitted": false,
+  "pseudo_cognitive_embedding": false,
+  "representation": "raw train-PCA-150 coefficients",
+  "source_meshes_modified": false,
+  "status": "complete",
+  "strict_no_mci": true,
+  "structure": "left_lateral_ventricle",
+  "test_data_loaded": false,
+  "training_semantics": "one subject trajectory per optimizer update"
+}

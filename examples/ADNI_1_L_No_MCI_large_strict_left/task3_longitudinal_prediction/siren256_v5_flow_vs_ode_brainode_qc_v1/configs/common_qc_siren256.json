@@ -1,0 +1,23 @@
+{
+  "ExperimentName": "siren256_v5_flow_vs_ode_brainode_qc_v1",
+  "LatentSize": 256,
+  "VelocityRank": 32,
+  "FeatureDimensions": 64,
+  "SourceExperimentDir": "../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2",
+  "MetadataCsv": "../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/metadata/adni_large_strict_no_mci_left_direct_flow_records_qc_drop_bad_scans_min2.csv",
+  "RegisteredMeshCache": "../inr_anchored_ad_residual_cocycle_qc_v1/metadata/registered_meshes.npz",
+  "DecoderCheckpoint": "../../task2_representations/inr/siren_naisr_5x512_warmstart_no_skip/checkpoints/best.pth",
+  "LatentArchives": {
+    "train": "../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/latents/train_latents.npz",
+    "val": "../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/latents/val_latents.npz",
+    "test": "../siren_no_skip_flow_real_sdf_observed_virtual_cocycle_qc_drop_bad_scans_min2/latents/test_latents.npz"
+  },
+  "AgeRangeYears": 40.02053388,
+  "LossScalePairCap": 512,
+  "SdfScaleSamples": 256,
+  "NormalScaleVertices": 512,
+  "EvaluationGridResolution": 80,
+  "EvaluationBounds": [-1.0, 1.0],
+  "EvaluationSurfaceSamples": 30000,
+  "Seed": 42
+}

@@ -29,7 +29,7 @@ from typing import Dict, Mapping, Optional, Tuple
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 
 from adni_no_mci_direct_flow_data import (
@@ -43,6 +43,8 @@ import deep_sdf.lr_scheduling as lr_scheduling
 import deep_sdf.workspace as ws
 from longitudinal_direct_flow import (
     DirectAgeFlow,
+    LatentODEFlow,
+    LocalDiseaseDecomposedFlow,
     MinimalDirectFlowLoss,
     MinimalLossConfig,
     per_row_latent_mse,
@@ -111,6 +113,18 @@ def load_specs(experiment_dir: Path) -> Dict[str, object]:
 def validate_loss_scope(specs: Mapping[str, object]) -> None:
     enabled = {
         "UseRealTargetSDFLoss": bool(specs.get("UseRealTargetSDFLoss", True)),
+        "UseChangeWeightedSDFLoss": bool(
+            specs.get("UseChangeWeightedSDFLoss", False)
+        ),
+        "UseDeltaSDFDirectionLoss": bool(
+            specs.get("UseDeltaSDFDirectionLoss", False)
+        ),
+        "UseDeltaSDFRMAELoss": bool(
+            specs.get("UseDeltaSDFRMAELoss", False)
+        ),
+        "UseNoChangeMarginLoss": bool(
+            specs.get("UseNoChangeMarginLoss", False)
+        ),
         "UseObservedCocycleLoss": bool(
             specs.get("UseObservedCocycleLoss", True)
         ),
@@ -152,6 +166,12 @@ def validate_loss_scope(specs: Mapping[str, object]) -> None:
         ),
         "UseSpeedGuardLoss": bool(
             specs.get("UseSpeedGuardLoss", False)
+        ),
+        "UseRelativeVolumeLoss": bool(
+            specs.get("UseRelativeVolumeLoss", False)
+        ),
+        "UseDiseaseVolumeOrderingLoss": bool(
+            specs.get("UseDiseaseVolumeOrderingLoss", False)
         ),
     }
     if not any(enabled.values()):
@@ -200,10 +220,12 @@ def build_data_contract(
         resolve_path(specs["LongitudinalMetadataFile"], experiment_dir),
         latent_files,
         int(specs["CodeLength"]),
+        pair_source_mode=str(specs.get("PairSourceMode", "all_forward_starts")),
         sequence_min_length=int(specs.get("SequenceMinLength", 2)),
         sequence_start_mode=str(
             specs.get("SequenceStartMode", "all_forward_starts")
         ),
+        allow_extra_latents=bool(specs.get("AllowExtraLatents", False)),
     )
 
 
@@ -277,7 +299,7 @@ def build_flow(
     specs: Mapping[str, object],
     device: torch.device,
     contract: Optional[DirectFlowDataContract] = None,
-) -> DirectAgeFlow:
+) -> torch.nn.Module:
     latent_condition_mode = str(specs.get("LatentConditionMode", "full")).lower()
     latent_condition_dim = specs.get("LatentConditionDim")
     pca_mean = None
@@ -293,37 +315,113 @@ def build_flow(
             latent_size=int(specs["CodeLength"]),
             component_count=int(latent_condition_dim),
         )
-    return DirectAgeFlow(
-        latent_size=int(specs["CodeLength"]),
-        hidden_dims=[int(value) for value in specs["FlowHiddenDims"]],
-        condition_dim=int(specs.get("ConditionDim", 1)),
-        activation=str(specs.get("FlowActivation", "relu")),
-        dropout=float(specs.get("FlowDropout", 0.0)),
-        zero_initialize_output=bool(
-            specs.get("FlowZeroInitializeOutput", True)
-        ),
-        latent_condition_mode=latent_condition_mode,
-        latent_condition_dim=(
-            None if latent_condition_dim is None else int(latent_condition_dim)
-        ),
-        include_delta_time_input=bool(
-            specs.get("FlowIncludeDeltaTimeInput", False)
-        ),
-        pca_mean=pca_mean,
-        pca_components=pca_components,
-    ).to(device)
+    flow_type = str(specs.get("FlowType", "direct_age")).strip().lower()
+    if flow_type in {"direct_age", "direct", "average_velocity"}:
+        return DirectAgeFlow(
+            latent_size=int(specs["CodeLength"]),
+            hidden_dims=[int(value) for value in specs["FlowHiddenDims"]],
+            condition_dim=int(specs.get("ConditionDim", 1)),
+            activation=str(specs.get("FlowActivation", "relu")),
+            dropout=float(specs.get("FlowDropout", 0.0)),
+            zero_initialize_output=bool(
+                specs.get("FlowZeroInitializeOutput", True)
+            ),
+            latent_condition_mode=latent_condition_mode,
+            latent_condition_dim=(
+                None if latent_condition_dim is None else int(latent_condition_dim)
+            ),
+            include_delta_time_input=bool(
+                specs.get("FlowIncludeDeltaTimeInput", False)
+            ),
+            pca_mean=pca_mean,
+            pca_components=pca_components,
+        ).to(device)
+    if flow_type in {
+        "local_disease_decomposed",
+        "local_decomposed",
+        "composed_local_disease",
+    }:
+        age_spec = specs.get("AgeNormalization", {})
+        age_range_years = float(age_spec.get("age_range_years", 1.0))
+        local_step_years = float(specs.get("LocalStepYears", 0.5))
+        max_step_norm = float(
+            specs.get(
+                "LocalMaxStepNorm",
+                local_step_years / max(age_range_years, 1.0e-8),
+            )
+        )
+        return LocalDiseaseDecomposedFlow(
+            latent_size=int(specs["CodeLength"]),
+            hidden_dims=[int(value) for value in specs["FlowHiddenDims"]],
+            rank=int(specs.get("FlowRank", 32)),
+            condition_dim=int(specs.get("ConditionDim", 1)),
+            activation=str(specs.get("FlowActivation", "silu")),
+            dropout=float(specs.get("FlowDropout", 0.0)),
+            zero_initialize_output=bool(
+                specs.get("FlowZeroInitializeOutput", True)
+            ),
+            latent_condition_mode=latent_condition_mode,
+            latent_condition_dim=(
+                None if latent_condition_dim is None else int(latent_condition_dim)
+            ),
+            include_time_input=bool(specs.get("FlowIncludeTimeInput", True)),
+            max_step_norm=max_step_norm,
+            basis_init_scale=float(specs.get("FlowBasisInitScale", 0.02)),
+            pca_mean=pca_mean,
+            pca_components=pca_components,
+        ).to(device)
+    if flow_type in {"latent_ode", "ode", "neural_ode", "siren_latent_ode"}:
+        hidden_dims = specs.get("ODEHiddenDims", specs["FlowHiddenDims"])
+        max_step_norm = specs.get("ODEMaxStepNorm")
+        return LatentODEFlow(
+            latent_size=int(specs["CodeLength"]),
+            hidden_dims=[int(value) for value in hidden_dims],
+            condition_dim=int(specs.get("ConditionDim", 1)),
+            activation=str(specs.get("ODEActivation", specs.get("FlowActivation", "silu"))),
+            dropout=float(specs.get("ODEDropout", specs.get("FlowDropout", 0.0))),
+            zero_initialize_output=bool(
+                specs.get("ODEZeroInitializeOutput", specs.get("FlowZeroInitializeOutput", True))
+            ),
+            latent_condition_mode=latent_condition_mode,
+            latent_condition_dim=(
+                None if latent_condition_dim is None else int(latent_condition_dim)
+            ),
+            integration_substeps=int(specs.get("ODEIntegrationSubsteps", 4)),
+            max_step_norm=None if max_step_norm is None else float(max_step_norm),
+            pca_mean=pca_mean,
+            pca_components=pca_components,
+        ).to(device)
+    raise ValueError(f"Unsupported FlowType {specs.get('FlowType')!r}")
 
 
 def build_loss(
     specs: Mapping[str, object],
     decoder: torch.nn.Module,
-    flow: DirectAgeFlow,
+    flow: torch.nn.Module,
 ) -> MinimalDirectFlowLoss:
     real_weight = float(specs.get("RealTargetSDFLossLambda", 1.0))
+    change_weighted_sdf_weight = float(
+        specs.get("ChangeWeightedSDFLossLambda", 0.0)
+    )
+    delta_sdf_direction_weight = float(
+        specs.get("DeltaSDFDirectionLossLambda", 0.0)
+    )
+    delta_sdf_rmae_weight = float(specs.get("DeltaSDFRMAELossLambda", 0.0))
+    no_change_margin_weight = float(
+        specs.get("NoChangeMarginLossLambda", 0.0)
+    )
     observed_weight = float(specs.get("ObservedCocycleLossLambda", 0.01))
     virtual_weight = float(specs.get("VirtualCocycleLossLambda", 0.01))
     if not bool(specs.get("UseRealTargetSDFLoss", True)):
         real_weight = 0.0
+    if not bool(specs.get("UseChangeWeightedSDFLoss", False)):
+        change_weighted_sdf_weight = 0.0
+    if not bool(specs.get("UseDeltaSDFDirectionLoss", False)):
+        delta_sdf_direction_weight = 0.0
+    if not bool(specs.get("UseDeltaSDFRMAELoss", False)):
+        delta_sdf_rmae_weight = 0.0
+    if not bool(specs.get("UseNoChangeMarginLoss", False)):
+        no_change_margin_weight = 0.0
     if not bool(specs.get("UseObservedCocycleLoss", True)):
         observed_weight = 0.0
     if not bool(specs.get("UseVirtualCocycleLoss", True)):
@@ -360,6 +458,16 @@ def build_loss(
         future_shape_weight = 0.0
     config = MinimalLossConfig(
         real_prediction_weight=real_weight,
+        change_weighted_sdf_weight=change_weighted_sdf_weight,
+        change_weighted_sdf_alpha=float(specs.get("ChangeWeightedSDFAlpha", 2.0)),
+        change_weighted_sdf_eps=float(specs.get("ChangeWeightedSDFEps", 1.0e-5)),
+        delta_sdf_direction_weight=delta_sdf_direction_weight,
+        delta_sdf_min_norm=float(specs.get("DeltaSDFMinNorm", 1.0e-6)),
+        delta_sdf_rmae_weight=delta_sdf_rmae_weight,
+        delta_sdf_rmae_eps=float(specs.get("DeltaSDFRMAEEps", 1.0e-4)),
+        delta_sdf_rmae_cap=float(specs.get("DeltaSDFRMAECap", 5.0)),
+        no_change_margin_weight=no_change_margin_weight,
+        no_change_margin=float(specs.get("NoChangeMargin", 1.0e-4)),
         observed_consistency_weight=observed_weight,
         virtual_consistency_weight=virtual_weight,
         virtual_ratio_min=float(specs.get("VirtualTimeRatioMin", 0.1)),
@@ -398,8 +506,9 @@ def make_loader(
     *,
     training: bool,
 ) -> DataLoader:
+    records = select_pair_records(contract, split, specs)
     dataset = DirectFlowPairDataset(
-        contract.pair_records[split],
+        records,
         contract.latent_maps[split],
         int(specs.get("SamplesPerTarget", 4096)),
         deterministic=not training,
@@ -410,10 +519,34 @@ def make_loader(
     generator.manual_seed(
         int(specs.get("Seed", 42)) + (0 if training else 10000)
     )
+    sampler = None
+    shuffle = bool(training)
+    if training and bool(specs.get("UseSubjectDiagnosisBalancedSampling", False)):
+        subject_pair_counts: Dict[str, int] = {}
+        diagnosis_subjects: Dict[str, set[str]] = {}
+        for record in records:
+            subject_pair_counts[record.subject_id] = (
+                subject_pair_counts.get(record.subject_id, 0) + 1
+            )
+            diagnosis_subjects.setdefault(record.diagnosis, set()).add(record.subject_id)
+        weights = []
+        for record in records:
+            diagnosis_count = max(len(diagnosis_subjects.get(record.diagnosis, ())), 1)
+            pair_count = max(subject_pair_counts.get(record.subject_id, 1), 1)
+            weights.append(1.0 / (diagnosis_count * pair_count))
+        sampler = WeightedRandomSampler(
+            weights=torch.as_tensor(weights, dtype=torch.double),
+            num_samples=len(weights),
+            replacement=True,
+            generator=generator,
+        )
+        shuffle = False
+
     loader_kwargs = dict(
         dataset=dataset,
         batch_size=int(specs.get("PairsPerBatch", 16)),
-        shuffle=training,
+        shuffle=shuffle,
+        sampler=sampler,
         num_workers=worker_count,
         drop_last=False,
         pin_memory=torch.cuda.is_available(),
@@ -428,6 +561,55 @@ def make_loader(
             specs.get("PrefetchFactor", 2)
         )
     return DataLoader(**loader_kwargs)
+
+
+def _split_float_value(
+    specs: Mapping[str, object],
+    key: str,
+    split: str,
+) -> Optional[float]:
+    split_values = specs.get(f"{key}BySplit")
+    if isinstance(split_values, Mapping) and split in split_values:
+        value = split_values[split]
+    else:
+        value = specs.get(key)
+    if value is None:
+        return None
+    return float(value)
+
+
+def _pair_gap_years(record, specs: Mapping[str, object]) -> float:
+    age_spec = specs.get("AgeNormalization", {})
+    age_range = float(age_spec.get("age_range_years", 1.0))
+    return float(abs(record.age_gap_norm) * age_range)
+
+
+def select_pair_records(
+    contract: DirectFlowDataContract,
+    split: str,
+    specs: Mapping[str, object],
+):
+    """Apply optional protocol-level pair filters before creating a loader."""
+
+    records = list(contract.pair_records[split])
+    min_gap_years = _split_float_value(specs, "PairMinGapYears", split)
+    max_gap_years = _split_float_value(specs, "PairMaxGapYears", split)
+    if min_gap_years is None and max_gap_years is None:
+        return records
+    filtered = []
+    for record in records:
+        gap_years = _pair_gap_years(record, specs)
+        if min_gap_years is not None and gap_years < min_gap_years:
+            continue
+        if max_gap_years is not None and gap_years > max_gap_years:
+            continue
+        filtered.append(record)
+    if not filtered:
+        raise RuntimeError(
+            f"Pair gap filters removed every {split!r} pair: "
+            f"PairMinGapYears={min_gap_years}, PairMaxGapYears={max_gap_years}"
+        )
+    return filtered
 
 
 def sequence_losses_enabled(specs: Mapping[str, object]) -> bool:
@@ -682,13 +864,207 @@ def speed_guard_loss(
     return torch.mean(normalized_excess ** 2), torch.quantile(speed.detach(), 0.95)
 
 
+def volume_losses_enabled(specs: Mapping[str, object]) -> bool:
+    return bool(
+        specs.get("UseRelativeVolumeLoss", False)
+        or specs.get("UseDiseaseVolumeOrderingLoss", False)
+    )
+
+
+def make_volume_probe_points(
+    specs: Mapping[str, object],
+    device: torch.device,
+) -> Optional[torch.Tensor]:
+    if not volume_losses_enabled(specs):
+        return None
+    count = int(specs.get("VolumeProbePoints", 4096))
+    if count <= 0:
+        raise ValueError("VolumeProbePoints must be positive")
+    raw_bounds = specs.get("VolumeProbeBounds", [-1.05, 1.05])
+    bounds = torch.as_tensor(raw_bounds, dtype=torch.float32)
+    if bounds.shape == (2,):
+        low = torch.full((3,), float(bounds[0]), dtype=torch.float32)
+        high = torch.full((3,), float(bounds[1]), dtype=torch.float32)
+    elif bounds.shape == (3, 2):
+        low = bounds[:, 0].contiguous()
+        high = bounds[:, 1].contiguous()
+    else:
+        raise ValueError(
+            "VolumeProbeBounds must be [low, high] or [[x0,x1],[y0,y1],[z0,z1]]"
+        )
+    if not bool(torch.all(high > low).item()):
+        raise ValueError(f"Invalid VolumeProbeBounds: {raw_bounds}")
+    generator = torch.Generator(device="cpu")
+    generator.manual_seed(int(specs.get("VolumeProbeSeed", 12345)))
+    points = torch.rand(count, 3, generator=generator, dtype=torch.float32)
+    points = low.view(1, 3) + points * (high - low).view(1, 3)
+    return points.to(device=device)
+
+
+def soft_volume_proxy(
+    loss_module: MinimalDirectFlowLoss,
+    latent: torch.Tensor,
+    probe_points: torch.Tensor,
+    *,
+    temperature: float,
+    inside_sdf_sign: float,
+    chunk_size: int,
+) -> torch.Tensor:
+    if float(temperature) <= 0.0:
+        raise ValueError("VolumeProbeTemperature must be positive")
+    if int(chunk_size) <= 0:
+        raise ValueError("VolumeProbeChunkSize must be positive")
+    occupancies = []
+    for start in range(0, int(probe_points.shape[0]), int(chunk_size)):
+        xyz = probe_points[start : start + int(chunk_size)].to(
+            device=latent.device,
+            dtype=latent.dtype,
+        )
+        xyz = xyz.unsqueeze(0).expand(latent.shape[0], -1, -1)
+        sdf = loss_module.decode_sdf_at_xyz(latent, xyz)
+        occupancies.append(
+            torch.sigmoid(float(inside_sdf_sign) * sdf / float(temperature))
+        )
+    occupancy = torch.cat(occupancies, dim=1)
+    return occupancy.mean(dim=(1, 2)).clamp_min(1.0e-8)
+
+
+def compute_pair_volume_losses(
+    *,
+    batch: Mapping[str, torch.Tensor],
+    output,
+    loss_module: MinimalDirectFlowLoss,
+    flow: torch.nn.Module,
+    specs: Mapping[str, object],
+    stats: LatentRegularizerStats,
+    volume_probe_points: Optional[torch.Tensor],
+) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    zero = output.total * 0.0
+    metrics: Dict[str, torch.Tensor] = {
+        "relative_volume": zero,
+        "disease_volume_ordering": zero,
+        "predicted_log_volume_ratio": zero.detach(),
+        "real_log_volume_ratio": zero.detach(),
+        "cn_condition_log_volume_ratio": zero.detach(),
+        "ad_condition_log_volume_ratio": zero.detach(),
+    }
+    if not volume_losses_enabled(specs):
+        return zero, metrics
+    if volume_probe_points is None:
+        raise ValueError("Volume losses are enabled but volume_probe_points is None")
+
+    temperature = float(specs.get("VolumeProbeTemperature", 0.01))
+    inside_sdf_sign = float(specs.get("VolumeProbeInsideSDFSign", -1.0))
+    chunk_size = int(specs.get("VolumeProbeChunkSize", 4096))
+    source_latent = batch["source_latent"]
+    source_time = _column_tensor(batch["source_time"])
+    target_time = _column_tensor(batch["target_time"])
+    condition = batch["condition"]
+
+    with torch.no_grad():
+        source_proxy = soft_volume_proxy(
+            loss_module,
+            source_latent,
+            volume_probe_points,
+            temperature=temperature,
+            inside_sdf_sign=inside_sdf_sign,
+            chunk_size=chunk_size,
+        )
+    target_proxy = soft_volume_proxy(
+        loss_module,
+        output.direct_target_latent,
+        volume_probe_points,
+        temperature=temperature,
+        inside_sdf_sign=inside_sdf_sign,
+        chunk_size=chunk_size,
+    )
+    predicted_log_ratio = torch.log(target_proxy / source_proxy.detach())
+    metrics["predicted_log_volume_ratio"] = predicted_log_ratio.detach().mean()
+
+    total = zero
+    if bool(specs.get("UseRelativeVolumeLoss", False)):
+        if "source_mesh_volume_mm3" not in batch or "target_mesh_volume_mm3" not in batch:
+            raise KeyError(
+                "UseRelativeVolumeLoss requires source_mesh_volume_mm3 and "
+                "target_mesh_volume_mm3 in the pair batch."
+            )
+        source_real = batch["source_mesh_volume_mm3"].to(
+            device=source_latent.device,
+            dtype=source_latent.dtype,
+        ).view(-1)
+        target_real = batch["target_mesh_volume_mm3"].to(
+            device=source_latent.device,
+            dtype=source_latent.dtype,
+        ).view(-1)
+        valid = torch.isfinite(source_real) & torch.isfinite(target_real)
+        valid = valid & (source_real > 0.0) & (target_real > 0.0)
+        real_log_ratio = torch.zeros_like(predicted_log_ratio)
+        real_log_ratio[valid] = torch.log(target_real[valid] / source_real[valid])
+        metrics["real_log_volume_ratio"] = (
+            real_log_ratio[valid].detach().mean()
+            if bool(valid.any().item())
+            else zero.detach()
+        )
+        row_loss = F.smooth_l1_loss(
+            predicted_log_ratio,
+            real_log_ratio,
+            reduction="none",
+            beta=float(specs.get("RelativeVolumeSmoothL1Beta", 0.02)),
+        )
+        weights = _gap_weights(source_time, target_time, specs, stats)
+        relative_volume = _weighted_mean(row_loss, weights, valid)
+        metrics["relative_volume"] = relative_volume
+        total = total + float(specs.get("RelativeVolumeLossLambda", 0.0)) * relative_volume
+
+    if bool(specs.get("UseDiseaseVolumeOrderingLoss", False)):
+        cn_condition = torch.zeros_like(condition)
+        ad_condition = torch.ones_like(condition)
+        cn_latent = flow.transport(source_latent, source_time, target_time, cn_condition)
+        ad_latent = flow.transport(source_latent, source_time, target_time, ad_condition)
+        cn_proxy = soft_volume_proxy(
+            loss_module,
+            cn_latent,
+            volume_probe_points,
+            temperature=temperature,
+            inside_sdf_sign=inside_sdf_sign,
+            chunk_size=chunk_size,
+        )
+        ad_proxy = soft_volume_proxy(
+            loss_module,
+            ad_latent,
+            volume_probe_points,
+            temperature=temperature,
+            inside_sdf_sign=inside_sdf_sign,
+            chunk_size=chunk_size,
+        )
+        cn_log_ratio = torch.log(cn_proxy / source_proxy.detach())
+        ad_log_ratio = torch.log(ad_proxy / source_proxy.detach())
+        age_spec = specs.get("AgeNormalization", {})
+        age_range_years = float(age_spec.get("age_range_years", 1.0))
+        gap_years = torch.abs(target_time - source_time).view(-1) * age_range_years
+        margin = float(specs.get("DiseaseVolumeMarginPerYear", 0.005)) * gap_years
+        row_loss = F.relu(ad_log_ratio - cn_log_ratio + margin) ** 2
+        weights = _gap_weights(source_time, target_time, specs, stats)
+        disease_volume_ordering = _weighted_mean(row_loss, weights)
+        metrics["disease_volume_ordering"] = disease_volume_ordering
+        metrics["cn_condition_log_volume_ratio"] = cn_log_ratio.detach().mean()
+        metrics["ad_condition_log_volume_ratio"] = ad_log_ratio.detach().mean()
+        total = total + float(
+            specs.get("DiseaseVolumeOrderingLossLambda", 0.0)
+        ) * disease_volume_ordering
+
+    return total, metrics
+
+
 def compute_pair_auxiliary_losses(
     *,
     batch: Mapping[str, torch.Tensor],
     output,
-    flow: DirectAgeFlow,
+    flow: torch.nn.Module,
     specs: Mapping[str, object],
     stats: LatentRegularizerStats,
+    loss_module: Optional[MinimalDirectFlowLoss] = None,
+    volume_probe_points: Optional[torch.Tensor] = None,
 ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
     zero = output.total * 0.0
     metrics: Dict[str, torch.Tensor] = {
@@ -807,6 +1183,21 @@ def compute_pair_auxiliary_losses(
         metrics["predicted_speed_p95"] = speed_p95
         total = total + float(specs.get("SpeedGuardLossLambda", 0.0)) * speed_loss
 
+    if volume_losses_enabled(specs):
+        if loss_module is None:
+            raise ValueError("Volume losses require loss_module")
+        volume_total, volume_metrics = compute_pair_volume_losses(
+            batch=batch,
+            output=output,
+            loss_module=loss_module,
+            flow=flow,
+            specs=specs,
+            stats=stats,
+            volume_probe_points=volume_probe_points,
+        )
+        total = total + volume_total
+        metrics.update(volume_metrics)
+
     return total, metrics
 
 
@@ -824,10 +1215,19 @@ def to_device(
         "observed_intermediate_time",
         "observed_intermediate_mask",
     )
-    return {
+    result = {
         key: batch[key].to(device=device, non_blocking=True)
         for key in tensor_keys
     }
+    optional_tensor_keys = (
+        "source_mesh_volume_mm3",
+        "target_mesh_volume_mm3",
+    )
+    for key in optional_tensor_keys:
+        value = batch.get(key)
+        if isinstance(value, torch.Tensor):
+            result[key] = value.to(device=device, non_blocking=True)
+    return result
 
 
 def sequence_to_device(
@@ -869,12 +1269,13 @@ def run_loader(
     *,
     loader: DataLoader,
     loss_module: MinimalDirectFlowLoss,
-    flow: DirectAgeFlow,
+    flow: torch.nn.Module,
     device: torch.device,
     optimizer: Optional[torch.optim.Optimizer],
     gradient_clip_norm: Optional[float],
     specs: Mapping[str, object],
     regularizer_stats: LatentRegularizerStats,
+    volume_probe_points: Optional[torch.Tensor] = None,
     max_batches: Optional[int] = None,
 ) -> Dict[str, float]:
     training = optimizer is not None
@@ -911,6 +1312,8 @@ def run_loader(
                 flow=flow,
                 specs=specs,
                 stats=regularizer_stats,
+                loss_module=loss_module,
+                volume_probe_points=volume_probe_points,
             )
             training_total = output.total + auxiliary_total
             training_total.backward()
@@ -951,6 +1354,8 @@ def run_loader(
                     flow=flow,
                     specs=specs,
                     stats=regularizer_stats,
+                    loss_module=loss_module,
+                    volume_probe_points=volume_probe_points,
                 )
                 no_change = no_change_sdf_loss(
                     loss_module,
@@ -997,7 +1402,7 @@ def compute_sequence_losses(
     *,
     batch: Mapping[str, object],
     loss_module: MinimalDirectFlowLoss,
-    flow: DirectAgeFlow,
+    flow: torch.nn.Module,
     specs: Mapping[str, object],
     stats: LatentRegularizerStats,
 ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
@@ -1218,7 +1623,7 @@ def run_sequence_loader(
     *,
     loader: DataLoader,
     loss_module: MinimalDirectFlowLoss,
-    flow: DirectAgeFlow,
+    flow: torch.nn.Module,
     device: torch.device,
     optimizer: Optional[torch.optim.Optimizer],
     gradient_clip_norm: Optional[float],
@@ -1287,7 +1692,7 @@ def checkpoint_payload(
     *,
     epoch: int,
     decoder: torch.nn.Module,
-    flow: DirectAgeFlow,
+    flow: torch.nn.Module,
     specs: Mapping[str, object],
     best_validation_real_prediction: float,
     best_validation_selection_metric: float,
@@ -1307,9 +1712,16 @@ def checkpoint_payload(
         ),
         "latent_condition_mode": str(specs.get("LatentConditionMode", "full")),
         "latent_condition_dim": specs.get("LatentConditionDim", int(specs["CodeLength"])),
+        "flow_type": str(specs.get("FlowType", "direct_age")),
+        "flow_rank": specs.get("FlowRank"),
+        "local_step_years": specs.get("LocalStepYears"),
+        "local_max_step_norm": getattr(flow, "max_step_norm", None),
         "flow_include_delta_time_input": bool(
             specs.get("FlowIncludeDeltaTimeInput", False)
         ),
+        "ode_integration_substeps": specs.get("ODEIntegrationSubsteps"),
+        "ode_max_step_norm": specs.get("ODEMaxStepNorm"),
+        "ode_hidden_dims": specs.get("ODEHiddenDims"),
         "loss_scope": loss_scope,
     }
 
@@ -1318,6 +1730,14 @@ def enabled_loss_scope(specs: Mapping[str, object]) -> list[str]:
     scope = []
     if bool(specs.get("UseRealTargetSDFLoss", True)):
         scope.append("real_target_sdf_prediction")
+    if bool(specs.get("UseChangeWeightedSDFLoss", False)):
+        scope.append("change_weighted_target_sdf_prediction")
+    if bool(specs.get("UseDeltaSDFDirectionLoss", False)):
+        scope.append("delta_sdf_direction_alignment")
+    if bool(specs.get("UseDeltaSDFRMAELoss", False)):
+        scope.append("delta_sdf_relative_change_error")
+    if bool(specs.get("UseNoChangeMarginLoss", False)):
+        scope.append("no_change_margin_ranking")
     if bool(specs.get("UseObservedCocycleLoss", True)):
         scope.append("observed_intermediate_latent_consistency")
     if bool(specs.get("UseVirtualCocycleLoss", True)):
@@ -1346,6 +1766,10 @@ def enabled_loss_scope(specs: Mapping[str, object]) -> list[str]:
         scope.append("latent_speed_guard")
     if bool(specs.get("UseSequenceDisplacementMagnitudeLoss", False)):
         scope.append("sequence_displacement_magnitude")
+    if bool(specs.get("UseRelativeVolumeLoss", False)):
+        scope.append("relative_soft_volume_change")
+    if bool(specs.get("UseDiseaseVolumeOrderingLoss", False)):
+        scope.append("cn_ad_counterfactual_volume_ordering")
     return scope
 
 
@@ -1355,7 +1779,7 @@ def save_checkpoint(
     *,
     epoch: int,
     decoder: torch.nn.Module,
-    flow: DirectAgeFlow,
+    flow: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
     specs: Mapping[str, object],
     best_validation_real_prediction: float,
@@ -1389,7 +1813,7 @@ def load_checkpoint(
     experiment_dir: Path,
     name: str,
     *,
-    flow: DirectAgeFlow,
+    flow: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
 ) -> Tuple[int, float, float]:
     model_path = experiment_dir / ws.model_params_subdir / f"{name}.pth"
@@ -1475,7 +1899,7 @@ def determine_device(gpu: Optional[int], validate_only: bool) -> torch.device:
 
 def build_optimizer(
     specs: Mapping[str, object],
-    flow: DirectAgeFlow,
+    flow: torch.nn.Module,
     learning_rate: float,
 ) -> torch.optim.Optimizer:
     optimizer_name = str(specs.get("Optimizer", "Adam")).strip().lower()
@@ -1514,6 +1938,51 @@ def validation_selection_metric(
                 (specs or {}).get("SequenceValidationSelectionWeight", 0.5)
             ) * float(metrics["sequence_rollout_minus_no_change"])
         return pair_score
+    if mode == "pair_sdf_plus_volume":
+        return (
+            float(metrics["model_minus_no_change"])
+            + float((specs or {}).get("VolumeValidationSelectionWeight", 1.0))
+            * float(metrics.get("relative_volume", 0.0))
+            + float(
+                (specs or {}).get("DiseaseVolumeValidationSelectionWeight", 0.0)
+            )
+            * float(metrics.get("disease_volume_ordering", 0.0))
+        )
+    if mode == "pair_sdf_plus_change_volume":
+        return (
+            float(metrics["model_minus_no_change"])
+            + float(
+                (specs or {}).get(
+                    "ChangeWeightedSDFValidationSelectionWeight",
+                    0.0,
+                )
+            )
+            * float(metrics.get("change_weighted_sdf", 0.0))
+            + float(
+                (specs or {}).get(
+                    "DeltaDirectionValidationSelectionWeight",
+                    (specs or {}).get("ChangeValidationSelectionWeight", 0.25),
+                )
+            )
+            * float(metrics.get("delta_sdf_direction", 0.0))
+            + float(
+                (specs or {}).get(
+                    "DeltaRMAEValidationSelectionWeight",
+                    (specs or {}).get("ChangeRmaeValidationSelectionWeight", 0.1),
+                )
+            )
+            * float(metrics.get("delta_sdf_rmae", 0.0))
+            + float(
+                (specs or {}).get("NoChangeMarginValidationSelectionWeight", 0.0)
+            )
+            * float(metrics.get("no_change_margin", 0.0))
+            + float((specs or {}).get("VolumeValidationSelectionWeight", 1.0))
+            * float(metrics.get("relative_volume", 0.0))
+            + float(
+                (specs or {}).get("DiseaseVolumeValidationSelectionWeight", 0.0)
+            )
+            * float(metrics.get("disease_volume_ordering", 0.0))
+        )
     if require_beat_no_change:
         return float(metrics["model_minus_no_change"])
     return float(metrics["real_prediction"])
@@ -1582,6 +2051,7 @@ def train(args: argparse.Namespace) -> None:
     )
     flow = build_flow(specs, device, contract)
     loss_module = build_loss(specs, decoder, flow)
+    volume_probe_points = make_volume_probe_points(specs, device)
     regularizer_stats = build_latent_regularizer_stats(
         contract,
         split="train",
@@ -1634,6 +2104,8 @@ def train(args: argparse.Namespace) -> None:
                 flow=flow,
                 specs=specs,
                 stats=regularizer_stats,
+                loss_module=loss_module,
+                volume_probe_points=volume_probe_points,
             )
         LOGGER.info(
             "CPU validation forward pass succeeded: %s",
@@ -1773,6 +2245,7 @@ def train(args: argparse.Namespace) -> None:
             ),
             specs=specs,
             regularizer_stats=regularizer_stats,
+            volume_probe_points=volume_probe_points,
             max_batches=max_batches,
         )
         if train_sequence_loader is not None:
@@ -1802,15 +2275,21 @@ def train(args: argparse.Namespace) -> None:
         writer.add_scalar("LearningRate/flow", learning_rate, epoch)
 
         LOGGER.info(
-            "epoch=%d lr=%.6g total=%.6g real=%.6g observed=%.6g "
-            "virtual=%.6g backward_lat=%.6g backward_shape=%.6g "
+            "epoch=%d lr=%.6g total=%.6g real=%.6g change_w=%.6g "
+            "delta_dir=%.6g delta_rmae=%.6g nochg_margin=%.6g "
+            "observed=%.6g virtual=%.6g backward_lat=%.6g backward_shape=%.6g "
             "future_lat=%.6g future_shape=%.6g direction=%.6g "
             "disp_mag=%.6g latent_guard=%.6g speed_guard=%.6g "
-            "seq_rollout=%.6g seq_cocycle=%.6g seq_disp_mag=%.6g seconds=%.1f",
+            "rel_vol=%.6g disease_vol=%.6g seq_rollout=%.6g "
+            "seq_cocycle=%.6g seq_disp_mag=%.6g seconds=%.1f",
             epoch,
             learning_rate,
             train_metrics["total"],
             train_metrics["real_prediction"],
+            train_metrics.get("change_weighted_sdf", 0.0),
+            train_metrics.get("delta_sdf_direction", 0.0),
+            train_metrics.get("delta_sdf_rmae", 0.0),
+            train_metrics.get("no_change_margin", 0.0),
             train_metrics["observed_consistency"],
             train_metrics["virtual_consistency"],
             train_metrics.get("backward_virtual_latent", 0.0),
@@ -1821,6 +2300,8 @@ def train(args: argparse.Namespace) -> None:
             train_metrics.get("latent_displacement_magnitude", 0.0),
             train_metrics.get("latent_manifold_guard", 0.0),
             train_metrics.get("speed_guard", 0.0),
+            train_metrics.get("relative_volume", 0.0),
+            train_metrics.get("disease_volume_ordering", 0.0),
             train_metrics.get("sequence_rollout_sdf", 0.0),
             train_metrics.get("sequence_cocycle", 0.0),
             train_metrics.get("sequence_displacement_magnitude", 0.0),
@@ -1842,6 +2323,7 @@ def train(args: argparse.Namespace) -> None:
                 gradient_clip_norm=None,
                 specs=specs,
                 regularizer_stats=regularizer_stats,
+                volume_probe_points=volume_probe_points,
                 max_batches=max_batches,
             )
             if validation_sequence_loader is not None:
@@ -1867,15 +2349,22 @@ def train(args: argparse.Namespace) -> None:
                 if key not in ("epoch", "rows", "observed_rows"):
                     writer.add_scalar(f"Loss/validation_{key}", value, epoch)
             LOGGER.info(
-                "validation epoch=%d real=%.6g no_change=%.6g "
+                "validation epoch=%d real=%.6g change_w=%.6g "
+                "delta_dir=%.6g delta_rmae=%.6g nochg_margin=%.6g "
+                "no_change=%.6g "
                 "model_minus_no_change=%.6g observed=%.6g virtual=%.6g "
                 "backward_lat=%.6g backward_shape=%.6g "
                 "future_lat=%.6g future_shape=%.6g direction=%.6g "
                 "disp_mag=%.6g latent_guard=%.6g speed_guard=%.6g "
+                "rel_vol=%.6g disease_vol=%.6g "
                 "seq_rollout=%.6g seq_no_change=%.6g seq_minus=%.6g "
                 "seq_cocycle=%.6g seq_disp_mag=%.6g",
                 epoch,
                 validation_metrics["real_prediction"],
+                validation_metrics.get("change_weighted_sdf", 0.0),
+                validation_metrics.get("delta_sdf_direction", 0.0),
+                validation_metrics.get("delta_sdf_rmae", 0.0),
+                validation_metrics.get("no_change_margin", 0.0),
                 validation_metrics["no_change"],
                 validation_metrics["model_minus_no_change"],
                 validation_metrics["observed_consistency"],
@@ -1888,6 +2377,8 @@ def train(args: argparse.Namespace) -> None:
                 validation_metrics.get("latent_displacement_magnitude", 0.0),
                 validation_metrics.get("latent_manifold_guard", 0.0),
                 validation_metrics.get("speed_guard", 0.0),
+                validation_metrics.get("relative_volume", 0.0),
+                validation_metrics.get("disease_volume_ordering", 0.0),
                 validation_metrics.get("sequence_rollout_sdf", 0.0),
                 validation_metrics.get("sequence_no_change_sdf", 0.0),
                 validation_metrics.get("sequence_rollout_minus_no_change", 0.0),
