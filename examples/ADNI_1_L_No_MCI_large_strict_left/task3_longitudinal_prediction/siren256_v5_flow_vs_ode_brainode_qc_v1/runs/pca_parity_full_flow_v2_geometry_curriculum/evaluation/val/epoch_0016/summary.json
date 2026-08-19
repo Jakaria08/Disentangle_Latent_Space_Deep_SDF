@@ -1,0 +1,197 @@
+{
+  "attention_contract": "not_applicable",
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1/runs/pca_parity_full_flow_v2_geometry_curriculum/checkpoints/epoch_0016.pt",
+  "checkpoint_tag": "epoch_0016",
+  "direct_vs_rollout": {
+    "direct_normal_mae": 0.01728751378633627,
+    "rollout_minus_direct": 4.571862518787384e-05,
+    "rollout_normal_mae": 0.017333232411524145,
+    "subjects": 41
+  },
+  "evaluation_surface": {
+    "bounds": [
+      -1.0,
+      1.0
+    ],
+    "grid_resolution": 80,
+    "method": "frozen_SIREN_zero_level_marching_cubes",
+    "samples_per_surface": 30000
+  },
+  "ood_future_trends": {
+    "ad_rate_is_more_negative_than_cn": true,
+    "by_diagnosis": {
+      "AD": -0.013436455093094662,
+      "CN": -0.007958818977686473
+    },
+    "first_last_subjects": 52
+  },
+  "pair_count": 522,
+  "primary_metrics": [
+    "registered_normal_mae",
+    "chamfer_l2_squared",
+    "assd",
+    "volume_relative_error",
+    "annual_log_volume_rate_mae"
+  ],
+  "run": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task3_longitudinal_prediction/siren256_v5_flow_vs_ode_brainode_qc_v1/runs/pca_parity_full_flow_v2_geometry_curriculum",
+  "split": "val",
+  "subject_log_volume_slope": {
+    "by_diagnosis_subject_macro": {
+      "AD": 2.809744961396919,
+      "CN": 0.771536388831734
+    },
+    "subject_log_volume_slope_mae": 1.7122480377079734,
+    "subjects": 52
+  },
+  "subject_macro": {
+    "all_subject_macro": {
+      "annual_log_volume_rate_mae": 0.05531200630592066,
+      "assd": 0.02503490893382127,
+      "chamfer_l2_squared": 0.0009550587962110914,
+      "hd95": 0.05499009693731543,
+      "hotspot_overlap": 0.07116286855811113,
+      "inverse_defect": 2.416396020218653e-08,
+      "nochange_improvement_ratio": -0.01603113573511097,
+      "registered_normal_mae": 0.015509014089185476,
+      "registered_proxy_vertex_mae": 0.024804365921099098,
+      "semigroup_defect": 1.312643471160985e-09,
+      "surface_area_relative_error": 0.034447787920607306,
+      "volume_relative_error": 0.0530662706217706
+    },
+    "by_diagnosis_subject_macro": {
+      "AD": {
+        "annual_log_volume_rate_mae": 0.08311668205357998,
+        "assd": 0.02556957488220805,
+        "chamfer_l2_squared": 0.0010060166479981625,
+        "hd95": 0.056199327324724824,
+        "hotspot_overlap": 0.08175732848608076,
+        "inverse_defect": 5.232630430854515e-10,
+        "nochange_improvement_ratio": -0.013336426202137366,
+        "registered_normal_mae": 0.016094612876056798,
+        "registered_proxy_vertex_mae": 0.026084504866351683,
+        "semigroup_defect": 3.111728387044341e-11,
+        "surface_area_relative_error": 0.04220324922648825,
+        "volume_relative_error": 0.0700984955170156
+      },
+      "CN": {
+        "annual_log_volume_rate_mae": 0.031479427093641224,
+        "assd": 0.02457662383520403,
+        "chamfer_l2_squared": 0.0009113806375364594,
+        "hd95": 0.05395361374810737,
+        "hotspot_overlap": 0.062081902905565735,
+        "inverse_defect": 4.4427414909987445e-08,
+        "nochange_improvement_ratio": -0.018340886763374066,
+        "registered_normal_mae": 0.015007072271867206,
+        "registered_proxy_vertex_mae": 0.023707103968025445,
+        "semigroup_defect": 2.4110944888385927e-09,
+        "surface_area_relative_error": 0.027800249658423645,
+        "volume_relative_error": 0.038467220711560605
+      }
+    },
+    "by_gap_subject_macro": {
+      "1_to_2y": {
+        "annual_log_volume_rate_mae": 0.04698923705360361,
+        "assd": 0.0242467692305434,
+        "chamfer_l2_squared": 0.0008967322988194608,
+        "hd95": 0.053100141920338975,
+        "hotspot_overlap": 0.07481424145848113,
+        "inverse_defect": 8.526404948906944e-10,
+        "nochange_improvement_ratio": -0.014205240954129861,
+        "registered_normal_mae": 0.01507825598130064,
+        "registered_proxy_vertex_mae": 0.024050824888295012,
+        "semigroup_defect": 5.130894536158197e-11,
+        "surface_area_relative_error": 0.03720241995354396,
+        "volume_relative_error": 0.0610180467113963
+      },
+      "over_2y": {
+        "annual_log_volume_rate_mae": 0.022451951208990288,
+        "assd": 0.02518282500504801,
+        "chamfer_l2_squared": 0.0009597522768824305,
+        "hd95": 0.05589282918154594,
+        "hotspot_overlap": 0.06457563562600552,
+        "inverse_defect": 8.610882325164605e-08,
+        "nochange_improvement_ratio": -0.05064010709150667,
+        "registered_normal_mae": 0.01753607986432481,
+        "registered_proxy_vertex_mae": 0.02705655205195277,
+        "semigroup_defect": 4.6805028912272585e-09,
+        "surface_area_relative_error": 0.041366608976275546,
+        "volume_relative_error": 0.0641214583929385
+      },
+      "under_1y": {
+        "annual_log_volume_rate_mae": 0.06594094466560638,
+        "assd": 0.024831083811488956,
+        "chamfer_l2_squared": 0.0009318769322011501,
+        "hd95": 0.053685509766725314,
+        "hotspot_overlap": 0.07098039199930009,
+        "inverse_defect": 5.685906101764059e-11,
+        "nochange_improvement_ratio": -0.003412794196306753,
+        "registered_normal_mae": 0.014540909667188923,
+        "registered_proxy_vertex_mae": 0.023325651423207354,
+        "semigroup_defect": 3.4576380959698104e-12,
+        "surface_area_relative_error": 0.027017719013561585,
+        "volume_relative_error": 0.03921433239588635
+      }
+    },
+    "by_pair_type_subject_macro": {
+      "adjacent": {
+        "annual_log_volume_rate_mae": 0.06499999483328835,
+        "assd": 0.02480748217386084,
+        "chamfer_l2_squared": 0.0009404426441618609,
+        "hd95": 0.053892639270423086,
+        "hotspot_overlap": 0.07183695031409464,
+        "inverse_defect": 6.654553691640032e-10,
+        "nochange_improvement_ratio": -0.0068442716077977426,
+        "registered_normal_mae": 0.014865169776323557,
+        "registered_proxy_vertex_mae": 0.023936975724888246,
+        "semigroup_defect": 3.7038243508841307e-11,
+        "surface_area_relative_error": 0.030801034666204548,
+        "volume_relative_error": 0.04485590149652322
+      },
+      "non_adjacent": {
+        "annual_log_volume_rate_mae": 0.041690940630356735,
+        "assd": 0.02505316778899354,
+        "chamfer_l2_squared": 0.0009507005801363016,
+        "hd95": 0.055327682828198825,
+        "hotspot_overlap": 0.07402715823262715,
+        "inverse_defect": 3.96087544931623e-08,
+        "nochange_improvement_ratio": -0.024553478479239697,
+        "registered_normal_mae": 0.015828321974088507,
+        "registered_proxy_vertex_mae": 0.024893780579149403,
+        "semigroup_defect": 2.1519099981178877e-09,
+        "surface_area_relative_error": 0.040012140028776254,
+        "volume_relative_error": 0.064116587013474
+      }
+    },
+    "first_last_subject_macro": {
+      "annual_log_volume_rate_mae": 0.04277254112750129,
+      "assd": 0.02565665237924241,
+      "chamfer_l2_squared": 0.0009967058115349795,
+      "hd95": 0.05747338774246983,
+      "hotspot_overlap": 0.06952196965690621,
+      "inverse_defect": 2.7376964188351033e-07,
+      "nochange_improvement_ratio": -0.045492266704274156,
+      "registered_normal_mae": 0.016958561099062745,
+      "registered_proxy_vertex_mae": 0.02658336337369222,
+      "semigroup_defect": 1.4637805621536892e-08,
+      "surface_area_relative_error": 0.04247123427494567,
+      "volume_relative_error": 0.06893374679021473
+    }
+  },
+  "test_rate_ordering": {
+    "by_diagnosis_subject_macro": {
+      "AD": {
+        "predicted_log_volume_rate": -0.013315301027695417,
+        "target_log_volume_rate": -0.05768187381965532
+      },
+      "CN": {
+        "predicted_log_volume_rate": -0.007402954736115329,
+        "target_log_volume_rate": -0.018376998409174238
+      }
+    },
+    "observed_ad_rate_is_more_negative_than_cn": true,
+    "predicted_ad_rate_is_more_negative_than_cn": true,
+    "predicted_matches_observed_order": true,
+    "subjects": 52
+  },
+  "volume_rate_definition": "log(decoded predicted volume / decoded source volume) per year; target remains registered target/source volume"
+}

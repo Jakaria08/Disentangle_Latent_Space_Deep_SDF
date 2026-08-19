@@ -1,0 +1,82 @@
+{
+  "archives": {
+    "test": {
+      "mtime_ns": 1786323255183822832,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/dataset/test_subject_sequences.npz",
+      "sha256": "341c06473799edf83503354fc03ee7af712ffee461c1d4bca8857a06532f23e9",
+      "size": 314026
+    },
+    "train": {
+      "mtime_ns": 1786323255099820232,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/dataset/train_subject_sequences.npz",
+      "sha256": "b37dae1688aea22660c9ebe711b18024dbd08beb3454a666a9d295003989b6b6",
+      "size": 2263005
+    },
+    "val": {
+      "mtime_ns": 1786323255158822058,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/dataset/val_subject_sequences.npz",
+      "sha256": "5269e175f0d4b610a03f1d31847e282d430ec832672a28a7c8283271dc0c62b6",
+      "size": 305077
+    }
+  },
+  "bootstrap_replicates": 2000,
+  "brainode_checkpoint": {
+    "mtime_ns": 1786340177658772412,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/brainode_paper_core/training/brainode_paper_core_raw_pca150_s42/checkpoints/best.pt",
+    "sha256": "72297445ca51ba7e62bd50897d9fa8dbcfe2df66a5f8fafc9f6d9e89a9d268da",
+    "size": 3936529
+  },
+  "brainode_config": {
+    "mtime_ns": 1786339701180164756,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/brainode_paper_core/configs/paper_core_primary.json",
+    "sha256": "0a3e5d8230eecd7a762d2c3e65959f23bcf86dc40f8bc7511e8f9cf981d18047",
+    "size": 2048
+  },
+  "example_split": "test",
+  "flow_checkpoint": {
+    "mtime_ns": 1786344098437601348,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v5/training/hippocampus_cocycle_v5_c4_s42/checkpoints/best_shape.pt",
+    "sha256": "fcf09a2225295f84825914c45cea4018f55cc70db41a2aa44351af3a9caeb79b",
+    "size": 4603757
+  },
+  "flow_config": {
+    "mtime_ns": 1786343169906561209,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v5/configs/c4_cocycle_v5.json",
+    "sha256": "6a7f335d9b0d4c5ed627037e030c522c36c0f555fa34b23f09d21aee7eb9991d",
+    "size": 2511
+  },
+  "group_map_max_pairs_per_diagnosis": 0,
+  "pca_model": {
+    "components": {
+      "mtime_ns": 1786322286313613252,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model/components_150.npy",
+      "sha256": "9a9fd8567840557c69fbb9e37e5e899f807e82007d06275abe021f25a185a683",
+      "size": 4942928
+    },
+    "faces": {
+      "mtime_ns": 1786322286314613283,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model/faces.npy",
+      "sha256": "01631f9060f3ad65f44ad2457f51a62af2f10738c9ae2633ba0bc52750708133",
+      "size": 131840
+    },
+    "mean": {
+      "mtime_ns": 1786322286306613030,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model/mean.npy",
+      "sha256": "b1465939780ed8c3a3b56fbf9f9a6f49f74ffdf577d3be8949e6f1eb05126e58",
+      "size": 33080
+    }
+  },
+  "schema_version": 1,
+  "seed": 42,
+  "skip_group_maps": false,
+  "source_meshes_modified": false,
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "strict_no_mci": true,
+  "structure": "hippocampus",
+  "test_loaded_during_training": false,
+  "top_change_fraction": 0.2
+}

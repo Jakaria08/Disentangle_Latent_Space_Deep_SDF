@@ -1,0 +1,17 @@
+{
+  "all_current_qc_passed_subjects_retained": true,
+  "attention_used": false,
+  "cross_subject_operations": false,
+  "experiment": "c4_time_embedded",
+  "input_config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "input_config_sha256": "70c998772cdee30b9fbf329d9a99d69edf54d86fbe3d4368ea4acae960b7d806",
+  "method": "direct_time_embedded_pca_cocycle_v1",
+  "model_variant": "direct_time_film",
+  "ode_used": false,
+  "source_meshes_modified": false,
+  "structure": "left_hippocampus",
+  "subject_context": "not used by this direct transport",
+  "test_loaded_during_training": false,
+  "time_conditioning": "C4 raw source/target normalized ages, signed/absolute interval, and midpoint are retained; fixed sin/cos embeddings of midpoint and signed interval condition each residual block",
+  "transport": "Phi(z,s,t,d)=z+(t-s)*phi(z,s,t,d)"
+}

@@ -1,15 +1,27 @@
 #!/usr/bin/env python3
-"""Train the direct, non-ODE Cocycle-V5 model on strict ADNI SynthSeg PCA data.
+"""Train direct or coboundary non-ODE flows on strict ADNI SynthSeg PCA data.
 
 The learned transport is deliberately the same direct-flow family used by the
 earlier cocycle experiment:
 
     Phi(z, s, t, d) = z + (t - s) * phi_theta(z, s, t, d)
 
+Two optional C4-derived coboundary experiments are also supported:
+
+``c4_coboundary_exact``
+    Phi(z,s,t;u,d) = z + P(u,t,d) - P(u,s,d), where ``u`` is the fixed
+    first-visit PCA context for the subject.  Identity, semigroup consistency,
+    and reversal are exact up to floating-point arithmetic.
+
+``c4_coboundary_soft``
+    Retains the state-dependent direct V5 transport and adds a potential
+    network.  A coboundary loss aligns the direct displacement with
+    P(u,t,d)-P(u,s,d), preserving flexibility while encouraging, but not
+    guaranteeing, coboundary structure.
+
 There is no ODE solver, recurrence hidden inside the transport, attention over
-subjects, or cross-run state.  Semigroup and inverse properties are imposed by
-losses on compositions of this direct map.  Every output directory belongs to
-one (structure, experiment, run-name) tuple, so independent experiments can be
+subjects, or cross-run state.  Every output directory belongs to one
+(structure, experiment, run-name) tuple, so independent experiments can be
 started concurrently on separate GPUs.
 """
 
@@ -48,7 +60,18 @@ from train_adni_synthseg_pca_cocycle_v4 import (
 SCRIPT_PATH = Path(__file__).resolve()
 PROJECT_ROOT = SCRIPT_PATH.parent.parent
 BASE_ROOT = PROJECT_ROOT / "examples" / "ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth"
-EXPERIMENTS = ("c1", "c2", "c3", "c4")
+EXPERIMENTS = (
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c4_time_embedded",
+    "c4_coboundary_exact",
+    "c4_coboundary_soft",
+    "c5_coboundary_exact_volume",
+    "c6_coboundary_exact_volume_selection",
+    "c7_coboundary_volume_axis",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -149,10 +172,427 @@ class DirectDiagnosisResidualCocycleFlow(nn.Module):
         source_time: torch.Tensor,
         target_time: torch.Tensor,
         label_ad: torch.Tensor,
+        context: torch.Tensor | None = None,
+        context_time: torch.Tensor | None = None,
     ) -> torch.Tensor:
+        del context, context_time
         source = source_time.reshape(-1, 1).to(dtype=latent.dtype, device=latent.device)
         target = target_time.reshape(-1, 1).to(dtype=latent.dtype, device=latent.device)
         return latent + (target - source) * self.average_velocity(latent, source, target, label_ad)
+
+
+class LowFrequencyTimeEmbedding(nn.Module):
+    """Fixed low-frequency age/interval encoding followed by a small MLP.
+
+    Raw source/target ages remain available to the C4 backbone.  This encoder
+    instead supplies a compact, explicit representation of absolute age
+    (midpoint) and signed transport interval to the residual blocks.
+    """
+
+    def __init__(self, embedding_dim: int, frequencies: Iterable[float]) -> None:
+        super().__init__()
+        if embedding_dim <= 0:
+            raise ValueError("time embedding_dim must be positive")
+        values = tuple(float(value) for value in frequencies)
+        if not values or any(not math.isfinite(value) or value <= 0.0 for value in values):
+            raise ValueError("time frequencies must be a non-empty list of positive finite values")
+        self.register_buffer("frequencies", torch.tensor(values, dtype=torch.float32).view(1, -1))
+        # Raw [s, t, t-s, |t-s|, midpoint], plus sin/cos of midpoint and signed gap.
+        feature_dim = 5 + 4 * len(values)
+        self.fc1 = nn.Linear(feature_dim, int(embedding_dim))
+        self.fc2 = nn.Linear(int(embedding_dim), int(embedding_dim))
+        self.norm = nn.LayerNorm(int(embedding_dim))
+        self.activation = nn.SiLU()
+
+    def forward(self, source_time: torch.Tensor, target_time: torch.Tensor) -> torch.Tensor:
+        source = source_time.reshape(-1, 1)
+        target = target_time.reshape(-1, 1)
+        if source.shape != target.shape:
+            raise ValueError("source_time and target_time must have equal batch sizes")
+        delta = target - source
+        midpoint = 0.5 * (source + target)
+        frequencies = self.frequencies.to(dtype=source.dtype, device=source.device)
+        midpoint_phase = 2.0 * math.pi * midpoint * frequencies
+        delta_phase = 2.0 * math.pi * delta * frequencies
+        raw = torch.cat([source, target, delta, torch.abs(delta), midpoint], dim=1)
+        features = torch.cat(
+            [raw, torch.sin(midpoint_phase), torch.cos(midpoint_phase), torch.sin(delta_phase), torch.cos(delta_phase)],
+            dim=1,
+        )
+        hidden = self.activation(self.fc1(features))
+        return self.norm(self.fc2(hidden))
+
+
+class TimeEmbeddedDirectDiagnosisResidualCocycleFlow(nn.Module):
+    """C4 direct flow with zero-initialized temporal FiLM adapters.
+
+    The C4 raw time input, width, residual depth, CN head, AD-residual head,
+    and direct transport equation are unchanged.  The only added capacity is
+    a low-frequency time encoder and one bounded FiLM adapter per residual
+    block.  Zero adapter initialization makes the untrained model exactly the
+    original C4 function for identical base parameters.
+    """
+
+    def __init__(
+        self,
+        latent_dim: int,
+        width: int,
+        residual_blocks: int,
+        time_embedding_dim: int,
+        time_frequencies: Iterable[float],
+        modulation_max_scale: float,
+    ) -> None:
+        super().__init__()
+        if latent_dim <= 0 or width <= 0 or residual_blocks <= 0:
+            raise ValueError("latent_dim, width, and residual_blocks must be positive")
+        if not math.isfinite(modulation_max_scale) or modulation_max_scale <= 0.0:
+            raise ValueError("modulation_max_scale must be positive and finite")
+        self.latent_dim = int(latent_dim)
+        self.modulation_max_scale = float(modulation_max_scale)
+        # Keep the original C4 modules and construction order exactly intact.
+        # This permits non-strict C4 checkpoint loading and a direct function
+        # parity check before the temporal adapters learn.
+        self.input = nn.Linear(self.latent_dim + 5, int(width))
+        self.activation = nn.SiLU()
+        self.blocks = nn.ModuleList(ResidualBlock(int(width)) for _ in range(int(residual_blocks)))
+        self.cn_head = nn.Linear(int(width), self.latent_dim)
+        self.ad_residual_head = nn.Linear(int(width), self.latent_dim)
+        nn.init.zeros_(self.cn_head.weight)
+        nn.init.zeros_(self.cn_head.bias)
+        nn.init.zeros_(self.ad_residual_head.weight)
+        nn.init.zeros_(self.ad_residual_head.bias)
+
+        self.time_embedding = LowFrequencyTimeEmbedding(int(time_embedding_dim), time_frequencies)
+        self.time_modulations = nn.ModuleList(
+            nn.Linear(int(time_embedding_dim), 2 * int(width)) for _ in range(int(residual_blocks))
+        )
+        for adapter in self.time_modulations:
+            nn.init.zeros_(adapter.weight)
+            nn.init.zeros_(adapter.bias)
+
+    def average_velocity(
+        self,
+        latent: torch.Tensor,
+        source_time: torch.Tensor,
+        target_time: torch.Tensor,
+        label_ad: torch.Tensor,
+    ) -> torch.Tensor:
+        if latent.ndim != 2 or latent.shape[1] != self.latent_dim:
+            raise ValueError(f"Expected latent [B,{self.latent_dim}], got {tuple(latent.shape)}")
+        source = source_time.reshape(-1, 1).to(dtype=latent.dtype, device=latent.device)
+        target = target_time.reshape(-1, 1).to(dtype=latent.dtype, device=latent.device)
+        label = label_ad.reshape(-1, 1).to(dtype=latent.dtype, device=latent.device)
+        if source.shape[0] != latent.shape[0] or target.shape[0] != latent.shape[0] or label.shape[0] != latent.shape[0]:
+            raise ValueError("Latent, time, and diagnosis batch sizes must match")
+        delta = target - source
+        midpoint = 0.5 * (source + target)
+        features = torch.cat([latent, source, target, delta, torch.abs(delta), midpoint], dim=1)
+        hidden = self.activation(self.input(features))
+        embedding = self.time_embedding(source, target)
+        for block, adapter in zip(self.blocks, self.time_modulations):
+            residual = hidden
+            normalized = block.norm(hidden)
+            gamma, beta = adapter(embedding).chunk(2, dim=1)
+            scale = self.modulation_max_scale
+            normalized = (1.0 + scale * torch.tanh(gamma)) * normalized + scale * torch.tanh(beta)
+            hidden = block.activation(block.fc2(block.activation(block.fc1(normalized))) + residual)
+        return self.cn_head(hidden) + label * self.ad_residual_head(hidden)
+
+    def transport(
+        self,
+        latent: torch.Tensor,
+        source_time: torch.Tensor,
+        target_time: torch.Tensor,
+        label_ad: torch.Tensor,
+        context: torch.Tensor | None = None,
+        context_time: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        del context, context_time
+        source = source_time.reshape(-1, 1).to(dtype=latent.dtype, device=latent.device)
+        target = target_time.reshape(-1, 1).to(dtype=latent.dtype, device=latent.device)
+        return latent + (target - source) * self.average_velocity(latent, source, target, label_ad)
+
+
+class DiagnosisResidualPotential(nn.Module):
+    """Cumulative PCA progression potential conditioned on fixed baseline context."""
+
+    def __init__(self, latent_dim: int, width: int, residual_blocks: int) -> None:
+        super().__init__()
+        if latent_dim <= 0 or width <= 0 or residual_blocks <= 0:
+            raise ValueError("latent_dim, width, and residual_blocks must be positive")
+        self.latent_dim = int(latent_dim)
+        # Baseline PCA context, baseline age, query age, and elapsed normalized age.
+        self.input = nn.Linear(self.latent_dim + 3, int(width))
+        self.activation = nn.SiLU()
+        self.blocks = nn.ModuleList(ResidualBlock(int(width)) for _ in range(int(residual_blocks)))
+        self.cn_head = nn.Linear(int(width), self.latent_dim)
+        self.ad_residual_head = nn.Linear(int(width), self.latent_dim)
+        nn.init.zeros_(self.cn_head.weight)
+        nn.init.zeros_(self.cn_head.bias)
+        nn.init.zeros_(self.ad_residual_head.weight)
+        nn.init.zeros_(self.ad_residual_head.bias)
+
+    def forward(
+        self,
+        context: torch.Tensor,
+        context_time: torch.Tensor,
+        query_time: torch.Tensor,
+        label_ad: torch.Tensor,
+    ) -> torch.Tensor:
+        if context.ndim != 2 or context.shape[1] != self.latent_dim:
+            raise ValueError(f"Expected context [B,{self.latent_dim}], got {tuple(context.shape)}")
+        baseline = context_time.reshape(-1, 1).to(dtype=context.dtype, device=context.device)
+        query = query_time.reshape(-1, 1).to(dtype=context.dtype, device=context.device)
+        label = label_ad.reshape(-1, 1).to(dtype=context.dtype, device=context.device)
+        if baseline.shape[0] != context.shape[0] or query.shape[0] != context.shape[0] or label.shape[0] != context.shape[0]:
+            raise ValueError("Context, time, and diagnosis batch sizes must match")
+        features = torch.cat([context, baseline, query, query - baseline], dim=1)
+        hidden = self.activation(self.input(features))
+        for block in self.blocks:
+            hidden = block(hidden)
+        return self.cn_head(hidden) + label * self.ad_residual_head(hidden)
+
+
+class VolumeAxisDiagnosisResidualPotential(nn.Module):
+    """Exact potential with separate volume-axis and volume-orthogonal parts.
+
+    ``volume_coefficient`` is the train-only ridge coefficient ``w`` from
+    ``log(volume) ~= intercept + w^T z`` in standardized PCA coordinates.
+    The normalized vector ``volume_basis = w / (w^T w)`` has unit response
+    under this local linear volume model: ``w^T volume_basis = 1``.  Therefore
+    the scalar potential ``q`` is directly calibrated in approximate
+    log-volume units, while the learned vector potential is projected to the
+    orthogonal complement of ``w``.
+    """
+
+    def __init__(
+        self,
+        latent_dim: int,
+        width: int,
+        residual_blocks: int,
+        volume_coefficient: list[float] | np.ndarray | torch.Tensor,
+    ) -> None:
+        super().__init__()
+        if latent_dim <= 0 or width <= 0 or residual_blocks <= 0:
+            raise ValueError("latent_dim, width, and residual_blocks must be positive")
+        coefficient = torch.as_tensor(volume_coefficient, dtype=torch.float32).reshape(-1)
+        if coefficient.numel() != int(latent_dim):
+            raise ValueError(
+                f"volume coefficient must contain {latent_dim} PCA entries, got {coefficient.numel()}"
+            )
+        squared_norm = torch.dot(coefficient, coefficient)
+        if not bool(torch.isfinite(coefficient).all()) or not bool(torch.isfinite(squared_norm)) or float(squared_norm) <= 1.0e-12:
+            raise ValueError("volume coefficient must be finite and have non-zero norm")
+        self.latent_dim = int(latent_dim)
+        self.register_buffer("volume_coefficient", coefficient)
+        self.register_buffer("volume_basis", coefficient / squared_norm)
+        # Baseline PCA context, baseline age, query age, and elapsed normalized age.
+        self.input = nn.Linear(self.latent_dim + 3, int(width))
+        self.activation = nn.SiLU()
+        self.blocks = nn.ModuleList(ResidualBlock(int(width)) for _ in range(int(residual_blocks)))
+        self.cn_shape_head = nn.Linear(int(width), self.latent_dim)
+        self.ad_shape_residual_head = nn.Linear(int(width), self.latent_dim)
+        self.cn_volume_head = nn.Linear(int(width), 1)
+        self.ad_volume_residual_head = nn.Linear(int(width), 1)
+        for head in (
+            self.cn_shape_head,
+            self.ad_shape_residual_head,
+            self.cn_volume_head,
+            self.ad_volume_residual_head,
+        ):
+            nn.init.zeros_(head.weight)
+            nn.init.zeros_(head.bias)
+
+    def components(
+        self,
+        context: torch.Tensor,
+        context_time: torch.Tensor,
+        query_time: torch.Tensor,
+        label_ad: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Return the ``w``-orthogonal potential and scalar log-volume potential."""
+        if context.ndim != 2 or context.shape[1] != self.latent_dim:
+            raise ValueError(f"Expected context [B,{self.latent_dim}], got {tuple(context.shape)}")
+        baseline = context_time.reshape(-1, 1).to(dtype=context.dtype, device=context.device)
+        query = query_time.reshape(-1, 1).to(dtype=context.dtype, device=context.device)
+        label = label_ad.reshape(-1, 1).to(dtype=context.dtype, device=context.device)
+        if baseline.shape[0] != context.shape[0] or query.shape[0] != context.shape[0] or label.shape[0] != context.shape[0]:
+            raise ValueError("Context, time, and diagnosis batch sizes must match")
+        features = torch.cat([context, baseline, query, query - baseline], dim=1)
+        hidden = self.activation(self.input(features))
+        for block in self.blocks:
+            hidden = block(hidden)
+        raw_shape = self.cn_shape_head(hidden) + label * self.ad_shape_residual_head(hidden)
+        volume_potential = (self.cn_volume_head(hidden) + label * self.ad_volume_residual_head(hidden)).reshape(-1)
+        coefficient = self.volume_coefficient.to(dtype=context.dtype, device=context.device).view(1, -1)
+        basis = self.volume_basis.to(dtype=context.dtype, device=context.device).view(1, -1)
+        shape_projection = torch.sum(raw_shape * coefficient, dim=1, keepdim=True)
+        shape_orthogonal = raw_shape - shape_projection * basis
+        return shape_orthogonal, volume_potential
+
+    def forward(
+        self,
+        context: torch.Tensor,
+        context_time: torch.Tensor,
+        query_time: torch.Tensor,
+        label_ad: torch.Tensor,
+    ) -> torch.Tensor:
+        shape_orthogonal, volume_potential = self.components(context, context_time, query_time, label_ad)
+        basis = self.volume_basis.to(dtype=context.dtype, device=context.device).view(1, -1)
+        return shape_orthogonal + volume_potential.view(-1, 1) * basis
+
+
+class ExactAdditiveCoboundaryFlow(nn.Module):
+    """Exact additive coboundary using a fixed first-visit subject context."""
+
+    def __init__(self, latent_dim: int, width: int, residual_blocks: int) -> None:
+        super().__init__()
+        self.latent_dim = int(latent_dim)
+        self.potential = DiagnosisResidualPotential(latent_dim, width, residual_blocks)
+
+    def coboundary_increment(
+        self,
+        source_time: torch.Tensor,
+        target_time: torch.Tensor,
+        label_ad: torch.Tensor,
+        context: torch.Tensor,
+        context_time: torch.Tensor,
+    ) -> torch.Tensor:
+        potential_source = self.potential(context, context_time, source_time, label_ad)
+        potential_target = self.potential(context, context_time, target_time, label_ad)
+        return potential_target - potential_source
+
+    def transport(
+        self,
+        latent: torch.Tensor,
+        source_time: torch.Tensor,
+        target_time: torch.Tensor,
+        label_ad: torch.Tensor,
+        context: torch.Tensor | None = None,
+        context_time: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        if context is None or context_time is None:
+            raise ValueError("Exact coboundary transport requires fixed subject context and context_time")
+        return latent + self.coboundary_increment(source_time, target_time, label_ad, context, context_time)
+
+
+class ExactVolumeAxisCoboundaryFlow(nn.Module):
+    """Exact coboundary with a scalar potential along the decoded-volume axis."""
+
+    def __init__(
+        self,
+        latent_dim: int,
+        width: int,
+        residual_blocks: int,
+        volume_coefficient: list[float] | np.ndarray | torch.Tensor,
+    ) -> None:
+        super().__init__()
+        self.latent_dim = int(latent_dim)
+        self.potential = VolumeAxisDiagnosisResidualPotential(
+            latent_dim, width, residual_blocks, volume_coefficient
+        )
+
+    def coboundary_increment(
+        self,
+        source_time: torch.Tensor,
+        target_time: torch.Tensor,
+        label_ad: torch.Tensor,
+        context: torch.Tensor,
+        context_time: torch.Tensor,
+    ) -> torch.Tensor:
+        potential_source = self.potential(context, context_time, source_time, label_ad)
+        potential_target = self.potential(context, context_time, target_time, label_ad)
+        return potential_target - potential_source
+
+    def volume_potential_delta(
+        self,
+        source_time: torch.Tensor,
+        target_time: torch.Tensor,
+        label_ad: torch.Tensor,
+        context: torch.Tensor,
+        context_time: torch.Tensor,
+    ) -> torch.Tensor:
+        """Scalar C7 potential difference, calibrated to local log-volume change."""
+        _, source_volume_potential = self.potential.components(context, context_time, source_time, label_ad)
+        _, target_volume_potential = self.potential.components(context, context_time, target_time, label_ad)
+        return target_volume_potential - source_volume_potential
+
+    def transport(
+        self,
+        latent: torch.Tensor,
+        source_time: torch.Tensor,
+        target_time: torch.Tensor,
+        label_ad: torch.Tensor,
+        context: torch.Tensor | None = None,
+        context_time: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        if context is None or context_time is None:
+            raise ValueError("Exact volume-axis coboundary transport requires fixed subject context and context_time")
+        return latent + self.coboundary_increment(source_time, target_time, label_ad, context, context_time)
+
+
+class SoftStateDependentCoboundaryFlow(nn.Module):
+    """State-dependent V5 flow with an auxiliary additive potential."""
+
+    def __init__(self, latent_dim: int, width: int, residual_blocks: int) -> None:
+        super().__init__()
+        self.latent_dim = int(latent_dim)
+        self.direct = DirectDiagnosisResidualCocycleFlow(latent_dim, width, residual_blocks)
+        self.potential = DiagnosisResidualPotential(latent_dim, width, residual_blocks)
+
+    def coboundary_increment(
+        self,
+        source_time: torch.Tensor,
+        target_time: torch.Tensor,
+        label_ad: torch.Tensor,
+        context: torch.Tensor,
+        context_time: torch.Tensor,
+    ) -> torch.Tensor:
+        potential_source = self.potential(context, context_time, source_time, label_ad)
+        potential_target = self.potential(context, context_time, target_time, label_ad)
+        return potential_target - potential_source
+
+    def transport(
+        self,
+        latent: torch.Tensor,
+        source_time: torch.Tensor,
+        target_time: torch.Tensor,
+        label_ad: torch.Tensor,
+        context: torch.Tensor | None = None,
+        context_time: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        return self.direct.transport(latent, source_time, target_time, label_ad, context, context_time)
+
+
+def build_flow(model_config: dict[str, Any], volume_axis: dict[str, Any] | None = None) -> nn.Module:
+    """Build a direct flow, its time-conditioned C4 variant, or a coboundary variant."""
+    variant = str(model_config.get("variant", "direct"))
+    arguments = {
+        "latent_dim": int(model_config["latent_dim"]),
+        "width": int(model_config["width"]),
+        "residual_blocks": int(model_config["residual_blocks"]),
+    }
+    if variant == "direct":
+        return DirectDiagnosisResidualCocycleFlow(**arguments)
+    if variant == "direct_time_film":
+        return TimeEmbeddedDirectDiagnosisResidualCocycleFlow(
+            **arguments,
+            time_embedding_dim=int(model_config["time_embedding_dim"]),
+            time_frequencies=model_config["time_frequencies"],
+            modulation_max_scale=float(model_config["modulation_max_scale"]),
+        )
+    if variant == "coboundary_exact":
+        return ExactAdditiveCoboundaryFlow(**arguments)
+    if variant == "coboundary_soft":
+        return SoftStateDependentCoboundaryFlow(**arguments)
+    if variant == "coboundary_volume_axis":
+        if not isinstance(volume_axis, dict):
+            raise ValueError("coboundary_volume_axis requires train-only volume_axis statistics")
+        coefficient = volume_axis.get("linear_log_volume_coefficient")
+        if coefficient is None:
+            raise KeyError("volume_axis.linear_log_volume_coefficient is required")
+        return ExactVolumeAxisCoboundaryFlow(**arguments, volume_coefficient=coefficient)
+    raise ValueError(f"Unknown model variant: {variant}")
 
 
 class PcaGeometry(nn.Module):
@@ -235,11 +675,24 @@ def convert_pairs(rows: Iterable[PairRow], archive: dict[str, np.ndarray]) -> li
 
 
 def values_on_device(archive: dict[str, np.ndarray], device: torch.device) -> dict[str, torch.Tensor]:
+    z = torch.from_numpy(archive["visit_pca_standardized_150"].astype(np.float32)).to(device)
+    age = torch.from_numpy(archive["visit_age_norm_train"].astype(np.float32)).to(device)
+    context = torch.empty_like(z)
+    context_age = torch.empty_like(age)
+    offsets = archive["subject_visit_offsets"].astype(np.int64)
+    for subject_index in range(len(offsets) - 1):
+        first = int(offsets[subject_index])
+        last = int(offsets[subject_index + 1])
+        context[first:last] = z[first].unsqueeze(0).expand(last - first, -1)
+        context_age[first:last] = age[first]
     return {
-        "z": torch.from_numpy(archive["visit_pca_standardized_150"].astype(np.float32)).to(device),
-        "age": torch.from_numpy(archive["visit_age_norm_train"].astype(np.float32)).to(device),
+        "z": z,
+        "age": age,
         "years": torch.from_numpy(archive["visit_time_years_from_baseline"].astype(np.float32)).to(device),
         "label": torch.from_numpy(archive["visit_label_ad"].astype(np.float32)).to(device),
+        # Fixed for every visit of a subject; required by exact coboundary algebra.
+        "context": context,
+        "context_age": context_age,
     }
 
 
@@ -255,6 +708,8 @@ def indexed(values: dict[str, torch.Tensor], raw: dict[str, torch.Tensor]) -> di
         "source_years": values["years"][source_index],
         "target_years": values["years"][target_index],
         "label": values["label"][source_index],
+        "context": values["context"][source_index],
+        "context_age": values["context_age"][source_index],
         "intermediate_index": intermediate_index,
     }
 
@@ -276,12 +731,75 @@ def line_slope(times: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
 
 
 @torch.no_grad()
+def estimate_volume_axis(
+    geometry: PcaGeometry,
+    standardized_scores: torch.Tensor,
+    batch_size: int = 512,
+    ridge: float = 1.0e-4,
+) -> dict[str, Any]:
+    """Fit the train-only local linear log-volume axis in standardized PCA space."""
+    if standardized_scores.ndim != 2 or standardized_scores.shape[0] < 2:
+        raise ValueError("At least two train scans are required to estimate the volume axis")
+    if ridge < 0.0:
+        raise ValueError("volume-axis ridge must be non-negative")
+    latent_dim = int(standardized_scores.shape[1])
+    count = 0
+    sum_z = np.zeros(latent_dim, dtype=np.float64)
+    sum_y = 0.0
+    sum_zz = np.zeros((latent_dim, latent_dim), dtype=np.float64)
+    sum_zy = np.zeros(latent_dim, dtype=np.float64)
+    sum_yy = 0.0
+    for start in range(0, int(standardized_scores.shape[0]), int(batch_size)):
+        z = standardized_scores[start : start + int(batch_size)]
+        y = torch.log(geometry.volume(z))
+        z_numpy = z.detach().cpu().numpy().astype(np.float64, copy=False)
+        y_numpy = y.detach().cpu().numpy().astype(np.float64, copy=False)
+        count += int(z_numpy.shape[0])
+        sum_z += np.sum(z_numpy, axis=0)
+        sum_y += float(np.sum(y_numpy))
+        sum_zz += z_numpy.T @ z_numpy
+        sum_zy += z_numpy.T @ y_numpy
+        sum_yy += float(y_numpy @ y_numpy)
+    if count < 2:
+        raise ValueError("At least two train scans are required to estimate the volume axis")
+    mean_z = sum_z / count
+    mean_y = sum_y / count
+    covariance = sum_zz / count - np.outer(mean_z, mean_z)
+    cross_covariance = sum_zy / count - mean_z * mean_y
+    coefficient = np.linalg.solve(covariance + float(ridge) * np.eye(latent_dim), cross_covariance)
+    coefficient_norm = float(np.linalg.norm(coefficient))
+    if not np.all(np.isfinite(coefficient)) or not math.isfinite(coefficient_norm) or coefficient_norm <= 1.0e-8:
+        raise RuntimeError("Could not estimate a finite non-zero train-only volume axis")
+    intercept = float(mean_y - mean_z @ coefficient)
+    residual_sum_squares = (
+        sum_yy
+        - 2.0 * intercept * sum_y
+        - 2.0 * coefficient @ sum_zy
+        + count * intercept * intercept
+        + 2.0 * intercept * coefficient @ sum_z
+        + coefficient @ sum_zz @ coefficient
+    )
+    total_sum_squares = float(sum_yy - count * mean_y * mean_y)
+    r_squared = 1.0 - residual_sum_squares / max(total_sum_squares, 1.0e-12)
+    return {
+        "definition": "train-only ridge fit: log(decoded_volume) = intercept + w^T standardized_pca",
+        "linear_log_volume_coefficient": coefficient.tolist(),
+        "linear_log_volume_intercept": intercept,
+        "coefficient_l2_norm": coefficient_norm,
+        "ridge": float(ridge),
+        "train_r_squared": float(r_squared),
+        "scans": int(count),
+    }
+
+
+@torch.no_grad()
 def training_statistics(
     geometry: PcaGeometry,
     values: dict[str, torch.Tensor],
     rows: list[CocyclePair],
     archive: dict[str, np.ndarray],
     batch_size: int = 512,
+    include_volume_axis: bool = False,
 ) -> dict[str, Any]:
     collected: dict[str, list[np.ndarray]] = {
         "pca": [], "coordinate": [], "euclidean": [], "volume_log": [], "rate": [], "displacement": [],
@@ -320,7 +838,7 @@ def training_statistics(
         if not subject_means:
             raise ValueError(f"No train rate targets for {diagnosis}")
         group_targets[diagnosis] = float(np.mean(subject_means))
-    return {
+    output = {
         "normalization_scales": {
             "pca": safe_median(collected["pca"]),
             "coordinate": safe_median(collected["coordinate"]),
@@ -335,6 +853,9 @@ def training_statistics(
         "subjects_by_diagnosis": {diagnosis: len(entries) for diagnosis, entries in rates_by_subject.items()},
         "statistics_source": "train split only; subject-balanced observed forward pairs",
     }
+    if include_volume_axis:
+        output["volume_axis"] = estimate_volume_axis(geometry, values["z"], batch_size=batch_size)
+    return output
 
 
 def balanced_pair_sampler(rows: list[CocyclePair], seed: int, epoch: int, samples: int) -> WeightedRandomSampler:
@@ -394,7 +915,7 @@ def mean_scaled_mse(left: torch.Tensor, right: torch.Tensor, scale: float) -> to
 
 
 def pair_terms(
-    flow: DirectDiagnosisResidualCocycleFlow,
+    flow: nn.Module,
     geometry: PcaGeometry,
     values: dict[str, torch.Tensor],
     raw: dict[str, torch.Tensor],
@@ -402,8 +923,12 @@ def pair_terms(
 ) -> dict[str, torch.Tensor]:
     batch = indexed(values, raw)
     scales = statistics["normalization_scales"]
-    prediction_forward = flow.transport(batch["source"], batch["source_age"], batch["target_age"], batch["label"])
-    prediction_backward = flow.transport(batch["target"], batch["target_age"], batch["source_age"], batch["label"])
+    prediction_forward = flow.transport(
+        batch["source"], batch["source_age"], batch["target_age"], batch["label"], batch["context"], batch["context_age"]
+    )
+    prediction_backward = flow.transport(
+        batch["target"], batch["target_age"], batch["source_age"], batch["label"], batch["context"], batch["context_age"]
+    )
     forward = shape_terms(prediction_forward, batch["target"], geometry, scales)
     backward = shape_terms(prediction_backward, batch["source"], geometry, scales)
 
@@ -413,10 +938,24 @@ def pair_terms(
         mid_index = batch["intermediate_index"][valid_middle]
         middle_age = values["age"][mid_index]
         labels = batch["label"][valid_middle]
-        forward_middle = flow.transport(batch["source"][valid_middle], batch["source_age"][valid_middle], middle_age, labels)
-        forward_composed = flow.transport(forward_middle, middle_age, batch["target_age"][valid_middle], labels)
-        backward_middle = flow.transport(batch["target"][valid_middle], batch["target_age"][valid_middle], middle_age, labels)
-        backward_composed = flow.transport(backward_middle, middle_age, batch["source_age"][valid_middle], labels)
+        middle_context = batch["context"][valid_middle]
+        middle_context_age = batch["context_age"][valid_middle]
+        forward_middle = flow.transport(
+            batch["source"][valid_middle], batch["source_age"][valid_middle], middle_age, labels,
+            middle_context, middle_context_age,
+        )
+        forward_composed = flow.transport(
+            forward_middle, middle_age, batch["target_age"][valid_middle], labels,
+            middle_context, middle_context_age,
+        )
+        backward_middle = flow.transport(
+            batch["target"][valid_middle], batch["target_age"][valid_middle], middle_age, labels,
+            middle_context, middle_context_age,
+        )
+        backward_composed = flow.transport(
+            backward_middle, middle_age, batch["source_age"][valid_middle], labels,
+            middle_context, middle_context_age,
+        )
         observed = 0.5 * (
             mean_scaled_mse(prediction_forward[valid_middle], forward_composed, scales["pca"])
             + mean_scaled_mse(prediction_backward[valid_middle], backward_composed, scales["pca"])
@@ -424,21 +963,46 @@ def pair_terms(
 
     ratio = torch.empty_like(batch["source_age"]).uniform_(0.2, 0.8)
     virtual_age = batch["source_age"] + ratio * (batch["target_age"] - batch["source_age"])
-    forward_middle = flow.transport(batch["source"], batch["source_age"], virtual_age, batch["label"])
-    forward_composed = flow.transport(forward_middle, virtual_age, batch["target_age"], batch["label"])
-    backward_middle = flow.transport(batch["target"], batch["target_age"], virtual_age, batch["label"])
-    backward_composed = flow.transport(backward_middle, virtual_age, batch["source_age"], batch["label"])
+    forward_middle = flow.transport(
+        batch["source"], batch["source_age"], virtual_age, batch["label"], batch["context"], batch["context_age"]
+    )
+    forward_composed = flow.transport(
+        forward_middle, virtual_age, batch["target_age"], batch["label"], batch["context"], batch["context_age"]
+    )
+    backward_middle = flow.transport(
+        batch["target"], batch["target_age"], virtual_age, batch["label"], batch["context"], batch["context_age"]
+    )
+    backward_composed = flow.transport(
+        backward_middle, virtual_age, batch["source_age"], batch["label"], batch["context"], batch["context_age"]
+    )
     virtual = 0.5 * (
         mean_scaled_mse(prediction_forward, forward_composed, scales["pca"])
         + mean_scaled_mse(prediction_backward, backward_composed, scales["pca"])
     )
 
-    inverse_forward = flow.transport(prediction_forward, batch["target_age"], batch["source_age"], batch["label"])
-    inverse_backward = flow.transport(prediction_backward, batch["source_age"], batch["target_age"], batch["label"])
+    inverse_forward = flow.transport(
+        prediction_forward, batch["target_age"], batch["source_age"], batch["label"], batch["context"], batch["context_age"]
+    )
+    inverse_backward = flow.transport(
+        prediction_backward, batch["source_age"], batch["target_age"], batch["label"], batch["context"], batch["context_age"]
+    )
     inverse = 0.5 * (
         mean_scaled_mse(inverse_forward, batch["source"], scales["pca"])
         + mean_scaled_mse(inverse_backward, batch["target"], scales["pca"])
     )
+
+    coboundary = prediction_forward.sum() * 0.0
+    if hasattr(flow, "coboundary_increment"):
+        potential_forward = flow.coboundary_increment(
+            batch["source_age"], batch["target_age"], batch["label"], batch["context"], batch["context_age"]
+        )
+        potential_backward = flow.coboundary_increment(
+            batch["target_age"], batch["source_age"], batch["label"], batch["context"], batch["context_age"]
+        )
+        coboundary = 0.5 * (
+            mean_scaled_mse(prediction_forward - batch["source"], potential_forward, scales["pca"])
+            + mean_scaled_mse(prediction_backward - batch["target"], potential_backward, scales["pca"])
+        )
 
     source_volume = geometry.volume(batch["source"])
     target_volume = geometry.volume(batch["target"])
@@ -450,6 +1014,25 @@ def pair_terms(
         F.smooth_l1_loss(log_forward / float(scales["volume_log"]), torch.zeros_like(log_forward))
         + F.smooth_l1_loss(log_backward / float(scales["volume_log"]), torch.zeros_like(log_backward))
     )
+    volume_potential = prediction_forward.sum() * 0.0
+    if hasattr(flow, "volume_potential_delta"):
+        observed_log_delta = torch.log(target_volume) - torch.log(source_volume)
+        potential_forward = flow.volume_potential_delta(
+            batch["source_age"], batch["target_age"], batch["label"], batch["context"], batch["context_age"]
+        )
+        potential_backward = flow.volume_potential_delta(
+            batch["target_age"], batch["source_age"], batch["label"], batch["context"], batch["context_age"]
+        )
+        volume_potential = 0.5 * (
+            F.smooth_l1_loss(
+                (potential_forward - observed_log_delta) / float(scales["volume_log"]),
+                torch.zeros_like(potential_forward),
+            )
+            + F.smooth_l1_loss(
+                (potential_backward + observed_log_delta) / float(scales["volume_log"]),
+                torch.zeros_like(potential_backward),
+            )
+        )
     years = (batch["target_years"] - batch["source_years"]).clamp_min(1.0e-6)
     rate_forward = (torch.log(predicted_forward_volume) - torch.log(source_volume)) / years
     observed_rate = (torch.log(target_volume) - torch.log(source_volume)) / years
@@ -481,7 +1064,9 @@ def pair_terms(
         "observed_semigroup": observed,
         "virtual_semigroup": virtual,
         "inverse": inverse,
+        "coboundary": coboundary,
         "volume": volume,
+        "volume_potential": volume_potential,
         "rate": rate,
         "group_rate": group_rate,
         "disease_gap": disease_gap,
@@ -489,7 +1074,7 @@ def pair_terms(
 
 
 def sequence_terms(
-    flow: DirectDiagnosisResidualCocycleFlow,
+    flow: nn.Module,
     geometry: PcaGeometry,
     values: dict[str, torch.Tensor],
     archive: dict[str, np.ndarray],
@@ -503,6 +1088,8 @@ def sequence_terms(
     ages = values["age"][start:end]
     years = values["years"][start:end]
     label = values["label"][start : start + 1]
+    context = values["context"][start : start + 1]
+    context_age = values["context_age"][start : start + 1]
     if z.shape[0] < 2:
         raise ValueError("Sequence loss requires at least two visits")
     scales = statistics["normalization_scales"]
@@ -512,12 +1099,15 @@ def sequence_terms(
     targets = z[1:]
     target_ages = ages[1:]
     count = targets.shape[0]
-    direct_forward = flow.transport(source.expand(count, -1), source_age.expand(count), target_ages, label.expand(count))
+    direct_forward = flow.transport(
+        source.expand(count, -1), source_age.expand(count), target_ages, label.expand(count),
+        context.expand(count, -1), context_age.expand(count),
+    )
     rollout_forward: list[torch.Tensor] = []
     current = source
     previous_age = source_age
     for index in range(1, z.shape[0]):
-        current = flow.transport(current, previous_age, ages[index : index + 1], label)
+        current = flow.transport(current, previous_age, ages[index : index + 1], label, context, context_age)
         rollout_forward.append(current)
         previous_age = ages[index : index + 1]
     rollout_forward_tensor = torch.cat(rollout_forward, dim=0)
@@ -526,12 +1116,15 @@ def sequence_terms(
     reverse_ages = ages[:-1].flip(0)
     reverse_source = z[-1:]
     reverse_source_age = ages[-1:]
-    direct_backward = flow.transport(reverse_source.expand(count, -1), reverse_source_age.expand(count), reverse_ages, label.expand(count))
+    direct_backward = flow.transport(
+        reverse_source.expand(count, -1), reverse_source_age.expand(count), reverse_ages, label.expand(count),
+        context.expand(count, -1), context_age.expand(count),
+    )
     rollout_backward: list[torch.Tensor] = []
     current = reverse_source
     previous_age = reverse_source_age
     for index in range(z.shape[0] - 2, -1, -1):
-        current = flow.transport(current, previous_age, ages[index : index + 1], label)
+        current = flow.transport(current, previous_age, ages[index : index + 1], label, context, context_age)
         rollout_backward.append(current)
         previous_age = ages[index : index + 1]
     rollout_backward_tensor = torch.cat(rollout_backward, dim=0)
@@ -582,12 +1175,14 @@ def total_loss(
             float(loss_config["observed_semigroup_weight"]) * pair["observed_semigroup"]
             + float(loss_config["virtual_semigroup_weight"]) * pair["virtual_semigroup"]
             + float(loss_config["inverse_weight"]) * pair["inverse"]
+            + float(loss_config.get("coboundary_weight", 0.0)) * pair["coboundary"]
             + float(loss_config["sequence_pca_weight"]) * sequence["sequence_pca"]
             + float(loss_config["sequence_vertex_weight"]) * sequence["sequence_vertex"]
             + float(loss_config["sequence_semigroup_weight"]) * sequence["sequence_semigroup"]
         )
         + anatomy_factor * (
             float(loss_config["volume_weight"]) * pair["volume"]
+            + float(loss_config.get("volume_potential_weight", 0.0)) * pair["volume_potential"]
             + float(loss_config["rate_weight"]) * pair["rate"]
             + float(loss_config["slope_weight"]) * sequence["slope"]
             + float(loss_config["group_rate_weight"]) * pair["group_rate"]
@@ -607,19 +1202,24 @@ def aggregate(values: dict[str, list[float]]) -> dict[str, float]:
 
 @torch.no_grad()
 def evaluate_pairs(
-    flow: DirectDiagnosisResidualCocycleFlow,
+    flow: nn.Module,
     geometry: PcaGeometry,
     values: dict[str, torch.Tensor],
     rows: list[CocyclePair],
     batch_size: int,
 ) -> dict[str, Any]:
     grouped: dict[str, dict[str, list[float]]] = {diagnosis: {name: [] for name in (
-        "pca", "coordinate", "euclidean", "volume_relative", "rate", "nochange_pca", "nochange_coordinate", "nochange_euclidean", "nochange_volume_relative", "nochange_rate"
+        "pca", "coordinate", "euclidean", "volume_relative", "rate",
+        "predicted_signed_rate", "observed_signed_rate",
+        "nochange_pca", "nochange_coordinate", "nochange_euclidean", "nochange_volume_relative", "nochange_rate"
     )} for diagnosis in ("CN", "AD", "overall")}
     for start in range(0, len(rows), batch_size):
         chunk = rows[start : start + batch_size]
         batch = indexed(values, collate_pairs(chunk))
-        prediction = flow.transport(batch["source"], batch["source_age"], batch["target_age"], batch["label"])
+        prediction = flow.transport(
+            batch["source"], batch["source_age"], batch["target_age"], batch["label"],
+            batch["context"], batch["context_age"],
+        )
         source_vertices = geometry.vertices(batch["source"])
         target_vertices = geometry.vertices(batch["target"])
         predicted_vertices = geometry.vertices(prediction)
@@ -627,12 +1227,16 @@ def evaluate_pairs(
         target_volume = geometry.volume_from_vertices(target_vertices)
         predicted_volume = geometry.volume_from_vertices(predicted_vertices)
         years = (batch["target_years"] - batch["source_years"]).clamp_min(1.0e-6)
+        predicted_signed_rate = (torch.log(predicted_volume) - torch.log(source_volume)) / years
+        observed_signed_rate = (torch.log(target_volume) - torch.log(source_volume)) / years
         metric_tensors = {
             "pca": torch.mean((prediction - batch["target"]).square(), dim=1),
             "coordinate": torch.mean(torch.abs(predicted_vertices - target_vertices), dim=(1, 2)),
             "euclidean": torch.linalg.vector_norm(predicted_vertices - target_vertices, dim=2).mean(dim=1),
             "volume_relative": torch.abs(predicted_volume - target_volume) / target_volume,
             "rate": torch.abs((torch.log(predicted_volume) - torch.log(target_volume)) / years),
+            "predicted_signed_rate": predicted_signed_rate,
+            "observed_signed_rate": observed_signed_rate,
             "nochange_pca": torch.mean((batch["source"] - batch["target"]).square(), dim=1),
             "nochange_coordinate": torch.mean(torch.abs(source_vertices - target_vertices), dim=(1, 2)),
             "nochange_euclidean": torch.linalg.vector_norm(source_vertices - target_vertices, dim=2).mean(dim=1),
@@ -659,7 +1263,7 @@ def first_last_pairs(archive: dict[str, np.ndarray]) -> list[CocyclePair]:
 
 @torch.no_grad()
 def cocycle_defects(
-    flow: DirectDiagnosisResidualCocycleFlow,
+    flow: nn.Module,
     values: dict[str, torch.Tensor],
     rows: list[CocyclePair],
     statistics: dict[str, Any],
@@ -671,11 +1275,23 @@ def cocycle_defects(
     for start in range(0, len(rows), batch_size):
         chunk = rows[start : start + batch_size]
         batch = indexed(values, collate_pairs(chunk))
-        direct = flow.transport(batch["source"], batch["source_age"], batch["target_age"], batch["label"])
+        direct = flow.transport(
+            batch["source"], batch["source_age"], batch["target_age"], batch["label"],
+            batch["context"], batch["context_age"],
+        )
         middle_age = 0.5 * (batch["source_age"] + batch["target_age"])
-        middle = flow.transport(batch["source"], batch["source_age"], middle_age, batch["label"])
-        composed = flow.transport(middle, middle_age, batch["target_age"], batch["label"])
-        inverse = flow.transport(direct, batch["target_age"], batch["source_age"], batch["label"])
+        middle = flow.transport(
+            batch["source"], batch["source_age"], middle_age, batch["label"],
+            batch["context"], batch["context_age"],
+        )
+        composed = flow.transport(
+            middle, middle_age, batch["target_age"], batch["label"],
+            batch["context"], batch["context_age"],
+        )
+        inverse = flow.transport(
+            direct, batch["target_age"], batch["source_age"], batch["label"],
+            batch["context"], batch["context_age"],
+        )
         semi_values.extend((torch.sqrt(torch.mean((direct - composed).square(), dim=1)) / scale).cpu().tolist())
         inverse_values.extend((torch.sqrt(torch.mean((inverse - batch["source"]).square(), dim=1)) / scale).cpu().tolist())
     return {
@@ -693,6 +1309,10 @@ def validation_score(
     selection: dict[str, Any],
 ) -> tuple[float, bool, dict[str, float]]:
     macro_first_last: list[float] = []
+    macro_first_last_volume: list[float] = []
+    macro_first_last_rate: list[float] = []
+    macro_group_trend: list[float] = []
+    signed_rates: dict[str, tuple[float, float]] = {}
     feasible = True
     pca_allowance = 1.0 + float(selection["pca_nochange_tolerance"])
     coordinate_allowance = 1.0 + float(selection["coordinate_nochange_tolerance"])
@@ -701,15 +1321,37 @@ def validation_score(
         coordinate_ratio = values["coordinate_mean"] / max(values["nochange_coordinate_mean"], 1.0e-8)
         euclidean_ratio = values["euclidean_mean"] / max(values["nochange_euclidean_mean"], 1.0e-8)
         pca_ratio = values["pca_mean"] / max(values["nochange_pca_mean"], 1.0e-8)
+        first_last_volume_ratio = values["volume_relative_mean"] / max(values["nochange_volume_relative_mean"], 1.0e-8)
+        first_last_rate_ratio = values["rate_mean"] / max(values["nochange_rate_mean"], 1.0e-8)
+        predicted_signed_rate = float(values["predicted_signed_rate_mean"])
+        observed_signed_rate = float(values["observed_signed_rate_mean"])
+        group_trend_ratio = abs(predicted_signed_rate - observed_signed_rate) / max(values["nochange_rate_mean"], 1.0e-8)
         macro_first_last.append(0.5 * (coordinate_ratio + euclidean_ratio))
-        feasible = feasible and all(math.isfinite(item) for item in (coordinate_ratio, euclidean_ratio, pca_ratio))
+        macro_first_last_volume.append(first_last_volume_ratio)
+        macro_first_last_rate.append(first_last_rate_ratio)
+        macro_group_trend.append(group_trend_ratio)
+        signed_rates[diagnosis] = (predicted_signed_rate, observed_signed_rate)
+        feasible = feasible and all(math.isfinite(item) for item in (
+            coordinate_ratio, euclidean_ratio, pca_ratio, first_last_volume_ratio,
+            first_last_rate_ratio, group_trend_ratio,
+        ))
         feasible = feasible and pca_ratio <= pca_allowance and coordinate_ratio <= coordinate_allowance
     all_values = all_pairs["groups"]["overall"]
     all_coordinate_ratio = all_values["coordinate_mean"] / max(all_values["nochange_coordinate_mean"], 1.0e-8)
     all_euclidean_ratio = all_values["euclidean_mean"] / max(all_values["nochange_euclidean_mean"], 1.0e-8)
     all_shape = 0.5 * (all_coordinate_ratio + all_euclidean_ratio)
     volume_ratio = all_values["volume_relative_mean"] / max(all_values["nochange_volume_relative_mean"], 1.0e-8)
-    score = float(np.mean(macro_first_last)) + float(selection["all_pair_shape_weight"]) * all_shape + float(selection["volume_tiebreak_weight"]) * volume_ratio
+    macro_volume = float(np.mean(macro_first_last_volume))
+    macro_rate = float(np.mean(macro_first_last_rate))
+    macro_trend = float(np.mean(macro_group_trend))
+    score = (
+        float(np.mean(macro_first_last))
+        + float(selection["all_pair_shape_weight"]) * all_shape
+        + float(selection["volume_tiebreak_weight"]) * volume_ratio
+        + float(selection.get("first_last_volume_weight", 0.0)) * macro_volume
+        + float(selection.get("first_last_rate_weight", 0.0)) * macro_rate
+        + float(selection.get("group_trend_weight", 0.0)) * macro_trend
+    )
     feasible = feasible and math.isfinite(score)
     feasible = feasible and defects["relative_semigroup_defect_mean"] <= float(selection["max_relative_semigroup_defect"])
     feasible = feasible and defects["relative_inverse_defect_mean"] <= float(selection["max_relative_inverse_defect"])
@@ -717,6 +1359,13 @@ def validation_score(
         "macro_first_last_shape": float(np.mean(macro_first_last)),
         "all_pair_shape": float(all_shape),
         "all_pair_volume": float(volume_ratio),
+        "macro_first_last_volume": macro_volume,
+        "macro_first_last_rate": macro_rate,
+        "macro_group_trend": macro_trend,
+        "first_last_cn_predicted_signed_rate": signed_rates["CN"][0],
+        "first_last_cn_observed_signed_rate": signed_rates["CN"][1],
+        "first_last_ad_predicted_signed_rate": signed_rates["AD"][0],
+        "first_last_ad_observed_signed_rate": signed_rates["AD"][1],
         "score": score,
     }
     return score, bool(feasible), ratios
@@ -727,8 +1376,15 @@ def output_directory(config_path: Path, config: dict[str, Any], run_name: str) -
 
 
 def validate_config(config_path: Path, config: dict[str, Any], structure: str, experiment: str) -> None:
-    if config.get("method") != "direct_pca_cocycle_v5":
-        raise ValueError(f"Unexpected V5 method in {config_path}")
+    accepted_methods = {
+        "direct_pca_cocycle_v5",
+        "direct_time_embedded_pca_cocycle_v1",
+        "exact_pca_coboundary_v1",
+        "soft_pca_coboundary_v1",
+        "exact_pca_coboundary_volume_axis_v1",
+    }
+    if config.get("method") not in accepted_methods:
+        raise ValueError(f"Unexpected V5/coboundary method in {config_path}")
     if config.get("experiment") != experiment:
         raise ValueError(f"Config experiment must be {experiment}")
     expected_structure = "left_hippocampus" if structure == "hippocampus" else "left_lateral_ventricle"
@@ -739,6 +1395,39 @@ def validate_config(config_path: Path, config: dict[str, Any], structure: str, e
             raise KeyError(f"Missing config section {section}")
     if int(config["model"]["latent_dim"]) != 150:
         raise ValueError("Cocycle-V5 requires PCA-150")
+    expected_variants = {
+        "c4_time_embedded": "direct_time_film",
+        "c4_coboundary_exact": "coboundary_exact",
+        "c4_coboundary_soft": "coboundary_soft",
+        "c5_coboundary_exact_volume": "coboundary_exact",
+        "c6_coboundary_exact_volume_selection": "coboundary_exact",
+        "c7_coboundary_volume_axis": "coboundary_volume_axis",
+    }
+    expected_variant = expected_variants.get(experiment, "direct")
+    if str(config["model"].get("variant", "direct")) != expected_variant:
+        raise ValueError(f"Experiment {experiment} requires model.variant={expected_variant}")
+    if experiment == "c4_time_embedded":
+        time_dim = int(config["model"].get("time_embedding_dim", 0))
+        frequencies = config["model"].get("time_frequencies")
+        modulation_scale = float(config["model"].get("modulation_max_scale", 0.0))
+        if time_dim <= 0 or not isinstance(frequencies, list) or not frequencies:
+            raise ValueError("Time-embedded C4 requires a positive time_embedding_dim and non-empty time_frequencies")
+        if any(not isinstance(value, (int, float)) or not math.isfinite(float(value)) or float(value) <= 0.0 for value in frequencies):
+            raise ValueError("time_frequencies must contain only positive finite numeric values")
+        if not math.isfinite(modulation_scale) or modulation_scale <= 0.0:
+            raise ValueError("Time-embedded C4 requires a positive finite modulation_max_scale")
+    if experiment == "c4_coboundary_soft" and float(config["loss"].get("coboundary_weight", 0.0)) <= 0.0:
+        raise ValueError("Soft coboundary experiment requires a positive coboundary_weight")
+    if experiment in {"c6_coboundary_exact_volume_selection", "c7_coboundary_volume_axis"}:
+        selection_weights = (
+            float(config["selection"].get("first_last_volume_weight", 0.0)),
+            float(config["selection"].get("first_last_rate_weight", 0.0)),
+            float(config["selection"].get("group_trend_weight", 0.0)),
+        )
+        if any(weight <= 0.0 for weight in selection_weights):
+            raise ValueError("C6/C7 requires positive first-last volume, rate, and group-trend selection weights")
+    if experiment == "c7_coboundary_volume_axis" and float(config["loss"].get("volume_potential_weight", 0.0)) <= 0.0:
+        raise ValueError("C7 requires a positive volume_potential_weight")
     if int(config["training"]["epochs"]) <= 0 or int(config["training"]["batch_size"]) <= 0:
         raise ValueError("Training epochs and batch size must be positive")
 
@@ -746,7 +1435,7 @@ def validate_config(config_path: Path, config: dict[str, Any], structure: str, e
 def checkpoint_payload(
     *,
     epoch: int,
-    flow: DirectDiagnosisResidualCocycleFlow,
+    flow: nn.Module,
     optimizer: torch.optim.Optimizer,
     scheduler: torch.optim.lr_scheduler.LRScheduler,
     config: dict[str, Any],
@@ -792,17 +1481,20 @@ def main() -> int:
     values = {split: values_on_device(archive, device) for split, archive in archives.items()}
     geometry = PcaGeometry(pca_model, archives["train"]["train_pca_mean_150"], archives["train"]["train_pca_std_150"]).to(device)
     geometry.eval()
-    statistics = training_statistics(geometry, values["train"], pair_rows["train"], archives["train"])
-    flow = DirectDiagnosisResidualCocycleFlow(
-        latent_dim=int(config["model"]["latent_dim"]),
-        width=int(config["model"]["width"]),
-        residual_blocks=int(config["model"]["residual_blocks"]),
-    ).to(device)
+    variant = str(config["model"].get("variant", "direct"))
+    statistics = training_statistics(
+        geometry,
+        values["train"],
+        pair_rows["train"],
+        archives["train"],
+        include_volume_axis=(variant == "coboundary_volume_axis"),
+    )
+    flow = build_flow(config["model"], statistics.get("volume_axis")).to(device)
     parameter_count = sum(parameter.numel() for parameter in flow.parameters())
     training = config["training"]
     print("=" * 96, flush=True)
-    print(f"Direct Cocycle-V5 | {args.structure} | {args.experiment} | device={device} | parameters={parameter_count}", flush=True)
-    print("Transport: Phi(z,s,t,d) = z + (t-s) * phi(z,s,t,d); no ODE integration", flush=True)
+    print(f"PCA transport | {args.structure} | {args.experiment} | variant={variant} | device={device} | parameters={parameter_count}", flush=True)
+    print(f"Transport: {config['model']['transport']}; no ODE integration", flush=True)
     print(json.dumps({
         split: {"subjects": len(archives[split]["subject_ids"]), "visits": len(archives[split]["visit_scan_ids"]), "pairs": len(pair_rows[split])}
         for split in ("train", "val")
@@ -837,7 +1529,7 @@ def main() -> int:
     val_defects = cocycle_defects(flow, values["val"], pair_rows["val"], statistics, int(training["evaluation_batch_size"]))
     val_score, val_feasible, val_ratios = validation_score(val_pairs, val_first_last, val_defects, config["selection"])
     if args.dry_run:
-        print("DRY RUN PASSED — finite direct-flow gradients, forward/backward transport, and semigroup validation; no files written.", flush=True)
+        print("DRY RUN PASSED — finite gradients, forward/backward transport, and consistency validation; no files written.", flush=True)
         print(json.dumps({"loss": float(probe_loss.detach().cpu()), "gradient_l2_norm": gradient_norm, "terms": probe_terms, "val_score": val_score, "val_feasible": val_feasible, "val_ratios": val_ratios, "val_defects": val_defects}, indent=2, sort_keys=True), flush=True)
         return 0
 
@@ -848,10 +1540,14 @@ def main() -> int:
         raise FileNotFoundError(f"--resume requires {checkpoint_dir / 'latest.pt'}")
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     if not args.resume:
+        uses_subject_context = variant.startswith("coboundary")
         atomic_json(output_dir / "resolved_config.json", config)
         atomic_json(output_dir / "training_statistics.json", statistics)
         atomic_json(output_dir / "run_contract.json", {
-            "method": config["method"], "experiment": args.experiment, "structure": config["structure"], "transport": "Phi(z,s,t,d)=z+(t-s)*phi(z,s,t,d)",
+            "method": config["method"], "experiment": args.experiment, "structure": config["structure"],
+            "model_variant": variant, "transport": config["model"]["transport"],
+            "time_conditioning": config["model"].get("time_conditioning", "raw source/target age, signed/absolute interval, and midpoint"),
+            "subject_context": "first longitudinal visit PCA state and normalized age, fixed within subject" if uses_subject_context else "not used by this direct transport",
             "ode_used": False, "attention_used": False, "cross_subject_operations": False, "test_loaded_during_training": False,
             "input_config": str(resolve_path(config["input_config"])), "input_config_sha256": sha256(resolve_path(config["input_config"])),
             "source_meshes_modified": False, "all_current_qc_passed_subjects_retained": True,

@@ -1,0 +1,1965 @@
+{
+  "alignment": "none; one fixed inverse global normalization is applied to INR meshes",
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/runs/hippocampus_shared_grid_32x16_z256/checkpoints/epoch_1000.pth",
+  "checkpoint_epoch": 1000,
+  "coordinate_space": "physical millimetres",
+  "definitions": {
+    "assd_mm": "0.5 * (mean GT-to-prediction + mean prediction-to-GT)",
+    "chamfer_l1_mm": "mean GT-to-prediction + mean prediction-to-GT",
+    "chamfer_l2_squared_mm2": "mean squared distances in both directions, summed",
+    "hd95_mm": "maximum of the two directional 95th percentiles"
+  },
+  "evaluated_rows": 600,
+  "failed_scans": [],
+  "paired_inr_minus_pca": {
+    "test": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.2802673981186249,
+          0.340316451555227
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.3098717300858741,
+        "median": 0.2931960835534344
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.5595692160198789,
+          0.6796665231675162
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.6197434601717482,
+        "median": 0.5863921671068688
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.2764491110822941,
+          0.3855569543733051
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.3303658849528414,
+        "median": 0.24486367826699496
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          -0.2781173301918864,
+          -0.18127065916739402
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; positive favors INR",
+        "mean": -0.23077754951898824,
+        "median": -0.11836077898179359
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          -0.021495913232850637,
+          -0.0017035729730244583
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; positive favors INR",
+        "mean": -0.008819195309746753,
+        "median": -0.0002000400080015563
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.2858122967573997,
+          0.34822765780522436
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.3153816065882307,
+        "median": 0.29724834398036326
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.5134918447563613,
+          0.5991914917722381
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.5553812063360603,
+        "median": 0.5210916959649876
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.27620528228345853,
+          0.33813187311010034
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.30436185358351747,
+        "median": 0.28914382312650566
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          4.794398532153072,
+          6.50085884000107
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 5.617648535911803,
+        "median": 4.950848194585205
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.001399663605293652,
+          0.001853502434361424
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.0016203824513744464,
+        "median": 0.001616026948632086
+      }
+    },
+    "train": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.28248951301138986,
+          0.34956605033287474
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.31680730544740326,
+        "median": 0.2745520491204071
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.5665776497018121,
+          0.7058268401678329
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.6336146108948065,
+        "median": 0.5491040982408142
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.28491449888164233,
+          0.4202630383182092
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.3519738546964428,
+        "median": 0.22275268954241176
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          -0.2951787344141341,
+          -0.19231483336675387
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; positive favors INR",
+        "mean": -0.24318878740130348,
+        "median": -0.11424405758405348
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          -0.028457328894632594,
+          -0.003470849021538013
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; positive favors INR",
+        "mean": -0.014151878661847745,
+        "median": -0.00016669444907480013
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.28920102066773185,
+          0.3607546896872475
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.32249702675311664,
+        "median": 0.28014658335652687
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.5204757212584238,
+          0.6145028010210725
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.5698166084802392,
+        "median": 0.5263977616660698
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.2784058282132233,
+          0.3447977150284049
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.3111175841416899,
+        "median": 0.2697969360698998
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          4.634115647227779,
+          7.1135706167743
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 5.804016216536772,
+        "median": 4.178506087646838
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0013681192887235363,
+          0.0020939785558567498
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.001719441851156909,
+        "median": 0.0011594714540295442
+      }
+    },
+    "val": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.32489752767370883,
+          0.3866736271906853
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.3563995925516388,
+        "median": 0.3464611184346993
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.6531888580463231,
+          0.773549560857655
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.7127991851032776,
+        "median": 0.6929222368693986
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.34835785630025873,
+          0.4716335802490612
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.41081738240098,
+        "median": 0.3393165261804434
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          -0.35502387309828154,
+          -0.2570176557729506
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; positive favors INR",
+        "mean": -0.3049233840923582,
+        "median": -0.24549768893652923
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          -0.019101437838390623,
+          -0.004283758633227167
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; positive favors INR",
+        "mean": -0.010779591606648478,
+        "median": -0.00037514074727679203
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.3305970805368905,
+          0.3951103086755947
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.36239628865317125,
+        "median": 0.35295001768540024
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.5620049223964813,
+          0.6528436259522322
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.6103951191588656,
+        "median": 0.6286671026002948
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.31818913208048366,
+          0.38172953458709147
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.35040289645010647,
+        "median": 0.33986351621542576
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          4.394852466826041,
+          6.101811373758397
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 5.225022846928978,
+        "median": 4.689768522519444
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0012800084192901688,
+          0.0018155328893104438
+        ],
+        "count": 100,
+        "definition": "INR minus PCA; negative favors INR",
+        "mean": 0.0015220574454364857,
+        "median": 0.0013417966794494445
+      }
+    }
+  },
+  "requested_per_split": 100,
+  "resolution": 256,
+  "seconds": 7847.869248151779,
+  "selection_metric": {
+    "name": "validation INR ASSD in millimetres",
+    "validation_inr_assd_mm": 0.3766420840151327
+  },
+  "summary": {
+    "diagnosis:AD/method:inr": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.30031941464423395,
+          0.3505682385779242
+        ],
+        "count": 146,
+        "mean": 0.32500032909239057,
+        "median": 0.30316362504612954,
+        "std": 0.15823818279473875
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.5977306915726932,
+          0.6983933545289954
+        ],
+        "count": 146,
+        "mean": 0.6500006581847811,
+        "median": 0.6063272500922591,
+        "std": 0.3164763655894775
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.278770572705784,
+          0.36819423124214573
+        ],
+        "count": 146,
+        "mean": 0.3230395632270671,
+        "median": 0.2338198769941362,
+        "std": 0.27102724169946446
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          0.726353218938591,
+          0.8109951037408443
+        ],
+        "count": 146,
+        "mean": 0.7679605212481357,
+        "median": 0.9120720326032556,
+        "std": 0.2536599444333187
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          0.9918309459162123,
+          0.9983231523299378
+        ],
+        "count": 146,
+        "mean": 0.9957986090874197,
+        "median": 0.9996999099729919,
+        "std": 0.02079316397793809
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.3069629945267561,
+          0.35766676999639446
+        ],
+        "count": 146,
+        "mean": 0.3308259699413438,
+        "median": 0.30886457186743826,
+        "std": 0.15947002334576552
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.5562988351785426,
+          0.6250640995293624
+        ],
+        "count": 146,
+        "mean": 0.5900625244262504,
+        "median": 0.5472092073825818,
+        "std": 0.21819826209587814
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.2932377632636435,
+          0.3458683006160653
+        ],
+        "count": 146,
+        "mean": 0.3191746882434374,
+        "median": 0.2966486460920207,
+        "std": 0.15702847330350603
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          5.921363724812292,
+          7.429711360392145
+        ],
+        "count": 146,
+        "mean": 6.667775253340473,
+        "median": 5.44591307998985,
+        "std": 4.703372802203203
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0019910671616644657,
+          0.0024639690169312735
+        ],
+        "count": 146,
+        "mean": 0.0022148026064999753,
+        "median": 0.0018241951589694039,
+        "std": 0.0015156930940927334
+      }
+    },
+    "diagnosis:AD/method:pca": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.018139558323731552,
+          0.019305909709761673
+        ],
+        "count": 146,
+        "mean": 0.01873248806531942,
+        "median": 0.018307531097996634,
+        "std": 0.0035350439643353233
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.03634747007394315,
+          0.038636636403286344
+        ],
+        "count": 146,
+        "mean": 0.03746497613063884,
+        "median": 0.03661506219599327,
+        "std": 0.0070700879286706465
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.001085928007160039,
+          0.0012436806237478468
+        ],
+        "count": 146,
+        "mean": 0.0011610582688405574,
+        "median": 0.0010706216186486127,
+        "std": 0.00048645979908296723
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 146,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 146,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.01818029088170935,
+          0.019345247336392795
+        ],
+        "count": 146,
+        "mean": 0.018733391951562147,
+        "median": 0.01832916808032422,
+        "std": 0.0035432571922067754
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.04553426111610617,
+          0.04844986599626259
+        ],
+        "count": 146,
+        "mean": 0.04690229185015183,
+        "median": 0.04573667349421764,
+        "std": 0.008963824954400578
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.018202169795881178,
+          0.019298366252775846
+        ],
+        "count": 146,
+        "mean": 0.018731584179076687,
+        "median": 0.018301810026555048,
+        "std": 0.003527968834017595
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          1.4765162397125025,
+          1.8939929560811384
+        ],
+        "count": 146,
+        "mean": 1.6826105300757366,
+        "median": 1.4856706032846887,
+        "std": 1.2917213043837936
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.000499344352980057,
+          0.000640052558821529
+        ],
+        "count": 146,
+        "mean": 0.0005682030991737346,
+        "median": 0.0005047512043521985,
+        "std": 0.00042278689525845903
+      }
+    },
+    "diagnosis:CN/method:inr": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.341552860356783,
+          0.3957035611742828
+        ],
+        "count": 154,
+        "mean": 0.3674028212688452,
+        "median": 0.33245757978267326,
+        "std": 0.17253655366672085
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.6800816835663431,
+          0.7914192916946764
+        ],
+        "count": 154,
+        "mean": 0.7348056425376904,
+        "median": 0.6649151595653465,
+        "std": 0.3450731073334417
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.35167619914565523,
+          0.4641218605734711
+        ],
+        "count": 154,
+        "mean": 0.4059388424658799,
+        "median": 0.2935681839270119,
+        "std": 0.3537689057996676
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          0.6698142602338789,
+          0.7571412212615731
+        ],
+        "count": 154,
+        "mean": 0.7142129337435532,
+        "median": 0.8023616359453155,
+        "std": 0.265438827261411
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          0.9696664503317686,
+          0.9921773303021887
+        ],
+        "count": 154,
+        "mean": 0.9820671202299507,
+        "median": 0.9998166330493924,
+        "std": 0.07205209509691511
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.34606548982410995,
+          0.40080686157847684
+        ],
+        "count": 154,
+        "mean": 0.37305742446066886,
+        "median": 0.33749540915829457,
+        "std": 0.17405843840757426
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.6229815437248336,
+          0.6992125425362349
+        ],
+        "count": 154,
+        "mean": 0.6606992374629835,
+        "median": 0.6337458418848078,
+        "std": 0.23343256959815178
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.3364818564337221,
+          0.3875677652692301
+        ],
+        "count": 154,
+        "mean": 0.3617482180770216,
+        "median": 0.32563402205974923,
+        "std": 0.17102701246662377
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          7.045017647359874,
+          8.743747758734656
+        ],
+        "count": 154,
+        "mean": 7.930269993335538,
+        "median": 7.2719873428752635,
+        "std": 5.249820942381844
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0018419846610689622,
+          0.0023030116557282558
+        ],
+        "count": 154,
+        "mean": 0.0020719691004758662,
+        "median": 0.0018673727930137835,
+        "std": 0.0013980896594319643
+      }
+    },
+    "diagnosis:CN/method:pca": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.018814157804561395,
+          0.020036130449055188
+        ],
+        "count": 154,
+        "mean": 0.019397899070538537,
+        "median": 0.019175366938807066,
+        "std": 0.003963553337749132
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.03759061297817822,
+          0.04004695998463709
+        ],
+        "count": 154,
+        "mean": 0.03879579814107707,
+        "median": 0.03835073387761413,
+        "std": 0.007927106675498265
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.0011690030690142607,
+          0.0013450101847124433
+        ],
+        "count": 154,
+        "mean": 0.0012540990819491673,
+        "median": 0.0011669988552242068,
+        "std": 0.0005499862295076101
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 154,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 154,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.018838221350189845,
+          0.02003490732687272
+        ],
+        "count": 154,
+        "mean": 0.01940823087012502,
+        "median": 0.019270863503461848,
+        "std": 0.003969060290303128
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.04706304627405723,
+          0.050164818323444334
+        ],
+        "count": 154,
+        "mean": 0.048634955375931,
+        "median": 0.047993710861609605,
+        "std": 0.010023732688501928
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.018751261445151855,
+          0.02006235838702615
+        ],
+        "count": 154,
+        "mean": 0.019387567270952057,
+        "median": 0.0190644576654121,
+        "std": 0.003959028620608186
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          1.621540150947406,
+          2.085896054245622
+        ],
+        "count": 154,
+        "mean": 1.8469277183933055,
+        "median": 1.4898189194418592,
+        "std": 1.5089925626788165
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.00042249449855429283,
+          0.0005332839517130019
+        ],
+        "count": 154,
+        "mean": 0.0004759649009488987,
+        "median": 0.0004159005067280421,
+        "std": 0.00036618273534025754
+      }
+    },
+    "method:inr": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.3268661599560016,
+          0.3658139963665579
+        ],
+        "count": 300,
+        "mean": 0.3467669417429707,
+        "median": 0.32101349618157365,
+        "std": 0.16708179479062263
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.6565901949884846,
+          0.7325970536419971
+        ],
+        "count": 300,
+        "mean": 0.6935338834859414,
+        "median": 0.6420269923631473,
+        "std": 0.33416358958124526
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.330695064267172,
+          0.4023434830915236
+        ],
+        "count": 300,
+        "mean": 0.3655945265696577,
+        "median": 0.26361278348893485,
+        "std": 0.3189204322145295
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          0.7095504896378526,
+          0.7709488119191122
+        ],
+        "count": 300,
+        "mean": 0.7403700929957834,
+        "median": 0.8460121176201574,
+        "std": 0.2611585377141397
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          0.9819523764412328,
+          0.9941040032441654
+        ],
+        "count": 300,
+        "mean": 0.9887497781405856,
+        "median": 0.9997499374843711,
+        "std": 0.05406006178733337
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.3341153589694647,
+          0.3718681486931117
+        ],
+        "count": 300,
+        "mean": 0.352504783261264,
+        "median": 0.32653083337837224,
+        "std": 0.16844567786178868
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.6022690037970087,
+          0.6543609475286057
+        ],
+        "count": 300,
+        "mean": 0.6263227037851068,
+        "median": 0.6076395824693229,
+        "std": 0.2288861276892029
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.3225109065860573,
+          0.3598355644226025
+        ],
+        "count": 300,
+        "mean": 0.34102910022467736,
+        "median": 0.31617922905376294,
+        "std": 0.16573510485796403
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          6.723965051896598,
+          7.857276052810853
+        ],
+        "count": 300,
+        "mean": 7.31585588653794,
+        "median": 6.263870749954322,
+        "std": 5.03109097790671
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.001986366401201025,
+          0.002307814358221443
+        ],
+        "count": 300,
+        "mean": 0.002141481406740933,
+        "median": 0.00184883075370569,
+        "std": 0.0014582585184195803
+      }
+    },
+    "method:pca": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.01863729789427942,
+          0.019487423423094532
+        ],
+        "count": 300,
+        "mean": 0.01907406571466523,
+        "median": 0.018769801756197548,
+        "std": 0.0037757916527593562
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.03735079578418364,
+          0.039025364129735375
+        ],
+        "count": 300,
+        "mean": 0.03814813142933046,
+        "median": 0.037539603512395096,
+        "std": 0.0075515833055187125
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.0011512461921146149,
+          0.0012703318524492125
+        ],
+        "count": 300,
+        "mean": 0.0012088192195696438,
+        "median": 0.0011147210216726354,
+        "std": 0.0005221154022011828
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 300,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 300,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.018665359163308196,
+          0.01952982293574585
+        ],
+        "count": 300,
+        "mean": 0.01907980926309109,
+        "median": 0.018792056301535187,
+        "std": 0.003782919075267443
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.04670141845843189,
+          0.04897675594544835
+        ],
+        "count": 300,
+        "mean": 0.047791725793385136,
+        "median": 0.04652113460489718,
+        "std": 0.009561956836711048
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.018657770538852397,
+          0.019489715069696985
+        ],
+        "count": 300,
+        "mean": 0.019068322166239375,
+        "median": 0.018757948961561792,
+        "std": 0.003769717371006683
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          1.6033689518312124,
+          1.9465731228016134
+        ],
+        "count": 300,
+        "mean": 1.7669600200787552,
+        "median": 1.4871282670712844,
+        "std": 1.4098439644605958
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0004763330349573953,
+          0.0005650440029660905
+        ],
+        "count": 300,
+        "mean": 0.000520854157418319,
+        "median": 0.00045950233701737785,
+        "std": 0.00039742833716270717
+      }
+    },
+    "overall": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.16703386983742258,
+          0.1989245862372877
+        ],
+        "count": 600,
+        "mean": 0.18292050372881793,
+        "median": 0.05176056426872112,
+        "std": 0.2020171938881836
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.335779088688017,
+          0.3999924526040614
+        ],
+        "count": 600,
+        "mean": 0.36584100745763587,
+        "median": 0.10352112853744223,
+        "std": 0.4040343877763672
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.16150497026146787,
+          0.2075602022919259
+        ],
+        "count": 600,
+        "mean": 0.18340167289461368,
+        "median": 0.01018703555031973,
+        "std": 0.28991290636060646
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          0.8525156389179743,
+          0.8874769449721726
+        ],
+        "count": 600,
+        "mean": 0.8701850464978916,
+        "median": 0.9998916431893576,
+        "std": 0.2257295130532302
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          0.9907870216662273,
+          0.9971241905279364
+        ],
+        "count": 600,
+        "mean": 0.9943748890702928,
+        "median": 1.0,
+        "std": 0.038637896076218516
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.16987079358345442,
+          0.20261630137565811
+        ],
+        "count": 600,
+        "mean": 0.18579229626217753,
+        "median": 0.05268627001269859,
+        "std": 0.20490773961699035
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.31061562061805703,
+          0.3640247288630169
+        ],
+        "count": 600,
+        "mean": 0.33705721478924594,
+        "median": 0.13979166718471298,
+        "std": 0.33153381178632
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.1641336783315415,
+          0.19578813935584055
+        ],
+        "count": 600,
+        "mean": 0.18004871119545834,
+        "median": 0.05083485852474365,
+        "std": 0.19913777524032825
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          4.182320435184198,
+          4.935603884608791
+        ],
+        "count": 600,
+        "mean": 4.541407953308347,
+        "median": 2.959728107293131,
+        "std": 4.620317040014904
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0012264629049716527,
+          0.0014361616468090393
+        ],
+        "count": 600,
+        "mean": 0.0013311677820796257,
+        "median": 0.0008849856979851818,
+        "std": 0.0013412090684055702
+      }
+    },
+    "split:test": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.1519816106648547,
+          0.20206883413790683
+        ],
+        "count": 200,
+        "mean": 0.17541176675261064,
+        "median": 0.05176056426872112,
+        "std": 0.18993955181286248
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.3020997290367925,
+          0.40435395201171587
+        ],
+        "count": 200,
+        "mean": 0.3508235335052213,
+        "median": 0.10352112853744223,
+        "std": 0.37987910362572497
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.13146724340494975,
+          0.20593684600807607
+        ],
+        "count": 200,
+        "mean": 0.16656289107528785,
+        "median": 0.01018703555031973,
+        "std": 0.26335156211704475
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          0.8546298022310707,
+          0.9125036774096408
+        ],
+        "count": 200,
+        "mean": 0.8846112252405058,
+        "median": 0.9998916431893576,
+        "std": 0.20865140401449173
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          0.9894892154607261,
+          0.9992198578491099
+        ],
+        "count": 200,
+        "mean": 0.9955904023451266,
+        "median": 1.0,
+        "std": 0.03637675939704564
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.15127927645189315,
+          0.20283434566813427
+        ],
+        "count": 200,
+        "mean": 0.17817341230727113,
+        "median": 0.05268627001269859,
+        "std": 0.19273304002171535
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.2836395709695116,
+          0.3741877375572402
+        ],
+        "count": 200,
+        "mean": 0.3289303664913394,
+        "median": 0.13979166718471298,
+        "std": 0.3184839733241989
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.1473680334445383,
+          0.19892617536107912
+        ],
+        "count": 200,
+        "mean": 0.1726501211979501,
+        "median": 0.05083485852474365,
+        "std": 0.1871560466222847
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          4.066773505967138,
+          5.2443812340362
+        ],
+        "count": 200,
+        "mean": 4.658906534337444,
+        "median": 3.1424346769224485,
+        "std": 4.245936418352461
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.001192017370316025,
+          0.001525497489264316
+        ],
+        "count": 200,
+        "mean": 0.0013498594204422495,
+        "median": 0.0009165876278967,
+        "std": 0.0011601840328974776
+      }
+    },
+    "split:test/method:inr": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.30066502226650316,
+          0.36053572209258256
+        ],
+        "count": 100,
+        "mean": 0.33034763179554766,
+        "median": 0.3140899750451528,
+        "std": 0.15534042398188536
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.6024570883301766,
+          0.7146052807020526
+        ],
+        "count": 100,
+        "mean": 0.6606952635910953,
+        "median": 0.6281799500903056,
+        "std": 0.3106808479637707
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.2773974052681373,
+          0.3821267354768108
+        ],
+        "count": 100,
+        "mean": 0.3317458335517086,
+        "median": 0.24639662183447347,
+        "std": 0.29006374769003723
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          0.7226604631644477,
+          0.8164451133751809
+        ],
+        "count": 100,
+        "mean": 0.7692224504810116,
+        "median": 0.8816392210182065,
+        "std": 0.2458488928456721
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          0.9805400379750525,
+          0.9984158005936182
+        ],
+        "count": 100,
+        "mean": 0.9911808046902533,
+        "median": 0.9997999599919984,
+        "std": 0.0510651363016429
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.3037812748157477,
+          0.3669861247397453
+        ],
+        "count": 100,
+        "mean": 0.33586421560138646,
+        "median": 0.31820116438874724,
+        "std": 0.1566718256600751
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.5625747491221744,
+          0.647836174457292
+        ],
+        "count": 100,
+        "mean": 0.6066209696593695,
+        "median": 0.5713580906540556,
+        "std": 0.2203583412401205
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.29475939544750684,
+          0.3543240116107975
+        ],
+        "count": 100,
+        "mean": 0.32483104798970885,
+        "median": 0.30997878570155835,
+        "std": 0.15402451960189006
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          6.677863183022594,
+          8.279402937145335
+        ],
+        "count": 100,
+        "mean": 7.467730802293345,
+        "median": 7.145069077038897,
+        "std": 4.216213002456553
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0019545433455186627,
+          0.0023867358980322055
+        ],
+        "count": 100,
+        "mean": 0.002160050646129473,
+        "median": 0.0020935684709516887,
+        "std": 0.0010987695638480452
+      }
+    },
+    "split:test/method:pca": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.01976481190830016,
+          0.02116139906047014
+        ],
+        "count": 100,
+        "mean": 0.020475901709673547,
+        "median": 0.02012950063571282,
+        "std": 0.0036297120634901647
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.03957507565135637,
+          0.04233497534435764
+        ],
+        "count": 100,
+        "mean": 0.040951803419347094,
+        "median": 0.04025900127142564,
+        "std": 0.0072594241269803295
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.0012776694558008213,
+          0.0014952037115451065
+        ],
+        "count": 100,
+        "mean": 0.0013799485988671208,
+        "median": 0.0013144933699806368,
+        "std": 0.0005512210525466172
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 100,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 100,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.01981923237527947,
+          0.021240090735254364
+        ],
+        "count": 100,
+        "mean": 0.020482609013155743,
+        "median": 0.020150567530804263,
+        "std": 0.0036344998660801583
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.049362242208542566,
+          0.05316102356595106
+        ],
+        "count": 100,
+        "mean": 0.051239763323309255,
+        "median": 0.0509648206722616,
+        "std": 0.009063211295781892
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.01979452864498993,
+          0.021217054372809414
+        ],
+        "count": 100,
+        "mean": 0.020469194406191358,
+        "median": 0.020140075826514912,
+        "std": 0.0036262897809325907
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          1.5805114903748556,
+          2.164412766021145
+        ],
+        "count": 100,
+        "mean": 1.8500822663815415,
+        "median": 1.5429969408410216,
+        "std": 1.5813008944485287
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.00046557193027387157,
+          0.0006250859838557476
+        ],
+        "count": 100,
+        "mean": 0.0005396681947550265,
+        "median": 0.0005038028287805295,
+        "std": 0.0004146562209596725
+      }
+    },
+    "split:train": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.14951077439800586,
+          0.20506812210620717
+        ],
+        "count": 200,
+        "mean": 0.17490745669452984,
+        "median": 0.05004954151074037,
+        "std": 0.20228904900337005
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.2946519713636356,
+          0.4066525081544769
+        ],
+        "count": 200,
+        "mean": 0.3498149133890597,
+        "median": 0.10009908302148074,
+        "std": 0.4045780980067401
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.13626078024814153,
+          0.22333770046298732
+        ],
+        "count": 200,
+        "mean": 0.17687936207097607,
+        "median": 0.010730197886804268,
+        "std": 0.3041384919412424
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          0.8455401544821219,
+          0.9068717125305711
+        ],
+        "count": 200,
+        "mean": 0.8784056062993483,
+        "median": 0.9998916431893576,
+        "std": 0.22709335396080407
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          0.9850155963693727,
+          0.9983658348861026
+        ],
+        "count": 200,
+        "mean": 0.992924060669076,
+        "median": 1.0,
+        "std": 0.04895059786047827
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.14839018414785288,
+          0.20830536259489338
+        ],
+        "count": 200,
+        "mean": 0.1777581361901777,
+        "median": 0.05173902018695008,
+        "std": 0.2051640128390369
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.28163427461720375,
+          0.36881442511487794
+        ],
+        "count": 200,
+        "mean": 0.3262590153635806,
+        "median": 0.13602312347500797,
+        "std": 0.33180097447337004
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.14506706142126868,
+          0.20007015183831797
+        ],
+        "count": 200,
+        "mean": 0.17205677719888207,
+        "median": 0.04836006283453066,
+        "std": 0.19942530312941179
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          3.6953855272127223,
+          5.276145056679002
+        ],
+        "count": 200,
+        "mean": 4.4245336753910385,
+        "median": 2.332450234019916,
+        "std": 5.503826370821869
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0011134217931507266,
+          0.0015506906536648423
+        ],
+        "count": 200,
+        "mean": 0.0013154868643118984,
+        "median": 0.0006970124449926914,
+        "std": 0.0016397001927535653
+      }
+    },
+    "split:train/method:inr": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.2998407196262179,
+          0.365870031713405
+        ],
+        "count": 100,
+        "mean": 0.3333111094182315,
+        "median": 0.2909704309356555,
+        "std": 0.17791024145226197
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.5975048164593779,
+          0.7385356957268479
+        ],
+        "count": 100,
+        "mean": 0.666622218836463,
+        "median": 0.581940861871311,
+        "std": 0.35582048290452395
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.2861003342314654,
+          0.4274912213356672
+        ],
+        "count": 100,
+        "mean": 0.3528662894191975,
+        "median": 0.22349952983608645,
+        "std": 0.35079561428574507
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          0.7048428714734951,
+          0.8088814879907489
+        ],
+        "count": 100,
+        "mean": 0.7568112125986964,
+        "median": 0.8857559424159465,
+        "std": 0.2712423080337503
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          0.9708482465609984,
+          0.9967558259683574
+        ],
+        "count": 100,
+        "mean": 0.9858481213381523,
+        "median": 0.9998333055509252,
+        "std": 0.06849951990318391
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.3043516040760874,
+          0.3750410255562983
+        ],
+        "count": 100,
+        "mean": 0.33900664956673604,
+        "median": 0.297353459362542,
+        "std": 0.17937704826254952
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.5651595698858316,
+          0.6617193900549493
+        ],
+        "count": 100,
+        "mean": 0.6111673196037001,
+        "median": 0.5659713727007676,
+        "std": 0.24040972270644045
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.295418819587967,
+          0.36260827919804933
+        ],
+        "count": 100,
+        "mean": 0.32761556926972696,
+        "median": 0.2856401674383226,
+        "std": 0.1764585356074881
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          6.132528474643762,
+          8.546709419050591
+        ],
+        "count": 100,
+        "mean": 7.326541783659425,
+        "median": 5.033043574998601,
+        "std": 6.527151779040158
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0018291639210978896,
+          0.0025685978640872186
+        ],
+        "count": 100,
+        "mean": 0.002175207789890353,
+        "median": 0.001598058178359761,
+        "std": 0.0019475688426473362
+      }
+    },
+    "split:train/method:pca": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.016057955892578864,
+          0.01699898282809738
+        ],
+        "count": 100,
+        "mean": 0.016503803970828238,
+        "median": 0.01653326248178548,
+        "std": 0.0024960543566668538
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.032076954814260435,
+          0.0339992770998702
+        ],
+        "count": 100,
+        "mean": 0.033007607941656476,
+        "median": 0.03306652496357096,
+        "std": 0.0049921087133337075
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.000834903877869907,
+          0.0009492057161256283
+        ],
+        "count": 100,
+        "mean": 0.0008924347227547058,
+        "median": 0.0008596186485239251,
+        "std": 0.0002904540183428646
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 100,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 100,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.01606071172564927,
+          0.01697930003314154
+        ],
+        "count": 100,
+        "mean": 0.016509622813619357,
+        "median": 0.016484275438064175,
+        "std": 0.0025005504889445405
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.04016267928919995,
+          0.04266931240327777
+        ],
+        "count": 100,
+        "mean": 0.04135071112346095,
+        "median": 0.040982172143122275,
+        "std": 0.00643854806670182
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.015999403986298993,
+          0.016978646786970638
+        ],
+        "count": 100,
+        "mean": 0.016497985128037126,
+        "median": 0.016582249525506777,
+        "std": 0.0024925261675034674
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          1.3121304395718605,
+          1.7465933710719757
+        ],
+        "count": 100,
+        "mean": 1.5225255671226523,
+        "median": 1.3168214989427725,
+        "std": 1.066394379566224
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.00039537934022014043,
+          0.0005217066296967325
+        ],
+        "count": 100,
+        "mean": 0.000455765938733444,
+        "median": 0.0004102059587140727,
+        "std": 0.0003255286586869525
+      }
+    },
+    "split:val": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.17161455047272706,
+          0.22789241719795303
+        ],
+        "count": 200,
+        "mean": 0.19844228773931336,
+        "median": 0.05426329502705017,
+        "std": 0.21230504317417645
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.33893678818222356,
+          0.4534376027490409
+        ],
+        "count": 200,
+        "mean": 0.3968845754786267,
+        "median": 0.10852659005410034,
+        "std": 0.4246100863483529
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.16556750934983208,
+          0.24902812142454156
+        ],
+        "count": 200,
+        "mean": 0.2067627655375771,
+        "median": 0.011252305222847047,
+        "std": 0.2990357612602016
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          0.8130538624615335,
+          0.8780655845658417
+        ],
+        "count": 200,
+        "mean": 0.847538307953821,
+        "median": 0.9998749687421855,
+        "std": 0.23867566356064224
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          0.9905121654141813,
+          0.9980059073597874
+        ],
+        "count": 200,
+        "mean": 0.9946102041966758,
+        "median": 1.0,
+        "std": 0.02748806351275767
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.1715543359203669,
+          0.22951819021591127
+        ],
+        "count": 200,
+        "mean": 0.20144534028908379,
+        "median": 0.05551407590252845,
+        "std": 0.2153035890934362
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.30872723626623805,
+          0.4091828967643775
+        ],
+        "count": 200,
+        "mean": 0.355982262512818,
+        "median": 0.14121427565567457,
+        "std": 0.3430441268137689
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.1656712742511586,
+          0.22523966537228984
+        ],
+        "count": 200,
+        "mean": 0.19543923518954287,
+        "median": 0.053012514151571884,
+        "std": 0.20931852497018155
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          3.99235976398574,
+          5.0722642256288
+        ],
+        "count": 200,
+        "mean": 4.540783650196561,
+        "median": 3.434497091571302,
+        "std": 3.961621127615992
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0011666398545056977,
+          0.0014860349525034982
+        ],
+        "count": 200,
+        "mean": 0.0013281570614847294,
+        "median": 0.0010136816232759398,
+        "std": 0.0011667378669814653
+      }
+    },
+    "split:val/method:inr": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.3441081010502637,
+          0.4084698839814788
+        ],
+        "count": 100,
+        "mean": 0.3766420840151327,
+        "median": 0.3643985622372462,
+        "std": 0.16316586599656854
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.6903035216967326,
+          0.8146281570111149
+        ],
+        "count": 100,
+        "mean": 0.7532841680302654,
+        "median": 0.7287971244744924,
+        "std": 0.3263317319931371
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.3541377865230229,
+          0.4752122892957964
+        ],
+        "count": 100,
+        "mean": 0.4121714567380671,
+        "median": 0.34040384376063604,
+        "std": 0.30734188302558024
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          0.6377515852351583,
+          0.7443528358275302
+        ],
+        "count": 100,
+        "mean": 0.6950766159076419,
+        "median": 0.7545023110634708,
+        "std": 0.25969792003221337
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          0.9807522169905898,
+          0.9958491892484895
+        ],
+        "count": 100,
+        "mean": 0.9892204083933516,
+        "median": 0.9996248592527233,
+        "std": 0.03811938448820673
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.34899561230798487,
+          0.4161932762018497
+        ],
+        "count": 100,
+        "mean": 0.3826434846156694,
+        "median": 0.3710134169983339,
+        "std": 0.16441472971512666
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.6191942708802994,
+          0.7060876610408876
+        ],
+        "count": 100,
+        "mean": 0.6611798220922506,
+        "median": 0.6745150733555173,
+        "std": 0.2213121829585164
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.3396330486923931,
+          0.40153561193846016
+        ],
+        "count": 100,
+        "mean": 0.37064068341459605,
+        "median": 0.35778370747615845,
+        "std": 0.16193845112143435
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          6.3871994650413075,
+          7.906081894395618
+        ],
+        "count": 100,
+        "mean": 7.15329507366105,
+        "median": 6.296609410129122,
+        "std": 3.9377481710866022
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0018624943341791806,
+          0.002324007323418156
+        ],
+        "count": 100,
+        "mean": 0.002089185784202972,
+        "median": 0.0018288068393851236,
+        "std": 0.0011726114661864172
+      }
+    },
+    "split:val/method:pca": {
+      "assd_mm": {
+        "bootstrap_mean_95ci": [
+          0.019563786049830858,
+          0.0209108622238452
+        ],
+        "count": 100,
+        "mean": 0.020242491463493904,
+        "median": 0.019811475145933333,
+        "std": 0.0036644375394596783
+      },
+      "chamfer_l1_mm": {
+        "bootstrap_mean_95ci": [
+          0.039102403939161756,
+          0.04195735974914386
+        ],
+        "count": 100,
+        "mean": 0.04048498292698781,
+        "median": 0.03962295029186667,
+        "std": 0.007328875078919357
+      },
+      "chamfer_l2_squared_mm2": {
+        "bootstrap_mean_95ci": [
+          0.0012538097291334312,
+          0.0014530582125739842
+        ],
+        "count": 100,
+        "mean": 0.0013540743370871057,
+        "median": 0.0012583213069018273,
+        "std": 0.0005283198185345672
+      },
+      "fscore_0_5mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 100,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "fscore_1mm": {
+        "bootstrap_mean_95ci": [
+          1.0,
+          1.0
+        ],
+        "count": 100,
+        "mean": 1.0,
+        "median": 1.0,
+        "std": 0.0
+      },
+      "gt_to_prediction_mm": {
+        "bootstrap_mean_95ci": [
+          0.019515357843496024,
+          0.020992815541856075
+        ],
+        "count": 100,
+        "mean": 0.020247195962498164,
+        "median": 0.01986220494731397,
+        "std": 0.003678667005314193
+      },
+      "hd95_mm": {
+        "bootstrap_mean_95ci": [
+          0.04887955150018058,
+          0.0524746709512576
+        ],
+        "count": 100,
+        "mean": 0.0507847029333852,
+        "median": 0.04991156100701351,
+        "std": 0.009400149493260753
+      },
+      "prediction_to_gt_mm": {
+        "bootstrap_mean_95ci": [
+          0.019542678964246454,
+          0.020922775546521326
+        ],
+        "count": 100,
+        "mean": 0.02023778696448965,
+        "median": 0.019760745344552695,
+        "std": 0.0036514270448489037
+      },
+      "volume_absolute_error_mm3": {
+        "bootstrap_mean_95ci": [
+          1.6659053588244441,
+          2.226045037026592
+        ],
+        "count": 100,
+        "mean": 1.928272226732072,
+        "median": 1.507985075561919,
+        "std": 1.4941858596526836
+      },
+      "volume_relative_error": {
+        "bootstrap_mean_95ci": [
+          0.0004800412898416088,
+          0.0006515895456092296
+        ],
+        "count": 100,
+        "mean": 0.0005671283387664861,
+        "median": 0.0004811746837375478,
+        "std": 0.00043497978833589504
+      }
+    }
+  },
+  "surface_points": 30000,
+  "test_policy": "monitor-only; test metrics never select a checkpoint"
+}

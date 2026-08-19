@@ -1,0 +1,204 @@
+{
+  "checkpoint_every_epochs": 500,
+  "checkpoint_latest_every_epochs": 1,
+  "clamp_distance": 0.1,
+  "code_bound": 1.0,
+  "code_initial_std": 0.01,
+  "description": "Phase 2/3 left hippocampus Compact-SDF adaptation: transferred 256-D global skip-SIREN plus a direct local skip-SIREN and one population-shared 32^3 x 16 grid.",
+  "global_checkpoint": "examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_latent_skip_warmstart/checkpoints/best.pth",
+  "global_checkpoint_scan_id_suffix": "_left",
+  "gradient_clip_norm": 1.0,
+  "latent_fit": {
+    "branch_weights": {
+      "fused": 1.0,
+      "global": 1.0,
+      "local": 1.0
+    },
+    "code_bound": 1.0,
+    "code_regularization_lambda": 0.0001,
+    "early_stop_min_delta": 1e-07,
+    "early_stop_patience": 75,
+    "holdout_fraction": 0.1,
+    "initial_std": 0.01,
+    "learning_rate": 0.005,
+    "sampling": {
+      "global_near_samples_per_scene": 4096,
+      "global_negative_samples_per_scene": 2048,
+      "global_positive_samples_per_scene": 2048,
+      "local_negative_samples_per_scene": 2048,
+      "local_positive_samples_per_scene": 2048,
+      "local_ultra_near_samples_per_scene": 4096,
+      "near_band": 0.1,
+      "ultra_near_band": 0.03
+    },
+    "steps": 500
+  },
+  "latent_size": 256,
+  "learning_rate_decay_factor": 0.5,
+  "learning_rate_decay_interval": 200,
+  "load_dataset_into_ram": true,
+  "loss_weights": {
+    "code_l2": 0.0001,
+    "fused_global_l1": 0.5,
+    "fused_local_l1": 1.0,
+    "global_l1": 1.0,
+    "grid_tv": 0.0,
+    "local_l1": 1.0,
+    "sampled_grid_l2": 1e-06
+  },
+  "manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/metadata/hippocampus_qc_sdf_manifest.csv",
+  "name": "hippocampus_shared_grid_32x16_z256",
+  "network_arch": "shared_grid_siren",
+  "network_specs": {
+    "gate_tau": 0.05,
+    "global_network_specs": {
+      "dims": [
+        512,
+        512,
+        768,
+        512,
+        512
+      ],
+      "dropout": [],
+      "dropout_prob": 0.0,
+      "encoding_features": 1,
+      "encoding_sigma": 0,
+      "final_layer_init": "siren",
+      "latent_dropout": false,
+      "latent_in": [
+        3
+      ],
+      "nonlinearity": "sine",
+      "norm_layers": [],
+      "use_tanh": false,
+      "weight_norm": false,
+      "xyz_in": [],
+      "xyz_in_all": false
+    },
+    "grid_aabb": [
+      [
+        -0.65,
+        -0.95,
+        -0.68
+      ],
+      [
+        0.65,
+        0.95,
+        0.68
+      ]
+    ],
+    "grid_channels": 16,
+    "grid_init_std": 0.0001,
+    "grid_resolution": 32,
+    "local_hidden_dims": [
+      128,
+      128,
+      128
+    ],
+    "local_omega_0": 30.0,
+    "local_skip_layer": 2,
+    "roi_taper_width": 0.04
+  },
+  "num_workers": 12,
+  "output_dir": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/runs/hippocampus_shared_grid_32x16_z256",
+  "periodic_evaluation": {
+    "also_final_epoch": true,
+    "compare_pca": true,
+    "enabled": true,
+    "every_epochs": 500,
+    "fscore_thresholds_mm": [
+      0.5,
+      1.0
+    ],
+    "latent_steps": 500,
+    "pca_coefficients": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/coefficients/all_coefficients_safe.npz",
+    "pca_components": 150,
+    "pca_model_dir": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model",
+    "per_split": 100,
+    "rescale_details_csv": "/home/jakaria/ADNI/ADNI_1_GO_Large/synthseg_minimal_correspondence/full/left_hippocampus/minimal_smooth_correspondence/rescale_details.csv",
+    "resolution": 256,
+    "selection_seed": 42,
+    "splits": [
+      "train",
+      "val",
+      "test"
+    ],
+    "surface_points": 30000
+  },
+  "reconstruction": {
+    "max_batch": 131072,
+    "resolution": 256
+  },
+  "regularization_warmup_epochs": 100,
+  "reuse_matching_source_latents": false,
+  "sampling": {
+    "global_near_samples_per_scene": 4096,
+    "global_negative_samples_per_scene": 2048,
+    "global_positive_samples_per_scene": 2048,
+    "local_negative_samples_per_scene": 2048,
+    "local_positive_samples_per_scene": 2048,
+    "local_ultra_near_samples_per_scene": 4096,
+    "near_band": 0.1,
+    "ultra_near_band": 0.03
+  },
+  "scenes_per_batch": 16,
+  "scenes_per_chunk": 2,
+  "schedule": {
+    "global_adapt_epochs": 100,
+    "joint_fusion_ramp_epochs": 25,
+    "local_warmup_epochs": 100,
+    "total_epochs": 1700
+  },
+  "seed": 42,
+  "stage_learning_rates": {
+    "global_adapt": {
+      "global": 1e-05,
+      "grid": 0.0,
+      "latent": 0.001,
+      "local": 0.0
+    },
+    "joint": {
+      "global": 2e-06,
+      "grid": 0.0005,
+      "latent": 0.0002,
+      "local": 0.0001
+    },
+    "local_warmup": {
+      "global": 0.0,
+      "grid": 0.001,
+      "latent": 0.0,
+      "local": 0.0002
+    }
+  },
+  "structure": "left_hippocampus",
+  "validation": {
+    "every_epochs": 25,
+    "latent_fit": {
+      "branch_weights": {
+        "fused": 1.0,
+        "global": 1.0,
+        "local": 1.0
+      },
+      "code_bound": 1.0,
+      "code_regularization_lambda": 0.0001,
+      "early_stop_min_delta": 1e-07,
+      "early_stop_patience": 30,
+      "holdout_fraction": 0.1,
+      "initial_std": 0.01,
+      "learning_rate": 0.005,
+      "sampling": {
+        "global_near_samples_per_scene": 2048,
+        "global_negative_samples_per_scene": 1024,
+        "global_positive_samples_per_scene": 1024,
+        "local_negative_samples_per_scene": 1024,
+        "local_positive_samples_per_scene": 1024,
+        "local_ultra_near_samples_per_scene": 2048,
+        "near_band": 0.1,
+        "ultra_near_band": 0.03
+      },
+      "steps": 100
+    },
+    "scans_per_validation": 24,
+    "source_unseen_subjects_only": true
+  }
+}

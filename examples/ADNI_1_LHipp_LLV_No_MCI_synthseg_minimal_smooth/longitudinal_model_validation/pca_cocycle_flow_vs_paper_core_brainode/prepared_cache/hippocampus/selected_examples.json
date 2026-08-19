@@ -1,0 +1,18 @@
+{
+  "AD": {
+    "diagnosis": "AD",
+    "future_visits": 4,
+    "maximum_followup_years": 2.9924697875976562,
+    "selection_rule": "most follow-up visits, then longest follow-up, then subject ID",
+    "split": "test",
+    "subject_id": "995"
+  },
+  "CN": {
+    "diagnosis": "CN",
+    "future_visits": 10,
+    "maximum_followup_years": 10.255989074707031,
+    "selection_rule": "most follow-up visits, then longest follow-up, then subject ID",
+    "split": "test",
+    "subject_id": "31"
+  }
+}

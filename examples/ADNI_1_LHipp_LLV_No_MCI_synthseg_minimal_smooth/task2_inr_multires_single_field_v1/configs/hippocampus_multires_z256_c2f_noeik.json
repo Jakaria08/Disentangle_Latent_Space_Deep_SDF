@@ -1,0 +1,90 @@
+{
+  "name": "hippocampus_multires_z256_c2f_noeik",
+  "description": "Primary single-field 256-D hippocampus auto-decoder with population-shared dense 8-64 multiresolution grids and coarse-to-fine activation. Eikonal is withheld because the current PreprocessMesh values are approximate nearest-rendered-surface distances.",
+  "run_role": "primary",
+  "structure": "left_hippocampus",
+  "manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/metadata/hippocampus_qc_sdf_manifest.csv",
+  "reference_sampling_utility": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/scripts/shared_grid_common.py",
+  "reference_sampling_sha256": "74048015c40fe54df4acdcc86d19d95a631b9383e4b6a7bd109ea07dcb924ca9",
+  "output_dir": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippocampus_multires_z256_c2f_noeik",
+  "network_arch": "shared_multires_grid_sdf",
+  "latent_size": 256,
+  "network_specs": {
+    "grid_resolutions": [8, 16, 24, 32, 48, 64],
+    "grid_channels_per_level": 4,
+    "grid_resolution": 64,
+    "sampling_balance_resolution": 64,
+    "grid_aabb": [[-0.65, -0.95, -0.68], [0.65, 0.95, 0.68]],
+    "feature_roi_taper_width": 0.04,
+    "grid_init_std": 0.0001,
+    "hidden_dims": [128, 128, 128, 128],
+    "latent_skip_layer": 2,
+    "activation": "softplus",
+    "softplus_beta": 100.0
+  },
+  "seed": 42,
+  "total_epochs": 1700,
+  "level_schedule": [
+    {"resolution": 8, "start_epoch": 1, "end_epoch": 1},
+    {"resolution": 16, "start_epoch": 1, "end_epoch": 1},
+    {"resolution": 24, "start_epoch": 1, "end_epoch": 1},
+    {"resolution": 32, "start_epoch": 101, "end_epoch": 200},
+    {"resolution": 48, "start_epoch": 301, "end_epoch": 400},
+    {"resolution": 64, "start_epoch": 501, "end_epoch": 600}
+  ],
+  "scenes_per_batch": 16,
+  "scenes_per_chunk": 16,
+  "num_workers": 12,
+  "load_dataset_into_ram": true,
+  "sampling": {
+    "global_near_samples_per_scene": 4096,
+    "global_positive_samples_per_scene": 2048,
+    "global_negative_samples_per_scene": 2048,
+    "local_ultra_near_samples_per_scene": 4096,
+    "local_positive_samples_per_scene": 2048,
+    "local_negative_samples_per_scene": 2048,
+    "near_band": 0.1,
+    "ultra_near_band": 0.03
+  },
+  "clamp_distance": 0.1,
+  "sdf_supervision": {
+    "generator": "Deep3DComp src/PreprocessMesh.cpp",
+    "source_file": "src/PreprocessMesh.cpp",
+    "distance_semantics": "nearest rendered surface point; point-plane magnitude when closer than sampler standard deviation",
+    "exact_triangle_distance": false,
+    "exact_distance_mae_tolerance": 0.002
+  },
+  "loss_weights": {"broad_sdf_l1": 1.0, "near_sdf_l1": 1.0, "latent_l2": 0.0001, "grid_l2": 0.000001, "grid_tv": 0.0},
+  "eikonal": {"enabled": false, "weight": 0.0, "start_epoch": 201, "warmup_epochs": 25, "target_band": 0.03, "points_per_chunk": 1024, "epsilon_cell_scale": 1.0, "final_epsilon_start_epoch": 1201, "final_epsilon_cell_scale": 0.5},
+  "learning_rates": {"decoder": 0.0001, "grid": 0.001, "latent": 0.001},
+  "learning_rate_decay_interval": 400,
+  "learning_rate_decay_factor": 0.5,
+  "code_initial_std": 0.01,
+  "code_bound": 1.0,
+  "gradient_clip_norm": 1.0,
+  "checkpoint_every_epochs": 500,
+  "checkpoint_latest_every_epochs": 1,
+  "validation": {
+    "every_epochs": 25,
+    "scans_per_validation": 24,
+    "latent_fit": {
+      "steps": 100,
+      "sampling": {"global_near_samples_per_scene": 2048, "global_positive_samples_per_scene": 1024, "global_negative_samples_per_scene": 1024, "local_ultra_near_samples_per_scene": 2048, "local_positive_samples_per_scene": 1024, "local_negative_samples_per_scene": 1024, "near_band": 0.1, "ultra_near_band": 0.03},
+    "broad_weight": 1.0, "near_weight": 1.0, "learning_rate": 0.005, "code_regularization_lambda": 0.0001, "code_bound": 1.0, "initial_std": 0.01, "holdout_fraction": 0.1, "early_stop_patience": 100, "early_stop_min_delta": 0.0000001
+    }
+  },
+  "latent_fit": {
+    "steps": 500,
+    "sampling": {"global_near_samples_per_scene": 4096, "global_positive_samples_per_scene": 2048, "global_negative_samples_per_scene": 2048, "local_ultra_near_samples_per_scene": 4096, "local_positive_samples_per_scene": 2048, "local_negative_samples_per_scene": 2048, "near_band": 0.1, "ultra_near_band": 0.03},
+    "broad_weight": 1.0, "near_weight": 1.0, "learning_rate": 0.005, "code_regularization_lambda": 0.0001, "code_bound": 1.0, "initial_std": 0.01, "holdout_fraction": 0.1, "early_stop_patience": 500, "early_stop_min_delta": 0.0000001
+  },
+  "reconstruction": {"resolution": 256, "max_batch": 131072},
+  "field_diagnostics": {"target_band": 0.03, "points_per_scan": 1024},
+  "periodic_evaluation": {
+    "enabled": true, "every_epochs": 500, "also_final_epoch": true, "per_split": 100, "splits": ["train", "val", "test"], "minimum_success_fraction": 0.95, "surface_points": 30000, "resolution": 256, "latent_steps": 500, "compare_pca": true, "pca_components": 150,
+    "pca_model_dir": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model",
+    "pca_coefficients": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/coefficients/all_coefficients_safe.npz",
+    "fixed_selection_json": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/runs/hippocampus_shared_grid_32x16_z256/periodic_evaluation/evaluation_subset.json",
+    "rescale_details_csv": "/home/jakaria/ADNI/ADNI_1_GO_Large/synthseg_minimal_correspondence/full/left_hippocampus/minimal_smooth_correspondence/rescale_details.csv"
+  }
+}

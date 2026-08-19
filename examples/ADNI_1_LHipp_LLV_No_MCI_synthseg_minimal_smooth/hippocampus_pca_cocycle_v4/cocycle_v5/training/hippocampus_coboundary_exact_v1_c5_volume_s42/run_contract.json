@@ -1,0 +1,16 @@
+{
+  "all_current_qc_passed_subjects_retained": true,
+  "attention_used": false,
+  "cross_subject_operations": false,
+  "experiment": "c5_coboundary_exact_volume",
+  "input_config": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4/configs/cocycle_v4_primary.json",
+  "input_config_sha256": "70c998772cdee30b9fbf329d9a99d69edf54d86fbe3d4368ea4acae960b7d806",
+  "method": "exact_pca_coboundary_v1",
+  "model_variant": "coboundary_exact",
+  "ode_used": false,
+  "source_meshes_modified": false,
+  "structure": "left_hippocampus",
+  "subject_context": "first longitudinal visit PCA state and normalized age, fixed within subject",
+  "test_loaded_during_training": false,
+  "transport": "Phi(z,s,t;u,d)=z+P(u,t,d)-P(u,s,d)"
+}

@@ -1,0 +1,60 @@
+{
+  "completed_at": "2026-08-11T22:15:05.887458+00:00",
+  "created_at": "2026-08-11T22:13:52.595564+00:00",
+  "group_maps": "complete",
+  "required_files": [
+    "provenance.json",
+    "selected_examples.json",
+    "tables/cohort_counts.csv",
+    "tables/per_pair_metrics.csv",
+    "tables/metric_summary.csv",
+    "tables/paired_metric_comparison.csv",
+    "tables/paired_bootstrap_ci.csv",
+    "tables/gap_summary.csv",
+    "tables/subject_volume_trends.csv",
+    "tables/cohort_volume_trend_summary.csv",
+    "tables/cohort_volume_curve.csv",
+    "tables/selected_volume_trajectories.csv",
+    "tables/counterfactual_trajectories.csv",
+    "tables/selected_mesh_metrics.csv",
+    "tables/group_hotspot_metrics.csv",
+    "meshes/template_faces.csv",
+    "meshes/selected_cn_vertices.csv",
+    "meshes/selected_ad_vertices.csv",
+    "meshes/group_cn_change_maps.csv",
+    "meshes/group_ad_change_maps.csv"
+  ],
+  "rows": {
+    "per_pair": 10752,
+    "subject_trends": 1194
+  },
+  "scalar_tables": {
+    "completed_at": "2026-08-11T22:14:37.058270+00:00",
+    "paired_metric_rows": 48384,
+    "pairs": 10752,
+    "status": "complete"
+  },
+  "schema_version": 1,
+  "selected_examples": {
+    "AD": {
+      "diagnosis": "AD",
+      "future_visits": 4,
+      "maximum_followup_years": 2.9924697875976562,
+      "selection_rule": "most follow-up visits, then longest follow-up, then subject ID",
+      "split": "test",
+      "subject_id": "995"
+    },
+    "CN": {
+      "diagnosis": "CN",
+      "future_visits": 10,
+      "maximum_followup_years": 10.255989074707031,
+      "selection_rule": "most follow-up visits, then longest follow-up, then subject ID",
+      "split": "test",
+      "subject_id": "31"
+    }
+  },
+  "source_meshes_modified": false,
+  "status": "complete",
+  "structure": "hippocampus",
+  "updated_at": "2026-08-11T22:15:05.887475+00:00"
+}

@@ -1,0 +1,134 @@
+{
+  "epochs_completed": 43,
+  "epochs_requested": 180,
+  "experiment": "c6_coboundary_exact_volume_selection",
+  "parameter_count": 380716,
+  "run_name": "hippocampus_coboundary_exact_v1_c6_volume_selection_s42",
+  "selected_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v5/training/hippocampus_coboundary_exact_v1_c6_volume_selection_s42/checkpoints/best_shape.pt",
+  "selected_epoch": 13,
+  "selected_validation": {
+    "all_pairs": {
+      "groups": {
+        "AD": {
+          "coordinate_mean": 0.1617726105309668,
+          "euclidean_mean": 0.3219285894717489,
+          "nochange_coordinate_mean": 0.17199612799144925,
+          "nochange_euclidean_mean": 0.3413838330242369,
+          "nochange_pca_mean": 0.8356041574761981,
+          "nochange_rate_mean": 0.051519830390812815,
+          "nochange_volume_relative_mean": 0.04938297460155029,
+          "observed_signed_rate_mean": -0.045759365041342946,
+          "pca_mean": 0.8351823001626938,
+          "predicted_signed_rate_mean": -0.03806421749057278,
+          "rate_mean": 0.03169245315883826,
+          "rows": 126.0,
+          "volume_relative_mean": 0.025632103206589818
+        },
+        "CN": {
+          "coordinate_mean": 0.14461626001494995,
+          "euclidean_mean": 0.2887831695254531,
+          "nochange_coordinate_mean": 0.15195837549988542,
+          "nochange_euclidean_mean": 0.3033616176099642,
+          "nochange_pca_mean": 0.6953168521254339,
+          "nochange_rate_mean": 0.016871409585601602,
+          "nochange_volume_relative_mean": 0.03728175433235452,
+          "observed_signed_rate_mean": -0.012557582851346163,
+          "pca_mean": 0.6969813350808254,
+          "predicted_signed_rate_mean": -0.01120924344946835,
+          "rate_mean": 0.01380311886462918,
+          "rows": 423.0,
+          "volume_relative_mean": 0.02465345363313471
+        },
+        "overall": {
+          "coordinate_mean": 0.14855378308419973,
+          "euclidean_mean": 0.29639031508689806,
+          "nochange_coordinate_mean": 0.1565572039405722,
+          "nochange_euclidean_mean": 0.3120880277050432,
+          "nochange_pca_mean": 0.7275139385993797,
+          "nochange_rate_mean": 0.024823506163846796,
+          "nochange_volume_relative_mean": 0.040059083574465026,
+          "observed_signed_rate_mean": -0.02017766400970608,
+          "pca_mean": 0.7286995893619099,
+          "predicted_signed_rate_mean": -0.017372680114639858,
+          "rate_mean": 0.01790886771903782,
+          "rows": 549.0,
+          "volume_relative_mean": 0.02487806173196047
+        }
+      }
+    },
+    "defects": {
+      "relative_inverse_defect_mean": 3.182130028998371e-08,
+      "relative_inverse_defect_p95": 4.8489445703125965e-08,
+      "relative_semigroup_defect_mean": 4.5542693733631876e-08,
+      "relative_semigroup_defect_p95": 6.473571119158805e-08
+    },
+    "feasible": true,
+    "first_last": {
+      "groups": {
+        "AD": {
+          "coordinate_mean": 0.17725534896765435,
+          "euclidean_mean": 0.3525595925748348,
+          "nochange_coordinate_mean": 0.1970364177333457,
+          "nochange_euclidean_mean": 0.3900651234601225,
+          "nochange_pca_mean": 0.9505789216075625,
+          "nochange_rate_mean": 0.045300074986049106,
+          "nochange_volume_relative_mean": 0.07183604349224229,
+          "observed_signed_rate_mean": -0.04523944854736328,
+          "pca_mean": 0.9485926734549659,
+          "predicted_signed_rate_mean": -0.037453259740556986,
+          "rate_mean": 0.0196021454674857,
+          "rows": 28.0,
+          "volume_relative_mean": 0.028481384843221998
+        },
+        "CN": {
+          "coordinate_mean": 0.1511916292436195,
+          "euclidean_mean": 0.3017072646003781,
+          "nochange_coordinate_mean": 0.16487050372542758,
+          "nochange_euclidean_mean": 0.3293806260282343,
+          "nochange_pca_mean": 0.7041473686695099,
+          "nochange_rate_mean": 0.015568357038622102,
+          "nochange_volume_relative_mean": 0.053840661590749565,
+          "observed_signed_rate_mean": -0.013916968812488696,
+          "pca_mean": 0.7035984658833706,
+          "predicted_signed_rate_mean": -0.012133090382893428,
+          "rate_mean": 0.0103259479951565,
+          "rows": 33.0,
+          "volume_relative_mean": 0.032427538560251844
+        },
+        "overall": {
+          "coordinate_mean": 0.16315530387104535,
+          "euclidean_mean": 0.32504931678537463,
+          "nochange_coordinate_mean": 0.1796351855651277,
+          "nochange_euclidean_mean": 0.35723580517729775,
+          "nochange_pca_mean": 0.8172634913295996,
+          "nochange_rate_mean": 0.02921570298170335,
+          "nochange_volume_relative_mean": 0.06210083688979541,
+          "observed_signed_rate_mean": -0.028294500494070472,
+          "pca_mean": 0.8160548234572176,
+          "predicted_signed_rate_mean": -0.023755463202804573,
+          "rate_mean": 0.014583874703766625,
+          "rows": 61.0,
+          "volume_relative_mean": 0.030616189313090604
+        }
+      }
+    },
+    "ratios": {
+      "all_pair_shape": 0.9492898132153846,
+      "all_pair_volume": 0.6210342202590616,
+      "first_last_ad_observed_signed_rate": -0.04523944854736328,
+      "first_last_ad_predicted_signed_rate": -0.037453259740556986,
+      "first_last_cn_observed_signed_rate": -0.013916968812488696,
+      "first_last_cn_predicted_signed_rate": -0.012133090382893428,
+      "macro_first_last_rate": 0.5479914167916605,
+      "macro_first_last_shape": 0.9091178312529073,
+      "macro_first_last_volume": 0.49938239338486223,
+      "macro_group_trend": 0.14323193264003856,
+      "score": 1.1234089429725747
+    },
+    "score": 1.1234089429725747
+  },
+  "source_meshes_modified": false,
+  "status": "complete",
+  "structure": "left_hippocampus",
+  "test_loaded_during_training": false
+}

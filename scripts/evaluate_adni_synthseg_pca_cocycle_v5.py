@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only evaluation for independently trained direct Cocycle-V5 runs."""
+"""Read-only evaluation for direct Cocycle-V5 and coboundary PCA runs."""
 
 from __future__ import annotations
 
@@ -17,8 +17,8 @@ from train_adni_synthseg_pca_cocycle_v5 import (
     BASE_ROOT,
     EXPERIMENTS,
     CocyclePair,
-    DirectDiagnosisResidualCocycleFlow,
     PcaGeometry,
+    build_flow,
     cocycle_defects,
     convert_pairs,
     default_config_path,
@@ -57,7 +57,7 @@ def mean_or_nan(values: list[float]) -> float:
 @torch.no_grad()
 def per_pair_metrics(
     *,
-    flow: DirectDiagnosisResidualCocycleFlow,
+    flow: torch.nn.Module,
     geometry: PcaGeometry,
     values: dict[str, torch.Tensor],
     archive: dict[str, np.ndarray],
@@ -76,8 +76,14 @@ def per_pair_metrics(
             "intermediate": torch.tensor([row.intermediate for row in chunk], dtype=torch.long),
         }
         batch = indexed(values, raw)
-        forward = flow.transport(batch["source"], batch["source_age"], batch["target_age"], batch["label"])
-        backward = flow.transport(batch["target"], batch["target_age"], batch["source_age"], batch["label"])
+        forward = flow.transport(
+            batch["source"], batch["source_age"], batch["target_age"], batch["label"],
+            batch["context"], batch["context_age"],
+        )
+        backward = flow.transport(
+            batch["target"], batch["target_age"], batch["source_age"], batch["label"],
+            batch["context"], batch["context_age"],
+        )
         source_vertices = geometry.vertices(batch["source"])
         target_vertices = geometry.vertices(batch["target"])
         forward_vertices = geometry.vertices(forward)
@@ -87,12 +93,16 @@ def per_pair_metrics(
         forward_volume = geometry.volume_from_vertices(forward_vertices)
         backward_volume = geometry.volume_from_vertices(backward_vertices)
         years = (batch["target_years"] - batch["source_years"]).clamp_min(1.0e-6)
+        predicted_signed_rate = (torch.log(forward_volume) - torch.log(source_volume)) / years
+        observed_signed_rate = (torch.log(target_volume) - torch.log(source_volume)) / years
         forward_values = {
             "pca_mse": torch.mean((forward - batch["target"]).square(), dim=1),
             "vertex_coordinate_mae_mm": torch.mean(torch.abs(forward_vertices - target_vertices), dim=(1, 2)),
             "vertex_euclidean_mean_mm": torch.linalg.vector_norm(forward_vertices - target_vertices, dim=2).mean(dim=1),
             "volume_relative_error": torch.abs(forward_volume - target_volume) / target_volume,
             "log_volume_rate_abs_error": torch.abs((torch.log(forward_volume) - torch.log(target_volume)) / years),
+            "predicted_log_volume_rate": predicted_signed_rate,
+            "observed_log_volume_rate": observed_signed_rate,
         }
         backward_values = {
             "backward_pca_mse": torch.mean((backward - batch["source"]).square(), dim=1),
@@ -109,11 +119,43 @@ def per_pair_metrics(
             "nochange_log_volume_rate_abs_error": torch.abs((torch.log(source_volume) - torch.log(target_volume)) / years),
         }
         middle_age = 0.5 * (batch["source_age"] + batch["target_age"])
-        middle = flow.transport(batch["source"], batch["source_age"], middle_age, batch["label"])
-        composed = flow.transport(middle, middle_age, batch["target_age"], batch["label"])
-        inverse = flow.transport(forward, batch["target_age"], batch["source_age"], batch["label"])
+        middle = flow.transport(
+            batch["source"], batch["source_age"], middle_age, batch["label"],
+            batch["context"], batch["context_age"],
+        )
+        composed = flow.transport(
+            middle, middle_age, batch["target_age"], batch["label"],
+            batch["context"], batch["context_age"],
+        )
+        inverse = flow.transport(
+            forward, batch["target_age"], batch["source_age"], batch["label"],
+            batch["context"], batch["context_age"],
+        )
         semi = torch.sqrt(torch.mean((forward - composed).square(), dim=1))
         inverse_error = torch.sqrt(torch.mean((inverse - batch["source"]).square(), dim=1))
+        if hasattr(flow, "coboundary_increment"):
+            potential_increment = flow.coboundary_increment(
+                batch["source_age"], batch["target_age"], batch["label"],
+                batch["context"], batch["context_age"],
+            )
+            coboundary_error = torch.sqrt(torch.mean(
+                ((forward - batch["source"]) - potential_increment).square(), dim=1
+            ))
+        else:
+            coboundary_error = torch.full_like(semi, float("nan"))
+        if hasattr(flow, "volume_potential_delta"):
+            observed_log_delta = torch.log(target_volume) - torch.log(source_volume)
+            volume_potential_forward = flow.volume_potential_delta(
+                batch["source_age"], batch["target_age"], batch["label"], batch["context"], batch["context_age"]
+            )
+            volume_potential_backward = flow.volume_potential_delta(
+                batch["target_age"], batch["source_age"], batch["label"], batch["context"], batch["context_age"]
+            )
+            volume_potential_error = torch.abs(volume_potential_forward - observed_log_delta)
+            volume_potential_backward_error = torch.abs(volume_potential_backward + observed_log_delta)
+        else:
+            volume_potential_error = torch.full_like(semi, float("nan"))
+            volume_potential_backward_error = torch.full_like(semi, float("nan"))
         for index, row in enumerate(chunk):
             record: dict[str, Any] = {
                 "split": split,
@@ -127,6 +169,9 @@ def per_pair_metrics(
                 "delta_years": float(years[index].cpu()),
                 "semigroup_defect_pca_rmse": float(semi[index].cpu()),
                 "inverse_defect_pca_rmse": float(inverse_error[index].cpu()),
+                "coboundary_alignment_pca_rmse": float(coboundary_error[index].cpu()),
+                "volume_potential_log_delta_abs_error": float(volume_potential_error[index].cpu()),
+                "backward_volume_potential_log_delta_abs_error": float(volume_potential_backward_error[index].cpu()),
             }
             for values_dict in (forward_values, backward_values, no_change):
                 record.update({name: float(value[index].cpu()) for name, value in values_dict.items()})
@@ -139,9 +184,12 @@ def per_pair_metrics(
 def summarize(records: list[dict[str, Any]], protocol: str) -> list[dict[str, Any]]:
     metrics = (
         "pca_mse", "vertex_coordinate_mae_mm", "vertex_euclidean_mean_mm", "volume_relative_error", "log_volume_rate_abs_error",
+        "predicted_log_volume_rate", "observed_log_volume_rate",
         "backward_pca_mse", "backward_vertex_coordinate_mae_mm", "backward_vertex_euclidean_mean_mm", "backward_volume_relative_error", "backward_log_volume_rate_abs_error",
         "nochange_pca_mse", "nochange_vertex_coordinate_mae_mm", "nochange_vertex_euclidean_mean_mm", "nochange_volume_relative_error", "nochange_log_volume_rate_abs_error",
         "semigroup_defect_pca_rmse", "inverse_defect_pca_rmse",
+        "coboundary_alignment_pca_rmse",
+        "volume_potential_log_delta_abs_error", "backward_volume_potential_log_delta_abs_error",
     )
     output: list[dict[str, Any]] = []
     splits = sorted({str(row["split"]) for row in records})
@@ -196,17 +244,21 @@ def main() -> int:
     pca_model = validate_pca_model(input_config, 150)
     geometry = PcaGeometry(pca_model, train_archive["train_pca_mean_150"], train_archive["train_pca_std_150"]).to(device)
     checkpoint = torch.load(checkpoint_path, map_location=device)
-    flow = DirectDiagnosisResidualCocycleFlow(
-        latent_dim=int(config["model"]["latent_dim"]), width=int(config["model"]["width"]), residual_blocks=int(config["model"]["residual_blocks"]),
-    ).to(device)
-    flow.load_state_dict(checkpoint["flow_state_dict"])
-    flow.eval()
-    geometry.eval()
     statistics = checkpoint.get("statistics")
     if not isinstance(statistics, dict):
         train_values = values_on_device(train_archive, device)
         train_pairs = convert_pairs(load_pairs(resolve_path(input_config["dataset"]["train_pairs"]), train_archive, "train"), train_archive)
-        statistics = training_statistics(geometry, train_values, train_pairs, train_archive)
+        statistics = training_statistics(
+            geometry,
+            train_values,
+            train_pairs,
+            train_archive,
+            include_volume_axis=(str(config["model"].get("variant", "direct")) == "coboundary_volume_axis"),
+        )
+    flow = build_flow(config["model"], statistics.get("volume_axis")).to(device)
+    flow.load_state_dict(checkpoint["flow_state_dict"])
+    flow.eval()
+    geometry.eval()
 
     all_records: list[dict[str, Any]] = []
     first_last_records: list[dict[str, Any]] = []
@@ -231,7 +283,7 @@ def main() -> int:
         json.dump(defect_report, handle, indent=2, sort_keys=True)
         handle.write("\n")
     with (output_dir / "README.md").open("w", encoding="utf-8") as handle:
-        handle.write("# Direct Cocycle-V5 evaluation\n\n")
+        handle.write("# PCA longitudinal transport evaluation\n\n")
         handle.write("This is a read-only evaluation of the selected `best_shape.pt` checkpoint. ")
         handle.write("It reports direct forward/backward observed-pair performance, first-to-last performance, and virtual-midpoint semigroup/inverse defects.\n")
     print("=" * 96, flush=True)

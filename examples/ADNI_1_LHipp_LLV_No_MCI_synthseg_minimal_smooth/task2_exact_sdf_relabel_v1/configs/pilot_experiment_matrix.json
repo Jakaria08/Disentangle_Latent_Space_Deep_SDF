@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "description": "Paired approximate-versus-exact SDF pilot. Each arm strictly restores its own completed 256-D population decoder/grid and starts with new pilot latents and a new optimizer. PCA uses the existing full-training PCA model and is descriptive only; the causal comparison is exact versus approximate within architecture.",
+  "bulk_output_root": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/exact_sdf_relabel_v1",
+  "manifests": {
+    "approx": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/exact_sdf_relabel_v1/manifests/hippocampus_pilot_approx.csv",
+    "exact": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/exact_sdf_relabel_v1/manifests/hippocampus_pilot_exact.csv"
+  },
+  "families": {
+    "compact": {
+      "base_config": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/configs/hippocampus_shared_grid_32x16_z256.json",
+      "base_config_sha256": "8a67cf06901cc361566df5c600d66a5f1c10cf83414ba04d3e4d74f8dec1b644",
+      "train_script": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/scripts/train_shared_grid_sdf.py",
+      "evaluate_script": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/scripts/periodic_evaluate_shared_grid.py"
+    },
+    "multires": {
+      "base_config": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_multires_single_field_v1/configs/hippocampus_multires_z256_c2f_noeik.json",
+      "base_config_sha256": "8dde16152a2ca7898a38883a9c8694802d88045d7e4ec490408c1f2e367c721a",
+      "train_script": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_multires_single_field_v1/scripts/train_multires_sdf.py",
+      "evaluate_script": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_multires_single_field_v1/scripts/periodic_evaluate_multires.py"
+    }
+  },
+  "experiments": {
+    "compact_approx": {"family": "compact", "labels": "approx"},
+    "compact_exact": {"family": "compact", "labels": "exact"},
+    "multires_approx": {"family": "multires", "labels": "approx"},
+    "multires_exact": {"family": "multires", "labels": "exact"}
+  },
+  "training_policy": {
+    "seed": 42,
+    "latent_size": 256,
+    "total_epochs": 1000,
+    "decoder_warm_start": {
+      "mode": "decoder_only",
+      "compact_checkpoint": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/runs/hippocampus_shared_grid_32x16_z256/checkpoints/best_mesh.pth",
+      "compact_checkpoint_sha256": "5d41ca41e114deca28eae28ea7cb561675a68f9a4c2e01f0aae7b56c993603fe",
+      "multires_checkpoint": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippocampus_multires_z256_c2f_noeik/checkpoints/best_mesh.pth",
+      "multires_checkpoint_sha256": "2f98641058b8b6f95b99cf40c3179e0bf54c01905a63ec9595c4a7cf5c8afcbe",
+      "latent_adapt_epochs": 100,
+      "joint_epochs": 900,
+      "compact_latent_adapt_learning_rates": {"global": 0.0, "local": 0.0, "grid": 0.0, "latent": 0.001},
+      "compact_joint_learning_rates": {"global": 0.000001, "local": 0.00002, "grid": 0.0001, "latent": 0.0005},
+      "multires_latent_adapt_learning_rates": {"decoder": 0.0, "grid": 0.0, "latent": 0.001},
+      "multires_joint_learning_rates": {"decoder": 0.00001, "grid": 0.0001, "latent": 0.0005}
+    },
+    "checkpoint_every_epochs": 500,
+    "periodic_evaluation_every_epochs": 500,
+    "periodic_splits": ["train", "val"],
+    "periodic_per_split": 100,
+    "test_locked_during_selection": true,
+    "eikonal_enabled": false
+  }
+}

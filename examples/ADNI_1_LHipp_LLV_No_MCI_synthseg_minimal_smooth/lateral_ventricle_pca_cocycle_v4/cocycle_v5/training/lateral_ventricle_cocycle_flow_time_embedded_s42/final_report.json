@@ -1,0 +1,134 @@
+{
+  "epochs_completed": 36,
+  "epochs_requested": 180,
+  "experiment": "c4_time_embedded",
+  "parameter_count": 416716,
+  "run_name": "lateral_ventricle_cocycle_flow_time_embedded_s42",
+  "selected_checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v5/training/lateral_ventricle_cocycle_flow_time_embedded_s42/checkpoints/best_shape.pt",
+  "selected_epoch": 6,
+  "selected_validation": {
+    "all_pairs": {
+      "groups": {
+        "AD": {
+          "coordinate_mean": 0.35973801860024057,
+          "euclidean_mean": 0.7189443611672947,
+          "nochange_coordinate_mean": 0.4319701593310114,
+          "nochange_euclidean_mean": 0.8646196519571637,
+          "nochange_pca_mean": 0.5438877739130504,
+          "nochange_rate_mean": 0.10708298738158885,
+          "nochange_volume_relative_mean": 0.09565080552812784,
+          "observed_signed_rate_mean": 0.10296941161273963,
+          "pca_mean": 0.5445118738663575,
+          "predicted_signed_rate_mean": 0.09351640034999166,
+          "rate_mean": 0.053064913965672963,
+          "rows": 126.0,
+          "volume_relative_mean": 0.04572708455805061
+        },
+        "CN": {
+          "coordinate_mean": 0.37130651512306256,
+          "euclidean_mean": 0.7543634148841759,
+          "nochange_coordinate_mean": 0.42057596855216994,
+          "nochange_euclidean_mean": 0.8571563683590799,
+          "nochange_pca_mean": 0.35058356248685774,
+          "nochange_rate_mean": 0.04086156654993142,
+          "nochange_volume_relative_mean": 0.08779316223794836,
+          "observed_signed_rate_mean": 0.03625673736898088,
+          "pca_mean": 0.3515717932638132,
+          "predicted_signed_rate_mean": 0.041005927682766376,
+          "rate_mean": 0.024736186392267042,
+          "rows": 424.0,
+          "volume_relative_mean": 0.04634661043858288
+        },
+        "overall": {
+          "coordinate_mean": 0.3686562777378342,
+          "euclidean_mean": 0.7462492316690358,
+          "nochange_coordinate_mean": 0.42318627407605,
+          "nochange_euclidean_mean": 0.8588661387833681,
+          "nochange_pca_mean": 0.3948678000135855,
+          "nochange_rate_mean": 0.05603229204954749,
+          "nochange_volume_relative_mean": 0.08959327688260765,
+          "observed_signed_rate_mean": 0.05154000455936925,
+          "pca_mean": 0.39577261172912337,
+          "predicted_signed_rate_mean": 0.05303559960289435,
+          "rate_mean": 0.031226040345447306,
+          "rows": 550.0,
+          "volume_relative_mean": 0.046204682691406394
+        }
+      }
+    },
+    "defects": {
+      "relative_inverse_defect_mean": 0.0038606823959608763,
+      "relative_inverse_defect_p95": 0.014875234337523578,
+      "relative_semigroup_defect_mean": 0.0016496959914407358,
+      "relative_semigroup_defect_p95": 0.008111077593639479
+    },
+    "feasible": true,
+    "first_last": {
+      "groups": {
+        "AD": {
+          "coordinate_mean": 0.36360841723425047,
+          "euclidean_mean": 0.7200826981237957,
+          "nochange_coordinate_mean": 0.5032754801213741,
+          "nochange_euclidean_mean": 1.0049125807625907,
+          "nochange_pca_mean": 0.4722855719072478,
+          "nochange_rate_mean": 0.10845558983939034,
+          "nochange_volume_relative_mean": 0.14379091294748442,
+          "observed_signed_rate_mean": 0.10512713023594447,
+          "pca_mean": 0.4737399475915091,
+          "predicted_signed_rate_mean": 0.09123408794403076,
+          "rate_mean": 0.04796935830797468,
+          "rows": 28.0,
+          "volume_relative_mean": 0.06396245646465104
+        },
+        "CN": {
+          "coordinate_mean": 0.420669874458602,
+          "euclidean_mean": 0.8662993799556385,
+          "nochange_coordinate_mean": 0.5063722648403861,
+          "nochange_euclidean_mean": 1.0405338216911664,
+          "nochange_pca_mean": 0.4723051023302656,
+          "nochange_rate_mean": 0.03996379856923313,
+          "nochange_volume_relative_mean": 0.12477564123092276,
+          "observed_signed_rate_mean": 0.03970798265866258,
+          "pca_mean": 0.4741892877853278,
+          "predicted_signed_rate_mean": 0.04208038109495784,
+          "rate_mean": 0.019306704691244347,
+          "rows": 33.0,
+          "volume_relative_mean": 0.06067054174755784
+        },
+        "overall": {
+          "coordinate_mean": 0.39447773015889964,
+          "euclidean_mean": 0.7991835260000385,
+          "nochange_coordinate_mean": 0.5049507898873971,
+          "nochange_euclidean_mean": 1.0241830881501808,
+          "nochange_pca_mean": 0.4722961375459296,
+          "nochange_rate_mean": 0.07140265357848562,
+          "nochange_volume_relative_mean": 0.13350396267459042,
+          "observed_signed_rate_mean": 0.06973644384167722,
+          "pca_mean": 0.47398303327013236,
+          "predicted_signed_rate_mean": 0.06464273833715525,
+          "rate_mean": 0.032463332580891055,
+          "rows": 61.0,
+          "volume_relative_mean": 0.062181584568518654
+        }
+      }
+    },
+    "ratios": {
+      "all_pair_shape": 0.8700107263277476,
+      "all_pair_volume": 0.515715958820744,
+      "first_last_ad_observed_signed_rate": 0.10512713023594447,
+      "first_last_ad_predicted_signed_rate": 0.09123408794403076,
+      "first_last_cn_observed_signed_rate": 0.03970798265866258,
+      "first_last_cn_predicted_signed_rate": 0.04208038109495784,
+      "macro_first_last_rate": 0.4626998908733816,
+      "macro_first_last_shape": 0.7755878582299515,
+      "macro_first_last_volume": 0.46553334075062835,
+      "macro_group_trend": 0.09373129604860123,
+      "score": 0.9501057194543217
+    },
+    "score": 0.9501057194543217
+  },
+  "source_meshes_modified": false,
+  "status": "complete",
+  "structure": "left_lateral_ventricle",
+  "test_loaded_during_training": false
+}

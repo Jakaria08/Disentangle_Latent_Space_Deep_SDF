@@ -1,0 +1,82 @@
+{
+  "archives": {
+    "test": {
+      "mtime_ns": 1786323256426861306,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/dataset/test_subject_sequences.npz",
+      "sha256": "974e0a1623811e2568afe522b6923893f603afcf842addb253e16dee29aed6d4",
+      "size": 318211
+    },
+    "train": {
+      "mtime_ns": 1786323256347858860,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/dataset/train_subject_sequences.npz",
+      "sha256": "ff8d0ea09bfd00424cea10eaa3d253ff02cc758bfb6b35bba185b9311d83c809",
+      "size": 2302397
+    },
+    "val": {
+      "mtime_ns": 1786323256403860594,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v4/dataset/val_subject_sequences.npz",
+      "sha256": "3e522a2cd4ba36850635396635854a92957842caa36b99d785e4298a072de897",
+      "size": 307024
+    }
+  },
+  "bootstrap_replicates": 2000,
+  "brainode_checkpoint": {
+    "mtime_ns": 1786340179136817759,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/brainode_paper_core/training/brainode_paper_core_raw_pca150_s42/checkpoints/best.pt",
+    "sha256": "96039e3f7d2683bacdafeb71919c28d71ede37f60c35ac372f60e52c70835410",
+    "size": 3935889
+  },
+  "brainode_config": {
+    "mtime_ns": 1786339701478173892,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/brainode_paper_core/configs/paper_core_primary.json",
+    "sha256": "918914993735ab2db18e5c10437d96db9d803dfe4595b2a373d1bed44ec7012d",
+    "size": 2066
+  },
+  "example_split": "test",
+  "flow_checkpoint": {
+    "mtime_ns": 1786344190036619146,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v5/training/lateral_ventricle_cocycle_v5_c1_s42/checkpoints/best_shape.pt",
+    "sha256": "338ba2c83e9d9942eadd7ef0bc5263b69fcfc284f1fecc0cf5a12606de377f5a",
+    "size": 4603629
+  },
+  "flow_config": {
+    "mtime_ns": 1786343241971829979,
+    "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/cocycle_v5/configs/c1_cocycle_v5.json",
+    "sha256": "b8bc21126c27be0fe1ced6bb89aa96a039a6dce1aedf61b3ecc5e5091567c93a",
+    "size": 2384
+  },
+  "group_map_max_pairs_per_diagnosis": 0,
+  "pca_model": {
+    "components": {
+      "mtime_ns": 1786322344178439577,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/model/components_150.npy",
+      "sha256": "349499fa97e453710688f3e16c9b8534697aba01d53bac35edf9f80bee27436c",
+      "size": 15022928
+    },
+    "faces": {
+      "mtime_ns": 1786322344180439640,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/model/faces.npy",
+      "sha256": "7ed8494dd6cf6d2ea8d5f8429f64ecc51b793a3f3fc71920a0f052ee2b727de4",
+      "size": 400640
+    },
+    "mean": {
+      "mtime_ns": 1786322344159438978,
+      "path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/lateral_ventricle_pca_cocycle_v4/pca/model/mean.npy",
+      "sha256": "2155882010fa8cae3f9e6075c0df82926095797fbfcdede5b992913c45e80234",
+      "size": 100280
+    }
+  },
+  "schema_version": 1,
+  "seed": 42,
+  "skip_group_maps": false,
+  "source_meshes_modified": false,
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "strict_no_mci": true,
+  "structure": "lateral_ventricle",
+  "test_loaded_during_training": false,
+  "top_change_fraction": 0.2
+}

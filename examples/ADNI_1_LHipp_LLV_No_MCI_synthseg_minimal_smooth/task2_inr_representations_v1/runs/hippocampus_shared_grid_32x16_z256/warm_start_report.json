@@ -1,0 +1,87 @@
+{
+  "checkpoint": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_L_No_MCI_large_strict_left/task2_representations/inr/siren_naisr_5x512_latent_skip_warmstart/checkpoints/best.pth",
+  "checkpoint_sha256": "57937c923b04bf38a4180ed6b1bf5ba5dcd4b11dbce88ef6c045dfd23425bae4",
+  "latent_size": 256,
+  "latent_transfer": "disabled_new_qc_mesh_codes",
+  "loaded_tensor_count": 12,
+  "network_specs": {
+    "dims": [
+      512,
+      512,
+      768,
+      512,
+      512
+    ],
+    "dropout": [],
+    "dropout_prob": 0.0,
+    "encoding_features": 1,
+    "encoding_sigma": 0,
+    "final_layer_init": "siren",
+    "latent_dropout": false,
+    "latent_in": [
+      3
+    ],
+    "nonlinearity": "sine",
+    "norm_layers": [],
+    "use_tanh": false,
+    "weight_norm": false,
+    "xyz_in": [],
+    "xyz_in_all": false
+  },
+  "random_latent_count": 2037,
+  "source_best_validation_l1": 0.0029260690498631448,
+  "source_epoch": 1775,
+  "source_pretraining_overlap": {
+    "test": {
+      "scan_count": 277,
+      "source_seen_scan_count": 234,
+      "source_seen_subject_count": 51,
+      "source_unseen_subject_count": 10,
+      "subject_count": 61
+    },
+    "train": {
+      "scan_count": 2037,
+      "source_seen_scan_count": 1610,
+      "source_seen_subject_count": 375,
+      "source_unseen_subject_count": 100,
+      "subject_count": 475
+    },
+    "val": {
+      "scan_count": 269,
+      "source_seen_scan_count": 228,
+      "source_seen_subject_count": 51,
+      "source_unseen_subject_count": 10,
+      "subject_count": 61
+    }
+  },
+  "transfer": "strict_global_decoder",
+  "validation_selection": {
+    "scan_ids": [
+      "83_m12",
+      "1242_m72",
+      "740_m06",
+      "813_m06",
+      "1307_m12",
+      "1002_m06",
+      "4728_m12",
+      "4090_m06",
+      "109_m24",
+      "4644_m12",
+      "83_m24",
+      "1242_m06",
+      "4728_m06",
+      "813_m12",
+      "1307_m24",
+      "1002_m36",
+      "109_bl",
+      "1242_m60",
+      "83_bl",
+      "1242_m12",
+      "1307_m06",
+      "1242_bl",
+      "740_bl",
+      "813_m36"
+    ],
+    "source_unseen_subjects_only": true
+  }
+}

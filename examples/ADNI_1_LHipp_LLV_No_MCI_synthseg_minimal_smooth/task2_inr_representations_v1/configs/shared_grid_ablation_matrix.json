@@ -1,0 +1,35 @@
+{
+  "description": "Change one capacity variable at a time around the reviewed 32^3 x 16, 3x128 default.",
+  "experiments": [
+    {
+      "suffix": "grid16_c16",
+      "description": "Grid-resolution lower bound: 16^3 x 16.",
+      "overrides": {"network_specs.grid_resolution": 16}
+    },
+    {
+      "suffix": "grid48_c16",
+      "description": "Grid-resolution upper comparison: 48^3 x 16.",
+      "overrides": {"network_specs.grid_resolution": 48}
+    },
+    {
+      "suffix": "grid32_c8",
+      "description": "Grid-channel lower comparison: 32^3 x 8.",
+      "overrides": {"network_specs.grid_channels": 8}
+    },
+    {
+      "suffix": "grid32_c32",
+      "description": "Grid-channel upper comparison: 32^3 x 32.",
+      "overrides": {"network_specs.grid_channels": 32}
+    },
+    {
+      "suffix": "local3x64",
+      "description": "Smaller local skip-SIREN: three 64-wide layers.",
+      "overrides": {"network_specs.local_hidden_dims": [64, 64, 64]}
+    },
+    {
+      "suffix": "local3x256",
+      "description": "Larger local skip-SIREN: three 256-wide layers.",
+      "overrides": {"network_specs.local_hidden_dims": [256, 256, 256]}
+    }
+  ]
+}
