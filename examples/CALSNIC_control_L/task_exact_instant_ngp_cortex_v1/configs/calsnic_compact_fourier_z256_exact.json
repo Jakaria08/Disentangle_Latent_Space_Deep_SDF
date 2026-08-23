@@ -1,0 +1,293 @@
+{
+  "name": "calsnic_compact_fourier_z256_exact",
+  "description": "C1: Compact two-branch with band-limited Fourier features on the grid-free branch (1-120mm), hash ladder capped at R=273 (0.56mm, collision load 0.62), gate tightened to 0.94mm, and a finite-difference curvature hinge above 1.0/mm. Targets folds without noise.",
+  "run_role": "fourier_compact_curvature_hinge",
+  "structure": "left_pial_cortex",
+  "manifest": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/manifests/calsnic_control_L_exact.csv",
+  "required_exact_audit": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/audits/exact_sdf_audit.json",
+  "reference_sampling_utility": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/scripts/shared_grid_common.py",
+  "reference_sampling_sha256": "74048015c40fe54df4acdcc86d19d95a631b9383e4b6a7bd109ea07dcb924ca9",
+  "output_dir": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_instant_ngp_v1/runs/calsnic_compact_fourier_z256_exact",
+  "network_arch": "compact_hashgrid_sdf",
+  "latent_size": 256,
+  "mm_per_normalized_unit": 117.431971,
+  "reference_surface_area_mm2": 100000.0,
+  "network_specs": {
+    "grid_resolutions": [
+      16,
+      20,
+      26,
+      34,
+      44,
+      58,
+      75,
+      97,
+      126,
+      163,
+      211,
+      273
+    ],
+    "base_resolution": 16,
+    "per_level_scale": 1.2944,
+    "num_levels": 12,
+    "features_per_level": 2,
+    "log2_hashmap_size": 19,
+    "grid_resolution": 273,
+    "sampling_balance_resolution": 256,
+    "grid_aabb": [
+      [
+        -0.45,
+        -0.85,
+        -0.7
+      ],
+      [
+        0.45,
+        0.85,
+        0.7
+      ]
+    ],
+    "feature_roi_taper_width": 0.04,
+    "grid_init_std": 0.0001,
+    "softplus_beta": 100.0,
+    "global_hidden_dims": [
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512
+    ],
+    "global_latent_skip_layer": 4,
+    "global_activation": "relu",
+    "local_hidden_dims": [
+      128,
+      128,
+      128,
+      128
+    ],
+    "local_latent_skip_layer": 2,
+    "local_activation": "softplus",
+    "gate_tau": 0.008,
+    "fusion_mode": "smooth_gate",
+    "global_fourier_enabled": true,
+    "global_fourier_bands": 8,
+    "global_fourier_directions": 8,
+    "global_fourier_min_wavelength_mm": 1.0,
+    "global_fourier_max_wavelength_mm": 120.0,
+    "mm_per_unit": 117.431971
+  },
+  "seed": 20260818,
+  "total_epochs": 2200,
+  "level_schedule": [
+    {
+      "resolution": 16,
+      "start_epoch": 1,
+      "end_epoch": 1
+    },
+    {
+      "resolution": 20,
+      "start_epoch": 1,
+      "end_epoch": 1
+    },
+    {
+      "resolution": 26,
+      "start_epoch": 1,
+      "end_epoch": 1
+    },
+    {
+      "resolution": 34,
+      "start_epoch": 1,
+      "end_epoch": 1
+    },
+    {
+      "resolution": 44,
+      "start_epoch": 138,
+      "end_epoch": 238
+    },
+    {
+      "resolution": 58,
+      "start_epoch": 275,
+      "end_epoch": 375
+    },
+    {
+      "resolution": 75,
+      "start_epoch": 412,
+      "end_epoch": 512
+    },
+    {
+      "resolution": 97,
+      "start_epoch": 549,
+      "end_epoch": 649
+    },
+    {
+      "resolution": 126,
+      "start_epoch": 686,
+      "end_epoch": 786
+    },
+    {
+      "resolution": 163,
+      "start_epoch": 823,
+      "end_epoch": 923
+    },
+    {
+      "resolution": 211,
+      "start_epoch": 960,
+      "end_epoch": 1060
+    },
+    {
+      "resolution": 273,
+      "start_epoch": 1097,
+      "end_epoch": 1200
+    }
+  ],
+  "scenes_per_batch": 8,
+  "scenes_per_chunk": 4,
+  "num_workers": 8,
+  "load_dataset_into_ram": true,
+  "sampling": {
+    "global_near_samples_per_scene": 4096,
+    "global_positive_samples_per_scene": 2048,
+    "global_negative_samples_per_scene": 2048,
+    "local_ultra_near_samples_per_scene": 4096,
+    "local_positive_samples_per_scene": 2048,
+    "local_negative_samples_per_scene": 2048,
+    "near_band": 0.1,
+    "ultra_near_band": 0.03
+  },
+  "clamp_distance": 0.1,
+  "sdf_supervision": {
+    "generator": "CALSNIC transform-aware PCU exact relabeller",
+    "source_file": "examples/CALSNIC_control_L/task_exact_multires_cortex_v1/scripts/relabel_exact_triangle_sdf.py",
+    "distance_semantics": "exact closest-triangle magnitude; fast-winding negative-inside sign; source XYZ unchanged",
+    "exact_triangle_distance": true,
+    "exact_distance_mae_tolerance": 2e-06
+  },
+  "loss_weights": {
+    "global_broad_sdf_l1": 1.0,
+    "global_near_sdf_l1": 1.0,
+    "local_broad_sdf_l1": 0.25,
+    "local_near_sdf_l1": 1.0,
+    "fused_near_sdf_l1": 1.0,
+    "far_field_agreement": 0.3,
+    "latent_l2": 0.0001,
+    "grid_l2": 1e-06,
+    "grid_tv": 0.0
+  },
+  "eikonal": {
+    "enabled": true,
+    "weight": 0.01,
+    "start_epoch": 401,
+    "warmup_epochs": 100,
+    "target_band": 0.03,
+    "points_per_chunk": 1024,
+    "branches": [
+      "fused",
+      "global"
+    ],
+    "epsilon_mm": 0.5,
+    "final_epsilon_mm": 0.35,
+    "final_epsilon_start_epoch": 1801
+  },
+  "learning_rates": {
+    "decoder": 0.0001,
+    "grid": 0.001,
+    "latent": 0.001
+  },
+  "learning_rate_decay_interval": 500,
+  "learning_rate_decay_factor": 0.5,
+  "code_initial_std": 0.01,
+  "code_bound": 1.0,
+  "gradient_clip_norm": 1.0,
+  "checkpoint_every_epochs": 500,
+  "checkpoint_latest_every_epochs": 10,
+  "validation": {
+    "every_epochs": 25,
+    "scans_per_validation": 15,
+    "latent_fit": {
+      "steps": 150,
+      "sampling": {
+        "global_near_samples_per_scene": 2048,
+        "global_positive_samples_per_scene": 1024,
+        "global_negative_samples_per_scene": 1024,
+        "local_ultra_near_samples_per_scene": 2048,
+        "local_positive_samples_per_scene": 1024,
+        "local_negative_samples_per_scene": 1024,
+        "near_band": 0.1,
+        "ultra_near_band": 0.03
+      },
+      "broad_weight": 1.0,
+      "near_weight": 1.0,
+      "learning_rate": 0.005,
+      "code_regularization_lambda": 0.0001,
+      "code_bound": 1.0,
+      "initial_std": 0.01,
+      "holdout_fraction": 0.1,
+      "early_stop_patience": 150,
+      "early_stop_min_delta": 1e-07
+    }
+  },
+  "latent_fit": {
+    "steps": 750,
+    "sampling": {
+      "global_near_samples_per_scene": 4096,
+      "global_positive_samples_per_scene": 2048,
+      "global_negative_samples_per_scene": 2048,
+      "local_ultra_near_samples_per_scene": 4096,
+      "local_positive_samples_per_scene": 2048,
+      "local_negative_samples_per_scene": 2048,
+      "near_band": 0.1,
+      "ultra_near_band": 0.03
+    },
+    "broad_weight": 1.0,
+    "near_weight": 1.0,
+    "learning_rate": 0.005,
+    "code_regularization_lambda": 0.0001,
+    "code_bound": 1.0,
+    "initial_std": 0.01,
+    "holdout_fraction": 0.1,
+    "early_stop_patience": 750,
+    "early_stop_min_delta": 1e-07
+  },
+  "reconstruction": {
+    "resolution": 256,
+    "max_batch": 131072
+  },
+  "field_diagnostics": {
+    "target_band": 0.03,
+    "points_per_scan": 1024
+  },
+  "periodic_evaluation": {
+    "enabled": true,
+    "script": "examples/CALSNIC_control_L/task_exact_instant_ngp_cortex_v1/scripts/evaluate_hashgrid_variants.py",
+    "every_epochs": 500,
+    "also_final_epoch": true,
+    "per_split": 15,
+    "splits": [
+      "val"
+    ],
+    "variants": [
+      "global_only",
+      "fused_hard_band",
+      "fused_smooth_gate"
+    ],
+    "selection_variant": "fused_smooth_gate",
+    "band_cells": 3,
+    "minimum_success_fraction": 1.0,
+    "surface_points": 30000,
+    "resolution": 256,
+    "latent_steps": 750,
+    "compare_pca": true,
+    "pca_components": 172,
+    "pca_model_dir": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/pca/matched_left_train173"
+  },
+  "far_field_margin": 0.0,
+  "second_order": {
+    "enabled": true,
+    "weight": 0.001,
+    "curvature_threshold_per_mm": 1.0,
+    "start_epoch": 600,
+    "warmup_epochs": 200
+  }
+}

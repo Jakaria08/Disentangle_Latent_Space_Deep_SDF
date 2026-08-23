@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "task": "adni_left_hippocampus_latent_flow_128",
+  "latent_dim": 128,
+  "coordinate_space": "final_ply_mm",
+  "output_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1",
+  "source_sequence_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4",
+  "source_manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+  "ae_source_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_spiral_ae_v1",
+  "ae_bulk_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1",
+  "representations": {
+    "pca128": {
+      "kind": "pca",
+      "description": "First 128 components of the fixed train-only PCA-150 basis; no refit.",
+      "pca_model_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model",
+      "source_validation_rmse_mm": 0.033668,
+      "source_test_rmse_mm": 0.034380
+    },
+    "spiralnet128": {
+      "kind": "spiral_ae",
+      "description": "Current best saved pure SpiralNet++-128 checkpoint at implementation time.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/studies/spiralnet_z128_v6/trials/trial_0002_val0.037215.pt",
+      "checkpoint_sha256": "7e2464a42409e8c24596b15d6f3157f0a8c4987bb4d545c22c9c7bc164082855",
+      "source_validation_rmse_mm": 0.03721479063227836,
+      "checkpoint_policy": "frozen snapshot; update this path and regenerate archives to adopt a later winner"
+    },
+    "adaptive128": {
+      "kind": "adaptive_ae",
+      "description": "Current best saved pure learned Adaptive-Spiral-128 checkpoint; includes its searched learned linear skip and is not the PCA-residual hybrid.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/studies/adaptive_z128_v2/trials/trial_0002_val0.036765.pt",
+      "checkpoint_sha256": "f23ad558695ae63c2e25d7733a175071fde73c700c7bf30087985614cb30a4fc",
+      "source_validation_rmse_mm": 0.036764504071858134,
+      "checkpoint_policy": "frozen snapshot; update this path and regenerate archives to adopt a later winner"
+    }
+  },
+  "scientific_contract": {
+    "strict_no_mci": true,
+    "subject_level_splits": true,
+    "train_only_latent_standardization": true,
+    "shared_correspondence_topology": true,
+    "source_meshes_modified": false,
+    "test_available_only_to_separate_evaluator": true
+  }
+}

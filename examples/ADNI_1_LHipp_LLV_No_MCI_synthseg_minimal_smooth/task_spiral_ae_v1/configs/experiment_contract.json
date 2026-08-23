@@ -1,0 +1,88 @@
+{
+  "name": "adni_synthseg_hippocampus_spiral_ae_reconstruction",
+  "structure": "left_hippocampus",
+  "objective": "reconstruction_only",
+  "purpose": "Beat PCA reconstruction at matched latent dimension and export latents for the downstream cocycle / Brain-ODE flow network.",
+  "coordinate_space": "final_ply_mm",
+  "source_meshes_modified": false,
+  "dataset": {
+    "manifest": "../hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+    "scans": 2583,
+    "splits": {"train": 2037, "val": 269, "test": 277},
+    "split_level": "subject",
+    "subjects": {"train": 475, "val": 61, "test": 61},
+    "topology": {
+      "vertex_count": 2746,
+      "face_count": 5488,
+      "correspondence_topology_hash": "a8485554b4637ef929b5b05da9e34e10cdb7997a8e861aa6558c3847d7fd9d57"
+    },
+    "template": "mean training shape on the shared correspondence topology"
+  },
+  "metric": {
+    "name": "vertex_rmse_mm",
+    "definition": "per-scan RMSE over coordinates, in mm (NOT per-vertex Euclidean distance, which is sqrt(3) larger)",
+    "matches": "hippocampus_pca_cocycle_v4/pca/metrics/pca_reconstruction_summary.csv",
+    "gate": "fit_pca_baseline.py refuses to proceed unless PCA-128 val reproduces 0.033667 within 1e-4"
+  },
+  "pca_targets_vertex_rmse_mm": {
+    "128": {"val": 0.033668, "test": 0.034380, "cumulative_explained_variance": 0.997209},
+    "256": {"val": 0.010338, "test": 0.010787, "cumulative_explained_variance": 0.999793},
+    "note": "The stored cohort PCA model caps at 150 components; 256 was refit by fit_pca_baseline.py."
+  },
+  "model": {
+    "type": "deterministic spiral autoencoder",
+    "latent": "encoder emits latent_channels directly; no mu/log_var, no KL, no reparameterisation",
+    "loss": "L1 on per-vertex-normalised coordinates (train-split statistics)",
+    "selection": "lowest validation vertex_rmse_mm; test split evaluated exactly once per study"
+  },
+  "operators": {
+    "spiral": "SpiralNet++ (Gong et al. 2019)",
+    "adaptive": {
+      "source": "https://github.com/FrancescaBabiloni/adaptive_spiral (ICCV 2023, Babiloni et al.)",
+      "deviation": "upstream Dynamic_spiral_pool.__init__ has a bare `self.reset_parameters` (missing call), so the spiral-length predictor is never zero-initialised; this port calls it",
+      "guards": {
+        "max_adaptive_nodes": 400,
+        "max_dynamic_seq": 320,
+        "rationale": "the operator materialises [B, N, max_seq, C] tensors, so it is applied only on coarse levels as in the paper's own CoMA config"
+      }
+    }
+  },
+  "experiments": [
+    {"name": "spiralnet_z128", "conv_type": "spiral", "latent": 128, "gpu": 0, "n_trials": 80, "trial_time_budget_s": 900},
+    {"name": "spiralnet_z256", "conv_type": "spiral", "latent": 256, "gpu": 0, "n_trials": 80, "trial_time_budget_s": 900},
+    {"name": "adaptive_z128", "conv_type": "adaptive", "latent": 128, "gpu": 1, "n_trials": 60, "trial_time_budget_s": 1200},
+    {"name": "adaptive_z256", "conv_type": "adaptive", "latent": 256, "gpu": 2, "n_trials": 60, "trial_time_budget_s": 1200}
+  ],
+  "search": {
+    "sampler": "TPESampler",
+    "pruner": "MedianPruner(n_startup_trials=8, n_warmup_steps=10)",
+    "direction": "minimize validation vertex_rmse_mm",
+    "fixed_per_study": ["conv_type", "latent_channels"],
+    "space": {
+      "ds_factors": ["4,4,4,4", "4,4,4", "4,4,2", "2,4,4"],
+      "base_channels": "32..128 step 16 (last level = 2x base)",
+      "seq_length": "9..27 step 2 (clamped per level to vertex_count // dilation)",
+      "dilation": "1..2",
+      "lr": "1e-4..3e-3 log",
+      "lr_decay": "0.90..0.999",
+      "decay_step": "1..20",
+      "weight_decay": "1e-8..1e-4 log",
+      "batch_size": [8, 16, 32, 64],
+      "epochs": "200..600 step 100",
+      "adaptive_levels": "1..2 (adaptive conv type only)",
+      "dynamic_seq_frac": "0.25..1.0 of level vertex count (adaptive conv type only)"
+    },
+    "structural_prune": "trials whose pre-latent width is below 2x the latent are pruned untrained; the stock SpiralNet++ hierarchy funnels through 11x64=704 features, under the 8238 input dimensions"
+  },
+  "outputs_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1",
+  "latent_export_schema": {
+    "mirrors": "hippocampus_pca_cocycle_v4/pca/coefficients/*.npz",
+    "keys": [
+      "scan_ids", "subject_ids", "splits", "diagnoses", "label_ad", "visit_orders",
+      "visit_months", "age_years", "age_norm_train",
+      "ae_<K>", "ae_standardized_<K>", "train_ae_mean_<K>", "train_ae_std_<K>"
+    ],
+    "row_order": "manifest order within each split, identical to the PCA files"
+  },
+  "status": "studies launched"
+}

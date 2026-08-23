@@ -1,0 +1,224 @@
+{
+  "name": "calsnic_dif_z512_exact",
+  "description": "D: deformed implicit field. sdf(x,z) = T(x + W(x,z)) + s(x,z). The canonical field T carries no latent so it can store folding once, in a frame where folds do not move; the warp W is band limited to long wavelengths and bounded, so it slides folds to subject position without manufacturing sub-millimetre noise. Tests whether the 64%-of-pial-area plateau of arms A-C is caused by the Euclidean parameterization rather than by latent capacity.",
+  "run_role": "deformed_implicit_field",
+  "structure": "left_pial_cortex",
+  "manifest": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/manifests/calsnic_control_L_exact.csv",
+  "required_exact_audit": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/audits/exact_sdf_audit.json",
+  "reference_sampling_utility": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/scripts/shared_grid_common.py",
+  "reference_sampling_sha256": "74048015c40fe54df4acdcc86d19d95a631b9383e4b6a7bd109ea07dcb924ca9",
+  "output_dir": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_instant_ngp_v1/runs/calsnic_dif_z512_exact",
+  "network_arch": "deformed_implicit_field_sdf",
+  "latent_size": 512,
+  "mm_per_normalized_unit": 117.431971,
+  "reference_surface_area_mm2": 100000.0,
+  "network_specs": {
+    "template_bands": 10,
+    "template_directions": 12,
+    "template_min_wavelength_mm": 0.8,
+    "template_max_wavelength_mm": 120.0,
+    "template_hidden_dims": [
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512
+    ],
+    "warp_bands": 4,
+    "warp_directions": 8,
+    "warp_min_wavelength_mm": 15.0,
+    "warp_max_wavelength_mm": 120.0,
+    "warp_hidden_dims": [
+      256,
+      256,
+      256,
+      256
+    ],
+    "warp_latent_skip_layer": 2,
+    "warp_scale_mm": 6.0,
+    "residual_enabled": true,
+    "residual_bands": 6,
+    "residual_directions": 8,
+    "residual_min_wavelength_mm": 4.0,
+    "residual_max_wavelength_mm": 120.0,
+    "residual_hidden_dims": [
+      128,
+      128,
+      128
+    ],
+    "residual_latent_skip_layer": 1,
+    "mm_per_unit": 117.431971,
+    "activation": "relu",
+    "softplus_beta": 100.0,
+    "grid_resolutions": [],
+    "grid_resolution": 0,
+    "sampling_balance_resolution": 256,
+    "grid_aabb": [
+      [
+        -0.45,
+        -0.85,
+        -0.7
+      ],
+      [
+        0.45,
+        0.85,
+        0.7
+      ]
+    ]
+  },
+  "seed": 20260818,
+  "total_epochs": 2200,
+  "level_schedule": [],
+  "scenes_per_batch": 8,
+  "scenes_per_chunk": 4,
+  "num_workers": 8,
+  "load_dataset_into_ram": true,
+  "sampling": {
+    "global_near_samples_per_scene": 4096,
+    "global_positive_samples_per_scene": 2048,
+    "global_negative_samples_per_scene": 2048,
+    "local_ultra_near_samples_per_scene": 4096,
+    "local_positive_samples_per_scene": 2048,
+    "local_negative_samples_per_scene": 2048,
+    "near_band": 0.1,
+    "ultra_near_band": 0.03
+  },
+  "clamp_distance": 0.1,
+  "sdf_supervision": {
+    "generator": "CALSNIC transform-aware PCU exact relabeller",
+    "source_file": "examples/CALSNIC_control_L/task_exact_multires_cortex_v1/scripts/relabel_exact_triangle_sdf.py",
+    "distance_semantics": "exact closest-triangle magnitude; fast-winding negative-inside sign; source XYZ unchanged",
+    "exact_triangle_distance": true,
+    "exact_distance_mae_tolerance": 2e-06
+  },
+  "loss_weights": {
+    "broad_sdf_l1": 1.0,
+    "near_sdf_l1": 1.0,
+    "latent_l2": 0.0001,
+    "deformation_l2": 0.0,
+    "deformation_jacobian": 0.01,
+    "residual_l2": 10.0,
+    "grid_l2": 0.0,
+    "grid_tv": 0.0
+  },
+  "eikonal": {
+    "enabled": true,
+    "weight": 0.01,
+    "start_epoch": 401,
+    "warmup_epochs": 100,
+    "target_band": 0.03,
+    "points_per_chunk": 1024,
+    "branches": [
+      "fused"
+    ],
+    "epsilon_mm": 0.5,
+    "final_epsilon_mm": 0.35,
+    "final_epsilon_start_epoch": 1801
+  },
+  "learning_rates": {
+    "decoder": 0.0001,
+    "grid": 0.001,
+    "latent": 0.001
+  },
+  "learning_rate_decay_interval": 500,
+  "learning_rate_decay_factor": 0.5,
+  "code_initial_std": 0.01,
+  "code_bound": 1.0,
+  "gradient_clip_norm": 1.0,
+  "checkpoint_every_epochs": 500,
+  "checkpoint_latest_every_epochs": 10,
+  "validation": {
+    "every_epochs": 25,
+    "scans_per_validation": 15,
+    "latent_fit": {
+      "steps": 150,
+      "sampling": {
+        "global_near_samples_per_scene": 2048,
+        "global_positive_samples_per_scene": 1024,
+        "global_negative_samples_per_scene": 1024,
+        "local_ultra_near_samples_per_scene": 2048,
+        "local_positive_samples_per_scene": 1024,
+        "local_negative_samples_per_scene": 1024,
+        "near_band": 0.1,
+        "ultra_near_band": 0.03
+      },
+      "broad_weight": 1.0,
+      "near_weight": 1.0,
+      "learning_rate": 0.005,
+      "code_regularization_lambda": 0.0001,
+      "code_bound": 1.0,
+      "initial_std": 0.01,
+      "holdout_fraction": 0.1,
+      "early_stop_patience": 150,
+      "early_stop_min_delta": 1e-07
+    }
+  },
+  "latent_fit": {
+    "steps": 750,
+    "sampling": {
+      "global_near_samples_per_scene": 4096,
+      "global_positive_samples_per_scene": 2048,
+      "global_negative_samples_per_scene": 2048,
+      "local_ultra_near_samples_per_scene": 4096,
+      "local_positive_samples_per_scene": 2048,
+      "local_negative_samples_per_scene": 2048,
+      "near_band": 0.1,
+      "ultra_near_band": 0.03
+    },
+    "broad_weight": 1.0,
+    "near_weight": 1.0,
+    "learning_rate": 0.005,
+    "code_regularization_lambda": 0.0001,
+    "code_bound": 1.0,
+    "initial_std": 0.01,
+    "holdout_fraction": 0.1,
+    "early_stop_patience": 750,
+    "early_stop_min_delta": 1e-07
+  },
+  "reconstruction": {
+    "resolution": 256,
+    "max_batch": 131072
+  },
+  "field_diagnostics": {
+    "target_band": 0.03,
+    "points_per_scan": 1024
+  },
+  "periodic_evaluation": {
+    "enabled": true,
+    "script": "examples/CALSNIC_control_L/task_exact_instant_ngp_cortex_v1/scripts/evaluate_hashgrid_variants.py",
+    "every_epochs": 500,
+    "also_final_epoch": true,
+    "per_split": 15,
+    "splits": [
+      "val"
+    ],
+    "variants": [
+      "single",
+      "template_only"
+    ],
+    "selection_variant": "single",
+    "band_cells": 3,
+    "minimum_success_fraction": 1.0,
+    "surface_points": 30000,
+    "resolution": 256,
+    "latent_steps": 750,
+    "compare_pca": true,
+    "pca_components": 172,
+    "pca_model_dir": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/pca/matched_left_train173"
+  },
+  "far_field_margin": 0.0,
+  "second_order": {
+    "enabled": true,
+    "weight": 0.001,
+    "curvature_threshold_per_mm": 1.0,
+    "start_epoch": 600,
+    "warmup_epochs": 200
+  },
+  "deformation": {
+    "target_band": 0.03,
+    "points_per_chunk": 1024
+  }
+}

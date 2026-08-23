@@ -1,0 +1,194 @@
+{
+  "name": "calsnic_fourier_global_z256_exact",
+  "description": "C3: grid-free band-limited Fourier SDF. The global branch alone already gives the cleanest topology (32 components vs 300-1200) and best volume error but only 55% of pial area; this asks whether Fourier features alone recover folds with no spatial grid at all.",
+  "run_role": "grid_free_fourier",
+  "structure": "left_pial_cortex",
+  "manifest": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/manifests/calsnic_control_L_exact.csv",
+  "required_exact_audit": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/audits/exact_sdf_audit.json",
+  "reference_sampling_utility": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/scripts/shared_grid_common.py",
+  "reference_sampling_sha256": "74048015c40fe54df4acdcc86d19d95a631b9383e4b6a7bd109ea07dcb924ca9",
+  "output_dir": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_instant_ngp_v1/runs/calsnic_fourier_global_z256_exact",
+  "network_arch": "fourier_global_sdf",
+  "latent_size": 256,
+  "mm_per_normalized_unit": 117.431971,
+  "reference_surface_area_mm2": 100000.0,
+  "network_specs": {
+    "fourier_bands": 10,
+    "fourier_directions": 12,
+    "fourier_min_wavelength_mm": 0.8,
+    "fourier_max_wavelength_mm": 120.0,
+    "mm_per_unit": 117.431971,
+    "hidden_dims": [
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512,
+      512
+    ],
+    "latent_skip_layer": 4,
+    "activation": "relu",
+    "softplus_beta": 100.0,
+    "grid_resolutions": [],
+    "grid_resolution": 0,
+    "sampling_balance_resolution": 256,
+    "grid_aabb": [
+      [
+        -0.45,
+        -0.85,
+        -0.7
+      ],
+      [
+        0.45,
+        0.85,
+        0.7
+      ]
+    ]
+  },
+  "seed": 20260818,
+  "total_epochs": 2200,
+  "level_schedule": [],
+  "scenes_per_batch": 8,
+  "scenes_per_chunk": 4,
+  "num_workers": 8,
+  "load_dataset_into_ram": true,
+  "sampling": {
+    "global_near_samples_per_scene": 4096,
+    "global_positive_samples_per_scene": 2048,
+    "global_negative_samples_per_scene": 2048,
+    "local_ultra_near_samples_per_scene": 4096,
+    "local_positive_samples_per_scene": 2048,
+    "local_negative_samples_per_scene": 2048,
+    "near_band": 0.1,
+    "ultra_near_band": 0.03
+  },
+  "clamp_distance": 0.1,
+  "sdf_supervision": {
+    "generator": "CALSNIC transform-aware PCU exact relabeller",
+    "source_file": "examples/CALSNIC_control_L/task_exact_multires_cortex_v1/scripts/relabel_exact_triangle_sdf.py",
+    "distance_semantics": "exact closest-triangle magnitude; fast-winding negative-inside sign; source XYZ unchanged",
+    "exact_triangle_distance": true,
+    "exact_distance_mae_tolerance": 2e-06
+  },
+  "loss_weights": {
+    "broad_sdf_l1": 1.0,
+    "near_sdf_l1": 1.0,
+    "latent_l2": 0.0001,
+    "grid_l2": 0.0,
+    "grid_tv": 0.0
+  },
+  "eikonal": {
+    "enabled": true,
+    "weight": 0.01,
+    "start_epoch": 401,
+    "warmup_epochs": 100,
+    "target_band": 0.03,
+    "points_per_chunk": 1024,
+    "branches": [
+      "fused"
+    ],
+    "epsilon_mm": 0.5,
+    "final_epsilon_mm": 0.35,
+    "final_epsilon_start_epoch": 1801
+  },
+  "learning_rates": {
+    "decoder": 0.0001,
+    "grid": 0.001,
+    "latent": 0.001
+  },
+  "learning_rate_decay_interval": 500,
+  "learning_rate_decay_factor": 0.5,
+  "code_initial_std": 0.01,
+  "code_bound": 1.0,
+  "gradient_clip_norm": 1.0,
+  "checkpoint_every_epochs": 500,
+  "checkpoint_latest_every_epochs": 10,
+  "validation": {
+    "every_epochs": 25,
+    "scans_per_validation": 15,
+    "latent_fit": {
+      "steps": 150,
+      "sampling": {
+        "global_near_samples_per_scene": 2048,
+        "global_positive_samples_per_scene": 1024,
+        "global_negative_samples_per_scene": 1024,
+        "local_ultra_near_samples_per_scene": 2048,
+        "local_positive_samples_per_scene": 1024,
+        "local_negative_samples_per_scene": 1024,
+        "near_band": 0.1,
+        "ultra_near_band": 0.03
+      },
+      "broad_weight": 1.0,
+      "near_weight": 1.0,
+      "learning_rate": 0.005,
+      "code_regularization_lambda": 0.0001,
+      "code_bound": 1.0,
+      "initial_std": 0.01,
+      "holdout_fraction": 0.1,
+      "early_stop_patience": 150,
+      "early_stop_min_delta": 1e-07
+    }
+  },
+  "latent_fit": {
+    "steps": 750,
+    "sampling": {
+      "global_near_samples_per_scene": 4096,
+      "global_positive_samples_per_scene": 2048,
+      "global_negative_samples_per_scene": 2048,
+      "local_ultra_near_samples_per_scene": 4096,
+      "local_positive_samples_per_scene": 2048,
+      "local_negative_samples_per_scene": 2048,
+      "near_band": 0.1,
+      "ultra_near_band": 0.03
+    },
+    "broad_weight": 1.0,
+    "near_weight": 1.0,
+    "learning_rate": 0.005,
+    "code_regularization_lambda": 0.0001,
+    "code_bound": 1.0,
+    "initial_std": 0.01,
+    "holdout_fraction": 0.1,
+    "early_stop_patience": 750,
+    "early_stop_min_delta": 1e-07
+  },
+  "reconstruction": {
+    "resolution": 256,
+    "max_batch": 131072
+  },
+  "field_diagnostics": {
+    "target_band": 0.03,
+    "points_per_scan": 1024
+  },
+  "periodic_evaluation": {
+    "enabled": true,
+    "script": "examples/CALSNIC_control_L/task_exact_instant_ngp_cortex_v1/scripts/evaluate_hashgrid_variants.py",
+    "every_epochs": 500,
+    "also_final_epoch": true,
+    "per_split": 15,
+    "splits": [
+      "val"
+    ],
+    "variants": [
+      "single"
+    ],
+    "selection_variant": "single",
+    "band_cells": 3,
+    "minimum_success_fraction": 1.0,
+    "surface_points": 30000,
+    "resolution": 256,
+    "latent_steps": 750,
+    "compare_pca": true,
+    "pca_components": 172,
+    "pca_model_dir": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/pca/matched_left_train173"
+  },
+  "far_field_margin": 0.0,
+  "second_order": {
+    "enabled": true,
+    "weight": 0.001,
+    "curvature_threshold_per_mm": 1.0,
+    "start_epoch": 600,
+    "warmup_epochs": 200
+  }
+}

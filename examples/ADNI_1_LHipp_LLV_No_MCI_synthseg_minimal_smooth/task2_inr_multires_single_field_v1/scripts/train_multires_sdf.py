@@ -369,7 +369,17 @@ def validate_codes(
 def run_periodic_evaluation(
     config: dict[str, Any], checkpoint: Path, device: torch.device, epoch: int
 ) -> dict[str, Any]:
-    script = Path(__file__).resolve().parent / "periodic_evaluate_multires.py"
+    configured_script = config.get("periodic_evaluation", {}).get("script")
+    script = (
+        Path(configured_script).expanduser()
+        if configured_script
+        else Path(__file__).resolve().parent / "periodic_evaluate_multires.py"
+    )
+    if not script.is_absolute():
+        script = Path(__file__).resolve().parents[4] / script
+    script = script.resolve()
+    if not script.is_file():
+        raise FileNotFoundError(f"Periodic evaluation script does not exist: {script}")
     output = require_bulk_path(config["output_dir"]) / "periodic_evaluation" / f"epoch_{epoch:04d}"
     command = [
         sys.executable,

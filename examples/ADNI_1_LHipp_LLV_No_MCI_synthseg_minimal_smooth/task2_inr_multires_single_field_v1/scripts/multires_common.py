@@ -46,7 +46,7 @@ load_checkpoint_training_scan_ids = _reference.load_checkpoint_training_scan_ids
 sample_continuous_sdf_pair = _reference.sample_continuous_sdf_pair
 select_stratified_rows = _reference.select_stratified_rows
 stable_seed = _reference.stable_seed
-validate_manifest_contract = _reference.validate_manifest_contract
+_reference_validate_manifest_contract = _reference.validate_manifest_contract
 seed_dataloader_worker = _reference.seed_dataloader_worker
 set_global_seed = _reference.set_global_seed
 sha256_file = _reference.sha256_file
@@ -55,6 +55,62 @@ sha256_file = _reference.sha256_file
 def resolve_repo_path(value: str | Path) -> Path:
     path = Path(value).expanduser()
     return path.resolve() if path.is_absolute() else (REPO_ROOT / path).resolve()
+
+
+def validate_manifest_contract(
+    rows: list[dict[str, str]], grid_aabb: list[list[float]]
+) -> dict[str, Any]:
+    """Validate inputs, optionally applying manifest-defined mesh centring in memory."""
+    centered = any(row.get("mesh_center_x", "") not in {None, ""} for row in rows)
+    if not centered:
+        return _reference_validate_manifest_contract(rows, grid_aabb)
+    scan_ids = [row["scan_id"] for row in rows]
+    if len(scan_ids) != len(set(scan_ids)):
+        raise ValueError("Manifest scan_id values are not unique.")
+    subject_splits: dict[str, set[str]] = {}
+    population_min = np.full(3, np.inf, dtype=np.float64)
+    population_max = np.full(3, -np.inf, dtype=np.float64)
+    center_fields = ("mesh_center_x", "mesh_center_y", "mesh_center_z")
+    for row in rows:
+        subject_splits.setdefault(row["subject_id"], set()).add(row["split"])
+        for key in ("mesh_path", "sdf_npz_path"):
+            if not Path(row[key]).is_file():
+                raise FileNotFoundError(f"Manifest {key} does not exist: {row[key]}")
+        present = [row.get(field, "") not in {None, ""} for field in center_fields]
+        if not all(present):
+            raise ValueError(f"Incomplete mesh_center_x/y/z for {row['scan_id']}.")
+        vertices, _faces = _reference.load_obj_arrays(row["mesh_path"])
+        center = np.asarray([float(row[field]) for field in center_fields], dtype=np.float64)
+        if not len(vertices) or not np.isfinite(vertices).all() or not np.isfinite(center).all():
+            raise ValueError(f"Invalid centred mesh inputs for {row['scan_id']}.")
+        vertices = np.asarray(vertices, dtype=np.float64) - center[None, :]
+        population_min = np.minimum(population_min, vertices.min(axis=0))
+        population_max = np.maximum(population_max, vertices.max(axis=0))
+    leakage = {subject: sorted(splits) for subject, splits in subject_splits.items() if len(splits) != 1}
+    if leakage:
+        raise ValueError(f"Subjects occur in multiple splits: {dict(list(leakage.items())[:5])}")
+    aabb = np.asarray(grid_aabb, dtype=np.float64)
+    lower_margin = population_min - aabb[0]
+    upper_margin = aabb[1] - population_max
+    if np.any(lower_margin < 0.0) or np.any(upper_margin < 0.0):
+        raise ValueError(
+            "At least one centred mesh lies outside grid_aabb: "
+            f"population={[population_min.tolist(), population_max.tolist()]}, aabb={aabb.tolist()}"
+        )
+    return {
+        "scan_count": len(rows),
+        "subject_count": len(subject_splits),
+        "split_scan_counts": {split: sum(row["split"] == split for row in rows) for split in ("train", "val", "test")},
+        "split_subject_counts": {split: len({row["subject_id"] for row in rows if row["split"] == split}) for split in ("train", "val", "test")},
+        "population_mesh_min": population_min.tolist(),
+        "population_mesh_max": population_max.tolist(),
+        "grid_aabb": aabb.tolist(),
+        "lower_margin": lower_margin.tolist(),
+        "upper_margin": upper_margin.tolist(),
+        "subject_split_disjoint": True,
+        "all_mesh_and_sdf_paths_exist": True,
+        "optional_manifest_mesh_center_applied": True,
+    }
 
 
 def require_bulk_path(value: str | Path, description: str = "output") -> Path:
@@ -378,6 +434,25 @@ def warm_start_full_decoder(
     }
 
 
+def balance_resolution(network_specs: dict[str, Any]) -> int:
+    """Cell-balancing resolution for the sampler.
+
+    Written as a function because ``dict.get(key, default)`` evaluates the
+    default eagerly: the previous inline form called ``max(grid_resolutions)``
+    even when the key was present, which raises for a grid-free architecture
+    whose ladder is legitimately empty.
+    """
+    configured = network_specs.get("sampling_balance_resolution")
+    if configured:
+        return int(configured)
+    resolutions = network_specs.get("grid_resolutions") or []
+    if not resolutions:
+        raise ValueError(
+            "sampling_balance_resolution must be set when there is no grid ladder."
+        )
+    return int(max(resolutions))
+
+
 def latent_objective(
     decoder,
     latent: torch.Tensor,
@@ -458,7 +533,7 @@ def fit_single_latent(
                 fit_config["sampling"],
                 rng,
                 network_specs["grid_aabb"],
-                int(network_specs.get("sampling_balance_resolution", max(network_specs["grid_resolutions"]))),
+                balance_resolution(network_specs),
             )
             optimizer.zero_grad(set_to_none=True)
             objective, _broad_l1, _near_l1 = latent_objective(
@@ -498,7 +573,7 @@ def fit_single_latent(
         fit_config["sampling"],
         rng,
         network_specs["grid_aabb"],
-        int(network_specs.get("sampling_balance_resolution", max(network_specs["grid_resolutions"]))),
+        balance_resolution(network_specs),
     )
     with torch.no_grad():
         heldout_objective, broad_l1, near_l1 = latent_objective(

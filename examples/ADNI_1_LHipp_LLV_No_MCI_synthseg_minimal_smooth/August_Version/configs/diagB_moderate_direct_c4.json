@@ -1,0 +1,67 @@
+{
+  "name": "diagB_moderate_direct_c4",
+  "representation": "spiralnet128",
+  "method": "direct_c4",
+  "model": {
+    "latent_dim": 128,
+    "variant": "direct",
+    "width": 256,
+    "residual_blocks": 2,
+    "dropout": 0.15,
+    "transport": "Phi(z,s,t,d)=z+(t-s)*phi(z,s,t,d)",
+    "ode_used": false,
+    "attention_used": false
+  },
+  "training": {
+    "run_name": "diagB_moderate_direct_c4",
+    "epochs": 40,
+    "batch_size": 24,
+    "samples_per_epoch": 4096,
+    "decoder_batch_size": 64,
+    "learning_rate": 0.0001,
+    "minimum_learning_rate": 3e-05,
+    "weight_decay": 0.001,
+    "gradient_clip_norm": 1.0,
+    "consistency_ramp_epochs": 10,
+    "anatomy_ramp_epochs": 15,
+    "evaluation_batch_size": 64,
+    "early_stopping_patience": 999,
+    "early_stopping_min_delta": 1e-05,
+    "seed": 42,
+    "smoke_train_batches": 2,
+    "smoke_pair_limit": 16
+  },
+  "loss": {
+    "real_latent_weight": 0.25,
+    "real_vertex_weight": 1.0,
+    "observed_semigroup_weight": 0.1,
+    "virtual_semigroup_weight": 0.1,
+    "inverse_weight": 0.05,
+    "sequence_latent_weight": 0.0625,
+    "sequence_vertex_weight": 0.25,
+    "sequence_semigroup_weight": 0.1,
+    "volume_weight": 0.1,
+    "rate_weight": 0.1,
+    "slope_weight": 0.05,
+    "group_rate_weight": 0.02,
+    "disease_gap_weight": 0.02,
+    "coboundary_weight": 0.0
+  },
+  "selection": {
+    "primary": "macro CN/AD first-to-last decoded transport shape ratio",
+    "all_pair_shape_weight": 0.2,
+    "volume_tiebreak_weight": 0.001,
+    "latent_nochange_tolerance": 0.01,
+    "coordinate_nochange_tolerance": 0.01,
+    "max_relative_semigroup_defect": 0.25,
+    "max_relative_inverse_defect": 0.25,
+    "test_used_for_selection": false
+  },
+  "scientific_contract": {
+    "direct_c4": true,
+    "coboundary_used": false,
+    "decoder_frozen": true,
+    "decoder_in_optimizer_loss": true,
+    "test_loaded_during_training": false
+  }
+}

@@ -1,12 +1,13 @@
 {
-  "name": "hippocampus_multires_z256_c2f_eik001",
-  "description": "Experimental Eikonal ablation of the single-field 256-D auto-decoder with shared dense 8-64 multiresolution grids. Use only after comparison with the no-Eikonal primary run because current PreprocessMesh values are approximate distances.",
-  "run_role": "controlled_eikonal_ablation",
-  "structure": "left_hippocampus",
-  "manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/metadata/hippocampus_qc_sdf_manifest.csv",
+  "name": "calsnic_control_L_multires64_z256_exact",
+  "description": "CALSNIC control left-pial exact-SDF 256-D auto-decoder with shared dense grids through 64.",
+  "run_role": "exact_label_current_capacity_control",
+  "structure": "left_pial_cortex",
+  "manifest": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/manifests/calsnic_control_L_exact.csv",
+  "required_exact_audit": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/audits/exact_sdf_audit.json",
   "reference_sampling_utility": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/scripts/shared_grid_common.py",
   "reference_sampling_sha256": "74048015c40fe54df4acdcc86d19d95a631b9383e4b6a7bd109ea07dcb924ca9",
-  "output_dir": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippocampus_multires_z256_c2f_eik001",
+  "output_dir": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/runs/calsnic_control_L_multires64_z256_exact",
   "network_arch": "shared_multires_grid_sdf",
   "latent_size": 256,
   "network_specs": {
@@ -14,7 +15,7 @@
     "grid_channels_per_level": 4,
     "grid_resolution": 64,
     "sampling_balance_resolution": 64,
-    "grid_aabb": [[-0.65, -0.95, -0.68], [0.65, 0.95, 0.68]],
+    "grid_aabb": [[-0.45, -0.85, -0.70], [0.45, 0.85, 0.70]],
     "feature_roi_taper_width": 0.04,
     "grid_init_std": 0.0001,
     "hidden_dims": [128, 128, 128, 128],
@@ -22,7 +23,7 @@
     "activation": "softplus",
     "softplus_beta": 100.0
   },
-  "seed": 42,
+  "seed": 20260818,
   "total_epochs": 1700,
   "level_schedule": [
     {"resolution": 8, "start_epoch": 1, "end_epoch": 1},
@@ -32,9 +33,9 @@
     {"resolution": 48, "start_epoch": 301, "end_epoch": 400},
     {"resolution": 64, "start_epoch": 501, "end_epoch": 600}
   ],
-  "scenes_per_batch": 16,
-  "scenes_per_chunk": 16,
-  "num_workers": 12,
+  "scenes_per_batch": 12,
+  "scenes_per_chunk": 6,
+  "num_workers": 8,
   "load_dataset_into_ram": true,
   "sampling": {
     "global_near_samples_per_scene": 4096,
@@ -48,11 +49,11 @@
   },
   "clamp_distance": 0.1,
   "sdf_supervision": {
-    "generator": "Deep3DComp src/PreprocessMesh.cpp",
-    "source_file": "src/PreprocessMesh.cpp",
-    "distance_semantics": "nearest rendered surface point; point-plane magnitude when closer than sampler standard deviation",
-    "exact_triangle_distance": false,
-    "exact_distance_mae_tolerance": 0.002
+    "generator": "CALSNIC transform-aware PCU exact relabeller",
+    "source_file": "examples/CALSNIC_control_L/task_exact_multires_cortex_v1/scripts/relabel_exact_triangle_sdf.py",
+    "distance_semantics": "exact closest-triangle magnitude; fast-winding negative-inside sign; source XYZ unchanged",
+    "exact_triangle_distance": true,
+    "exact_distance_mae_tolerance": 0.000002
   },
   "loss_weights": {
     "broad_sdf_l1": 1.0,
@@ -62,8 +63,8 @@
     "grid_tv": 0.0
   },
   "eikonal": {
-    "enabled": true,
-    "weight": 0.01,
+    "enabled": false,
+    "weight": 0.0,
     "start_epoch": 201,
     "warmup_epochs": 25,
     "target_band": 0.03,
@@ -72,23 +73,19 @@
     "final_epsilon_start_epoch": 1201,
     "final_epsilon_cell_scale": 0.5
   },
-  "learning_rates": {
-    "decoder": 0.0001,
-    "grid": 0.001,
-    "latent": 0.001
-  },
+  "learning_rates": {"decoder": 0.0001, "grid": 0.001, "latent": 0.001},
   "learning_rate_decay_interval": 400,
   "learning_rate_decay_factor": 0.5,
   "code_initial_std": 0.01,
   "code_bound": 1.0,
   "gradient_clip_norm": 1.0,
   "checkpoint_every_epochs": 500,
-  "checkpoint_latest_every_epochs": 1,
+  "checkpoint_latest_every_epochs": 10,
   "validation": {
     "every_epochs": 25,
-    "scans_per_validation": 24,
+    "scans_per_validation": 15,
     "latent_fit": {
-      "steps": 100,
+      "steps": 150,
       "sampling": {
         "global_near_samples_per_scene": 2048,
         "global_positive_samples_per_scene": 1024,
@@ -106,12 +103,12 @@
       "code_bound": 1.0,
       "initial_std": 0.01,
       "holdout_fraction": 0.1,
-      "early_stop_patience": 100,
+      "early_stop_patience": 150,
       "early_stop_min_delta": 0.0000001
     }
   },
   "latent_fit": {
-    "steps": 500,
+    "steps": 750,
     "sampling": {
       "global_near_samples_per_scene": 4096,
       "global_positive_samples_per_scene": 2048,
@@ -129,32 +126,24 @@
     "code_bound": 1.0,
     "initial_std": 0.01,
     "holdout_fraction": 0.1,
-    "early_stop_patience": 500,
+    "early_stop_patience": 750,
     "early_stop_min_delta": 0.0000001
   },
-  "reconstruction": {
-    "resolution": 256,
-    "max_batch": 131072
-  },
-  "field_diagnostics": {
-    "target_band": 0.03,
-    "points_per_scan": 1024
-  },
+  "reconstruction": {"resolution": 256, "max_batch": 131072},
+  "field_diagnostics": {"target_band": 0.03, "points_per_scan": 1024},
   "periodic_evaluation": {
     "enabled": true,
+    "script": "examples/CALSNIC_control_L/task_exact_multires_cortex_v1/scripts/periodic_evaluate_multires.py",
     "every_epochs": 500,
     "also_final_epoch": true,
-    "per_split": 100,
-    "splits": ["train", "val", "test"],
-    "minimum_success_fraction": 0.95,
+    "per_split": 15,
+    "splits": ["val"],
+    "minimum_success_fraction": 1.0,
     "surface_points": 30000,
     "resolution": 256,
-    "latent_steps": 500,
+    "latent_steps": 750,
     "compare_pca": true,
-    "pca_components": 150,
-    "pca_model_dir": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model",
-    "pca_coefficients": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/coefficients/all_coefficients_safe.npz",
-    "fixed_selection_json": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/runs/hippocampus_shared_grid_32x16_z256/periodic_evaluation/evaluation_subset.json",
-    "rescale_details_csv": "/home/jakaria/ADNI/ADNI_1_GO_Large/synthseg_minimal_correspondence/full/left_hippocampus/minimal_smooth_correspondence/rescale_details.csv"
+    "pca_components": 172,
+    "pca_model_dir": "/mnt/bulk10tb/Deep3DComp/CALSNIC/control_L_exact_multires_v1/pca/matched_left_train173"
   }
 }
