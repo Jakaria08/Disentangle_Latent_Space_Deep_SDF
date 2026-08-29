@@ -1,0 +1,79 @@
+{
+  "name": "adaptive128_exact_coboundary_c4_s42",
+  "representation": "adaptive128",
+  "method": "exact_coboundary_c4",
+  "model": {
+    "latent_dim": 128,
+    "variant": "exact_coupling_group_coboundary",
+    "context_dim": 64,
+    "width": 192,
+    "residual_blocks": 2,
+    "coupling_layers": 4,
+    "time_frequencies": [0.5, 1.0, 2.0],
+    "max_log_scale": 0.15,
+    "max_shift": 0.5,
+    "gate_scale": 1.0,
+    "dropout": 0.0,
+    "transport": "Phi(z,s,t;c,d)=F(t;c,d)(F(s;c,d)^-1(z))",
+    "ode_used": false,
+    "attention_used": false
+  },
+  "training": {
+    "run_name": "adaptive128_exact_coboundary_c4_s42",
+    "epochs": 180,
+    "batch_size": 8,
+    "samples_per_epoch": 4096,
+    "decoder_batch_size": 16,
+    "learning_rate": 0.0001,
+    "minimum_learning_rate": 0.00001,
+    "weight_decay": 0.001,
+    "gradient_clip_norm": 1.0,
+    "consistency_ramp_epochs": 10,
+    "anatomy_ramp_epochs": 15,
+    "evaluation_batch_size": 16,
+    "early_stopping_patience": 40,
+    "early_stopping_min_delta": 0.00001,
+    "seed": 42,
+    "smoke_train_batches": 2,
+    "smoke_pair_limit": 16
+  },
+  "loss": {
+    "real_latent_weight": 0.25,
+    "real_vertex_weight": 1.0,
+    "observed_semigroup_weight": 0.0,
+    "virtual_semigroup_weight": 0.0,
+    "inverse_weight": 0.0,
+    "sequence_latent_weight": 0.0625,
+    "sequence_vertex_weight": 0.25,
+    "sequence_semigroup_weight": 0.0,
+    "volume_weight": 0.1,
+    "rate_weight": 0.1,
+    "slope_weight": 0.05,
+    "group_rate_weight": 0.02,
+    "disease_gap_weight": 0.02
+  },
+  "selection": {
+    "primary": "macro CN/AD first-to-last decoded transport shape ratio",
+    "all_pair_shape_weight": 0.2,
+    "volume_tiebreak_weight": 0.001,
+    "latent_nochange_tolerance": 0.05,
+    "coordinate_nochange_tolerance": 0.05,
+    "max_relative_semigroup_defect": 0.0001,
+    "max_relative_inverse_defect": 0.0001,
+    "implementation_audit_max_relative_defect": 0.0001,
+    "test_used_for_selection": false
+  },
+  "scientific_contract": {
+    "coboundary_used": true,
+    "structural_exactness": true,
+    "fixed_subject_baseline_context": true,
+    "decoder_frozen": true,
+    "decoder_in_optimizer_loss": true,
+    "test_loaded_during_training": false
+  },
+  "provenance": {
+    "matched_to": "August_Version direct C4 representation, losses, sampler, validation score, and seed",
+    "research_basis": ["Neural Flows (NeurIPS 2021)", "Real NVP (arXiv:1605.08803)"],
+    "structural_note": "Consistency losses are zero because identity/inverse/composition are architectural equalities and are separately audited."
+  }
+}

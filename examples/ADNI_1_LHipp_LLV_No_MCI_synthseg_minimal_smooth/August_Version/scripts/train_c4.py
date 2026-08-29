@@ -286,6 +286,7 @@ def main() -> int:
     start_epoch = 1
     best_score = float(baseline_validation["score"])
     best_epoch = 0
+    best_any_score, best_any_epoch = float(baseline_validation["score"]), 0
     stale = 0
     baseline_payload = checkpoint_payload(0, flow, optimizer, scheduler, config, statistics, baseline_validation, best_score, best_epoch)
     if args.resume:
@@ -296,6 +297,8 @@ def main() -> int:
         start_epoch = int(payload["epoch"]) + 1
         best_score = float(payload["best_selection_score"])
         best_epoch = int(payload["best_epoch"])
+        best_any_score = float(payload.get("best_unconstrained_score", best_score))
+        best_any_epoch = int(payload.get("best_unconstrained_epoch", best_epoch))
         status = C.read_json(output_dir / "training_status.json")
         stale = int(status.get("stale_epochs", 0))
     else:
@@ -354,14 +357,23 @@ def main() -> int:
         )
         score = float(current_validation["score"])
         feasible = bool(current_validation["feasible"])
-        if feasible and score < best_score - float(training["early_stopping_min_delta"]):
-            best_score, best_epoch, stale = score, epoch, 0
-        else:
-            stale += 1
+        delta = float(training["early_stopping_min_delta"])
+        # Patience used to reset only on a FEASIBLE improvement. Once epochs went infeasible
+        # the clock kept running from epoch 1, so training died around epoch 30 holding an
+        # epoch-1 checkpoint while the score was still improving. Patience now tracks genuine
+        # progress; feasibility still decides which checkpoint is promoted to best.pt.
+        improved_any = score < best_any_score - delta
+        if improved_any:
+            best_any_score, best_any_epoch = score, epoch
+        if feasible and score < best_score - delta:
+            best_score, best_epoch = score, epoch
+        stale = 0 if improved_any else stale + 1
         payload = checkpoint_payload(epoch, flow, optimizer, scheduler, config, statistics, current_validation, best_score, best_epoch)
         C.atomic_torch_save(checkpoint_dir / "latest.pt", payload)
         if feasible and best_epoch == epoch:
             C.atomic_torch_save(checkpoint_dir / "best.pt", payload)
+        if best_any_epoch == epoch:
+            C.atomic_torch_save(checkpoint_dir / "best_unconstrained.pt", payload)
         row = {
             "epoch": epoch,
             "elapsed_minutes": (time.time() - started) / 60.0,
@@ -378,6 +390,8 @@ def main() -> int:
             "epochs_requested": epochs,
             "best_epoch": best_epoch,
             "best_validation_selection_score": best_score,
+            "best_unconstrained_epoch": best_any_epoch,
+            "best_unconstrained_score": best_any_score,
             "stale_epochs": stale,
             "coboundary_used": False,
             "test_data_loaded": False,

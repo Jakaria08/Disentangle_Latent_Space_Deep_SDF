@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "cache_mode": "full",
+  "selected_estimator": "surface_linear_rigid",
+  "subjects": {
+    "val": 57,
+    "test": 58
+  },
+  "scans": {
+    "val": 261,
+    "test": 271
+  },
+  "current_methods": [
+    "Adaptive",
+    "INR",
+    "PCA",
+    "Spiral"
+  ],
+  "legacy_methods": [
+    "BrainODE",
+    "INR Cocycle",
+    "Latent ODE",
+    "PCA Cocycle"
+  ],
+  "checks": "scientific labels, split isolation, finite values, topology, cohort coverage, and notebook explanations"
+}

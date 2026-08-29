@@ -21,7 +21,12 @@ import common as C
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--representations", nargs="+", default=["pca128", "spiralnet128", "adaptive128"])
+    parser.add_argument(
+        "--representations",
+        nargs="+",
+        default=None,
+        help="Registry names to export; default is every registered representation.",
+    )
     parser.add_argument("--device", default="cuda:1")
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--dry-run", action="store_true", help="Check registry, checkpoints, and a tiny encode/decode batch without writing.")
@@ -152,7 +157,8 @@ def main() -> int:
     if args.batch_size <= 0:
         raise ValueError("--batch-size must be positive")
     registry = C.load_registry()
-    names = list(dict.fromkeys(args.representations))
+    requested = args.representations or list(registry["representations"])
+    names = list(dict.fromkeys(requested))
     unknown = set(names).difference(registry["representations"])
     if unknown:
         raise ValueError(f"Unknown representations: {sorted(unknown)}")
@@ -189,6 +195,13 @@ def main() -> int:
         latent_mean = raw_by_split["train"].mean(axis=0).astype(np.float32)
         latent_std = np.maximum(raw_by_split["train"].std(axis=0), np.float32(1.0e-8)).astype(np.float32)
         archive_by_split: dict[str, dict[str, np.ndarray]] = {}
+        latent_split = [int(value) for value in spec.get("expected_latent_split", [C.LATENT_DIM])]
+        if sum(latent_split) != C.LATENT_DIM or any(value <= 0 for value in latent_split):
+            raise ValueError(f"Invalid latent split for {name}: {latent_split}")
+        latent_offsets = np.asarray([0, *np.cumsum(latent_split).tolist()], dtype=np.int64)
+        latent_scale_names = [str(value) for value in spec.get("latent_scale_names", ["full"])]
+        if len(latent_scale_names) != len(latent_split):
+            raise ValueError(f"Latent scale-name mismatch for {name}: {latent_scale_names}")
         for split in C.SPLITS:
             raw = raw_by_split[split].astype(np.float32)
             standardized = ((raw - latent_mean) / latent_std).astype(np.float32)
@@ -199,6 +212,8 @@ def main() -> int:
                 "train_latent_std_128": latent_std,
                 "representation_name": np.asarray(name),
                 "representation_kind": np.asarray(spec["kind"]),
+                "latent_scale_offsets_128": latent_offsets,
+                "latent_scale_names_128": np.asarray(latent_scale_names),
             }
             archive_by_split[split] = archive
 
@@ -221,6 +236,9 @@ def main() -> int:
             "representation": name,
             "kind": spec["kind"],
             "latent_dim": C.LATENT_DIM,
+            "latent_scale_split": latent_split,
+            "latent_scale_offsets": latent_offsets.tolist(),
+            "latent_scale_names": latent_scale_names,
             "checkpoint": str(checkpoint_path) if checkpoint_path else None,
             "checkpoint_sha256": C.sha256(checkpoint_path) if checkpoint_path else None,
             "checkpoint_trial": payload.get("trial") if payload else None,

@@ -43,6 +43,8 @@ DISTANCE_METRICS = (
     "hd95_mm",
     "gt_to_prediction_mm",
     "prediction_to_gt_mm",
+    "fscore_0_1mm",
+    "fscore_0_25mm",
     "fscore_0_5mm",
     "fscore_1mm",
     "volume_absolute_error_mm3",
@@ -88,11 +90,85 @@ def edge_qc(mesh: trimesh.Trimesh) -> tuple[int, int]:
     return int(np.sum(counts == 1)), int(np.sum(counts > 2))
 
 
+def _edge_angles_and_lengths(mesh: trimesh.Trimesh):
+    if not len(mesh.face_adjacency):
+        return np.zeros(0), np.zeros(0)
+    angles = np.asarray(mesh.face_adjacency_angles, dtype=np.float64)
+    edges = np.asarray(mesh.face_adjacency_edges)
+    vertices = np.asarray(mesh.vertices, dtype=np.float64)
+    lengths = np.linalg.norm(vertices[edges[:, 0]] - vertices[edges[:, 1]], axis=1)
+    return angles, lengths
+
+
+def discrete_curvature_per_mm(mesh: trimesh.Trimesh) -> float:
+    """Area-normalised absolute mean curvature, in 1/mm.
+
+    ``adjacent_face_angle_mean_degrees`` cannot be compared across meshes of
+    different tessellation: for a smooth surface sampled at spacing h the
+    dihedral angle is about kappa*h, so a finer mesh of the *same* shape reports
+    a smaller angle.  On one hippocampus that made a 162k-face marching-cubes
+    surface look 4x smoother than the 5.5k-face ground truth it was 4x rougher
+    than.
+
+    Uses the integral identity ``integral(H dA) = 0.5 * sum_e |e| * theta_e``
+    divided by total area.  The per-edge ratio ``theta/|e|`` would also cancel
+    h, but marching cubes emits many near-degenerate edges -- the isosurface
+    passing close to a lattice vertex -- and dividing by those lengths produced
+    values of 4.5e6 /mm.  Weighting *by* edge length instead of dividing by it
+    gives degenerate edges no influence, and returns exactly 1/r on a sphere of
+    radius r regardless of triangulation.
+    """
+    angles, lengths = _edge_angles_and_lengths(mesh)
+    area = float(mesh.area)
+    if not len(angles) or area <= 0.0:
+        return 0.0
+    return float(0.5 * np.sum(lengths * angles) / area)
+
+
+def curvature_tail_per_mm(mesh: trimesh.Trimesh, quantile: float = 0.95) -> float:
+    """Length-weighted tail of per-edge curvature, degenerate edges removed.
+
+    Complements the area-normalised mean: a surface can carry the right total
+    curvature while concentrating it into a few creases, which is what
+    marching-cubes terracing looks like.
+    """
+    angles, lengths = _edge_angles_and_lengths(mesh)
+    if not len(angles):
+        return 0.0
+    median = float(np.median(lengths))
+    keep = lengths > 0.1 * median  # below this an edge is an extraction artefact
+    if not keep.any():
+        return 0.0
+    values = angles[keep] / lengths[keep]
+    weights = lengths[keep]
+    order = np.argsort(values)
+    values, weights = values[order], weights[order]
+    cumulative = np.cumsum(weights) / weights.sum()
+    return float(values[np.searchsorted(cumulative, quantile).clip(0, len(values) - 1)])
+
+
+def axis_aligned_face_fraction(mesh: trimesh.Trimesh, tolerance: float = 0.985) -> float:
+    """Area fraction whose normal points along a lattice axis.
+
+    Marching cubes on an under-resolved or noisy field produces terraced facets
+    that lie in the sampling planes; they read as straight ridges across an
+    otherwise smooth surface.  A real anatomical surface has no reason to prefer
+    the lattice axes, so an excess over the ground truth's value is extraction
+    artefact rather than shape.
+    """
+    if not len(mesh.faces):
+        return 0.0
+    areas = np.asarray(mesh.area_faces, dtype=np.float64)
+    aligned = np.abs(np.asarray(mesh.face_normals)).max(axis=1) > tolerance
+    return float(areas[aligned].sum() / max(areas.sum(), 1.0e-12))
+
+
 def surface_metrics(
     ground_truth: trimesh.Trimesh,
     predicted: trimesh.Trimesh,
     count: int,
     seed: int,
+    fscore_thresholds_mm: tuple[float, ...] = (0.1, 0.25, 0.5, 1.0),
 ) -> dict[str, Any]:
     gt_points, gt_faces = sample_surface(ground_truth, count, seed)
     prediction_points, prediction_faces = sample_surface(predicted, count, seed + 1)
@@ -117,6 +193,12 @@ def surface_metrics(
         )
     )
     adjacency_angles = np.degrees(np.asarray(predicted.face_adjacency_angles))
+    # Scale-free roughness: comparable between a 5k-face PCA mesh and a 160k-face
+    # marching-cubes mesh, which the raw dihedral angle above is not.
+    predicted_curvature_mean = discrete_curvature_per_mm(predicted)
+    gt_curvature_mean = discrete_curvature_per_mm(ground_truth)
+    gt_area = float(ground_truth.area)
+    predicted_area = float(predicted.area)
     gt_volume = abs(float(ground_truth.volume))
     predicted_volume = abs(float(predicted.volume))
     boundary_edges, nonmanifold_edges = edge_qc(predicted)
@@ -137,8 +219,26 @@ def surface_metrics(
         "volume_relative_error": abs(predicted_volume - gt_volume) / max(gt_volume, 1.0e-12),
         "normal_absolute_cosine": float(np.abs(cosine).mean()),
         "normal_signed_cosine": float(cosine.mean()),
+        # Tessellation-dependent; kept for continuity with earlier runs, but do
+        # not rank models on it -- see discrete_curvature_per_mm.
         "adjacent_face_angle_mean_degrees": float(adjacency_angles.mean()) if len(adjacency_angles) else 0.0,
         "adjacent_face_angle_p95_degrees": float(np.quantile(adjacency_angles, 0.95)) if len(adjacency_angles) else 0.0,
+        "curvature_per_mm_mean": predicted_curvature_mean,
+        "curvature_per_mm_p95": curvature_tail_per_mm(predicted),
+        "ground_truth_curvature_per_mm_mean": gt_curvature_mean,
+        # 1.0 is the target: above is jagged, below is over-smoothed.
+        "curvature_ratio_to_ground_truth": (
+            predicted_curvature_mean / gt_curvature_mean if gt_curvature_mean > 0.0 else 0.0
+        ),
+        "surface_area_mm2": predicted_area,
+        "ground_truth_surface_area_mm2": gt_area,
+        "surface_area_ratio": predicted_area / gt_area if gt_area > 0.0 else 0.0,
+        "axis_aligned_face_fraction": axis_aligned_face_fraction(predicted),
+        "ground_truth_axis_aligned_face_fraction": axis_aligned_face_fraction(ground_truth),
+        "predicted_face_count": int(len(predicted.faces)),
+        "predicted_median_edge_mm": (
+            float(np.median(predicted.edges_unique_length)) if len(predicted.faces) else 0.0
+        ),
         "predicted_watertight": bool(predicted.is_watertight),
         "predicted_winding_consistent": bool(predicted.is_winding_consistent),
         "predicted_connected_components": int(len(predicted.split(only_watertight=False))),
@@ -147,7 +247,9 @@ def surface_metrics(
         "predicted_nonmanifold_edges": nonmanifold_edges,
         "distance_backend": "sampled source points to exact target triangles",
     }
-    for threshold, name in ((0.5, "fscore_0_5mm"), (1.0, "fscore_1mm")):
+    for threshold in fscore_thresholds_mm:
+        token = f"{float(threshold):g}".replace(".", "_")
+        name = f"fscore_{token}mm"
         recall = float(np.mean(gt_to_prediction <= threshold))
         precision = float(np.mean(prediction_to_gt <= threshold))
         result[name] = 2.0 * precision * recall / max(precision + recall, 1.0e-12)
@@ -357,6 +459,15 @@ def main() -> None:
     resolution = int(args.resolution or periodic.get("resolution", 256))
     latent_steps = int(args.latent_steps or periodic.get("latent_steps", 500))
     surface_points = int(args.surface_points or periodic.get("surface_points", 30000))
+    fscore_thresholds_mm = tuple(
+        float(value) for value in periodic.get("fscore_thresholds_mm", (0.1, 0.25, 0.5, 1.0))
+    )
+    if (
+        not fscore_thresholds_mm
+        or any(not np.isfinite(value) or value <= 0.0 for value in fscore_thresholds_mm)
+        or tuple(sorted(set(fscore_thresholds_mm))) != fscore_thresholds_mm
+    ):
+        raise ValueError("periodic_evaluation.fscore_thresholds_mm must be unique, positive, and sorted.")
     rows = load_manifest(config["manifest"])
     warm_start = config.get("decoder_warm_start", {})
     source_checkpoint = warm_start.get("checkpoint")
@@ -460,6 +571,7 @@ def main() -> None:
                 inr_mesh,
                 surface_points,
                 stable_seed(row["scan_id"], int(config["seed"])),
+                fscore_thresholds_mm,
             )
             results.append({**common, "method": "inr", **metrics, "mesh_path": str(inr_path)})
 
@@ -477,6 +589,7 @@ def main() -> None:
                     pca_mesh,
                     surface_points,
                     stable_seed(row["scan_id"], int(config["seed"])),
+                    fscore_thresholds_mm,
                 )
                 results.append({**common, "method": "pca", **metrics, "mesh_path": str(pca_path)})
         except Exception as error:

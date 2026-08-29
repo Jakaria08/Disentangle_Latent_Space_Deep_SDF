@@ -357,7 +357,16 @@ def main():
             f"verts={data.train.shape[1]}")
 
         trial_dir = sc.makedirs(dirs["study"] / "trials")
+        # Resume-safe: the CSV is rewritten wholesale from this list, so a restart with an
+        # empty list truncates every row written before the restart. Seed it from disk.
+        # (study.db and the per-trial checkpoints remain the authoritative record either way.)
         trial_rows: list[dict] = []
+        _existing = dirs["study"] / "trial_metrics.csv"
+        if _existing.exists():
+            import csv as _csv
+            with open(_existing, newline="") as _h:
+                trial_rows = [r for r in _csv.DictReader(_h) if r.get("val_rmse_mm")]
+            log(f"resumed trial_metrics.csv with {len(trial_rows)} prior rows")
         objective = build_objective(args, spec, data, device, trial_rows, trial_dir, log)
 
         storage = f"sqlite:///{dirs['study'] / 'study.db'}"
@@ -381,9 +390,15 @@ def main():
         log(f"  params: {json.dumps(best.params, indent=2, sort_keys=True)}")
 
         # Test set is touched exactly once, here, on the selected model.
-        best_ckpt_fp = Path(
-            [r for r in trial_rows if r["trial"] == best.number][0]["checkpoint"]
-        )
+        # int(...) on both sides: rows resumed from CSV have string fields, so a naive
+        # `r["trial"] == best.number` silently matches nothing and the lookup blows up.
+        _match = [r for r in trial_rows if int(r["trial"]) == int(best.number)]
+        if not _match:
+            raise SystemExit(
+                f"no CSV/checkpoint row for best trial {best.number}; "
+                f"run rebuild_trial_csv.py on this study first"
+            )
+        best_ckpt_fp = Path(_match[0]["checkpoint"])
         payload = torch.load(best_ckpt_fp, map_location="cpu")
         transform = sc.get_transform(payload["ds_factors"])
         spirals, dynamic, down, up = cached_spiral_stack(

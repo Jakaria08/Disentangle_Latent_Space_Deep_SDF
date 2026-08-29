@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "description": "Paired exact-SDF sampling ablation initialized from the strongest 256-D hippocampus multiresolution population model.",
+  "bulk_output_root": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/sampling_ablation_exact_v1",
+  "python": "/home/jakaria/anaconda3/envs/inr_sdf/bin/python",
+  "base_config": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_multires_single_field_v1/configs/hippo_exact_z256_eikonal_warm.json",
+  "base_config_sha256": "8fd46ddadea1410a5ee870d264f9b23a8466b94aaf9fbfaa3203ae9a6cee9759",
+  "source_checkpoint": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippo_exact_z256_eikonal_warm/checkpoints/best_mesh.pth",
+  "source_checkpoint_sha256": "221ac5b1810ae207b552f28294a07d97f2ae97d353be4d22f09aa8e7586fb817",
+  "source_checkpoint_epoch": 2500,
+  "fixed_validation_selection": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippo_exact_z256_eikonal_warm/periodic_evaluation/epoch_2500/evaluation_subset.json",
+  "exact_sdf_audit": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/exact_sdf_relabel_v1/audits/exact_sdf_audit_summary.json",
+  "training_policy": {
+    "latent_size": 256,
+    "seed": 42,
+    "total_epochs": 300,
+    "checkpoint_every_epochs": 100,
+    "checkpoint_latest_every_epochs": 1,
+    "learning_rates": {
+      "decoder": 5e-7,
+      "grid": 5e-6,
+      "latent": 2.5e-5
+    },
+    "learning_rate_decay_interval": 200,
+    "learning_rate_decay_factor": 0.5,
+    "validation_every_epochs": 25,
+    "validation_scans": 24,
+    "periodic_evaluation_every_epochs": 300,
+    "periodic_evaluation_per_split": 100,
+    "periodic_evaluation_splits": ["val"],
+    "fscore_thresholds_mm": [0.1, 0.25, 0.5, 1.0],
+    "eikonal": {
+      "enabled": true,
+      "weight": 0.01,
+      "start_epoch": 1,
+      "warmup_epochs": 1,
+      "target_band": 0.03,
+      "points_per_chunk": 1024,
+      "epsilon_cell_scale": 0.5,
+      "final_epsilon_start_epoch": 1,
+      "final_epsilon_cell_scale": 0.5
+    }
+  },
+  "experiments": {
+    "control_u030_n100": {
+      "description": "Continued-training control with the established 0.03/0.10 bands.",
+      "sampling_mode": "standard_bands",
+      "ultra_near_band": 0.03,
+      "near_band": 0.1
+    },
+    "medium_u005_n030": {
+      "description": "Moderately tighter near-surface training bands.",
+      "sampling_mode": "standard_bands",
+      "ultra_near_band": 0.005,
+      "near_band": 0.03
+    },
+    "tight_u002_n010": {
+      "description": "Tight near-surface training bands.",
+      "sampling_mode": "standard_bands",
+      "ultra_near_band": 0.002,
+      "near_band": 0.01
+    },
+    "shell_stratified": {
+      "description": "Explicit distance-shell allocation; run only after the band-width screen.",
+      "sampling_mode": "shell_stratified",
+      "ultra_near_band": 0.03,
+      "near_band": 0.1,
+      "shells": {
+        "global": [
+          {"min_abs_sdf": 0.0, "max_abs_sdf": 0.01, "fraction": 0.25},
+          {"min_abs_sdf": 0.01, "max_abs_sdf": 0.03, "fraction": 0.25},
+          {"min_abs_sdf": 0.03, "max_abs_sdf": 0.1, "fraction": 0.25},
+          {"min_abs_sdf": 0.1, "max_abs_sdf": null, "fraction": 0.25}
+        ],
+        "local": [
+          {"min_abs_sdf": 0.0, "max_abs_sdf": 0.002, "fraction": 0.4},
+          {"min_abs_sdf": 0.002, "max_abs_sdf": 0.01, "fraction": 0.3},
+          {"min_abs_sdf": 0.01, "max_abs_sdf": 0.03, "fraction": 0.3}
+        ]
+      }
+    }
+  }
+}

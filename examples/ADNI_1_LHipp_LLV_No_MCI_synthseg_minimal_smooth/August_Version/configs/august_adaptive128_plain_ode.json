@@ -1,0 +1,47 @@
+{
+  "name": "august_adaptive128_plain_ode",
+  "representation": "adaptive128",
+  "method": "plain_ode",
+  "model": {
+    "latent_dim": 128,
+    "width": 256,
+    "residual_blocks": 2,
+    "dropout": 0.3,
+    "integrator": "fixed RK4"
+  },
+  "training": {
+    "run_name": "august_adaptive128_plain_ode",
+    "epochs": 100,
+    "batch_size": 64,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.01,
+    "scheduler_step_size": 20,
+    "scheduler_gamma": 0.5,
+    "noise_std": 0.01,
+    "scale_min": 0.98,
+    "scale_max": 1.02,
+    "integration_substeps": 4,
+    "gradient_clip_norm": 1.0,
+    "seed": 42,
+    "smoke_train_batches": 2,
+    "smoke_val_records": 8,
+    "early_stopping_patience": 25
+  },
+  "loss": {
+    "latent_trajectory_mse_weight": 1.0
+  },
+  "selection": {
+    "primary": "macro CN/AD first-to-last decoded transport shape ratio",
+    "test_used_for_selection": false
+  },
+  "scientific_contract": {
+    "latent_only_training": true,
+    "decoder_in_optimizer_loss": false,
+    "forward_and_backward_training": true,
+    "test_loaded_during_training": false
+  },
+  "provenance": {
+    "derived_from": "adaptive128_plain_ode_s42.json (task3_latent_flow_128_v1)",
+    "regularisation_rationale": "dropout 0.30 / wd 0.01 / reduced lr from August diagnostic C; all other losses, cocycle transport and semigroup+inverse consistency unchanged"
+  }
+}

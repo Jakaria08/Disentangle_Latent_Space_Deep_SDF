@@ -1,0 +1,206 @@
+{
+  "age105_structural_guardrail_passes": 3,
+  "analysis_kind": "counterfactual_ood_stress_test_not_biological_validation",
+  "composition_step_years": 1,
+  "direct_failures": [],
+  "direct_training_age_range_years": [
+    55.099998474121094,
+    95.62053680419922
+  ],
+  "expected_meshes": 112,
+  "final_age_years": 105,
+  "generated_meshes": 112,
+  "html_reports": [
+    {
+      "ages_rendered": [
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        105
+      ],
+      "condition": "CN",
+      "html_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task6_ood_mesh_rollout_v1/reports/age75_to105_v1/mesh_adaptive__source_cn__condition_cn.html",
+      "method": "mesh_adaptive",
+      "method_label": "Mesh Adaptive",
+      "source_diagnosis": "CN"
+    },
+    {
+      "ages_rendered": [
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        105
+      ],
+      "condition": "AD",
+      "html_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task6_ood_mesh_rollout_v1/reports/age75_to105_v1/mesh_adaptive__source_cn__condition_ad.html",
+      "method": "mesh_adaptive",
+      "method_label": "Mesh Adaptive",
+      "source_diagnosis": "CN"
+    },
+    {
+      "ages_rendered": [
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        105
+      ],
+      "condition": "CN",
+      "html_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task6_ood_mesh_rollout_v1/reports/age75_to105_v1/mesh_adaptive__source_ad__condition_cn.html",
+      "method": "mesh_adaptive",
+      "method_label": "Mesh Adaptive",
+      "source_diagnosis": "AD"
+    },
+    {
+      "ages_rendered": [
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        105
+      ],
+      "condition": "AD",
+      "html_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task6_ood_mesh_rollout_v1/reports/age75_to105_v1/mesh_adaptive__source_ad__condition_ad.html",
+      "method": "mesh_adaptive",
+      "method_label": "Mesh Adaptive",
+      "source_diagnosis": "AD"
+    },
+    {
+      "ages_rendered": [
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        105
+      ],
+      "condition": "CN",
+      "html_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task6_ood_mesh_rollout_v1/reports/age75_to105_v1/latent_spiral__source_cn__condition_cn.html",
+      "method": "latent_spiral",
+      "method_label": "Latent Spiral",
+      "source_diagnosis": "CN"
+    },
+    {
+      "ages_rendered": [
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        105
+      ],
+      "condition": "AD",
+      "html_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task6_ood_mesh_rollout_v1/reports/age75_to105_v1/latent_spiral__source_cn__condition_ad.html",
+      "method": "latent_spiral",
+      "method_label": "Latent Spiral",
+      "source_diagnosis": "CN"
+    },
+    {
+      "ages_rendered": [
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        105
+      ],
+      "condition": "CN",
+      "html_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task6_ood_mesh_rollout_v1/reports/age75_to105_v1/latent_spiral__source_ad__condition_cn.html",
+      "method": "latent_spiral",
+      "method_label": "Latent Spiral",
+      "source_diagnosis": "AD"
+    },
+    {
+      "ages_rendered": [
+        75,
+        80,
+        85,
+        90,
+        95,
+        100,
+        105
+      ],
+      "condition": "AD",
+      "html_path": "/home/jakaria/INR/Deep3DComp/examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task6_ood_mesh_rollout_v1/reports/age75_to105_v1/latent_spiral__source_ad__condition_ad.html",
+      "method": "latent_spiral",
+      "method_label": "Latent Spiral",
+      "source_diagnosis": "AD"
+    }
+  ],
+  "interpretation": "Geometric validity and condition sensitivity at unsupported ages are stress-test diagnostics. They do not establish biological plausibility or calibrated age-105 prediction.",
+  "latent_failures": [],
+  "latent_state_files": [
+    "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task6_ood_mesh_rollout_v1/age75_to105_v1/latents/latent_spiral/source_cn_1250_m24/condition_cn/one_shot.npz",
+    "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task6_ood_mesh_rollout_v1/age75_to105_v1/latents/latent_spiral/source_cn_1250_m24/condition_cn/composed.npz",
+    "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task6_ood_mesh_rollout_v1/age75_to105_v1/latents/latent_spiral/source_cn_1250_m24/condition_ad/one_shot.npz",
+    "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task6_ood_mesh_rollout_v1/age75_to105_v1/latents/latent_spiral/source_cn_1250_m24/condition_ad/composed.npz",
+    "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task6_ood_mesh_rollout_v1/age75_to105_v1/latents/latent_spiral/source_ad_83_m24/condition_cn/one_shot.npz",
+    "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task6_ood_mesh_rollout_v1/age75_to105_v1/latents/latent_spiral/source_ad_83_m24/condition_cn/composed.npz",
+    "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task6_ood_mesh_rollout_v1/age75_to105_v1/latents/latent_spiral/source_ad_83_m24/condition_ad/one_shot.npz",
+    "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task6_ood_mesh_rollout_v1/age75_to105_v1/latents/latent_spiral/source_ad_83_m24/condition_ad/composed.npz"
+  ],
+  "latent_training_age_range_years": [
+    55.099998474121094,
+    95.62053680419922
+  ],
+  "methods": {
+    "latent_spiral": {
+      "checkpoint_epoch": 1,
+      "label": "Latent Spiral"
+    },
+    "mesh_adaptive": {
+      "checkpoint_epoch": 56,
+      "label": "Mesh Adaptive"
+    }
+  },
+  "out_of_training_age_support": true,
+  "schema_version": 1,
+  "self_intersection_checked": false,
+  "source_age_years": 75,
+  "sources": [
+    {
+      "actual_age_years": 75.28076934814453,
+      "diagnosis": "CN",
+      "model_source_age_years": 75.0,
+      "scan_id": "1250_m24",
+      "selection_score": 0.15685364929482837,
+      "subject_id": "1250",
+      "volume_mm3": 3822.440185546875
+    },
+    {
+      "actual_age_years": 75.23148345947266,
+      "diagnosis": "AD",
+      "model_source_age_years": 75.0,
+      "scan_id": "83_m24",
+      "selection_score": 0.2985784381320947,
+      "subject_id": "83",
+      "volume_mm3": 2495.749267578125
+    }
+  ],
+  "split": "val",
+  "status": "complete",
+  "structural_guardrail_passes": 80,
+  "target_ages_years": [
+    75,
+    80,
+    85,
+    90,
+    95,
+    100,
+    105
+  ],
+  "test_data_loaded": false
+}

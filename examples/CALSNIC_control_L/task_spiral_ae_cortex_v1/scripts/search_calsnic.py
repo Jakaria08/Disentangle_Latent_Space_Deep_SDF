@@ -251,7 +251,14 @@ def main():
         log(f"data: train={len(data.x['train'])} val={len(data.x['val'])} "
             f"test={len(data.x['test'])} verts={data.x['train'].shape[1]}")
 
+        # Resume-safe -- see the note in the ADNI driver: an empty list truncates the CSV.
         trial_rows = []
+        _existing = dirs["studies"] / "trial_metrics.csv"
+        if _existing.exists():
+            import csv as _csv
+            with open(_existing, newline="") as _h:
+                trial_rows = [r for r in _csv.DictReader(_h) if r.get("val_rmse_mm")]
+            log(f"resumed trial_metrics.csv with {len(trial_rows)} prior rows")
 
         def objective(trial):
             cfg = sample_config(trial, arch, args.smoke)

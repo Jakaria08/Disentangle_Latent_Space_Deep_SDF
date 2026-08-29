@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "experiment": "task4_velocity_reference_audit_v2",
+  "random_seed": 42,
+  "source_task_128": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task3_latent_flow_128_v1",
+  "source_manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+  "pca_model_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model",
+  "inr_test_archive": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_inr_latent_flow_256_v1/representations/inr256/test_subject_sequences_256.npz",
+  "existing_task4_cache": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task4_all_flow_visual_analysis_v1/cache_v1",
+  "existing_surface_velocity_cache": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task4_all_flow_visual_analysis_v1/derived_cache/instantaneous_surface_velocity_v1",
+  "output_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task4_velocity_reference_audit_v2/generated_cache",
+  "splits": ["val", "test"],
+  "minimum_visits": 3,
+  "bootstrap_repetitions": 1000,
+  "huber_delta": 1.345,
+  "pca_components": [32, 64, 128],
+  "quadratic_components": [32, 64],
+  "selection_metric": "subject_mean_vertex_rmse_mm",
+  "scientific_contract": {
+    "instantaneous_ground_truth_exists": false,
+    "reference_label": "Observed — fitted trajectory",
+    "adjacent_label": "Observed — adjacent interval",
+    "endpoint_label": "Observed — first-to-last",
+    "validation_only_model_selection": true,
+    "test_split_used_once_after_freeze": true,
+    "subject_level_resampling": true,
+    "rigid_alignment_has_scale": false,
+    "rigid_alignment_allows_reflection": false,
+    "source_meshes_modified": false,
+    "ordinary_plot_labels_hide_latent_dimension": true,
+    "legacy_cohort_kept_separate": true
+  }
+}

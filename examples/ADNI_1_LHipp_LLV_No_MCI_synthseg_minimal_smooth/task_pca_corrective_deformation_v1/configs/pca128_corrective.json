@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "experiment_name": "hippocampus_pca128_corrective",
+  "description": "PCA-128-conditioned orthogonal corrective mesh decoder for the QC-controlled ADNI left hippocampus correspondence meshes.",
+  "output_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_pca_corrective_deformation_v1",
+  "source_task_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_spiral_ae_v1",
+  "pca_model_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/pca/model",
+  "pca_metrics_csv": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/pca/metrics/pca_reconstruction_summary.csv",
+  "latent_dim": 128,
+  "expected": {
+    "vertices": 2746,
+    "features": 8238,
+    "train_scans": 2037,
+    "val_scans": 269,
+    "test_scans": 277,
+    "pca_val_rmse_mm": 0.033667780668256354,
+    "pca_test_rmse_mm": 0.03438008757505468,
+    "pca_reproduction_tolerance_mm": 0.00001
+  },
+  "hierarchy": {
+    "downsample_factors": [2, 4, 4],
+    "spiral_sequence_length": 17,
+    "spiral_dilation": 2
+  },
+  "model": {
+    "channels_fine_to_coarse": [32, 64, 96],
+    "global_dim": 128,
+    "global_hidden_dim": 256,
+    "dropout": 0.05,
+    "film_scale": 0.1,
+    "hard_orthogonal_projection": true,
+    "zero_initialize_correction": true
+  },
+  "training": {
+    "seed": 42,
+    "epochs": 400,
+    "batch_size": 16,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.00001,
+    "scheduler": "cosine",
+    "eval_every": 5,
+    "early_stopping_evaluations": 20,
+    "min_epochs": 100,
+    "gradient_clip_norm": 1.0,
+    "minimum_improvement_mm": 0.00000001
+  },
+  "loss": {
+    "coordinate_weight": 1.0,
+    "edge_weight": 0.0,
+    "normal_weight": 0.0,
+    "laplacian_weight": 0.0,
+    "correction_weight": 0.0001
+  },
+  "evaluation": {
+    "surface_points": 10000,
+    "bootstrap_repeats": 2000,
+    "bootstrap_seed": 42
+  },
+  "scientific_contract": {
+    "pca_fit": "train split only",
+    "normalization": "train split only",
+    "model_input": "PCA coefficients only; no target mesh or target residual is provided to the decoder",
+    "latent_contract": "all 128 PCA coefficients are retained; no learned latent dimensions are added",
+    "correction_contract": "predicted displacement is hard-projected outside the retained PCA subspace",
+    "selection": "lowest validation per-coordinate RMSE in millimetres, with exact PCA at epoch zero",
+    "test_policy": "test evaluation requires an explicit --allow-test flag",
+    "runtime_outputs": "all checkpoints, logs, reports, and generated meshes must be below /mnt/bulk10tb"
+  }
+}

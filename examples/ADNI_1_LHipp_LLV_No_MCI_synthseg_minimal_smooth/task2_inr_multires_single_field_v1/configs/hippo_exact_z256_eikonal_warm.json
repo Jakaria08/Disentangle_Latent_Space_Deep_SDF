@@ -1,0 +1,210 @@
+{
+  "checkpoint_every_epochs": 500,
+  "checkpoint_latest_every_epochs": 1,
+  "clamp_distance": 0.1,
+  "code_bound": 1.0,
+  "code_initial_std": 0.01,
+  "description": "E1: exact-SDF supervision plus Eikonal, warm started from multires_exact epoch 1000 (ASSD val 0.0548). Exact supervision was worth 6.9x over approximate (0.380 -> 0.055); Eikonal is the one regularizer measured to reduce field roughness (curvature ratio 1.202 -> 1.169 on approximate data) without costing area. Error is already sub-voxel (0.28 of an MC-256 voxel), so this tests whether a better conditioned field closes any of the remaining 2.8x gap to PCA-150.",
+  "eikonal": {
+    "enabled": true,
+    "weight": 0.01,
+    "start_epoch": 1001,
+    "warmup_epochs": 50,
+    "target_band": 0.03,
+    "points_per_chunk": 1024,
+    "epsilon_cell_scale": 1.0,
+    "final_epsilon_start_epoch": 1801,
+    "final_epsilon_cell_scale": 0.5
+  },
+  "field_diagnostics": {
+    "points_per_scan": 1024,
+    "target_band": 0.03
+  },
+  "gradient_clip_norm": 1.0,
+  "latent_fit": {
+    "broad_weight": 1.0,
+    "code_bound": 1.0,
+    "code_regularization_lambda": 0.0001,
+    "early_stop_min_delta": 1e-07,
+    "early_stop_patience": 500,
+    "holdout_fraction": 0.1,
+    "initial_std": 0.01,
+    "learning_rate": 0.005,
+    "near_weight": 1.0,
+    "sampling": {
+      "global_near_samples_per_scene": 4096,
+      "global_negative_samples_per_scene": 2048,
+      "global_positive_samples_per_scene": 2048,
+      "local_negative_samples_per_scene": 2048,
+      "local_positive_samples_per_scene": 2048,
+      "local_ultra_near_samples_per_scene": 4096,
+      "near_band": 0.1,
+      "ultra_near_band": 0.03
+    },
+    "steps": 500
+  },
+  "latent_size": 256,
+  "learning_rate_decay_factor": 0.5,
+  "learning_rate_decay_interval": 400,
+  "learning_rates": {
+    "decoder": 1e-05,
+    "grid": 0.0001,
+    "latent": 0.0005
+  },
+  "level_schedule": [
+    {
+      "end_epoch": 1,
+      "resolution": 8,
+      "start_epoch": 1
+    },
+    {
+      "end_epoch": 1,
+      "resolution": 16,
+      "start_epoch": 1
+    },
+    {
+      "end_epoch": 1,
+      "resolution": 24,
+      "start_epoch": 1
+    },
+    {
+      "end_epoch": 1,
+      "resolution": 32,
+      "start_epoch": 1
+    },
+    {
+      "end_epoch": 1,
+      "resolution": 48,
+      "start_epoch": 1
+    },
+    {
+      "end_epoch": 1,
+      "resolution": 64,
+      "start_epoch": 1
+    }
+  ],
+  "load_dataset_into_ram": true,
+  "loss_weights": {
+    "broad_sdf_l1": 1.0,
+    "grid_l2": 1e-06,
+    "grid_tv": 0.0,
+    "latent_l2": 0.0001,
+    "near_sdf_l1": 1.0
+  },
+  "manifest": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/exact_sdf_relabel_v1/manifests/hippocampus_pilot_exact.csv",
+  "name": "hippo_exact_z256_eikonal_warm",
+  "network_arch": "shared_multires_grid_sdf",
+  "network_specs": {
+    "activation": "softplus",
+    "feature_roi_taper_width": 0.04,
+    "grid_aabb": [
+      [
+        -0.65,
+        -0.95,
+        -0.68
+      ],
+      [
+        0.65,
+        0.95,
+        0.68
+      ]
+    ],
+    "grid_channels_per_level": 4,
+    "grid_init_std": 0.0001,
+    "grid_resolution": 64,
+    "grid_resolutions": [
+      8,
+      16,
+      24,
+      32,
+      48,
+      64
+    ],
+    "hidden_dims": [
+      128,
+      128,
+      128,
+      128
+    ],
+    "latent_skip_layer": 2,
+    "sampling_balance_resolution": 64,
+    "softplus_beta": 100.0
+  },
+  "num_workers": 12,
+  "output_dir": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippo_exact_z256_eikonal_warm",
+  "periodic_evaluation": {
+    "also_final_epoch": true,
+    "compare_pca": true,
+    "enabled": true,
+    "every_epochs": 500,
+    "latent_steps": 500,
+    "minimum_success_fraction": 0.95,
+    "pca_coefficients": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/coefficients/all_coefficients_safe.npz",
+    "pca_components": 150,
+    "pca_model_dir": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model",
+    "per_split": 100,
+    "rescale_details_csv": "/home/jakaria/ADNI/ADNI_1_GO_Large/synthseg_minimal_correspondence/full/left_hippocampus/minimal_smooth_correspondence/rescale_details.csv",
+    "resolution": 256,
+    "source_unseen_validation_only": false,
+    "splits": [
+      "val"
+    ],
+    "surface_points": 30000
+  },
+  "reconstruction": {
+    "max_batch": 131072,
+    "resolution": 256
+  },
+  "reference_sampling_sha256": "74048015c40fe54df4acdcc86d19d95a631b9383e4b6a7bd109ea07dcb924ca9",
+  "reference_sampling_utility": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task2_inr_representations_v1/scripts/shared_grid_common.py",
+  "require_bulk_output": true,
+  "run_role": "exact_sdf_plus_eikonal_warmstart",
+  "sampling": {
+    "global_near_samples_per_scene": 4096,
+    "global_negative_samples_per_scene": 2048,
+    "global_positive_samples_per_scene": 2048,
+    "local_negative_samples_per_scene": 2048,
+    "local_positive_samples_per_scene": 2048,
+    "local_ultra_near_samples_per_scene": 4096,
+    "near_band": 0.1,
+    "ultra_near_band": 0.03
+  },
+  "scenes_per_batch": 16,
+  "scenes_per_chunk": 16,
+  "sdf_supervision": {
+    "eikonal_enabled": false,
+    "exact_triangle_distance": true,
+    "label_kind": "exact_point_to_triangle_signed_distance",
+    "query_coordinates": "identical_between_paired_manifests",
+    "sign_convention": "negative_inside_positive_outside"
+  },
+  "seed": 42,
+  "structure": "left_hippocampus",
+  "total_epochs": 2500,
+  "validation": {
+    "every_epochs": 25,
+    "latent_fit": {
+      "broad_weight": 1.0,
+      "code_bound": 1.0,
+      "code_regularization_lambda": 0.0001,
+      "early_stop_min_delta": 1e-07,
+      "early_stop_patience": 100,
+      "holdout_fraction": 0.1,
+      "initial_std": 0.01,
+      "learning_rate": 0.005,
+      "near_weight": 1.0,
+      "sampling": {
+        "global_near_samples_per_scene": 2048,
+        "global_negative_samples_per_scene": 1024,
+        "global_positive_samples_per_scene": 1024,
+        "local_negative_samples_per_scene": 1024,
+        "local_positive_samples_per_scene": 1024,
+        "local_ultra_near_samples_per_scene": 2048,
+        "near_band": 0.1,
+        "ultra_near_band": 0.03
+      },
+      "steps": 100
+    },
+    "scans_per_validation": 24
+  }
+}

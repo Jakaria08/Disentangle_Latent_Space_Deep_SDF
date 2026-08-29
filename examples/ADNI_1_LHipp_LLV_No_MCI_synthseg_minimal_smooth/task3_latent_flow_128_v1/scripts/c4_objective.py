@@ -492,6 +492,8 @@ def evaluate_pairs(
                     "subject": row.subject,
                     "diagnosis": row.diagnosis,
                     "pair_type": row.pair_type,
+                    "source_index": int(row.source),
+                    "target_index": int(row.target),
                     "delta_years": float(row.delta_years),
                     **{name: float(tensor[index].cpu()) for name, tensor in tensors.items()},
                 })

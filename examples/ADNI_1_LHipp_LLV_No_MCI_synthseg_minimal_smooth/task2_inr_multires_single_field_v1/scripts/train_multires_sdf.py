@@ -35,7 +35,10 @@ from multires_common import (
     level_weights_for_epoch,
     load_config,
     load_manifest,
+    numerical_gradient_and_laplacian,
     numerical_spatial_gradient,
+    read_scaling,
+    resolve_repo_path,
     require_bulk_path,
     seed_dataloader_worker,
     select_near_surface_points,
@@ -154,6 +157,38 @@ def configure_learning_rates(
         group["lr"] = float(rates[group["name"]]) * decay
 
 
+def mm_per_normalized_unit(config: dict[str, Any]) -> float:
+    """Millimetres per normalized unit, read back from the rescale table.
+
+    This task has no single ``mm_per_normalized_unit`` config key -- unlike the
+    CALSNIC tasks -- but the normalization is one global similarity, so the
+    factor is recoverable from the same CSV the evaluator uses to map meshes
+    back to millimetres.  Deriving it keeps the curvature threshold pinned to
+    the data rather than to a constant that can silently drift out of step.
+    """
+    stated = config.get("mm_per_normalized_unit")
+    scaling = read_scaling(resolve_repo_path(config["periodic_evaluation"]["rescale_details_csv"]))
+    derived = float(scaling["distance_unscale_factor"] / scaling["range_linear_scale_factor"])
+    if stated is not None and abs(float(stated) - derived) / derived > 1.0e-6:
+        raise ValueError(
+            f"config mm_per_normalized_unit {stated} disagrees with the rescale "
+            f"table's {derived}; the curvature threshold would be mis-scaled."
+        )
+    return derived
+
+
+def effective_second_order_weight(epoch: int, config: dict[str, Any]) -> float:
+    """Warm-in schedule for the finite-difference Laplacian hinge."""
+    settings = config.get("second_order", {})
+    if not bool(settings.get("enabled", False)):
+        return 0.0
+    start = int(settings.get("start_epoch", 1))
+    if epoch < start:
+        return 0.0
+    warmup = max(1, int(settings.get("warmup_epochs", 1)))
+    return float(settings.get("weight", 0.0)) * min(1.0, (epoch - start + 1) / warmup)
+
+
 def compute_loss(
     model,
     latent_codes: torch.Tensor,
@@ -205,6 +240,13 @@ def compute_loss(
     gradient_absolute_error = total.new_zeros(())
     eikonal_points = 0
     replacement_shortfall = 0
+    # Seeded unconditionally: append_csv writes the header from the first row, so
+    # a key that only appears once a term activates shifts every later column.
+    second_weight = effective_second_order_weight(epoch, config)
+    second_loss = total.new_zeros(())
+    curvature_excess_fraction = total.new_zeros(())
+    laplacian_abs_mean = total.new_zeros(())
+    laplacian_abs_p95 = total.new_zeros(())
     if eikonal_weight > 0.0:
         settings = config["eikonal"]
         selected_xyz, selected_codes, replacement_shortfall = select_near_surface_points(
@@ -214,9 +256,15 @@ def compute_loss(
             int(settings["points_per_chunk"]),
         )
         epsilon = torch.as_tensor(epsilon_np, device=selected_xyz.device, dtype=selected_xyz.dtype)
-        gradient = numerical_spatial_gradient(
-            model, selected_codes, selected_xyz, epsilon, level_weights
-        )
+        if second_weight > 0.0:
+            gradient, laplacian = numerical_gradient_and_laplacian(
+                model, selected_codes, selected_xyz, epsilon, level_weights
+            )
+        else:
+            gradient = numerical_spatial_gradient(
+                model, selected_codes, selected_xyz, epsilon, level_weights
+            )
+            laplacian = None
         norm = torch.linalg.vector_norm(gradient, dim=1)
         eikonal_loss = torch.square(norm - 1.0).mean()
         total = total + eikonal_weight * eikonal_loss
@@ -225,6 +273,20 @@ def compute_loss(
         gradient_p95 = torch.quantile(norm, 0.95)
         gradient_absolute_error = torch.abs(norm - 1.0).mean()
         eikonal_points = len(norm)
+        if laplacian is not None:
+            # Hinge, not L2. A hippocampus is curved everywhere -- ground-truth
+            # per-edge curvature runs to 2.59 /mm at p99 -- so driving curvature
+            # toward zero would erase the head digitations and the tail. Only
+            # curvature above a physically implausible threshold is charged for.
+            per_mm = 1.0 / mm_per_normalized_unit(config)
+            threshold = float(config["second_order"]["curvature_threshold_per_mm"])
+            absolute = laplacian.abs() * per_mm
+            excess = torch.clamp(absolute - threshold, min=0.0)
+            second_loss = excess.square().mean()
+            total = total + second_weight * second_loss
+            curvature_excess_fraction = (excess > 0).float().mean()
+            laplacian_abs_mean = absolute.mean().detach()
+            laplacian_abs_p95 = torch.quantile(absolute.detach(), 0.95)
 
     metrics = {
         "broad_sdf_l1": float(broad_l1.detach().cpu()),
@@ -240,6 +302,11 @@ def compute_loss(
         "gradient_norm_absolute_error": float(gradient_absolute_error.detach().cpu()),
         "eikonal_points": float(eikonal_points),
         "eikonal_replacement_shortfall": float(replacement_shortfall),
+        "second_order_loss": float(second_loss.detach().cpu()),
+        "second_order_weight": float(second_weight),
+        "curvature_excess_fraction": float(curvature_excess_fraction.detach().cpu()),
+        "laplacian_abs_mean_per_mm": float(laplacian_abs_mean.cpu()),
+        "laplacian_abs_p95_per_mm": float(laplacian_abs_p95.cpu()),
         "epsilon_x": float(epsilon_np[0]),
         "epsilon_y": float(epsilon_np[1]),
         "epsilon_z": float(epsilon_np[2]),
@@ -329,6 +396,17 @@ def save_checkpoint(
         )
 
 
+def _cpu_byte_state(value: torch.Tensor) -> torch.Tensor:
+    """RNG states must be CPU uint8 tensors.
+
+    The checkpoint is loaded with ``map_location=device``, which moves the saved
+    RNG ByteTensors onto the GPU; ``set_rng_state`` then rejects them with
+    "RNG state must be a torch.ByteTensor" and every ``--resume`` onto a GPU
+    fails.  Bringing them back explicitly makes resume work on any device.
+    """
+    return value.detach().cpu().to(torch.uint8)
+
+
 def restore_rng(payload: dict[str, Any]) -> None:
     state = payload.get("rng_state", {})
     if "python" in state:
@@ -336,9 +414,20 @@ def restore_rng(payload: dict[str, Any]) -> None:
     if "numpy" in state:
         np.random.set_state(state["numpy"])
     if "torch" in state:
-        torch.set_rng_state(state["torch"])
+        torch.set_rng_state(_cpu_byte_state(state["torch"]))
     if torch.cuda.is_available() and "cuda" in state:
-        torch.cuda.set_rng_state_all(state["cuda"])
+        # The checkpoint holds one state per device visible when it was saved.
+        # Resuming under a narrower CUDA_VISIBLE_DEVICES makes that list longer
+        # than torch.cuda.default_generators, and set_rng_state_all indexes off
+        # the end ("tuple index out of range"). Restore only what exists now;
+        # any device without a saved state keeps its freshly seeded generator.
+        saved = [_cpu_byte_state(item) for item in state["cuda"]]
+        visible = torch.cuda.device_count()
+        if len(saved) >= visible:
+            torch.cuda.set_rng_state_all(saved[:visible])
+        else:
+            for index, item in enumerate(saved):
+                torch.cuda.set_rng_state(item, device=index)
 
 
 def validate_codes(
@@ -398,6 +487,51 @@ def run_periodic_evaluation(
         import json
 
         return json.load(handle)
+
+
+def run_latent_export(
+    config: dict[str, Any], checkpoint: Path, device: torch.device, epoch: int
+) -> str | None:
+    """Fit and save train/val/test codes for this checkpoint, if configured.
+
+    Opt-in via ``latent_export.enabled``; absent from every existing config, so
+    no current run changes behaviour.
+
+    Deliberately *not* ``check=True``.  A failed periodic evaluation already
+    took down a 2.5 h run once in this task, and latents are a downstream
+    convenience rather than part of training -- an export failure must never
+    destroy the model that produced it.
+    """
+    settings = config.get("latent_export", {})
+    if not bool(settings.get("enabled", False)):
+        return None
+    script = Path(__file__).resolve().parent / "fit_export_multires_latents.py"
+    if not script.is_file():
+        print(f"[latent_export] script missing: {script}", flush=True)
+        return None
+    output = (
+        require_bulk_path(config["output_dir"]) / "latent_exports" / f"epoch_{epoch:04d}"
+    )
+    command = [
+        sys.executable, str(script),
+        "--config", str(config["_config_path"]),
+        "--checkpoint", str(checkpoint),
+        "--output-dir", str(output),
+        "--device", str(device),
+        "--splits", *[str(s) for s in settings.get("splits", ["train", "val", "test"])],
+    ]
+    if settings.get("steps"):
+        command += ["--steps", str(int(settings["steps"]))]
+    result = subprocess.run(command, check=False)
+    if result.returncode != 0:
+        print(
+            f"[latent_export] epoch {epoch} failed with code {result.returncode}; "
+            "training continues.",
+            flush=True,
+        )
+        return None
+    print(f"[latent_export] epoch {epoch} -> {output}", flush=True)
+    return str(output)
 
 
 def smoke_overrides(config: dict[str, Any]) -> None:
@@ -745,6 +879,9 @@ def main() -> None:
                 or (epoch == total_epochs and bool(periodic.get("also_final_epoch", True)))
             )
             if should_evaluate and not args.skip_periodic_evaluation:
+                run_latent_export(
+                    config, output_dir / "checkpoints" / f"{label}.pth", device, epoch
+                )
                 report = run_periodic_evaluation(
                     config, output_dir / "checkpoints" / f"{label}.pth", device, epoch
                 )

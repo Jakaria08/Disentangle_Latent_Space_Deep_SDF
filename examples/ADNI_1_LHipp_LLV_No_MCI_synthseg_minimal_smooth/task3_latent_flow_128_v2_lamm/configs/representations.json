@@ -1,0 +1,77 @@
+{
+  "schema_version": 2,
+  "task": "adni_left_hippocampus_latest_lamm_spiralnet_v7_latent_flow_128",
+  "latent_dim": 128,
+  "coordinate_space": "final_ply_mm",
+  "output_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest",
+  "source_sequence_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4",
+  "source_manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+  "ae_source_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_spiral_ae_v1",
+  "ae_bulk_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1",
+  "lamm_source_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_lamm_ae_v1",
+  "faces_path": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/cache/adni_faces.npy",
+  "representations": {
+    "spiralnet128": {
+      "kind": "spiral_ae",
+      "description": "Pure SpiralNet++-128 v7 trial 36; current frozen comparator.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/studies/spiralnet_z128_v7/trials/trial_0036_val0.036784.pt",
+      "checkpoint_sha256": "1f09ed8499842bcbafa9d4aa0ee1ff9d8687ebd08397d1e8c08dc502e1332497",
+      "source_validation_rmse_mm": 0.03678441029044442,
+      "source_test_rmse_mm": 0.0376698776797016,
+      "checkpoint_policy": "frozen validation-selected snapshot; never discover latest implicitly"
+    },
+    "lamm128": {
+      "kind": "lamm_ae",
+      "description": "Latest validation-selected LAMM E1_N3_ml_s1: 43+86-region residual MLPMixer with a 64+64 latent split and metric-weighted reconstruction loss.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_lamm_ae_v1/studies/E1_N3_ml_s1/best.pt",
+      "checkpoint_sha256": "8353392b0726ae5e6c4c6645fae2734a5cef9bd4a81dcebe90d64391460d55e0",
+      "source_validation_rmse_mm": 0.033833829496826645,
+      "source_test_rmse_mm": 0.03459006599512028,
+      "expected_scales": [43, 86],
+      "expected_latent_split": [64, 64],
+      "latent_scale_names": ["coarse_43", "fine_86"],
+      "checkpoint_policy": "frozen validation-selected snapshot; never discover latest implicitly"
+    },
+    "lamm128_n3_s2": {
+      "kind": "lamm_ae",
+      "description": "LAMM E1_N3 mlpmixer seed 2; matched 43+86-region residual architecture and metric-weighted reconstruction loss.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_lamm_ae_v1/studies/E1_N3_ml_s2/best.pt",
+      "checkpoint_sha256": "e87fb7686bb849fc2d6b30b929ba6221c5aaf8c1f7eed60a72b0c89d045bf01f",
+      "source_validation_rmse_mm": 0.03406672544266104,
+      "source_test_rmse_mm": 0.03477015664692875,
+      "expected_scales": [43, 86],
+      "expected_latent_split": [64, 64],
+      "latent_scale_names": ["coarse_43", "fine_86"],
+      "checkpoint_policy": "frozen seed snapshot; never discover latest implicitly"
+    },
+    "lamm128_n3_s3": {
+      "kind": "lamm_ae",
+      "description": "LAMM E1_N3 mlpmixer seed 3; matched 43+86-region residual architecture and metric-weighted reconstruction loss.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_lamm_ae_v1/studies/E1_N3_ml_s3/best.pt",
+      "checkpoint_sha256": "a14c1475147efe8dad0de03fa6398bcf72f7b326b9f6ec4a1132dd868d1a9af4",
+      "source_validation_rmse_mm": 0.03384666925045262,
+      "source_test_rmse_mm": 0.03479194346874709,
+      "expected_scales": [43, 86],
+      "expected_latent_split": [64, 64],
+      "latent_scale_names": ["coarse_43", "fine_86"],
+      "checkpoint_policy": "frozen seed snapshot; never discover latest implicitly"
+    }
+  },
+  "source_integrity": {
+    "faces_sha256": "ecff631955de0f35eaba4f841ae224e2920b0c46bd6e7975f9f4f2fae1f1ca1f",
+    "lamm_hierarchy": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/cache/transform_2-4-4-4.pkl",
+    "lamm_hierarchy_sha256": "bee6a9f01580db0b3bb58aea5f0a71e871cda1a020ad10e00842108a03309b7f",
+    "lamm_model_source_sha256": "4326c8d82f7a82768374ac0783d9cc7ea194b166d572387413c132b144c212b9",
+    "lamm_builder_source_sha256": "a30950838cd756ff2fe4d94eb34fe291379f1f3fc03a6473350518086c69e3af"
+  },
+  "scientific_contract": {
+    "strict_no_mci": true,
+    "subject_level_splits": true,
+    "train_only_latent_standardization": true,
+    "shared_correspondence_topology": true,
+    "decoder_frozen": true,
+    "decoder_in_c4_loss": true,
+    "test_available_only_to_separate_evaluator": true,
+    "source_meshes_modified": false
+  }
+}

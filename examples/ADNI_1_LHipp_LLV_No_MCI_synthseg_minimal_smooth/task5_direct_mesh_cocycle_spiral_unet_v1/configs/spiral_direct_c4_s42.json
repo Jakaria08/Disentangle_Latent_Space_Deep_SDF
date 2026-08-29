@@ -1,0 +1,66 @@
+{
+  "name": "direct_mesh_spiral_c4_s42",
+  "method": "direct_surface_cocycle",
+  "model": {
+    "operator": "spiral",
+    "channels": [24, 48, 72, 96],
+    "condition_dim": 64,
+    "time_frequencies": 3,
+    "dropout": 0.1,
+    "adaptive_initial_support": 8.5,
+    "transport": "Phi(X,s,t,d)=X+(t-s)*G(X,s,t,d)"
+  },
+  "training": {
+    "run_name": "direct_mesh_spiral_c4_s42",
+    "epochs": 200,
+    "batch_size": 2,
+    "gradient_accumulation": 8,
+    "samples_per_epoch": 512,
+    "learning_rate": 0.0002,
+    "minimum_learning_rate": 0.00002,
+    "weight_decay": 0.0001,
+    "gradient_clip_norm": 1.0,
+    "consistency_ramp_epochs": 15,
+    "anatomy_ramp_epochs": 20,
+    "evaluation_batch_size": 2,
+    "early_stopping_patience": 30,
+    "early_stopping_min_delta": 0.00001,
+    "seed": 42,
+    "amp": true,
+    "smoke_epochs": 1,
+    "smoke_train_batches": 4,
+    "smoke_pair_limit": 4
+  },
+  "loss": {
+    "endpoint_weight": 1.0,
+    "normal_endpoint_weight": 0.25,
+    "observed_cocycle_weight": 0.1,
+    "virtual_cocycle_weight": 0.1,
+    "local_cocycle_weight": 0.02,
+    "inverse_weight": 0.05,
+    "diagonal_velocity_weight": 0.05,
+    "volume_weight": 0.1,
+    "rate_weight": 0.1,
+    "group_rate_weight": 0.02,
+    "disease_gap_weight": 0.02,
+    "edge_weight": 0.01,
+    "smoothness_weight": 0.005,
+    "tangent_weight": 0.002,
+    "flip_weight": 0.02
+  },
+  "selection": {
+    "primary": "macro CN/AD first-to-last mean vertex error divided by no-change error",
+    "cocycle_tiebreak_weight": 0.01,
+    "cocycle_validation_pairs": 64,
+    "max_relative_cocycle_defect": 0.5,
+    "max_relative_inverse_defect": 0.5,
+    "test_used_for_selection": false
+  },
+  "scientific_contract": {
+    "ode_used": false,
+    "global_latent_bottleneck": false,
+    "direct_surface_prediction": true,
+    "identity_by_construction": true,
+    "test_loaded_during_training": false
+  }
+}

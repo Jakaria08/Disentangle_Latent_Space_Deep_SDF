@@ -1,0 +1,15 @@
+{
+  "status": "complete",
+  "stage": "current",
+  "rows": 400,
+  "subjects": 20,
+  "scans": 100,
+  "methods": [
+    "Adaptive",
+    "INR",
+    "PCA",
+    "Spiral"
+  ],
+  "epsilon_years": 0.05,
+  "observed_label_contract": "Observed (GT estimate) is derived from longitudinal scans and is not directly measured instantaneous motion."
+}

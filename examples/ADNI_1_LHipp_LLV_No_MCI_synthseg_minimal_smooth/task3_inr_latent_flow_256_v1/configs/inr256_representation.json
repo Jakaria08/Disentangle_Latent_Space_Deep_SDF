@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "task": "adni_left_hippocampus_inr_latent_flow_256_v1",
+  "latent_dim": 256,
+  "code_bound": 1.0,
+  "output_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_inr_latent_flow_256_v1",
+  "latent_export": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippo_exact_z256_eikonal_warm/latent_exports/best_mesh/latents.pth",
+  "latent_export_sha256": "74eb2147d75c5eec8c8b8460d3b03dfb9cdd928b98d6193235c0473b774722f0",
+  "latent_metadata": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippo_exact_z256_eikonal_warm/latent_exports/best_mesh/latent_metadata.csv",
+  "latent_metadata_sha256": "767958f29903d431a776b30b4130695c8c314a152f10edf0b1423235e30137d8",
+  "decoder_checkpoint": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippo_exact_z256_eikonal_warm/checkpoints/best_mesh.pth",
+  "decoder_checkpoint_sha256": "221ac5b1810ae207b552f28294a07d97f2ae97d353be4d22f09aa8e7586fb817",
+  "decoder_config": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippo_exact_z256_eikonal_warm/run_config.json",
+  "source_manifest": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/exact_sdf_relabel_v1/manifests/hippocampus_pilot_exact.csv",
+  "rescale_details_csv": "/home/jakaria/ADNI/ADNI_1_GO_Large/synthseg_minimal_correspondence/full/left_hippocampus/minimal_smooth_correspondence/rescale_details.csv",
+  "field_samples_per_scan": 512,
+  "field_clamp_distance": 0.1,
+  "field_sampling_seed": 20260824,
+  "expected_split_counts": {"train": 401, "val": 100, "test": 100},
+  "expected_subject_counts": {"train": 91, "val": 20, "test": 20},
+  "scientific_contract": {
+    "strict_no_mci": true,
+    "subject_level_splits": true,
+    "train_only_latent_standardization": true,
+    "decoder_frozen": true,
+    "decoder_checkpoint_pinned": true,
+    "test_evaluator_only": true,
+    "source_files_modified": false
+  }
+}

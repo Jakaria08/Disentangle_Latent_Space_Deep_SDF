@@ -45,8 +45,10 @@ def parse_args() -> argparse.Namespace:
 def validate_config(config: dict[str, Any]) -> None:
     if config.get("method") != "direct_c4":
         raise ValueError("C4 config method must be direct_c4")
-    if config.get("representation") not in {"pca128", "spiralnet128", "adaptive128"}:
-        raise ValueError("Unknown representation")
+    representation = config.get("representation")
+    if not isinstance(representation, str):
+        raise ValueError("C4 representation must be a registry name")
+    C.validate_run_name(representation)
     model = config.get("model", {})
     if int(model.get("latent_dim", -1)) != C.LATENT_DIM or model.get("variant") != "direct":
         raise ValueError("C4 must be the direct 128-D variant")

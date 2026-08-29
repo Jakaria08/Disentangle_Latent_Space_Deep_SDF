@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "output_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task4_all_flow_visual_analysis_v1",
+  "current_128_task": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task3_latent_flow_128_v1",
+  "current_inr_task": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task3_inr_latent_flow_256_v1",
+  "current_models": {
+    "pca": {
+      "label": "PCA",
+      "representation": "pca128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/pca128/direct_c4/pca128_direct_c4_s42"
+    },
+    "spiral": {
+      "label": "Spiral",
+      "representation": "spiralnet128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/spiralnet128/direct_c4/spiralnet128_direct_c4_s42"
+    },
+    "adaptive": {
+      "label": "Adaptive",
+      "representation": "adaptive128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/adaptive128/direct_c4/adaptive128_direct_c4_s42"
+    },
+    "inr": {
+      "label": "INR",
+      "representation": "inr256",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_inr_latent_flow_256_v1/training/inr256/direct_c4/inr256_direct_c4_s42"
+    }
+  },
+  "legacy": {
+    "mesh_metrics": "examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/unified_longitudinal_visual_report/tables/mesh_pair_metrics.csv",
+    "velocity_per_scan": "examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/longitudinal_visual_notebooks/generated_cache/instantaneous_latent_velocity/instantaneous_latent_velocity_per_scan.csv",
+    "velocity_summary": "examples/ADNI_1_L_No_MCI/brainode_comparison_task3_core_brainode_original/analysis/longitudinal_visual_notebooks/generated_cache/instantaneous_latent_velocity/instantaneous_latent_velocity_summary.csv",
+    "pca_group_map_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/longitudinal_model_validation/pca_cocycle_flow_vs_paper_core_brainode/prepared_cache/hippocampus/meshes"
+  },
+  "display_contract": {
+    "ordinary_method_labels_hide_latent_dimension": true,
+    "primary_current_analysis_uses_shared_test_subset": true,
+    "legacy_ode_brainode_results_are_separate": true,
+    "smoke_runs_are_excluded": true
+  }
+}

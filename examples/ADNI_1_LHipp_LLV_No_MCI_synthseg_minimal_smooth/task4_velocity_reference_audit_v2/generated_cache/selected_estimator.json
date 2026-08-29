@@ -1,0 +1,12 @@
+{
+  "selected_on": "validation subjects only",
+  "selection_metric": "subject_mean_vertex_rmse_mm",
+  "candidate": "surface_linear_rigid",
+  "candidate_label": "Linear surface (rigid removed)",
+  "alignment": "rigid",
+  "degree": 1,
+  "basis": "surface",
+  "components": null,
+  "robust": false,
+  "test_was_not_used_for_selection": true
+}

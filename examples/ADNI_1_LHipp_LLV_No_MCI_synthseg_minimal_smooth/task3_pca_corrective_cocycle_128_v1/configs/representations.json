@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "task": "adni_left_hippocampus_pca_corrective_cocycle_128_v1",
+  "latent_dim": 128,
+  "coordinate_space": "final_ply_mm",
+  "output_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_pca_corrective_cocycle_128_v1",
+  "source_sequence_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4",
+  "source_manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+  "ae_source_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_spiral_ae_v1",
+  "ae_bulk_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1",
+  "representations": {
+    "pca128": {
+      "kind": "pca",
+      "description": "Completed August PCA-128 reference; first 128 components of its fixed train-only PCA-150 basis.",
+      "pca_model_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model",
+      "archive_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/representations/pca128",
+      "source_validation_rmse_mm": 0.033668,
+      "source_test_rmse_mm": 0.034380
+    },
+    "spiralnet128": {
+      "kind": "spiral_ae",
+      "description": "Completed August frozen SpiralNet++-128 reference.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/studies/spiralnet_z128_v6/trials/trial_0002_val0.037215.pt",
+      "checkpoint_sha256": "7e2464a42409e8c24596b15d6f3157f0a8c4987bb4d545c22c9c7bc164082855",
+      "archive_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/representations/spiralnet128"
+    },
+    "adaptive128": {
+      "kind": "adaptive_ae",
+      "description": "Completed August frozen Adaptive-Spiral-128 reference.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/studies/adaptive_z128_v2/trials/trial_0002_val0.036765.pt",
+      "checkpoint_sha256": "f23ad558695ae63c2e25d7733a175071fde73c700c7bf30087985614cb30a4fc",
+      "archive_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/representations/adaptive128"
+    },
+    "pca_corrective128": {
+      "kind": "pca_corrective",
+      "description": "PCA-128-conditioned orthogonal corrective Spiral decoder selected at validation epoch 5.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_pca_corrective_deformation_v1/runs/pca128_corrective_s42/best.pt",
+      "checkpoint_sha256": "24e966a7e10022aa2758a8585d9d0c8d04cbc2f4515225055df618d9caa87ee3",
+      "checkpoint_best_epoch": 5,
+      "pca_mean": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/pca/model/mean.npy",
+      "pca_mean_sha256": "b84900feae1d81791d3baf0a189891f250849015b5e592e2b9bfa33dfdc2e0f6",
+      "pca_components": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/pca/model/components_128.npy",
+      "pca_components_sha256": "4d73ee1b8ae71df38af0b0c6916906a1cf48d6c617b8414960889d99db8f5605",
+      "expected_validation_rmse_mm": 0.0324137248,
+      "expected_test_rmse_mm": 0.0328371959
+    }
+  },
+  "completed_reference_runs": {
+    "pca128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/training/pca128/direct_c4/pca128_direct_c4_s42_v2",
+    "spiralnet128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/training/spiralnet128/direct_c4/spiralnet128_direct_c4_s42_v2",
+    "adaptive128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/training/adaptive128/direct_c4/adaptive128_direct_c4_s42_v2",
+    "inr256": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_inr_latent_flow_256_v1/training/inr256/direct_c4/inr256_direct_c4_s42"
+  },
+  "scientific_contract": {
+    "strict_no_mci": true,
+    "subject_level_splits": true,
+    "train_only_latent_standardization": true,
+    "shared_correspondence_topology": true,
+    "corrective_checkpoint_frozen": true,
+    "test_available_only_to_separate_evaluator": true,
+    "runtime_outputs_below_bulk10tb": true
+  }
+}

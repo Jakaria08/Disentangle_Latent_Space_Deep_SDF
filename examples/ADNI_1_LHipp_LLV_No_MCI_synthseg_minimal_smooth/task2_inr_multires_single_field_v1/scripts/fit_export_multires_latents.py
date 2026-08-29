@@ -15,7 +15,9 @@ from multires_common import (
     load_config,
     load_decoder_checkpoint,
     load_manifest,
+    read_scaling,
     require_bulk_path,
+    sha256_file,
     stable_seed,
     write_csv,
     write_json,
@@ -72,14 +74,32 @@ def main() -> None:
         print(f"[{number:04d}/{len(rows):04d}] {row['split']} {row['scan_id']}", flush=True)
     output.mkdir(parents=True, exist_ok=True)
     latent_path = require_bulk_path(output / "latents.pth", "latent export")
+    checkpoint_sha256 = sha256_file(checkpoint)
+    split_counts = {
+        split: sum(row["split"] == split for row in metadata)
+        for split in ("train", "val", "test")
+    }
+    scaling_path = config["periodic_evaluation"]["rescale_details_csv"]
     atomic_torch_save(
         {
             "architecture": "single_field_dense_multiresolution_sdf",
             "checkpoint": str(checkpoint),
+            "checkpoint_sha256": checkpoint_sha256,
+            "checkpoint_epoch": int(payload.get("epoch", 0)),
+            "manifest": str(config["manifest"]),
             "latent_size": int(config["latent_size"]),
             "latents": torch.from_numpy(np.stack(vectors).astype(np.float32)),
             "scan_ids": [row["scan_id"] for row in metadata],
+            "subject_ids": [row["subject_id"] for row in metadata],
             "splits": [row["split"] for row in metadata],
+            "split_counts": split_counts,
+            "fit_steps": int(args.steps or config["latent_fit"]["steps"]),
+            "latent_fit_config": config["latent_fit"],
+            "normalization": {
+                "rescale_details_csv": str(scaling_path),
+                "values": read_scaling(scaling_path),
+            },
+            "sdf_supervision": config.get("sdf_supervision", {}),
         },
         latent_path,
     )
@@ -87,7 +107,20 @@ def main() -> None:
     write_csv(output / "latent_fit_metrics.csv", metrics)
     write_json(
         output / "summary.json",
-        {"checkpoint": str(checkpoint), "count": len(vectors), "latent_size": int(config["latent_size"]), "output": str(latent_path)},
+        {
+            "checkpoint": str(checkpoint),
+            "checkpoint_sha256": checkpoint_sha256,
+            "checkpoint_epoch": int(payload.get("epoch", 0)),
+            "count": len(vectors),
+            "split_counts": split_counts,
+            "latent_size": int(config["latent_size"]),
+            "fit_steps": int(args.steps or config["latent_fit"]["steps"]),
+            "normalization": {
+                "rescale_details_csv": str(scaling_path),
+                "values": read_scaling(scaling_path),
+            },
+            "output": str(latent_path),
+        },
     )
 
 

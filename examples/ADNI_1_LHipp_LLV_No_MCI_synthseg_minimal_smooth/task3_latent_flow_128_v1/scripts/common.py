@@ -20,6 +20,7 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Iterable
 
 import numpy as np
@@ -30,9 +31,15 @@ from torch import nn
 SCRIPT_DIR = Path(__file__).resolve().parent
 TASK_ROOT = SCRIPT_DIR.parent
 PROJECT_ROOT = TASK_ROOT.parents[2]
-REGISTRY_PATH = TASK_ROOT / "configs" / "representations.json"
+REGISTRY_PATH = Path(
+    os.environ.get(
+        "DEEP3DCOMP_LATENT_FLOW_REGISTRY",
+        str(TASK_ROOT / "configs" / "representations.json"),
+    )
+).expanduser().resolve()
 SPLITS = ("train", "val", "test")
 LATENT_DIM = 128
+BULK_ROOT = Path("/mnt/bulk10tb")
 REQUIRED_ARCHIVE_KEYS = {
     "subject_ids",
     "subject_splits",
@@ -149,13 +156,59 @@ def validate_run_name(value: str) -> None:
         raise ValueError("Run name must be one safe directory-name component")
 
 
+def require_bulk_path(value: str | Path, description: str = "runtime output") -> Path:
+    """Keep persistent experiment outputs below the dedicated bulk mount."""
+    path = resolve_path(value)
+    try:
+        path.relative_to(BULK_ROOT)
+    except ValueError as error:
+        raise ValueError(f"{description} must be below {BULK_ROOT}; refusing {path}") from error
+    if path == BULK_ROOT:
+        raise ValueError(f"{description} cannot be the bulk mount root")
+    return path
+
+
+def verify_source_integrity(registry: dict[str, Any]) -> None:
+    """Reject silent drift in the topology and LAMM architecture builders."""
+    integrity = registry.get("source_integrity")
+    if integrity is None:
+        return
+    if not isinstance(integrity, dict):
+        raise ValueError("source_integrity must be a JSON object")
+    declared: list[tuple[str, Path | None, str | None]] = [
+        ("faces", resolve_path(registry["faces_path"]) if registry.get("faces_path") else None, integrity.get("faces_sha256")),
+        ("lamm hierarchy", resolve_path(integrity["lamm_hierarchy"]) if integrity.get("lamm_hierarchy") else None, integrity.get("lamm_hierarchy_sha256")),
+    ]
+    if registry.get("lamm_source_root"):
+        scripts = resolve_path(registry["lamm_source_root"]) / "scripts"
+        declared.extend([
+            ("LAMM model source", scripts / "lamm_model.py", integrity.get("lamm_model_source_sha256")),
+            ("LAMM builder source", scripts / "train_lamm.py", integrity.get("lamm_builder_source_sha256")),
+        ])
+    for label, path, expected in declared:
+        if path is None and expected is None:
+            continue
+        if path is None or not expected:
+            raise ValueError(f"Incomplete source-integrity declaration for {label}")
+        if not path.is_file():
+            raise FileNotFoundError(f"Pinned {label} is missing: {path}")
+        actual = sha256(path)
+        if actual != expected:
+            raise ValueError(f"Pinned {label} hash mismatch: expected={expected}, actual={actual}")
+
+
 def load_registry(path: str | Path = REGISTRY_PATH) -> dict[str, Any]:
     registry = read_json(path)
     if int(registry.get("latent_dim", -1)) != LATENT_DIM:
         raise ValueError(f"Registry must declare latent_dim={LATENT_DIM}")
     representations = registry.get("representations")
-    if not isinstance(representations, dict) or set(representations) != {"pca128", "spiralnet128", "adaptive128"}:
-        raise ValueError("Registry must define exactly pca128, spiralnet128, and adaptive128")
+    if not isinstance(representations, dict) or not representations:
+        raise ValueError("Registry must define at least one representation")
+    for name, specification in representations.items():
+        validate_run_name(str(name))
+        if not isinstance(specification, dict) or not specification.get("kind"):
+            raise ValueError(f"Representation {name!r} must be an object with a kind")
+    verify_source_integrity(registry)
     return registry
 
 
@@ -353,16 +406,103 @@ def _add_ae_import_path(registry: dict[str, Any]) -> Path:
     return ae_scripts
 
 
+def _add_lamm_import_path(registry: dict[str, Any]) -> Path:
+    source = registry.get("lamm_source_root")
+    if not source:
+        raise KeyError("A lamm_ae representation requires top-level lamm_source_root")
+    scripts = resolve_path(source) / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    return scripts
+
+
+def _load_lamm_model(
+    name: str,
+    spec: dict[str, Any],
+    checkpoint_path: Path,
+    payload: dict[str, Any],
+    device: torch.device,
+    registry: dict[str, Any],
+) -> nn.Module:
+    if int(payload.get("args", {}).get("latent", -1)) != LATENT_DIM:
+        raise ValueError(f"{name} checkpoint is not {LATENT_DIM}-D")
+    arguments = dict(payload.get("args", {}))
+    # Checkpoints created before the optimizer-ablation fields were added do not
+    # carry these training-only values.  They do not change the architecture,
+    # but train_lamm.build records them in its returned info dictionary.
+    arguments.setdefault("loss", "l1")
+    arguments.setdefault("huber_delta", 0.1)
+    arguments.setdefault("mixup_alpha", 0.0)
+    arguments.setdefault("mixup_prob", 1.0)
+    arguments.setdefault("ema_decay", 0.0)
+    required = {
+        "scales",
+        "latent_split",
+        "residual",
+        "latent",
+        "dim",
+        "enc_depth",
+        "dec_depth",
+        "heads",
+        "dim_head",
+        "dropout",
+        "backbone",
+        "share_regions",
+        "latent_mode",
+        "region_mode",
+        "deep_sup",
+        "patch_level",
+    }
+    missing = sorted(required.difference(arguments))
+    if missing:
+        raise KeyError(f"{name} LAMM checkpoint args are missing {missing}")
+    _add_ae_import_path(registry)
+    _add_lamm_import_path(registry)
+    from train_lamm import build as build_lamm
+
+    model, rebuilt_info = build_lamm(SimpleNamespace(**arguments), device)
+    saved_info = payload.get("info", {})
+    checks = {
+        "latent": LATENT_DIM,
+        "scales": spec.get("expected_scales"),
+        "latent_split": spec.get("expected_latent_split"),
+    }
+    if int(rebuilt_info.get("latent", -1)) != checks["latent"]:
+        raise ValueError(f"{name} rebuilt LAMM latent mismatch: {rebuilt_info.get('latent')}")
+    if checks["scales"] is not None and list(rebuilt_info.get("scales", [])) != list(checks["scales"]):
+        raise ValueError(f"{name} rebuilt LAMM scale mismatch: {rebuilt_info.get('scales')}")
+    rebuilt_split = rebuilt_info.get("params", {}).get("latent_split")
+    if checks["latent_split"] is not None and list(rebuilt_split or []) != list(checks["latent_split"]):
+        raise ValueError(f"{name} rebuilt LAMM latent split mismatch: {rebuilt_split}")
+    for field in ("backbone", "dim", "enc_depth", "dec_depth", "heads", "residual"):
+        if field in saved_info and rebuilt_info.get(field) != saved_info.get(field):
+            raise ValueError(
+                f"{name} rebuilt LAMM {field} mismatch: "
+                f"saved={saved_info.get(field)!r}, rebuilt={rebuilt_info.get(field)!r}"
+            )
+    state = payload.get("model_state_dict")
+    if not isinstance(state, dict) or not state:
+        raise ValueError(f"{checkpoint_path} has no model_state_dict")
+    model.load_state_dict(state, strict=True)
+    return model
+
+
 def load_ae_model(name: str, device: torch.device, registry: dict[str, Any] | None = None) -> tuple[nn.Module, dict[str, Any]]:
     registry = load_registry() if registry is None else registry
     spec = representation_spec(name, registry)
-    if spec["kind"] not in {"spiral_ae", "adaptive_ae"}:
+    if spec["kind"] not in {"spiral_ae", "adaptive_ae", "lamm_ae"}:
         raise ValueError(f"{name} is not an AE representation")
     checkpoint_path = resolve_path(spec["checkpoint"])
     actual_hash = sha256(checkpoint_path)
     if actual_hash != spec["checkpoint_sha256"]:
         raise ValueError(f"Checkpoint hash mismatch for {name}: {actual_hash}")
     payload = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    if spec["kind"] == "lamm_ae":
+        model = _load_lamm_model(name, spec, checkpoint_path, payload, device, registry)
+        model.eval()
+        for parameter in model.parameters():
+            parameter.requires_grad_(False)
+        return model, payload
     if int(payload["latent_channels"]) != LATENT_DIM:
         raise ValueError(f"{name} checkpoint is not {LATENT_DIM}-D")
     _add_ae_import_path(registry)
@@ -505,8 +645,15 @@ def build_geometry(
     else:
         model, _ = load_ae_model(representation, device, registry)
         mesh_mean, mesh_std = ae_normalization(registry)
-        pca_model_root = resolve_path(registry["representations"]["pca128"]["pca_model_root"])
-        faces = np.load(pca_model_root / "faces.npy", allow_pickle=False)
+        if registry.get("faces_path"):
+            faces_path = resolve_path(registry["faces_path"])
+        elif "pca128" in registry["representations"]:
+            faces_path = resolve_path(
+                registry["representations"]["pca128"]["pca_model_root"]
+            ) / "faces.npy"
+        else:
+            faces_path = resolve_path(registry["ae_bulk_root"]) / "cache" / "adni_faces.npy"
+        faces = np.load(faces_path, allow_pickle=False)
         geometry = FrozenAEGeometry(model, latent_mean, latent_std, mesh_mean, mesh_std, faces)
     geometry = geometry.to(device)
     geometry.eval()

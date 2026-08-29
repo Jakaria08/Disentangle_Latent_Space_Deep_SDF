@@ -1,0 +1,9 @@
+{
+  "status": "complete",
+  "current_comparator": "Observed \u2014 fitted trajectory",
+  "current_scope": "same test subjects available to all four current models; subject-then-group aggregation",
+  "legacy_comparator": "Observed \u2014 adjacent interval; not directly measured instantaneous motion",
+  "legacy_scope": "separate legacy cohort; no numeric pooling with current models",
+  "latent_unit_contract": "train-standardized latent units/year; compare magnitude only within each representation",
+  "ordinary_labels_hide_latent_dimension": true
+}

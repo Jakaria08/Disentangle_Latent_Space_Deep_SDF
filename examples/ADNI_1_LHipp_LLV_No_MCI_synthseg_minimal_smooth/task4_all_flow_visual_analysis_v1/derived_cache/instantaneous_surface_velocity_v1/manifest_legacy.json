@@ -1,0 +1,16 @@
+{
+  "status": "complete",
+  "stage": "legacy",
+  "rows": 856,
+  "subjects": 50,
+  "scans": 214,
+  "methods": [
+    "BrainODE",
+    "INR Cocycle",
+    "Latent ODE",
+    "PCA Cocycle"
+  ],
+  "epsilon_years": 0.05,
+  "distance_scale_mm": 23.596532653324285,
+  "observed_label_contract": "Observed (GT estimate) is derived from longitudinal scans and is not directly measured instantaneous motion."
+}

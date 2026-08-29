@@ -1,0 +1,74 @@
+{
+  "status": "complete",
+  "mode": "full",
+  "max_subjects_per_split": null,
+  "selected_estimator": "surface_linear_rigid",
+  "selected_estimator_label": "Linear surface (rigid removed)",
+  "selection_split": "val",
+  "evaluation_split": "test",
+  "bootstrap_repetitions": 1000,
+  "surface_distances_computed": true,
+  "input_hashes": {
+    "config": "7b11ddf32140ad2162cc938ef5333fc86c409dd12c1576a3534f755511f49fd9",
+    "pca_faces": "01631f9060f3ad65f44ad2457f51a62af2f10738c9ae2633ba0bc52750708133",
+    "pca_components": "9a9fd8567840557c69fbb9e37e5e899f807e82007d06275abe021f25a185a683"
+  },
+  "counts": {
+    "val": {
+      "subjects": 57,
+      "scans": 261
+    },
+    "test": {
+      "subjects": 58,
+      "scans": 271
+    }
+  },
+  "excluded_subjects": {
+    "val": [
+      {
+        "subject_id": "1212",
+        "reason": "fewer_than_3_visits",
+        "visits": 2
+      },
+      {
+        "subject_id": "1289",
+        "reason": "fewer_than_3_visits",
+        "visits": 2
+      },
+      {
+        "subject_id": "1334",
+        "reason": "fewer_than_3_visits",
+        "visits": 2
+      },
+      {
+        "subject_id": "4001",
+        "reason": "fewer_than_3_visits",
+        "visits": 2
+      }
+    ],
+    "test": [
+      {
+        "subject_id": "4589",
+        "reason": "fewer_than_3_visits",
+        "visits": 2
+      },
+      {
+        "subject_id": "691",
+        "reason": "fewer_than_3_visits",
+        "visits": 2
+      },
+      {
+        "subject_id": "929",
+        "reason": "fewer_than_3_visits",
+        "visits": 2
+      }
+    ]
+  },
+  "interpretation": {
+    "instantaneous_ground_truth_exists": false,
+    "observed_fitted_trajectory": "A smoother estimate inferred from repeated registered meshes; it is the primary reference, not directly measured instantaneous motion.",
+    "observed_adjacent_interval": "An interval-average change divided by elapsed years; it contains differenced visit-specific error and is not an instantaneous ground truth.",
+    "observed_first_to_last": "A long-interval average rate; stable but unable to show within-subject acceleration."
+  },
+  "source_meshes_modified": false
+}

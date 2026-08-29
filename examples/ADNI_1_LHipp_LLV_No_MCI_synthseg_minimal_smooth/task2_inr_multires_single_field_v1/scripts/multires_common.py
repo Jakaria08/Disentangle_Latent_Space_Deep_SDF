@@ -345,6 +345,43 @@ def numerical_spatial_gradient(
     return ((values[:3] - values[3:]) / (2.0 * epsilon_xyz[:, None, None])).squeeze(-1).transpose(0, 1)
 
 
+def numerical_gradient_and_laplacian(
+    decoder,
+    codes: torch.Tensor,
+    xyz: torch.Tensor,
+    epsilon_xyz: torch.Tensor,
+    level_weights: list[float],
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Central-difference gradient and Laplacian from one batched 7-point stencil.
+
+    Additive: ``numerical_spatial_gradient`` above is unchanged and still used by
+    every existing config.  The six offsets the Eikonal term already needs also
+    give the second derivatives, so the Laplacian costs one extra evaluation --
+    the centre -- rather than the nine-per-axis stencil a full Hessian needs.
+
+    The step size selects the band.  A central second difference at step h
+    responds to oscillation at scale ~h and is nearly blind to structure much
+    larger than h, so penalising it suppresses extraction-scale jitter while
+    leaving genuine anatomical curvature alone.
+    """
+    if epsilon_xyz.shape != (3,) or torch.any(epsilon_xyz <= 0.0):
+        raise ValueError("epsilon_xyz must be a positive three-vector.")
+    identity = torch.eye(3, device=xyz.device, dtype=xyz.dtype)
+    plus = xyz[None, :, :] + identity[:, None, :] * epsilon_xyz[None, None, :]
+    minus = xyz[None, :, :] - identity[:, None, :] * epsilon_xyz[None, None, :]
+    queries = torch.cat((plus, minus, xyz[None, :, :]), dim=0).reshape(-1, 3)
+    repeated = codes[None, :, :].expand(7, -1, -1).reshape(-1, codes.shape[1])
+    values = decoder(
+        torch.cat((repeated, queries), dim=1), level_weights=level_weights
+    ).reshape(7, len(xyz), 1)
+    forward, backward, centre = values[:3], values[3:6], values[6]
+    gradient = (
+        ((forward - backward) / (2.0 * epsilon_xyz[:, None, None])).squeeze(-1).transpose(0, 1)
+    )
+    second = (forward - 2.0 * centre[None] + backward) / (epsilon_xyz[:, None, None] ** 2)
+    return gradient, second.sum(dim=0).squeeze(-1)
+
+
 def checkpoint_path(config: dict[str, Any], checkpoint: str | Path) -> Path:
     value = Path(checkpoint)
     if value.is_file():

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "split": "val",
+  "age_bin_edges_years": [70.0, 75.0, 80.0, 95.0],
+  "bootstrap_samples": 5000,
+  "bootstrap_seed": 1701,
+  "output_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task4_all_flow_visual_analysis_v1/age_velocity_all_methods_v1",
+  "observed_reference": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task5_direct_mesh_cocycle_spiral_unet_v1/cache/val_surfaces.npz",
+  "direct_mesh": {
+    "mesh_spiral": {
+      "label": "Mesh Spiral",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task5_direct_mesh_cocycle_spiral_unet_v1/runs/optuna_spiral_velocity_main_v2_trial_0013"
+    },
+    "mesh_adaptive": {
+      "label": "Mesh Adaptive",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task5_direct_mesh_cocycle_spiral_unet_v1/runs/optuna_adaptive_velocity_main_v2_trial_0014"
+    }
+  },
+  "latent_128_task": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task3_latent_flow_128_v1",
+  "latent_128": {
+    "latent_pca": {
+      "label": "Latent PCA",
+      "representation": "pca128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/pca128/direct_c4/pca128_direct_c4_s42"
+    },
+    "latent_spiral": {
+      "label": "Latent Spiral",
+      "representation": "spiralnet128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/spiralnet128/direct_c4/spiralnet128_direct_c4_s42"
+    },
+    "latent_adaptive": {
+      "label": "Latent Adaptive",
+      "representation": "adaptive128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/adaptive128/direct_c4/adaptive128_direct_c4_s42"
+    }
+  },
+  "inr_task": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task3_inr_latent_flow_256_v1",
+  "inr": {
+    "key": "latent_inr",
+    "label": "Latent INR",
+    "representation": "inr256",
+    "surface_derivative_epsilon_years": 0.01,
+    "validation_archive": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_inr_latent_flow_256_v1/representations/inr256/val_subject_sequences_256.npz",
+    "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_inr_latent_flow_256_v1/training/inr256/direct_c4/inr256_direct_c4_s42"
+  },
+  "lamm_task": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task3_latent_flow_128_v2_lamm",
+  "lamm_n3": {
+    "key": "lamm_n3",
+    "label": "LAMM N3",
+    "members": [
+      {
+        "representation": "lamm128",
+        "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/training/lamm128/direct_c4/lamm128_direct_c4_s42"
+      },
+      {
+        "representation": "lamm128_n3_s2",
+        "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/training/lamm128_n3_s2/direct_c4/lamm128_n3_s2_direct_c4_s42"
+      },
+      {
+        "representation": "lamm128_n3_s3",
+        "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/training/lamm128_n3_s3/direct_c4/lamm128_n3_s3_direct_c4_s42"
+      }
+    ],
+    "existing_validation_report": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/ensemble/n3_s42_val/summary.json",
+    "existing_validation_subjects": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/ensemble/n3_s42_val/instantaneous_velocity_subjects.csv"
+  },
+  "legacy_velocity_csv": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task4_all_flow_visual_analysis_v1/derived_cache/instantaneous_surface_velocity_v1/tables/legacy_instantaneous_surface_velocity.csv"
+}
