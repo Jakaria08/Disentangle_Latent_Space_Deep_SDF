@@ -1,0 +1,7 @@
+{
+  "method": "direct_c4_no_disease",
+  "ablation": "A3 (PLAN Part 3): cocycle without the disease head",
+  "source": "The direct_c4 recipe unchanged (model, 13-leaf objective, sampler, selection). Only the transport differs: the condition is never fed to the velocity, Phi(z,s,t,d) = z + (t-s) v_CN(z,s,t), so v_AD receives no gradient.",
+  "compose": {"base": "direct_c4"},
+  "config_patch": {"model": {"disease_head": false}}
+}

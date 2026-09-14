@@ -1,42 +1,59 @@
 # Runbook
 
-Run commands from `/home/jakaria/INR/Deep3DComp`.
-
-The `inr_sdf` environment is used for Optuna because it contains Optuna 4.7. The model has
-no torch-scatter dependency.
+Run from `/home/jakaria/INR/Deep3DComp`:
 
 ```bash
 TASK=examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task7_direct_mesh_cocycle_lamm_v1
 PY=/home/jakaria/anaconda3/envs/inr_sdf/bin/python
 ```
 
-## Fast verification
+## Verify
 
 ```bash
 $PY "$TASK/scripts/run_tests.py"
 $PY "$TASK/scripts/validate_experiment.py" --device cuda:1
 ```
 
-If CUDA is temporarily unavailable, use `--device cpu` for validation.
+## Three training commands
 
-End-to-end smoke training on GPU 1:
+Global 256D:
 
 ```bash
 $PY "$TASK/scripts/train.py" \
-  --config "$TASK/configs/lamm_direct_c4_z128_s42.json" \
-  --device cuda:1 \
-  --run-name direct_mesh_lamm_z128_gpu1_smoke \
-  --smoke
+  --config "$TASK/configs/lamm_global_c4_z256_s42.json" \
+  --device cuda:1
 ```
 
-The smoke run fails if any of the conditioning, tokenizer, encoder, down projection, latent
-flow, up projection, decoder tokens, decoder, or velocity heads receives no gradient.
+Global 384D:
 
-## Optuna search on GPU 1
+```bash
+$PY "$TASK/scripts/train.py" \
+  --config "$TASK/configs/lamm_global_c4_z384_s42.json" \
+  --device cuda:1
+```
 
-The search jointly compares 128D/256D allocation, token width, encoder/decoder depth,
-conditioning width, latent-flow width/depth, dropout, learning rate, weight decay, velocity
-loss, and smoothness loss.
+Regional tokens, no global bottleneck:
+
+```bash
+$PY "$TASK/scripts/train.py" \
+  --config "$TASK/configs/lamm_token_c4_s42.json" \
+  --device cuda:1
+```
+
+They run sequentially with `bash "$TASK/scripts/run_final_gpu1.sh"`. Add `--resume` to an
+individual command after interruption. Training reads train/validation only and writes to:
+
+```text
+/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/runs/
+```
+
+Use `checkpoints/best.pt`, never `latest.pt`, in a reported comparison.
+
+## Optional Optuna architecture/hyperparameter search
+
+The search includes all three state designs and tunes token width, encoder/decoder depth,
+condition width, global-flow or token-flow depth, dropout, optimization, fitted-velocity
+weight, and spatial smoothness. Its first three queued trials are the three fixed anchors.
 
 ```bash
 $PY "$TASK/scripts/optuna_search.py" \
@@ -44,105 +61,48 @@ $PY "$TASK/scripts/optuna_search.py" \
   --n-trials 18 \
   --trial-epochs 80 \
   --trial-samples-per-epoch 384 \
-  --study-tag main_v1
+  --study-tag architecture_main_v2
 ```
 
-The resumable SQLite study and exports are written under:
+The SQLite study is resumable by running exactly the same command. Train its exported
+`best_config.json` with `scripts/train.py` only after inspecting the completed trials.
 
-```text
-/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/optuna/
-```
+## One centralized validation comparison
 
-The selected configuration is `best_config.json` in the study directory. Re-running the
-same command continues the existing study.
-
-## Matched final-width runs
-
-Run 128D:
+After all three new runs finish:
 
 ```bash
-$PY "$TASK/scripts/train.py" \
-  --config "$TASK/configs/lamm_direct_c4_z128_s42.json" \
-  --device cuda:1
-```
-
-Run the controlled 256D equal split:
-
-```bash
-$PY "$TASK/scripts/train.py" \
-  --config "$TASK/configs/lamm_direct_c4_z256_equal_s42.json" \
-  --device cuda:1
-```
-
-Run the 256D fine-heavy allocation:
-
-```bash
-$PY "$TASK/scripts/train.py" \
-  --config "$TASK/configs/lamm_direct_c4_z256_fine_s42.json" \
-  --device cuda:1
-```
-
-Resume any interrupted run by adding `--resume` with the same configuration and run name.
-
-To train the Optuna-selected configuration:
-
-```bash
-$PY "$TASK/scripts/train.py" \
-  --config /mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/optuna/lamm_direct_c4_main_v1/best_config.json \
-  --device cuda:1
-```
-
-## Validation and test evaluation
-
-Use the selected `best.pt`, never `latest.pt`, for reported results.
-
-```bash
-CKPT=/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/runs/direct_mesh_lamm_c4_z128_s42/checkpoints/best.pt
-
-$PY "$TASK/scripts/evaluate.py" \
-  --checkpoint "$CKPT" \
+$PY "$TASK/scripts/evaluate_all.py" \
+  --manifest "$TASK/configs/central_evaluation.json" \
   --split val \
   --device cuda:1 \
-  --batch-size 8
+  --surface-points 10000 \
+  --bootstrap-samples 2000 \
+  --output-dir /mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/comparisons/all_methods_val_v1
+```
 
-$PY "$TASK/scripts/evaluate.py" \
-  --checkpoint "$CKPT" \
+This command evaluates:
+
+- LAMM global 256D, global 384D, and regional-token direct mesh flows;
+- selected Spiral and Adaptive-Spiral direct mesh flows;
+- current 128D LAMM latent flow, including decoder-JVP surface velocity.
+
+It writes native per-method results plus `comparison.csv` and `comparison.json`. The primary
+ranking is overall first-to-last mean vertex error; no-change-normalized, surface, volume,
+cocycle, and velocity metrics remain separate columns and should all be inspected.
+
+Test is a separate, explicitly authorized final evaluation:
+
+```bash
+$PY "$TASK/scripts/evaluate_all.py" \
+  --manifest "$TASK/configs/central_evaluation.json" \
   --split test \
+  --allow-test \
   --device cuda:1 \
-  --batch-size 8 \
-  --surface-metrics \
-  --surface-max-pairs 100 \
-  --save-vertex-maps
+  --surface-points 10000 \
+  --bootstrap-samples 2000 \
+  --output-dir /mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/comparisons/all_methods_test_v1
 ```
 
-Expensive ASSD/HD95/Dice metrics use a deterministic balanced subset when
-`--surface-max-pairs` is supplied. Correspondence endpoint, volume, instantaneous velocity,
-and cocycle metrics are still reported by the evaluator.
-
-## Instantaneous velocity by age and diagnosis
-
-Inspect available options:
-
-```bash
-$PY "$TASK/scripts/analyze_velocity_by_age.py" --help
-```
-
-Then run it with the selected checkpoint using the same arguments as the direct Spiral task.
-The quantity is a predicted surface velocity in mm/year:
-
-```text
-V(X,a,a,d)
-```
-
-The comparison target is the reliability-weighted velocity estimate fitted from repeated
-observed visits; it is not direct physical ground truth.
-
-## Custom data/output roots
-
-The default data root is the validated task-5 cache. Override it without copying data:
-
-```bash
-export DEEP3DCOMP_DIRECT_LAMM_DATA_ROOT=/absolute/path/to/prepared/direct_mesh_root
-export DEEP3DCOMP_DIRECT_LAMM_ROOT=/absolute/path/to/task7_outputs
-```
-
+For a command-only check before training, add `--dry-run`. For a quick partial check, use
+`--only METHOD`, `--max-subjects N`, `--max-velocity-scans N`, and fewer surface points.

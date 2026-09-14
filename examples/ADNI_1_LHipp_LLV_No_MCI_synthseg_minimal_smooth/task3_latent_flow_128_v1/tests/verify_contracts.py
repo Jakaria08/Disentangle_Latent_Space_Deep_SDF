@@ -17,12 +17,18 @@ import common as C  # noqa: E402
 from models import BrainODEAttentionFunc, build_ode  # noqa: E402
 from train_c4 import validate_config as validate_c4  # noqa: E402
 from train_latent_ode import validate_config as validate_ode  # noqa: E402
+from train_brainode_cognition import validate_config as validate_cognition  # noqa: E402
 
 
 def main() -> int:
     registry = C.load_registry()
     assert set(registry["representations"]) == {"pca128", "spiralnet128", "adaptive128"}
-    configs = sorted((TASK_ROOT / "configs").glob("*_s42.json"))
+    cognition_path = TASK_ROOT / "configs" / "pca128_brainode_cognition_s42.json"
+    cognition = json.loads(cognition_path.read_text())
+    validate_cognition(cognition)
+    assert cognition["scientific_contract"]["pseudo_cognition_sampling"] is False
+    assert cognition["scientific_contract"]["converter_supervision"] is False
+    configs = sorted(path for path in (TASK_ROOT / "configs").glob("*_s42.json") if path != cognition_path)
     assert len(configs) == 9, len(configs)
     for path in configs:
         config = json.loads(path.read_text())
@@ -43,7 +49,10 @@ def main() -> int:
     alone = brain(time[:1], latent[:1], condition[:1])
     together = brain(time, latent, condition)[:1]
     assert torch.equal(alone, together), torch.max(torch.abs(alone - together))
-    print("CONTRACT CHECKS PASSED: 3x3 configs, latent-only ODE, direct/no-coboundary C4, singleton BrainODE.")
+    features = torch.cat((latent[:1], time[:1, None], condition[:1, None]), dim=1)
+    reference = brain._singleton(features)
+    assert torch.equal(alone, reference), torch.max(torch.abs(alone - reference))
+    print("CONTRACT CHECKS PASSED: 3x3 configs, PCA128 voxel cognition, latent-only ODE, direct/no-coboundary C4, singleton BrainODE.")
     return 0
 
 

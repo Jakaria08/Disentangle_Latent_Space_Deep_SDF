@@ -1,0 +1,2906 @@
+{
+  "name": "lean_latent_cocycle_sweep_v1",
+  "representations": [
+    "pca128",
+    "spiralnet128",
+    "adaptive128",
+    "lamm128"
+  ],
+  "variants": [
+    "A0_postact_lean4_wc005",
+    "A1_postact_lean4",
+    "B0_preact_lean4",
+    "B1_film_lean4",
+    "C0_film_lean5",
+    "C1_film_lean4t",
+    "C2_film_lean3",
+    "D0_film_lowlr",
+    "D1_film_drop",
+    "D2_film_lowlr_drop",
+    "E0_film_wide",
+    "E1_film_deep"
+  ],
+  "budget": "30 epochs x 64 optimizer steps = 1920 steps per run; validation every 32 steps",
+  "jobs": [
+    {
+      "id": "A0_postact_lean4_wc005",
+      "representation": "pca128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "postact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 0.05,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "A0_postact_lean4_wc005",
+      "representation": "spiralnet128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "postact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 0.05,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "A0_postact_lean4_wc005",
+      "representation": "adaptive128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "postact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 0.05,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "A0_postact_lean4_wc005",
+      "representation": "lamm128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "postact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 0.05,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "A1_postact_lean4",
+      "representation": "pca128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "postact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "A1_postact_lean4",
+      "representation": "spiralnet128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "postact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "A1_postact_lean4",
+      "representation": "adaptive128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "postact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "A1_postact_lean4",
+      "representation": "lamm128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "postact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "B0_preact_lean4",
+      "representation": "pca128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "preact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "B0_preact_lean4",
+      "representation": "spiralnet128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "preact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "B0_preact_lean4",
+      "representation": "adaptive128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "preact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "B0_preact_lean4",
+      "representation": "lamm128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "preact",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "B1_film_lean4",
+      "representation": "pca128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "B1_film_lean4",
+      "representation": "spiralnet128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "B1_film_lean4",
+      "representation": "adaptive128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "B1_film_lean4",
+      "representation": "lamm128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C0_film_lean5",
+      "representation": "pca128",
+      "loss_set": "lean5",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C0_film_lean5",
+      "representation": "spiralnet128",
+      "loss_set": "lean5",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C0_film_lean5",
+      "representation": "adaptive128",
+      "loss_set": "lean5",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C0_film_lean5",
+      "representation": "lamm128",
+      "loss_set": "lean5",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C1_film_lean4t",
+      "representation": "pca128",
+      "loss_set": "lean4t",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C1_film_lean4t",
+      "representation": "spiralnet128",
+      "loss_set": "lean4t",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C1_film_lean4t",
+      "representation": "adaptive128",
+      "loss_set": "lean4t",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C1_film_lean4t",
+      "representation": "lamm128",
+      "loss_set": "lean4t",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C2_film_lean3",
+      "representation": "pca128",
+      "loss_set": "lean3",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C2_film_lean3",
+      "representation": "spiralnet128",
+      "loss_set": "lean3",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C2_film_lean3",
+      "representation": "adaptive128",
+      "loss_set": "lean3",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "C2_film_lean3",
+      "representation": "lamm128",
+      "loss_set": "lean3",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D0_film_lowlr",
+      "representation": "pca128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0001,
+        "min_lr": 1e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D0_film_lowlr",
+      "representation": "spiralnet128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0001,
+        "min_lr": 1e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D0_film_lowlr",
+      "representation": "adaptive128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0001,
+        "min_lr": 1e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D0_film_lowlr",
+      "representation": "lamm128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0001,
+        "min_lr": 1e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D1_film_drop",
+      "representation": "pca128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.1,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D1_film_drop",
+      "representation": "spiralnet128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.1,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D1_film_drop",
+      "representation": "adaptive128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.1,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D1_film_drop",
+      "representation": "lamm128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.1,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D2_film_lowlr_drop",
+      "representation": "pca128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.1,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0001,
+        "min_lr": 1e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D2_film_lowlr_drop",
+      "representation": "spiralnet128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.1,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0001,
+        "min_lr": 1e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D2_film_lowlr_drop",
+      "representation": "adaptive128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.1,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0001,
+        "min_lr": 1e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "D2_film_lowlr_drop",
+      "representation": "lamm128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 2,
+        "dropout": 0.1,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0001,
+        "min_lr": 1e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "E0_film_wide",
+      "representation": "pca128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 384,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "E0_film_wide",
+      "representation": "spiralnet128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 384,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "E0_film_wide",
+      "representation": "adaptive128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 384,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "E0_film_wide",
+      "representation": "lamm128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 384,
+        "blocks": 2,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "E1_film_deep",
+      "representation": "pca128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 4,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 96,
+        "decoder_batch_size": 512,
+        "eval_batch_size": 512
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "E1_film_deep",
+      "representation": "spiralnet128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 4,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "E1_film_deep",
+      "representation": "adaptive128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 4,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    },
+    {
+      "id": "E1_film_deep",
+      "representation": "lamm128",
+      "loss_set": "lean4",
+      "model": {
+        "arch": "film",
+        "width": 256,
+        "blocks": 4,
+        "dropout": 0.0,
+        "condition_dim": 64,
+        "frequencies": 2
+      },
+      "train": {
+        "steps_per_epoch": 64,
+        "epochs": 30,
+        "eval_every_steps": 32,
+        "lr": 0.0003,
+        "min_lr": 3e-05,
+        "weight_decay": 0.0001,
+        "grad_clip": 1.0,
+        "comp_ramp_steps": 128,
+        "anatomy_ramp_steps": 192,
+        "seed": 42,
+        "batch_size": 24,
+        "decoder_batch_size": 64,
+        "eval_batch_size": 64
+      },
+      "loss": {
+        "vtx": 1.0,
+        "lat": 0.25,
+        "seq_vtx": 0.25,
+        "comp": 1.0,
+        "rate": 0.1,
+        "trend": 0.05,
+        "comp_families": [
+          "virtual",
+          "observed",
+          "inverse",
+          "rollout"
+        ]
+      },
+      "selection": {
+        "all_pair_shape_weight": 0.2,
+        "volume_tiebreak_weight": 0.001,
+        "latent_nochange_tolerance": 0.01,
+        "coordinate_nochange_tolerance": 0.01,
+        "max_relative_semigroup_defect": 0.25,
+        "max_relative_inverse_defect": 0.25,
+        "test_used_for_selection": false
+      },
+      "scientific_contract": {
+        "ode_used": false,
+        "attention_used": false,
+        "coboundary_used": false,
+        "decoder_frozen": true,
+        "decoder_in_optimizer_loss": true,
+        "identity_by_construction": true,
+        "test_loaded_during_training": false
+      }
+    }
+  ]
+}

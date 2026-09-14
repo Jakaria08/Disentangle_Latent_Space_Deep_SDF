@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "name": "R1_frozen_adni_lhipp_z128",
+  "note": "Every representation is fitted on ADNI train only and frozen. External cohorts are encoded with these exact weights, the ADNI PCA basis, and the ADNI-train mesh normalization; nothing is refitted per cohort. These are the checkpoints behind the existing longitudinal anchors (August_Version, task3_latent_flow_128_v3_lamm_latest).",
+  "latent_dim": 128,
+  "coordinate_space": "final_ply_mm",
+  "ae_source_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_spiral_ae_v1",
+  "ae_bulk_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1",
+  "lamm_source_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_lamm_ae_v1",
+  "faces_path": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/cache/adni_faces.npy",
+  "mesh_normalization": {
+    "source": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/cache/adni_train_V.npy",
+    "rule": "per-vertex-coordinate mean and std over ADNI train meshes; std floored at 1e-8"
+  },
+  "source_integrity": {
+    "faces_sha256": "ecff631955de0f35eaba4f841ae224e2920b0c46bd6e7975f9f4f2fae1f1ca1f",
+    "lamm_hierarchy": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/cache/transform_2-4-4-4.pkl",
+    "lamm_hierarchy_sha256": "bee6a9f01580db0b3bb58aea5f0a71e871cda1a020ad10e00842108a03309b7f",
+    "lamm_model_source": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_lamm_ae_v1/scripts/lamm_model.py",
+    "lamm_model_source_sha256": "4326c8d82f7a82768374ac0783d9cc7ea194b166d572387413c132b144c212b9"
+  },
+  "pinned_sources": {
+    "train_lamm": {
+      "nominal_file": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_lamm_ae_v1/scripts/train_lamm.py",
+      "git_blob": "17015113bfa4e8d08739e0a60c5c68cd9e012ff8",
+      "sha256": "a30950838cd756ff2fe4d94eb34fe291379f1f3fc03a6473350518086c69e3af",
+      "reason": "The LAMM archives were built with this builder. The working-tree train_lamm.py later gained semi-amortized training options (architecture unchanged) that old checkpoints do not carry, so the committed blob is loaded in memory instead."
+    }
+  },
+  "representations": {
+    "pca128": {
+      "kind": "pca",
+      "pca_model_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model",
+      "components_file": "components_150.npy",
+      "source_validation_rmse_mm": 0.033668,
+      "adni_reference_archive_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/representations/pca128"
+    },
+    "spiralnet128": {
+      "kind": "spiral_ae",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/studies/spiralnet_z128_v6/trials/trial_0002_val0.037215.pt",
+      "checkpoint_sha256": "7e2464a42409e8c24596b15d6f3157f0a8c4987bb4d545c22c9c7bc164082855",
+      "source_validation_rmse_mm": 0.03721479063227836,
+      "adni_reference_archive_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/representations/spiralnet128"
+    },
+    "adaptive128": {
+      "kind": "adaptive_ae",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/studies/adaptive_z128_v2/trials/trial_0002_val0.036765.pt",
+      "checkpoint_sha256": "f23ad558695ae63c2e25d7733a175071fde73c700c7bf30087985614cb30a4fc",
+      "source_validation_rmse_mm": 0.036764504071858134,
+      "adni_reference_archive_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/representations/adaptive128"
+    },
+    "lamm128": {
+      "kind": "lamm_ae",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_lamm_ae_v1/studies/E1_N3_ml_s1/best.pt",
+      "checkpoint_sha256": "8353392b0726ae5e6c4c6645fae2734a5cef9bd4a81dcebe90d64391460d55e0",
+      "source_validation_rmse_mm": 0.033833829496826645,
+      "expected_scales": [43, 86],
+      "expected_latent_split": [64, 64],
+      "latent_scale_names": ["coarse_43", "fine_86"],
+      "adni_reference_archive_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/representations/lamm128"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "method": "brainode",
+  "source": "August_Version/configs/august_<rep>_brainode.json (identical across representations). Produced the August brainode s42 anchors.",
+  "trainer_semantics": "Same trainer as plain_ode. The vector field is BrainODE's Q/K/V block with singleton (one-subject) attention. task3's models.py evaluates it vectorized, which is mathematically identical to August's per-row loop (a 1x1 softmax is exactly 1) and ~20x faster; tests/test_stage2_dynamics.py checks the equivalence.",
+  "config": {
+    "method": "brainode",
+    "model": {
+      "latent_dim": 128,
+      "attention_dim": 256,
+      "hidden_dim": 512,
+      "dropout": 0.3,
+      "attention_contract": "singleton QKV; no cross-subject attention",
+      "integrator": "fixed RK4"
+    },
+    "training": {
+      "epochs": 100,
+      "batch_size": 64,
+      "learning_rate": 0.0001,
+      "weight_decay": 0.01,
+      "scheduler_step_size": 20,
+      "scheduler_gamma": 0.5,
+      "noise_std": 0.01,
+      "scale_min": 0.98,
+      "scale_max": 1.02,
+      "integration_substeps": 4,
+      "gradient_clip_norm": 1.0,
+      "seed": 42,
+      "smoke_train_batches": 2,
+      "smoke_val_records": 8
+    },
+    "loss": {"latent_trajectory_mse_weight": 1.0},
+    "selection": {
+      "primary": "macro CN/AD first-to-last decoded transport shape ratio",
+      "test_used_for_selection": false
+    }
+  },
+  "representation_overrides": {"pca128": {}, "spiralnet128": {}, "adaptive128": {}, "lamm128": {}}
+}

@@ -1,0 +1,11 @@
+{
+  "oasis": {
+    "scans": 1064,
+    "splits": {
+      "test": 116,
+      "train": 847,
+      "val": 101
+    },
+    "subjects": 385
+  }
+}

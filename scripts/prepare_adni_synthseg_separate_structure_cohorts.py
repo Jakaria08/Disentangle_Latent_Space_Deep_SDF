@@ -55,6 +55,39 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--val-ratio", type=float, default=0.10)
     parser.add_argument("--test-ratio", type=float, default=0.10)
     parser.add_argument(
+        "--allowed-diagnoses",
+        nargs="+",
+        default=["CN", "AD"],
+        help="Baseline diagnoses the cohort may contain, or 'any' to accept whatever the QC produced.",
+    )
+    parser.add_argument(
+        "--allow-non-strict-subjects",
+        action="store_true",
+        help="Skip the strict no-MCI assertion, for cohorts outside the CN/MCI/AD axis.",
+    )
+    parser.add_argument(
+        "--restrict-diagnoses",
+        nargs="+",
+        default=None,
+        help="Keep only these baseline diagnoses in the cohort, dropping the rest before splitting.",
+    )
+    parser.add_argument(
+        "--drop-duplicate-visit-months",
+        action="store_true",
+        help="Keep the first of several scans a subject has at the same visit month (same-session repeats).",
+    )
+    parser.add_argument("--positive-diagnosis", default="AD", help="Diagnosis mapped to label_ad=1.")
+    parser.add_argument("--negative-diagnosis", default="CN", help="Diagnosis mapped to label_ad=0.")
+    parser.add_argument(
+        "--pair-exclusion-policy",
+        choices=("both_endpoints", "culprit"),
+        default="both_endpoints",
+        help=(
+            "Which scans a strong adjacent-pair failure excludes.  'culprit' blames the scan shared "
+            "by two consecutive failing pairs instead of discarding both endpoints."
+        ),
+    )
+    parser.add_argument(
         "--audit-only",
         action="store_true",
         help="Refresh only the non-destructive generated-data audit; do not rebuild cohorts.",
@@ -110,7 +143,10 @@ def split_sizes(total: int, ratios: tuple[float, float, float]) -> tuple[int, in
 def make_master_assignment(master: pd.DataFrame, seed: int, ratios: tuple[float, float, float]) -> dict[str, str]:
     subjects = master.drop_duplicates("subject_id")[["subject_id", "baseline_diagnosis"]].copy()
     assignment: dict[str, str] = {}
-    for diagnosis in ("CN", "AD"):
+    # Stratify over the diagnoses actually present, so a cohort outside the CN/AD axis
+    # (CALSNIC is Control/ALS) is still split diagnosis-balanced rather than silently dropped.
+    present = tuple(sorted(subjects["baseline_diagnosis"].dropna().astype(str).unique()))
+    for diagnosis in present:
         ids = sorted(subjects.loc[subjects["baseline_diagnosis"] == diagnosis, "subject_id"].astype(str))
         random.Random(f"{seed}:{diagnosis}").shuffle(ids)
         n_train, n_val, _n_test = split_sizes(len(ids), ratios)
@@ -203,7 +239,18 @@ def generated_data_audit(output_root: Path) -> tuple[list[dict[str, Any]], list[
     return rows, preserved
 
 
-def build_master(records: pd.DataFrame, seed: int, ratios: tuple[float, float, float]) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def build_master(
+    records: pd.DataFrame,
+    seed: int,
+    ratios: tuple[float, float, float],
+    *,
+    require_strict_no_mci: bool = True,
+    allowed_diagnoses: tuple[str, ...] | None = ("CN", "AD"),
+    positive_diagnosis: str = "AD",
+    negative_diagnosis: str = "CN",
+    drop_duplicate_visit_months: bool = False,
+    restrict_diagnoses: tuple[str, ...] | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     scans = records.drop_duplicates("scan_id", keep="first").copy()
     required = {
         "scan_id", "subject_id", "VISCODE", "visit_month", "age_years", "baseline_diagnosis", "visit_diagnosis", "strict_subject_no_mci",
@@ -211,10 +258,32 @@ def build_master(records: pd.DataFrame, seed: int, ratios: tuple[float, float, f
     missing = sorted(required.difference(scans.columns))
     if missing:
         raise KeyError(f"Input QC records lack: {missing}")
-    if not truthy(scans["strict_subject_no_mci"]).all():
+    unlabelled = scans["visit_diagnosis"].isna()
+    if unlabelled.any():
+        # A scan with no diagnosis near it cannot belong to a labelled cohort, and leaving it in
+        # breaks the stability contract (visit_diagnosis == baseline_diagnosis). OASIS has these
+        # wherever no CDR assessment falls within a year of the scan; ADNI has none.
+        print(f"  dropping {int(unlabelled.sum())} scan(s) with no visit diagnosis "
+              f"({scans.loc[unlabelled, 'subject_id'].nunique()} subject(s) affected)", flush=True)
+        scans = scans.loc[~unlabelled].copy()
+    if restrict_diagnoses:
+        # Keep only the diagnosis groups this study is about, before splitting. CALSNIC meshes
+        # every patient group, but the cohort is Control vs ALS; the rare groups (PLS, PMA,
+        # Kennedy's, ...) have too few subjects to stratify and are not part of the question.
+        before = len(scans)
+        scans = scans.loc[scans["baseline_diagnosis"].astype(str).isin(restrict_diagnoses)].copy()
+        dropped = sorted(set(records["baseline_diagnosis"].astype(str)).difference(restrict_diagnoses))
+        print(f"  restricted to {sorted(restrict_diagnoses)}: {before} -> {len(scans)} scans (dropped {dropped})",
+              flush=True)
+        if scans.empty:
+            raise ValueError(f"No scans left after restricting to {sorted(restrict_diagnoses)}")
+    if require_strict_no_mci and not truthy(scans["strict_subject_no_mci"]).all():
         raise ValueError("Strict no-MCI QC input unexpectedly contains a non-strict subject.")
-    if not scans["baseline_diagnosis"].isin(("CN", "AD")).all():
-        raise ValueError("Strict QC input unexpectedly contains a non-CN/AD baseline diagnosis.")
+    if allowed_diagnoses and not scans["baseline_diagnosis"].isin(allowed_diagnoses).all():
+        observed = sorted(set(scans["baseline_diagnosis"].dropna().astype(str)))
+        raise ValueError(
+            f"QC input contains a baseline diagnosis outside {list(allowed_diagnoses)}: observed {observed}"
+        )
     visit_sets = scans.groupby("subject_id", sort=True)["visit_diagnosis"].agg(
         lambda values: sorted({str(value) for value in values if pd.notna(value)})
     )
@@ -223,14 +292,34 @@ def build_master(records: pd.DataFrame, seed: int, ratios: tuple[float, float, f
     visits = stable.groupby("subject_id", sort=True)["scan_id"].nunique()
     master = stable.loc[stable["subject_id"].astype(str).isin(set(visits.loc[visits.ge(2)].index.astype(str)))].copy()
     master = master.sort_values(["subject_id", "visit_month", "VISCODE", "scan_id"], kind="stable").reset_index(drop=True)
-    if master.duplicated(["subject_id", "visit_month"], keep=False).any():
-        raise ValueError("Master cohort has duplicate visit months within a subject.")
+    duplicates = master.loc[master.duplicated(["subject_id", "visit_month"], keep=False)]
+    if not duplicates.empty and drop_duplicate_visit_months:
+        # A repeat scan acquired in the same session appears as two visit labels sharing one
+        # date (CALSNIC records a few). They are the same timepoint, so the later label is
+        # dropped rather than treated as longitudinal change. Reported, never silent.
+        print(
+            f"  dropping {len(duplicates) - duplicates['subject_id'].nunique()} same-date repeat scan(s): "
+            + ", ".join(sorted(duplicates["scan_id"].astype(str))[:6]),
+            flush=True,
+        )
+        master = master.drop_duplicates(["subject_id", "visit_month"], keep="first").reset_index(drop=True)
+    elif not duplicates.empty:
+        raise ValueError(
+            "Master cohort has duplicate visit months within a subject: "
+            f"{sorted(duplicates['scan_id'].astype(str))[:6]}. Pass --drop-duplicate-visit-months "
+            "if these are same-session repeat scans."
+        )
     if any((group["visit_month"].diff().dropna() <= 0).any() for _, group in master.groupby("subject_id", sort=False)):
         raise ValueError("Master cohort has non-increasing longitudinal visits.")
     assignment = make_master_assignment(master, seed, ratios)
     master["split"] = master["subject_id"].astype(str).map(assignment)
     master["diagnosis"] = master["baseline_diagnosis"]
-    master["label_ad"] = master["diagnosis"].map({"CN": 0, "AD": 1}).astype(int)
+    # Binary positive-class label.  ADNI/AIBL/OASIS use CN vs AD; CALSNIC uses Control vs ALS.
+    # Anything outside the configured pair gets -1 rather than crashing, so a cohort that
+    # legitimately carries other labels still builds (the label is metadata here, not an input).
+    master["label_ad"] = (
+        master["diagnosis"].map({negative_diagnosis: 0, positive_diagnosis: 1}).fillna(-1).astype(int)
+    )
     master["master_visit_order"] = master.groupby("subject_id").cumcount().astype(int)
     master["months_from_baseline"] = master["visit_month"] - master.groupby("subject_id")["visit_month"].transform("min")
     subject_table = (
@@ -265,6 +354,32 @@ def add_structure_qc_fields(frame: pd.DataFrame, selected_qc: pd.DataFrame) -> p
     return output
 
 
+def blamed_pair_endpoints(strong_pairs: pd.DataFrame, structure_scan_qc: pd.DataFrame, policy: str) -> dict[int, tuple[str, ...]]:
+    """Which scan of each failing pair to exclude; see --pair-exclusion-policy."""
+    rows = [
+        (index, str(row.source_scan_id), str(row.target_scan_id))
+        for index, row in enumerate(strong_pairs.itertuples(index=False))
+    ]
+    if policy == "both_endpoints":
+        return {index: (source, target) for index, source, target in rows}
+    appearances: Counter[str] = Counter()
+    for _index, source, target in rows:
+        appearances[source] += 1
+        appearances[target] += 1
+    reviewed = set(
+        structure_scan_qc.loc[truthy(structure_scan_qc["review_mesh_qc_flag"]), "scan_id"].astype(str)
+    )
+    blamed: dict[int, tuple[str, ...]] = {}
+    for index, source, target in rows:
+        shared = [scan for scan in (source, target) if appearances[scan] > 1]
+        if shared:
+            blamed[index] = tuple(dict.fromkeys(shared))
+            continue
+        suspect = [scan for scan in (source, target) if scan in reviewed]
+        blamed[index] = (suspect[0],) if len(suspect) == 1 else (target,)
+    return blamed
+
+
 def structure_cohort(
     *,
     structure: str,
@@ -272,6 +387,7 @@ def structure_cohort(
     scan_qc: pd.DataFrame,
     pair_qc: pd.DataFrame,
     source_root: Path,
+    pair_exclusion_policy: str = "both_endpoints",
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
     spec = STRUCTURES[structure]
     candidate_ids = set(master["scan_id"].astype(str))
@@ -288,9 +404,10 @@ def structure_cohort(
         (pair_qc["structure"] == structure) & pair_qc["subject_id"].astype(str).isin(candidate_subjects)
     ].copy()
     strong = pairs.loc[truthy(pairs["strong_pair_qc_flag"])].copy()
+    blamed = blamed_pair_endpoints(strong, q, pair_exclusion_policy)
     pair_rows: list[dict[str, str]] = []
-    for row in strong.itertuples(index=False):
-        for scan_id in (str(row.source_scan_id), str(row.target_scan_id)):
+    for position, _row in enumerate(strong.itertuples(index=False)):
+        for scan_id in blamed[position]:
             if scan_id in candidate_ids:
                 pair_rows.append({"scan_id": scan_id, "reason": "strong_adjacent_shape_or_extreme_volume_failure"})
     pair_exclusions = pd.DataFrame(pair_rows, columns=["scan_id", "reason"])
@@ -326,10 +443,10 @@ def structure_cohort(
     excluded = excluded.sort_values(["subject_id", "visit_month", "scan_id"], kind="stable").reset_index(drop=True)
 
     selected_q = q.loc[q["scan_id"].astype(str).isin(set(final["scan_id"].astype(str)))].copy()
-    selected_pair_endpoints = set()
-    for row in strong.itertuples(index=False):
-        selected_pair_endpoints.add(str(row.source_scan_id))
-        selected_pair_endpoints.add(str(row.target_scan_id))
+    # Check the scans this policy actually blames, not every endpoint of a failing pair.
+    # Under 'both_endpoints' those are the same set, so ADNI's invariant is unchanged; under
+    # 'culprit' the surviving endpoint is deliberately kept and must not be flagged here.
+    selected_pair_endpoints = {scan for scans in blamed.values() for scan in scans}
     missing_paths = [path for path in final["mesh_path_mm"].astype(str) if not Path(path).is_file()]
     topology_hashes = sorted(selected_q["correspondence_topology_hash"].dropna().astype(str).unique())
     vertex_counts = sorted(pd.to_numeric(selected_q["correspondence_vertices_actual"], errors="coerce").dropna().unique())
@@ -457,7 +574,18 @@ def main() -> int:
     )
 
     print("[2/4] Building strict no-MCI, diagnosis-stable master subject split…", flush=True)
-    master, subject_table, direct_changers = build_master(records, int(args.seed), ratios)
+    allowed = None if args.allowed_diagnoses == ["any"] else tuple(args.allowed_diagnoses)
+    master, subject_table, direct_changers = build_master(
+        records,
+        int(args.seed),
+        ratios,
+        require_strict_no_mci=not args.allow_non_strict_subjects,
+        allowed_diagnoses=allowed,
+        positive_diagnosis=args.positive_diagnosis,
+        negative_diagnosis=args.negative_diagnosis,
+        drop_duplicate_visit_months=args.drop_duplicate_visit_months,
+        restrict_diagnoses=tuple(args.restrict_diagnoses) if args.restrict_diagnoses else None,
+    )
     master_manifest = master_root / "metadata" / "master_strict_no_mci_stable_min2_manifest.csv"
     master_fields = [
         "scan_id", "subject_id", "split", "diagnosis", "label_ad", "baseline_diagnosis", "visit_diagnosis", "VISCODE",
@@ -506,7 +634,12 @@ def main() -> int:
         spec = STRUCTURES[structure]
         print(f"[{step}/4] Building and validating {structure}-only cohort…", flush=True)
         final, excluded, summary = structure_cohort(
-            structure=structure, master=master, scan_qc=scan_qc, pair_qc=pair_qc, source_root=source_root
+            structure=structure,
+            master=master,
+            scan_qc=scan_qc,
+            pair_qc=pair_qc,
+            source_root=source_root,
+            pair_exclusion_policy=args.pair_exclusion_policy,
         )
         target = output_root / spec["directory"]
         manifest = target / "metadata" / f"{spec['short_name']}_qc_keep_manifest.csv"

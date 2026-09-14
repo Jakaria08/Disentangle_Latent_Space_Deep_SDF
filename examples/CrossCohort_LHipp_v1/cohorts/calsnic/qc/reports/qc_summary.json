@@ -1,0 +1,141 @@
+{
+  "source_meshes_modified": false,
+  "source_root": "/mnt/bulk10tb/CALSNIC_Long/synthseg_minimal_correspondence/full",
+  "structures": [
+    "left_hippocampus",
+    "left_lateral_ventricle"
+  ],
+  "policy": {
+    "cohort_filter": "all",
+    "keep_diagnosis_changers": false,
+    "pair_exclusion_policy": "culprit",
+    "multi_component_volume_tolerance_pct": 1.0,
+    "pair_outlier_method": "stratified_mad",
+    "pair_outlier_mad_multiplier": 8.0,
+    "clinical": "baseline CN/AD and strict_subject_no_mci from the source manifest; direct CN<->AD changers excluded",
+    "longitudinal": "at least two visits before and after automatic QC",
+    "automatic_mesh_exclusions": "hard final smooth/correspondence geometry failure in either structure, or endpoint of a strong adjacent correspondence-shape failure",
+    "not_automatically_excluded": "distributional volume/compactness outliers and ordinary trajectory warnings; retained in separate warning manifests because they can be biological"
+  },
+  "counts": {
+    "strict_no_mci_input": {
+      "scans": 1007,
+      "subjects": 461,
+      "scans_by_baseline_group": {
+        "ALS": 455,
+        "ALS-FTD": 2,
+        "Control": 478,
+        "FTD": 2,
+        "Kennedy's": 9,
+        "PLS": 31,
+        "PMA": 16,
+        "Patient_unspecified": 2,
+        "other": 9,
+        "spinal cerebellar ataxia": 3
+      },
+      "subjects_by_baseline_group": {
+        "ALS": 222,
+        "ALS-FTD": 1,
+        "Control": 206,
+        "FTD": 1,
+        "Kennedy's": 5,
+        "PLS": 12,
+        "PMA": 6,
+        "Patient_unspecified": 2,
+        "other": 5,
+        "spinal cerebellar ataxia": 1
+      }
+    },
+    "after_direct_CN_AD_change_exclusion": {
+      "scans": 1007,
+      "subjects": 461,
+      "scans_by_baseline_group": {
+        "ALS": 455,
+        "ALS-FTD": 2,
+        "Control": 478,
+        "FTD": 2,
+        "Kennedy's": 9,
+        "PLS": 31,
+        "PMA": 16,
+        "Patient_unspecified": 2,
+        "other": 9,
+        "spinal cerebellar ataxia": 3
+      },
+      "subjects_by_baseline_group": {
+        "ALS": 222,
+        "ALS-FTD": 1,
+        "Control": 206,
+        "FTD": 1,
+        "Kennedy's": 5,
+        "PLS": 12,
+        "PMA": 6,
+        "Patient_unspecified": 2,
+        "other": 5,
+        "spinal cerebellar ataxia": 1
+      }
+    },
+    "longitudinal_before_mesh_qc": {
+      "scans": 874,
+      "subjects": 328,
+      "scans_by_baseline_group": {
+        "ALS": 377,
+        "ALS-FTD": 2,
+        "Control": 431,
+        "FTD": 2,
+        "Kennedy's": 7,
+        "PLS": 30,
+        "PMA": 16,
+        "other": 6,
+        "spinal cerebellar ataxia": 3
+      },
+      "subjects_by_baseline_group": {
+        "ALS": 144,
+        "ALS-FTD": 1,
+        "Control": 159,
+        "FTD": 1,
+        "Kennedy's": 3,
+        "PLS": 11,
+        "PMA": 6,
+        "other": 2,
+        "spinal cerebellar ataxia": 1
+      }
+    },
+    "recommended_keep": {
+      "scans": 865,
+      "subjects": 326,
+      "scans_by_baseline_group": {
+        "ALS": 373,
+        "ALS-FTD": 2,
+        "Control": 427,
+        "FTD": 2,
+        "Kennedy's": 7,
+        "PLS": 29,
+        "PMA": 16,
+        "other": 6,
+        "spinal cerebellar ataxia": 3
+      },
+      "subjects_by_baseline_group": {
+        "ALS": 143,
+        "ALS-FTD": 1,
+        "Control": 158,
+        "FTD": 1,
+        "Kennedy's": 3,
+        "PLS": 11,
+        "PMA": 6,
+        "other": 2,
+        "spinal cerebellar ataxia": 1
+      }
+    },
+    "direct_CN_AD_changer_subjects": 0,
+    "single_visit_scans_before_mesh_qc": 133,
+    "automatic_scan_exclusions": 9,
+    "subjects_lost_after_mesh_qc": 2,
+    "kept_scan_warnings": 350,
+    "kept_pair_warnings": 291
+  },
+  "files": {
+    "recommended_manifest": "/home/jakaria/INR/Deep3DComp/examples/CrossCohort_LHipp_v1/cohorts/calsnic/qc/manifests/strict_no_mci_longitudinal_keep_conservative.csv",
+    "automatic_exclusions": "/home/jakaria/INR/Deep3DComp/examples/CrossCohort_LHipp_v1/cohorts/calsnic/qc/manifests/auto_excluded_scans_conservative.csv",
+    "mesh_qc_summary": "/home/jakaria/INR/Deep3DComp/examples/CrossCohort_LHipp_v1/cohorts/calsnic/qc/mesh_qc/qc_summary.json"
+  }
+}

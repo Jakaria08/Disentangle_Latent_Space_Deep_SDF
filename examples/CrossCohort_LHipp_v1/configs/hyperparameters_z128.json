@@ -1,0 +1,100 @@
+{
+  "note": "Frozen ADNI-searched hyperparameters, reused verbatim for every cohort and protocol. Re-running Optuna per cohort would cost ~20 h per study and would make cohorts incomparable, so the architecture is held fixed and only the weights are retrained.",
+  "latent": 128,
+  "reference_val_vertex_rmse_mm": {
+    "pca_128": 0.033668,
+    "spiralnet_z128": 0.036784,
+    "adaptive_z128": 0.037237,
+    "lamm_z128": 0.037685,
+    "meshmae_tuned": 0.037867
+  },
+  "reference_test_vertex_rmse_mm": {
+    "pca_128": 0.03438
+  },
+  "reference_checkpoints": {
+    "spiralnet_z128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/best/spiralnet_z128_v7/best_model.pt",
+    "adaptive_z128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/best/adaptive_z128_v7/best_model.pt",
+    "lamm_z128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_lamm_ae_v1/studies/E1_N1_ml_s1/best.pt"
+  },
+  "source": {
+    "spiralnet_z128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/best/spiralnet_z128_v7/best_summary.json",
+    "adaptive_z128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/best/adaptive_z128_v7/best_summary.json",
+    "lamm_z128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_lamm_ae_v1/studies/E1_N1_ml_s1/summary.json"
+  },
+  "models": {
+    "spiralnet_z128": {
+      "trainer": "spiral",
+      "conv_type": "spiral",
+      "latent_channels": 128,
+      "base_channels": 96,
+      "ds_factors": [2, 4, 4],
+      "seq_length": 17,
+      "dilation": 2,
+      "dropout": 0.05,
+      "adaptive_levels": 0,
+      "dynamic_seq_frac": 0.0,
+      "batch_size": 16,
+      "epochs": 400,
+      "lr": 0.00023035207977537586,
+      "lr_decay": 0.9116161230466987,
+      "decay_step": 6,
+      "weight_decay": 0.00018340316433865296,
+      "noise_std": 0.06,
+      "scheduler": "step"
+    },
+    "adaptive_z128": {
+      "trainer": "spiral",
+      "conv_type": "adaptive",
+      "latent_channels": 128,
+      "base_channels": 96,
+      "ds_factors": [2, 4, 4],
+      "seq_length": 13,
+      "dilation": 2,
+      "dropout": 0.1,
+      "adaptive_levels": 1,
+      "dynamic_seq_frac": 0.5431357742843035,
+      "batch_size": 16,
+      "epochs": 400,
+      "lr": 0.00018278378569236954,
+      "lr_decay": 0.9258173117763585,
+      "decay_step": 8,
+      "weight_decay": 7.011680125038927e-05,
+      "noise_std": 0.06,
+      "scheduler": "step"
+    },
+    "lamm_z128": {
+      "trainer": "lamm",
+      "latent": 128,
+      "backbone": "mlpmixer",
+      "dim": 256,
+      "dim_head": 64,
+      "heads": 4,
+      "enc_depth": 8,
+      "dec_depth": 6,
+      "dropout": 0.05,
+      "scales": "43,86",
+      "patch_level": 3,
+      "region_mode": "raw",
+      "latent_mode": "id_token",
+      "norm_mode": "std",
+      "residual": true,
+      "loss": "l1",
+      "huber_delta": 0.1,
+      "batch_size": 16,
+      "epochs": 250,
+      "min_epochs": 100,
+      "patience": 60,
+      "warmup_epochs": 10,
+      "lr": 0.0011613991692409735,
+      "lr_final": 1e-06,
+      "weight_decay": 2.2654123578888588e-05,
+      "ema_decay": 0.999,
+      "mixup_alpha": 0.8,
+      "mixup_prob": 0.5,
+      "time_budget": 2400.0
+    }
+  },
+  "pca_components": [32, 64, 100, 128, 150, 256],
+  "primary_k": 128,
+  "seeds": [1]
+}

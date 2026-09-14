@@ -1,0 +1,80 @@
+{
+  "name": "pca128_brainode_cognition_s42",
+  "representation": "pca128",
+  "method": "brainode_cognition",
+  "anatomy": "left_hippocampus",
+  "ode_model": {
+    "latent_dim": 128,
+    "attention_dim": 256,
+    "hidden_dim": 512,
+    "dropout": 0.05,
+    "attention_contract": "singleton QKV; no cross-subject attention",
+    "integrator": "fixed RK4"
+  },
+  "cognition_estimator": {
+    "input": "solid_voxelized_shape_only",
+    "output_dim": 1,
+    "output_semantics": "continuous AD-like anatomical probability in [0,1]",
+    "uses_age": false,
+    "uses_latent": false,
+    "voxel_resolution": 32,
+    "padding_voxels": 2,
+    "base_channels": 12,
+    "dropout": 0.15,
+    "epochs": 40,
+    "batch_size": 32,
+    "evaluation_batch_size": 64,
+    "learning_rate": 0.0002,
+    "minimum_learning_rate": 0.000005,
+    "weight_decay": 0.0001,
+    "gradient_clip_norm": 1.0,
+    "scheduler_patience": 3,
+    "early_stopping_patience": 10,
+    "calibration": "single temperature fitted on validation logits only"
+  },
+  "training": {
+    "run_name": "pca128_brainode_cognition_s42",
+    "ode_epochs": 100,
+    "ode_batch_size": 64,
+    "ode_learning_rate": 0.0005,
+    "ode_weight_decay": 0.01,
+    "ode_scheduler_step_size": 20,
+    "ode_scheduler_gamma": 0.5,
+    "noise_std": 0.01,
+    "scale_min": 0.98,
+    "scale_max": 1.02,
+    "integration_substeps": 4,
+    "gradient_clip_norm": 1.0,
+    "seed": 42,
+    "smoke_cognition_batches": 2,
+    "smoke_ode_batches": 2,
+    "smoke_val_records": 8
+  },
+  "loss": {
+    "ode_latent_trajectory_mse_weight": 1.0,
+    "cognition_bce_weight": 1.0
+  },
+  "inference": {
+    "feedback": "decode PCA128 latent to mm mesh, solid-voxelize, estimate c, hold c fixed for one RK4 substep, repeat",
+    "fixed_label_ablation": true,
+    "condition_injectivity_ablation": true,
+    "n_shot": [1, 2, 4]
+  },
+  "comparison": {
+    "primary": "PCA128 direct C4 cocycle",
+    "cocycle_run": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/pca128/direct_c4/pca128_direct_c4_s42",
+    "additional": ["fixed-label PCA128 BrainODE", "no-change"]
+  },
+  "scientific_contract": {
+    "mci_used": false,
+    "converter_supervision": false,
+    "pseudo_cognition_sampling": false,
+    "cn_to_ad_conversion_claim": false,
+    "cognition_interpretation": "cross-sectional AD-like anatomy score, not measured cognition and not conversion probability",
+    "ode_training_condition": "fixed subject diagnosis CN=0/AD=1",
+    "estimator_feedback_used_during_training": false,
+    "estimator_feedback_used_during_inference": true,
+    "test_used_for_selection": false,
+    "source_meshes_modified": false
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "method": "latent_ode",
+  "overrides": {
+    "model.encoder_hidden": 256,
+    "model.observation_std": 0.3,
+    "model.z0_dim": 128,
+    "training.kl_anneal_epochs": 5,
+    "training.learning_rate": 0.0003
+  },
+  "representation": "pca128",
+  "seed": 42,
+  "selected_trial": "lode_trial_02",
+  "selection": "lowest ADNI validation first-to-last selection score over the stage 2 search; test never used",
+  "validation_selection_score": 1.5531533012001022,
+  "view": "p0_internal_adni",
+  "written": "2026-09-13 00:27:59"
+}

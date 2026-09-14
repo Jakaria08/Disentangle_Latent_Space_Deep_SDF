@@ -43,6 +43,9 @@ REF = {"pca128_val": 0.033668, "spiralnet128_val": 0.036784,
 def parse_args():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--run-name", default="lamm_z128")
+    p.add_argument("--out-root", default=str(OUT),
+                   help="output root; set by the metric-aligned experiments so their results "
+                        "land in a separate tree and never overwrite the LAMM studies.")
     p.add_argument("--gpu", type=int, default=1)
     p.add_argument("--latent", type=int, default=128)
     p.add_argument("--backbone", choices=("transformer", "mlpmixer"), default="transformer")
@@ -90,6 +93,15 @@ def parse_args():
                         "actually present -- 16%% of the effective sample size discarded by an "
                         "accidental choice. It also matches the evaluation distribution, since "
                         "val and test are subject-clustered (61 subjects each).")
+    p.add_argument("--semi-amortized", type=int, default=0,
+                   help="K inner gradient steps refining z before a SECOND decoder loss. "
+                        "PCA's encoder is the exact least-squares argmin for its decoder, so "
+                        "its amortisation gap is zero; LAMM's learned encoder was measured at "
+                        "1.09%% val / 1.08%% test below its own decoder's optimum. Training "
+                        "the decoder on refined codes is the standard semi-amortised fix.")
+    p.add_argument("--sa-lr", type=float, default=3e-3, help="inner step size for z")
+    p.add_argument("--sa-weight", type=float, default=1.0,
+                   help="weight on the refined-code loss term")
     p.add_argument("--norm-mode", choices=("std", "center"), default="std",
                    help="'std' = (x-mu)/sigma, this project's convention. 'center' = x-mu "
                         "only, which is what LAMM's paper does. sigma spans 0.1223-1.2365 mm "
@@ -198,7 +210,8 @@ def build(args, device):
             "deep_sup": args.deep_sup, "ema_decay": args.ema_decay,
             "mixup_alpha": args.mixup_alpha, "mixup_prob": args.mixup_prob,
             "loss": args.loss, "subject_weight": bool(args.subject_weight),
-            "norm_mode": args.norm_mode,
+            "norm_mode": args.norm_mode, "semi_amortized": int(args.semi_amortized),
+            "sa_lr": args.sa_lr, "sa_weight": args.sa_weight,
             "metric_weighted_loss": bool(args.metric_weighted_loss),
             "region_width": int(mmask.shape[1]),
             "verts_per_region_mean": float(mmask.sum(1).float().mean()),
@@ -245,8 +258,9 @@ def main():
     a = parse_args()
     device = torch.device("cuda", a.gpu); torch.cuda.set_device(device)
     torch.manual_seed(a.seed); np.random.seed(a.seed)
-    run = OUT / "studies" / a.run_name; run.mkdir(parents=True, exist_ok=True)
-    log_fp = OUT / "logs" / f"{a.run_name}.log"; log_fp.parent.mkdir(parents=True, exist_ok=True)
+    out = sc.require_bulk_path(a.out_root, "lamm output root")
+    run = out / "studies" / a.run_name; run.mkdir(parents=True, exist_ok=True)
+    log_fp = out / "logs" / f"{a.run_name}.log"; log_fp.parent.mkdir(parents=True, exist_ok=True)
     lg = open(log_fp, "a", buffering=1)
     def log(m): print(m, flush=True); lg.write(m + "\n")
 
@@ -306,7 +320,20 @@ def main():
                 if wb is not None:            # the mixed sample inherits a mixed weight
                     wb = lam * wb + (1.0 - lam) * wb[p2]
             opt.zero_grad(set_to_none=True)
-            if a.deep_sup > 0:
+            if a.semi_amortized > 0:
+                # Amortised term trains encoder+decoder; refined term trains the DECODER on
+                # codes it will actually be given at test time. z is detached between inner
+                # steps, so no second-order graph is built -- cheap, and the encoder still
+                # gets its gradient from the first term.
+                z = model.encode(b)
+                loss = recon_loss(model.decode(z), b, a, wb, sigma)
+                zr = z.detach().clone().requires_grad_(True)
+                for _ in range(a.semi_amortized):
+                    li = recon_loss(model.decode(zr), b, a, wb, sigma)
+                    gz, = torch.autograd.grad(li, zr)
+                    zr = (zr - a.sa_lr * gz).detach().requires_grad_(True)
+                loss = loss + a.sa_weight * recon_loss(model.decode(zr.detach()), b, a, wb, sigma)
+            elif a.deep_sup > 0:
                 outs = model(b, all_layers=True)
                 loss = recon_loss(outs[-1], b, a, wb, sigma)
                 if len(outs) > 1:

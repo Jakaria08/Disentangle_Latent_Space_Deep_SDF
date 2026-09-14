@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "purpose": "Ablation A1 (PLAN Part 3): the August exact-coboundary and volume-coboundary-v2 cocycles, run unchanged on the stage-1 ADNI view and trained to completion (early stopping disabled). Files are verified by sha256 before import.",
+  "commit": "45c74ea4c3236422d6ad865f081752e25fc61f2f",
+  "core_compatibility": "The coboundary modules import `common` and `c4_objective` by name. In this experiment those resolve to task3_latent_flow_128_v1, a strict superset of August_Version/scripts (adds registry flexibility, LAMM loading, row indices, and the vectorized singleton BrainODE proven identical in stage 2).",
+  "files": {
+    "coboundary_model": {
+      "path": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version/coboundary_v1/scripts/coboundary_model.py",
+      "git_blob": "a2137c83ffe58f988dfdb2496ab3e3bc864ac72c",
+      "sha256": "9ae830127c300b0717ebe925614162d30abc8abff80a3f99d8e2820f2f04898b"
+    },
+    "coboundary_objective": {
+      "path": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version/coboundary_v1/scripts/coboundary_objective.py",
+      "git_blob": "fd3df844e25866f1a5c92ffe6cc7d484c1cecca4",
+      "sha256": "66508ba19edf57b9c8075608873eceacff754795f20f7c7faf44065e7f3ae9c2"
+    },
+    "train_coboundary": {
+      "path": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version/coboundary_v1/scripts/train_coboundary.py",
+      "git_blob": "2d65d96d23f3bda1154a8e20476238cfa1506490",
+      "sha256": "59941a29c56686c7a98717e29641395cc696db546e85dd85f30650c6868f1fb0"
+    },
+    "volume_coboundary_model": {
+      "path": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version/coboundary_volume_v2/scripts/volume_coboundary_model.py",
+      "git_blob": "75d19a0bb2c977df2e2b75bb9a6391a8eb52f931",
+      "sha256": "cea156191c6f58d9499151a90eb10492a76da907f8e4003684f80241763d855a"
+    },
+    "volume_objective": {
+      "path": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version/coboundary_volume_v2/scripts/volume_objective.py",
+      "git_blob": "551c7f8d7842a3d967865f113b76d61284402aab",
+      "sha256": "0914a8c5a2f46eda21f0622c78d7794ba75c1e68ccda22715d3873e0e6fa4a64"
+    },
+    "train_volume_coboundary": {
+      "path": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version/coboundary_volume_v2/scripts/train_volume_coboundary.py",
+      "git_blob": "7312442ca0148264a194f16fcfd0b9e9b9c61ac1",
+      "sha256": "82605372a380321707624a8544c7f7297d04c4b415233ab95bd0e88fae485a89"
+    },
+    "config_exact_pca128": {
+      "path": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version/coboundary_v1/configs/pca128_exact_coboundary_c4_s42.json",
+      "git_blob": "b1f1f7fc01d594e509a99f4b9458d62d5f3daa63",
+      "sha256": "5ea117daf8712474f0106d6c4f10367cdf80460db3b7caa56612d7707fb34dea"
+    },
+    "config_volume_v2_pca128": {
+      "path": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version/coboundary_volume_v2/configs/pca128_volume_exact_coboundary_v2_s42.json",
+      "git_blob": "318cab51c6d41a6932ba22f7594c73d7a56047af",
+      "sha256": "98bcbf3522b7f59b8f9430f997dda3b5846643372a5a170b4b7ba98ce6c54d77"
+    },
+    "config_exact_spiralnet128": {
+      "path": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version/coboundary_v1/configs/spiralnet128_exact_coboundary_c4_s42.json",
+      "git_blob": "0efa383f0183cbcb899624928b197307b44c8711",
+      "sha256": "bb19220830f82c711242e138b90c2df894350b336e6d7d21f2f4a699e66b15d2"
+    },
+    "config_volume_v2_spiralnet128": {
+      "path": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version/coboundary_volume_v2/configs/spiralnet128_volume_exact_coboundary_v2_s42.json",
+      "git_blob": "b1050601c56ba61df64d189de9c1c603abc817ce",
+      "sha256": "3ac5ec991087a34800aacbfbd610e9e822881671911e09d19b39795da6b14923"
+    }
+  }
+}

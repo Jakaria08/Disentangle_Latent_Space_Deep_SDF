@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only validation of data, layout, identity, condition, and latent-width contracts."""
+"""Read-only validation of data, layout, identity, conditioning, and state contracts."""
 
 from __future__ import annotations
 
@@ -30,10 +30,20 @@ def check_model(config: dict, device: torch.device) -> dict:
     label = split.labels[:1]
     model.eval()
     with torch.no_grad():
-        latent, condition = model.encode(vertices, age, age, label)
-        if latent.shape != (1, int(config["model"]["latent_dim"])):
-            raise AssertionError(f"Wrong latent shape: {tuple(latent.shape)}")
-        if not torch.isfinite(latent).all() or not torch.isfinite(condition).all():
+        representation, condition = model.encode(vertices, age, age, label)
+        if model.bottleneck_mode == "global":
+            expected_shape = (1, int(config["model"]["latent_dim"]))
+        else:
+            expected_shape = (
+                1,
+                sum(int(value) for value in config["model"]["region_scales"]),
+                int(config["model"]["token_dim"]),
+            )
+        if representation.shape != expected_shape:
+            raise AssertionError(
+                f"Wrong internal representation shape: {tuple(representation.shape)}"
+            )
+        if not torch.isfinite(representation).all() or not torch.isfinite(condition).all():
             raise AssertionError("Non-finite encoder output")
         identity = model.transport(vertices, age, age, label)
         identity_error = float((identity - vertices).abs().max().cpu())
@@ -55,7 +65,8 @@ def check_model(config: dict, device: torch.device) -> dict:
             raise AssertionError("Diagnosis does not affect surface velocity")
     output = {
         "name": config["name"],
-        "latent_shape": list(latent.shape),
+        "bottleneck_mode": model.bottleneck_mode,
+        "internal_representation_shape": list(representation.shape),
         "latent_split": model.latent_split,
         "parameters": C.parameter_count(model),
         "parameter_breakdown": model.parameter_breakdown(),
@@ -79,9 +90,9 @@ def main() -> int:
     D.verify_split_isolation(splits)
     models = []
     for name in (
-        "lamm_direct_c4_z128_s42.json",
-        "lamm_direct_c4_z256_equal_s42.json",
-        "lamm_direct_c4_z256_fine_s42.json",
+        "lamm_global_c4_z256_s42.json",
+        "lamm_global_c4_z384_s42.json",
+        "lamm_token_c4_s42.json",
     ):
         config = C.read_json(C.TASK_ROOT / "configs" / name)
         validate_config(config)
@@ -101,4 +112,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

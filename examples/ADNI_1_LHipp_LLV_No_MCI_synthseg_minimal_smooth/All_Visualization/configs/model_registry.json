@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "experiment": "all_cocycle_methods_analysis_v1",
+  "output_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/All_Visualization_v1",
+  "worker_python": "/home/jakaria/anaconda3/envs/pytorch_geo/bin/python",
+  "notebook_python": "/home/jakaria/anaconda3/envs/inr_sdf/bin/python",
+  "training_age_support": {
+    "maximum_years": 96.0,
+    "ood_target_years": 105.0
+  },
+  "cohort": {
+    "structure": "left_hippocampus",
+    "diagnoses": ["CN", "AD"],
+    "exclude_mci": true,
+    "fixed_topology_vertices": 2746,
+    "master_manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv"
+  },
+  "existing_caches": {
+    "all_flow": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task4_all_flow_visual_analysis_v1/cache_v1",
+    "age_velocity": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task4_all_flow_visual_analysis_v1/age_velocity_all_methods_v1",
+    "surface_velocity": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task4_all_flow_visual_analysis_v1/derived_cache/instantaneous_surface_velocity_v1",
+    "velocity_reference": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task4_velocity_reference_audit_v2/generated_cache",
+    "corrective_pca": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_pca_corrective_cocycle_128_v1/comparisons",
+    "direct_lamm_validation": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/All_Visualization_v1/central_val",
+    "direct_lamm_test": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/All_Visualization_v1/central_test"
+  },
+  "latent_cocycle_methods": [
+    {
+      "key": "latent_pca",
+      "label": "Latent PCA",
+      "representation": "pca128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/pca128/direct_c4/pca128_direct_c4_s42"
+    },
+    {
+      "key": "latent_pca_corrective",
+      "label": "Latent PCA + corrective decoder",
+      "representation": "pca_corrective128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_pca_corrective_cocycle_128_v1/training/pca_corrective128/direct_c4/pca_corrective128_direct_c4_s42"
+    },
+    {
+      "key": "latent_spiral",
+      "label": "Latent Spiral",
+      "representation": "spiralnet128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/spiralnet128/direct_c4/spiralnet128_direct_c4_s42"
+    },
+    {
+      "key": "latent_adaptive",
+      "label": "Latent Adaptive",
+      "representation": "adaptive128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/adaptive128/direct_c4/adaptive128_direct_c4_s42"
+    },
+    {
+      "key": "latent_lamm_n3",
+      "label": "Latent LAMM ensemble",
+      "representation": "lamm128_n3",
+      "run_dirs": [
+        "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/training/lamm128/direct_c4/lamm128_direct_c4_s42",
+        "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/training/lamm128_n3_s2/direct_c4/lamm128_n3_s2_direct_c4_s42",
+        "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/training/lamm128_n3_s3/direct_c4/lamm128_n3_s3_direct_c4_s42"
+      ]
+    },
+    {
+      "key": "latent_inr",
+      "label": "Latent INR",
+      "representation": "inr256",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_inr_latent_flow_256_v1/training/inr256/direct_c4/inr256_direct_c4_s42"
+    }
+  ],
+  "pca_ode_baselines": {
+    "task_dir": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/August_Version",
+    "representation": "pca128",
+    "surface_split": "test",
+    "surface_output": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/All_Visualization_v1/pca_ode_surface_test",
+    "surface_points": 10000,
+    "velocity_split": "val",
+    "velocity_reference": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task5_direct_mesh_cocycle_spiral_unet_v1/cache/val_surfaces.npz",
+    "velocity_output": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/All_Visualization_v1/pca_ode_velocity_val",
+    "methods": {
+      "pca_plain_ode": {
+        "label": "PCA plain ODE",
+        "method": "plain_ode",
+        "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/training/pca128/plain_ode/pca128_plain_ode_s42"
+      },
+      "pca_brainode": {
+        "label": "PCA BrainODE",
+        "method": "brainode",
+        "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/August_Version/training/pca128/brainode/pca128_brainode_s42"
+      }
+    }
+  },
+  "direct_mesh_methods": [
+    {
+      "key": "mesh_spiral",
+      "label": "Direct Spiral",
+      "family": "spiral",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task5_direct_mesh_cocycle_spiral_unet_v1/runs/optuna_spiral_velocity_main_v2_trial_0013/checkpoints/best.pt"
+    },
+    {
+      "key": "mesh_adaptive",
+      "label": "Direct Adaptive",
+      "family": "adaptive_spiral",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task5_direct_mesh_cocycle_spiral_unet_v1/runs/optuna_adaptive_velocity_main_v2_trial_0014/checkpoints/best.pt"
+    },
+    {
+      "key": "lamm_global_256",
+      "label": "Direct LAMM global-256",
+      "family": "lamm",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/runs/direct_mesh_lamm_global_c4_z256_s42/checkpoints/best.pt"
+    },
+    {
+      "key": "lamm_global_384",
+      "label": "Direct LAMM global-384",
+      "family": "lamm",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/runs/direct_mesh_lamm_global_c4_z384_s42/checkpoints/best.pt"
+    },
+    {
+      "key": "lamm_regional_tokens",
+      "label": "Direct LAMM regional tokens",
+      "family": "lamm",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/runs/direct_mesh_lamm_token_c4_s42/checkpoints/best.pt"
+    }
+  ],
+  "inr_representations": [
+    {
+      "key": "inr_128",
+      "label": "INR-128",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippo_exact_z128_eikonal",
+      "latent_export": "latent_exports/epoch_2500"
+    },
+    {
+      "key": "inr_256",
+      "label": "INR-256",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/synthseg_qc_v1/left_hippocampus/inr_multires_single_field_v1/runs/hippo_exact_z256_eikonal_warm",
+      "latent_export": "latent_exports/best_mesh"
+    }
+  ],
+  "brainode": {
+    "label": "BrainODE",
+    "run_dir": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/brainode_paper_core/training/brainode_paper_core_raw_pca150_s42",
+    "checkpoint": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/brainode_paper_core/training/brainode_paper_core_raw_pca150_s42/checkpoints/best.pt",
+    "comparison_cache": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/longitudinal_model_validation/pca_cocycle_flow_vs_paper_core_brainode/prepared_cache/hippocampus",
+    "inference_batch_size": 1
+  },
+  "display": {
+    "primary_age_bin_width_years": 5.0,
+    "velocity_epsilon_years": [0.01, 0.05, 0.1],
+    "bootstrap_samples": 2000,
+    "surface_points": 10000,
+    "plot_dpi": 180,
+    "descriptions_outside_axes": true
+  }
+}

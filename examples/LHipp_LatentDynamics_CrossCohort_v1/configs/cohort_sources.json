@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "structure": "left_hippocampus",
+  "topology": {
+    "vertex_count": 2746,
+    "face_count": 5488,
+    "correspondence_topology_hash": "a8485554b4637ef929b5b05da9e34e10cdb7997a8e861aa6558c3847d7fd9d57"
+  },
+  "split_ratios": {"train": 0.8, "val": 0.1, "test": 0.1},
+  "seed": 42,
+  "canonical_labels": {
+    "note": "Dynamics models see a binary condition. Label 1 is the cohort's disease class (AD, or ALS for CALSNIC); label 0 is its control class. August-format archives store the canonical names CN/AD for labels 0/1 and keep the source names in visit_diagnoses_source.",
+    "negative": "CN",
+    "positive": "AD"
+  },
+  "cohorts": {
+    "adni": {
+      "role": "reference",
+      "strict_manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+      "mesh_root": "/home/jakaria/ADNI/ADNI_1_GO_Large/synthseg_minimal_correspondence/full",
+      "inclusive_qc_root": null,
+      "negative_label": "CN",
+      "positive_label": "AD",
+      "label_axis": "alzheimer",
+      "pooled_eligible": true,
+      "use_reference_archives": true,
+      "note": "Strict CN/AD cohort shared with August_Version and task3_v3_lamm_latest (same 2583 scans and splits). Its codes are copied from those archives so existing results stay reproducible."
+    },
+    "aibl": {
+      "role": "target",
+      "strict_manifest": "examples/CrossCohort_LHipp_v1/cohorts/aibl/cohort/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+      "mesh_root": "/mnt/bulk10tb/AIBL/synthseg_minimal_correspondence/full",
+      "inclusive_qc_root": "examples/CrossCohort_LHipp_v1/cohorts_inclusive/aibl/qc",
+      "negative_label": "CN",
+      "positive_label": "AD",
+      "label_axis": "alzheimer",
+      "pooled_eligible": true,
+      "use_reference_archives": false,
+      "note": "Fixed 18-month visits: the regular-interval cohort (BrainODE Table 1 analog)."
+    },
+    "oasis": {
+      "role": "target",
+      "strict_manifest": "examples/CrossCohort_LHipp_v1/cohorts/oasis/cohort/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+      "mesh_root": "/mnt/bulk10tb/OASIS_3_Long/synthseg_minimal_correspondence/full",
+      "inclusive_qc_root": "examples/CrossCohort_LHipp_v1/cohorts_inclusive/oasis/qc",
+      "negative_label": "CN",
+      "positive_label": "AD",
+      "label_axis": "alzheimer",
+      "pooled_eligible": true,
+      "use_reference_archives": false,
+      "note": "CDR-derived labels (0 CN, 0.5 MCI, >=1 AD); irregular, long intervals."
+    },
+    "calsnic": {
+      "role": "target",
+      "strict_manifest": "examples/CrossCohort_LHipp_v1/cohorts/calsnic/cohort/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+      "mesh_root": "/mnt/bulk10tb/CALSNIC_Long/synthseg_minimal_correspondence/full",
+      "inclusive_qc_root": null,
+      "negative_label": "Control",
+      "positive_label": "ALS",
+      "label_axis": "als",
+      "pooled_eligible": false,
+      "use_reference_archives": false,
+      "restrict_diagnoses": ["Control", "ALS"],
+      "note": "ALS, not Alzheimer's: out-of-distribution condition. Never pooled into AD training."
+    }
+  },
+  "inclusive_policy": {
+    "purpose": "Converter line (stage 5). Built in stage 1 so all cohort construction lives in one place.",
+    "label_order": {"CN": 0, "MCI": 1, "AD": 2},
+    "unlabelled_visits": "dropped (no diagnosis within the adapter's matching window)",
+    "strict_subjects_keep_strict_split": true,
+    "new_subject_split_strata": "trajectory_group",
+    "minimum_visits_after_structure_qc": 2
+  }
+}

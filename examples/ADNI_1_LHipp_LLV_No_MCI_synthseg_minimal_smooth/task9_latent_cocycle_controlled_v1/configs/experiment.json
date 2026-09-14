@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "name": "controlled_latent_loss_reduction_v1",
+  "representations": ["pca128", "spiralnet128", "adaptive128", "lamm128"],
+  "loss_sets": ["full13", "lean6", "lean5", "lean4"],
+  "seeds": [42, 43, 44],
+  "model": {
+    "latent_dim": 128,
+    "width": 256,
+    "residual_blocks": 2,
+    "dropout": 0.0,
+    "transport": "Phi(z,s,t,d)=z+(t-s)*[v_CN(z,s,t)+d*v_AD(z,s,t)]"
+  },
+  "training": {
+    "epochs": 60,
+    "steps_per_epoch": 32,
+    "batch_size_by_representation": {
+      "pca128": 96,
+      "spiralnet128": 24,
+      "adaptive128": 8,
+      "lamm128": 24
+    },
+    "decoder_batch_size_by_representation": {
+      "pca128": 512,
+      "spiralnet128": 64,
+      "adaptive128": 16,
+      "lamm128": 64
+    },
+    "evaluation_batch_size_by_representation": {
+      "pca128": 512,
+      "spiralnet128": 64,
+      "adaptive128": 16,
+      "lamm128": 64
+    },
+    "initial_learning_rate": 0.00001,
+    "peak_learning_rate": 0.0003,
+    "minimum_learning_rate": 0.00003,
+    "warmup_steps": 128,
+    "weight_decay": 0.0001,
+    "gradient_clip_norm": 1.0,
+    "consistency_ramp_steps": 0,
+    "anatomy_ramp_steps": 0,
+    "selection_start_step": 128,
+    "early_stopping_enabled": false,
+    "early_stopping_patience_evaluations": 20,
+    "early_stopping_min_step": 640,
+    "early_stopping_min_delta": 0.00001,
+    "fixed_train_evaluation_pairs": 128,
+    "smoke_pair_limit": 16,
+    "smoke_steps": 4
+  },
+  "loss_weights": {
+    "real_latent": 0.25,
+    "real_vertex": 1.0,
+    "observed_semigroup": 0.1,
+    "virtual_semigroup": 0.1,
+    "inverse": 0.05,
+    "sequence_latent": 0.0625,
+    "sequence_vertex": 0.25,
+    "sequence_semigroup": 0.1,
+    "volume": 0.1,
+    "rate": 0.1,
+    "slope": 0.05,
+    "group_rate": 0.02,
+    "disease_gap": 0.02
+  },
+  "selection": {
+    "primary": "legacy task3 decoded-transport validation score",
+    "all_pair_shape_weight": 0.2,
+    "volume_tiebreak_weight": 0.001,
+    "latent_nochange_tolerance": 0.01,
+    "coordinate_nochange_tolerance": 0.01,
+    "max_relative_semigroup_defect": 0.25,
+    "max_relative_inverse_defect": 0.25,
+    "test_used_for_selection": false
+  },
+  "adoption": {
+    "minimum_seeds": 3,
+    "max_mean_legacy_score_increase_vs_full13": 0.0015,
+    "max_mean_legacy_score_increase_vs_historical": 0.0015,
+    "max_mean_observed_mesh_error_increase_mm_vs_full13": 0.002,
+    "max_mean_group_rate_error_increase_vs_full13": 0.002,
+    "max_defect_ratio_vs_full13": 1.25,
+    "require_all_best_any_epochs_after_epoch_one": true
+  },
+  "scientific_contract": {
+    "latent_only": true,
+    "direct_non_ode": true,
+    "architecture_fixed_across_loss_sets": true,
+    "paired_seed_batches": true,
+    "decoder_frozen": true,
+    "decoder_in_optimizer_loss": true,
+    "test_loaded_during_training": false
+  }
+}

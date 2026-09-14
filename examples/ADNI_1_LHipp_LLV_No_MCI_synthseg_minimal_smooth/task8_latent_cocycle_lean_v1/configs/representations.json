@@ -1,0 +1,84 @@
+{
+  "schema_version": 3,
+  "task": "adni_left_hippocampus_lean_latent_cocycle_128",
+  "latent_dim": 128,
+  "coordinate_space": "final_ply_mm",
+  "output_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task8_latent_cocycle_lean_v1",
+  "source_sequence_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/cocycle_v4",
+  "source_manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+  "ae_source_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_spiral_ae_v1",
+  "ae_bulk_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1",
+  "lamm_source_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task_lamm_ae_v1",
+  "faces_path": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/cache/adni_faces.npy",
+  "representations": {
+    "pca128": {
+      "kind": "pca",
+      "description": "First 128 components of the fixed train-only PCA-150 basis; no refit.",
+      "pca_model_root": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model",
+      "source_validation_rmse_mm": 0.033668,
+      "source_test_rmse_mm": 0.03438
+    },
+    "spiralnet128": {
+      "kind": "spiral_ae",
+      "description": "Current best saved pure SpiralNet++-128 checkpoint at implementation time.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/studies/spiralnet_z128_v6/trials/trial_0002_val0.037215.pt",
+      "checkpoint_sha256": "7e2464a42409e8c24596b15d6f3157f0a8c4987bb4d545c22c9c7bc164082855",
+      "source_validation_rmse_mm": 0.03721479063227836,
+      "checkpoint_policy": "frozen snapshot; update this path and regenerate archives to adopt a later winner"
+    },
+    "adaptive128": {
+      "kind": "adaptive_ae",
+      "description": "Current best saved pure learned Adaptive-Spiral-128 checkpoint; includes its searched learned linear skip and is not the PCA-residual hybrid.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/studies/adaptive_z128_v2/trials/trial_0002_val0.036765.pt",
+      "checkpoint_sha256": "f23ad558695ae63c2e25d7733a175071fde73c700c7bf30087985614cb30a4fc",
+      "source_validation_rmse_mm": 0.036764504071858134,
+      "checkpoint_policy": "frozen snapshot; update this path and regenerate archives to adopt a later winner"
+    },
+    "lamm128": {
+      "kind": "lamm_ae",
+      "description": "Latest validation-selected LAMM E1_N3_ml_s1: 43+86-region residual MLPMixer with a 64+64 latent split and metric-weighted reconstruction loss.",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_lamm_ae_v1/studies/E1_N3_ml_s1/best.pt",
+      "checkpoint_sha256": "8353392b0726ae5e6c4c6645fae2734a5cef9bd4a81dcebe90d64391460d55e0",
+      "source_validation_rmse_mm": 0.033833829496826645,
+      "source_test_rmse_mm": 0.03459006599512028,
+      "expected_scales": [
+        43,
+        86
+      ],
+      "expected_latent_split": [
+        64,
+        64
+      ],
+      "latent_scale_names": [
+        "coarse_43",
+        "fine_86"
+      ],
+      "checkpoint_policy": "frozen validation-selected snapshot; never discover latest implicitly"
+    }
+  },
+  "source_integrity": {
+    "faces_sha256": "ecff631955de0f35eaba4f841ae224e2920b0c46bd6e7975f9f4f2fae1f1ca1f",
+    "lamm_hierarchy": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task_spiral_ae_v1/cache/transform_2-4-4-4.pkl",
+    "lamm_hierarchy_sha256": "bee6a9f01580db0b3bb58aea5f0a71e871cda1a020ad10e00842108a03309b7f",
+    "lamm_model_source_sha256": "4326c8d82f7a82768374ac0783d9cc7ea194b166d572387413c132b144c212b9",
+    "lamm_builder_source_sha256": "9ca5fde88fe44752ba4d6eff0cb66cd359ee462f5a9516ae79f95dc774d1982c",
+    "lamm_builder_repin_note": "Re-pinned 2026-09-02. train_lamm.py gained --out-root and the semi-amortized (--semi-amortized/--sa-lr/--sa-weight) training options. build() is unchanged except that it echoes the three new fields into its info dict; no architecture construction changed, and load_state_dict(strict=True) remains the binding guarantee. Previous pin: a30950838cd756ff2fe4d94eb34fe291379f1f3fc03a6473350518086c69e3af"
+  },
+  "archive_provenance": {
+    "pca128": "symlink -> task3_latent_flow_128_v1/representations/pca128",
+    "spiralnet128": "symlink -> task3_latent_flow_128_v1/representations/spiralnet128",
+    "adaptive128": "symlink -> task3_latent_flow_128_v1/representations/adaptive128",
+    "lamm128": "symlink -> task3_latent_flow_128_v3_lamm_latest/representations/lamm128",
+    "note": "Archives are reused unchanged so latents are bit-identical to the published direct_c4 baselines."
+  },
+  "scientific_contract": {
+    "strict_no_mci": true,
+    "subject_level_splits": true,
+    "train_only_latent_standardization": true,
+    "shared_correspondence_topology": true,
+    "decoder_frozen": true,
+    "decoder_in_c4_loss": true,
+    "test_available_only_to_separate_evaluator": true,
+    "source_meshes_modified": false
+  }
+}

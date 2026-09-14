@@ -15,6 +15,16 @@ def build(latent_dim: int) -> ConditionalLAMMFlow:
     )
 
 
+def build_tokens() -> ConditionalLAMMFlow:
+    stats = synthetic_statistics()
+    return ConditionalLAMMFlow(
+        synthetic_layout(),
+        stats["faces"],
+        synthetic_config(bottleneck_mode="regional_tokens"),
+        stats,
+    )
+
+
 def test_128_and_256_are_internal_bottlenecks() -> None:
     vertices, source, target, disease = make_batch()
     for latent_dim in (128, 256):
@@ -24,6 +34,20 @@ def test_128_and_256_are_internal_bottlenecks() -> None:
         assert condition.shape == (2, 8)
         assert model.transport(vertices, source, target, disease).shape == vertices.shape
         assert model.global_latent_bottleneck is True
+
+
+def test_regional_token_flow_has_no_global_bottleneck() -> None:
+    model = build_tokens()
+    vertices, source, target, disease = make_batch()
+    tokens, condition = model.encode(vertices, source, target, disease)
+    assert tokens.shape == (2, 5, 16)
+    assert condition.shape == (2, 8)
+    assert model.latent_dim is None
+    assert model.latent_split == []
+    assert model.global_latent_bottleneck is False
+    assert not hasattr(model, "w_down")
+    assert not hasattr(model, "w_up")
+    assert model.transport(vertices, source, target, disease).shape == vertices.shape
 
 
 def test_identity_is_bit_exact() -> None:
@@ -88,6 +112,38 @@ def test_all_components_are_trainable_end_to_end() -> None:
     assert all(parameter.requires_grad for parameter in model.parameters())
 
 
+def test_regional_token_components_are_trainable_end_to_end() -> None:
+    model = build_tokens().train()
+    with torch.no_grad():
+        for head in model.velocity_heads:
+            head.weight.normal_(mean=0.0, std=1.0e-3)
+    vertices, source, target, disease = make_batch()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+    # FiLM output maps are intentionally zero initialized. Their first update opens the
+    # gradient path into the condition encoder; the second pass verifies that path.
+    for _ in range(2):
+        optimizer.zero_grad(set_to_none=True)
+        model.average_velocity(vertices, source, target, disease).square().mean().backward()
+        optimizer.step()
+    prefixes = {
+        "condition.": False,
+        "tokenizers.": False,
+        "encoder.": False,
+        "token_flow.": False,
+        "region_tokens.": False,
+        "decoder.": False,
+        "velocity_heads.": False,
+    }
+    optimizer.zero_grad(set_to_none=True)
+    model.average_velocity(vertices, source, target, disease).square().mean().backward()
+    for name, parameter in model.named_parameters():
+        for prefix in prefixes:
+            if name.startswith(prefix) and parameter.grad is not None:
+                prefixes[prefix] |= float(parameter.grad.abs().sum()) > 0.0
+    assert all(prefixes.values()), prefixes
+    assert all(parameter.requires_grad for parameter in model.parameters())
+
+
 def test_composition_is_finite_and_differentiable() -> None:
     model = build(128).train()
     with torch.no_grad():
@@ -113,4 +169,3 @@ def test_no_ode_solver_is_present() -> None:
 
 def model_transport_signature_is_direct(source: str) -> bool:
     return "vertices + elapsed * self.average_velocity" in source
-

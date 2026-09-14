@@ -1,0 +1,37 @@
+{
+  "method": "plain_ode",
+  "source": "August_Version/configs/august_<rep>_plain_ode.json (identical across representations). Produced the August plain_ode s42 anchors.",
+  "trainer_semantics": "task3/August train_latent_ode.py: latent-only trajectory MSE over forward suffixes and backward prefixes; all epochs run; best.pt is the lowest validation first-to-last selection score. The August config's early_stopping_patience key was never read by that trainer, so it is omitted here.",
+  "config": {
+    "method": "plain_ode",
+    "model": {
+      "latent_dim": 128,
+      "width": 256,
+      "residual_blocks": 2,
+      "dropout": 0.3,
+      "integrator": "fixed RK4"
+    },
+    "training": {
+      "epochs": 100,
+      "batch_size": 64,
+      "learning_rate": 0.0001,
+      "weight_decay": 0.01,
+      "scheduler_step_size": 20,
+      "scheduler_gamma": 0.5,
+      "noise_std": 0.01,
+      "scale_min": 0.98,
+      "scale_max": 1.02,
+      "integration_substeps": 4,
+      "gradient_clip_norm": 1.0,
+      "seed": 42,
+      "smoke_train_batches": 2,
+      "smoke_val_records": 8
+    },
+    "loss": {"latent_trajectory_mse_weight": 1.0},
+    "selection": {
+      "primary": "macro CN/AD first-to-last decoded transport shape ratio",
+      "test_used_for_selection": false
+    }
+  },
+  "representation_overrides": {"pca128": {}, "spiralnet128": {}, "adaptive128": {}, "lamm128": {}}
+}

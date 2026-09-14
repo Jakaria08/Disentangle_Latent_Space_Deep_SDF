@@ -1,0 +1,7 @@
+{
+  "method": "brainode_v",
+  "ablation": "A2 (PLAN Part 3): BrainODE-V",
+  "source": "BrainODE-core's vector field (brainode recipe model block and RK4 substeps) trained with the cocycle's full 13-leaf objective, sampler, optimizer and selection (direct_c4 recipe). It separates the loss (decoded-vertex, volume and rate leaves) from the structure (direct cocycle vs ODE) as the source of AD capture.",
+  "compose": {"base": "direct_c4", "model_from": "brainode", "training_keys_from": {"brainode": ["integration_substeps"]}},
+  "config_patch": {"model": {"variant": "brainode_v", "ode_used": true, "attention_used": true, "transport": "RK4 integral of BrainODE's singleton-attention field"}}
+}

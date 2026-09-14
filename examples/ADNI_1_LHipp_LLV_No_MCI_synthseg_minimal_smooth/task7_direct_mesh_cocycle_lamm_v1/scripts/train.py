@@ -43,8 +43,6 @@ def validate_config(config: dict[str, Any]) -> None:
     contract = config.get("scientific_contract", {})
     if bool(contract.get("ode_used", True)):
         raise ValueError("This task prohibits ODE use")
-    if not bool(contract.get("global_latent_bottleneck", False)):
-        raise ValueError("LAMM must declare its internal global latent bottleneck")
     if not bool(contract.get("end_to_end", False)):
         raise ValueError("LAMM flow must be trained end to end")
     if not bool(contract.get("identity_by_construction", False)):
@@ -54,21 +52,37 @@ def validate_config(config: dict[str, Any]) -> None:
         raise ValueError("model.operator must be lamm_mlpmixer")
     if [int(value) for value in model.get("region_scales", [])] != [43, 86]:
         raise ValueError("The latest-LAMM layout must use region_scales=[43,86]")
-    latent_dim = int(model.get("latent_dim", 0))
-    split = [int(value) for value in model.get("latent_split", [])]
-    if latent_dim not in {128, 256}:
-        raise ValueError("This controlled experiment supports latent_dim 128 or 256")
-    if len(split) != 2 or any(value <= 0 for value in split) or sum(split) != latent_dim:
-        raise ValueError("latent_split must contain two positive entries summing to latent_dim")
-    for name in (
+    bottleneck_mode = str(model.get("bottleneck_mode", "global"))
+    if bottleneck_mode not in {"global", "regional_tokens"}:
+        raise ValueError("model.bottleneck_mode must be global or regional_tokens")
+    expected_global = bottleneck_mode == "global"
+    if bool(contract.get("global_latent_bottleneck", not expected_global)) != expected_global:
+        raise ValueError("Scientific contract disagrees with model.bottleneck_mode")
+    if expected_global:
+        latent_dim = int(model.get("latent_dim", 0))
+        split = [int(value) for value in model.get("latent_split", [])]
+        if latent_dim <= 0:
+            raise ValueError("Global models require a positive latent_dim")
+        if (
+            len(split) != 2
+            or any(value <= 0 for value in split)
+            or sum(split) != latent_dim
+        ):
+            raise ValueError(
+                "latent_split must contain two positive entries summing to latent_dim"
+            )
+    elif int(model.get("token_flow_depth", 0)) <= 0:
+        raise ValueError("Regional-token models require a positive token_flow_depth")
+    common_positive = [
         "token_dim",
         "encoder_depth",
         "decoder_depth",
         "condition_dim",
         "time_frequencies",
-        "latent_width",
-        "latent_residual_blocks",
-    ):
+    ]
+    if expected_global:
+        common_positive.extend(("latent_width", "latent_residual_blocks"))
+    for name in common_positive:
         if int(model.get(name, 0)) <= 0:
             raise ValueError(f"model.{name} must be positive")
     required_loss = {
@@ -197,9 +211,10 @@ def checkpoint_payload(
         "operator": model.operator,
         "latent_dim": model.latent_dim,
         "latent_split": model.latent_split,
+        "bottleneck_mode": model.bottleneck_mode,
         "region_layout_fingerprint": model.layout_fingerprint,
         "ode_used": False,
-        "global_latent_bottleneck": True,
+        "global_latent_bottleneck": model.global_latent_bottleneck,
         "end_to_end": True,
         "test_data_loaded": False,
     }
@@ -217,6 +232,7 @@ def _gradient_group(name: str) -> str | None:
         "w_up.": "up_projection",
         "region_tokens.": "decoder_tokens",
         "decoder.": "decoder",
+        "token_flow.": "token_flow",
         "velocity_heads.": "velocity_heads",
     }
     return next((group for prefix, group in prefixes.items() if name.startswith(prefix)), None)
@@ -314,20 +330,19 @@ def train_experiment(
     history_path = output / "history.jsonl"
     started = time.time()
     completed_epoch = start_epoch - 1
-    gradient_reach = {
-        name: 0.0
-        for name in (
-            "condition",
-            "tokenizers",
-            "encoder",
-            "down_projection",
-            "latent_flow",
-            "up_projection",
-            "decoder_tokens",
-            "decoder",
-            "velocity_heads",
-        )
-    }
+    gradient_groups = [
+        "condition",
+        "tokenizers",
+        "encoder",
+        "decoder_tokens",
+        "decoder",
+        "velocity_heads",
+    ]
+    if model.bottleneck_mode == "global":
+        gradient_groups.extend(("down_projection", "latent_flow", "up_projection"))
+    else:
+        gradient_groups.append("token_flow")
+    gradient_reach = {name: 0.0 for name in gradient_groups}
     for epoch in range(start_epoch, epochs + 1):
         model.train()
         indices = C.balanced_pair_indices(train_rows, samples, seed + 100_003 * epoch)
@@ -345,7 +360,7 @@ def train_experiment(
             scaler.scale(loss).backward()
             for parameter_name, parameter in model.named_parameters():
                 group = _gradient_group(parameter_name)
-                if group is not None and parameter.grad is not None:
+                if group in gradient_reach and parameter.grad is not None:
                     gradient_reach[group] += float(parameter.grad.detach().abs().sum().cpu())
             if step % accumulation == 0 or step * physical_batch >= samples:
                 scaler.unscale_(optimizer)
@@ -397,6 +412,7 @@ def train_experiment(
                 "stale_epochs": stale,
                 "operator": model.operator,
                 "latent_dim": model.latent_dim,
+                "bottleneck_mode": model.bottleneck_mode,
                 "parameters": C.parameter_count(model),
                 "parameter_breakdown": model.parameter_breakdown(),
                 "end_to_end_gradient_l1": gradient_reach,
@@ -433,6 +449,7 @@ def train_experiment(
         "operator": model.operator,
         "latent_dim": model.latent_dim,
         "latent_split": model.latent_split,
+        "bottleneck_mode": model.bottleneck_mode,
         "parameters": C.parameter_count(model),
         "parameter_breakdown": model.parameter_breakdown(),
         "end_to_end_gradient_l1": gradient_reach,
@@ -464,4 +481,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

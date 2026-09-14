@@ -46,6 +46,11 @@ class LoadedMesh:
     winding_consistent: bool
     component_count: int
     finite_vertices: bool
+    # Fraction of |volume| held by every component except the largest.  Marching-cubes
+    # meshes often carry sub-voxel interior bubbles that are extra components but
+    # essentially zero volume, which is a very different defect from a mesh that is
+    # genuinely split in two.
+    spurious_component_volume_fraction: float = 0.0
 
 
 def terminal_progress(stage: str, index: int, total: int, *, every: int = 100) -> None:
@@ -96,10 +101,16 @@ def parse_structures(value: str | Sequence[str]) -> tuple[str, ...]:
 def normalize_diagnosis(value: object) -> str | None:
     if value is None or pd.isna(value):
         return None
-    normalized = str(value).strip().upper()
+    text = str(value).strip()
+    if not text or text.lower() in {"nan", "none", "na"}:
+        return None
+    normalized = text.upper()
     if normalized in DIAGNOSES:
         return normalized
-    return None
+    # A cohort outside the CN/MCI/AD axis (CALSNIC is ALS) keeps its own labels, so that
+    # cohort_filter="all" can still group by diagnosis.  The strict CN/AD filter ignores
+    # them exactly as it did when they were discarded here.
+    return text
 
 
 def truthy(value: object) -> bool:
@@ -168,7 +179,14 @@ def load_mesh(path: str | Path) -> LoadedMesh:
         loaded = trimesh.util.concatenate(tuple(loaded.geometry.values()))
     vertices = np.asarray(loaded.vertices, dtype=np.float64)
     faces = np.asarray(loaded.faces, dtype=np.int64)
-    components = len(loaded.split(only_watertight=False))
+    parts = loaded.split(only_watertight=False)
+    components = len(parts)
+    spurious_fraction = 0.0
+    if components > 1:
+        part_volumes = sorted((abs(float(part.volume)) for part in parts), reverse=True)
+        total_volume = sum(part_volumes)
+        if total_volume > 0:
+            spurious_fraction = float(sum(part_volumes[1:]) / total_volume)
     return LoadedMesh(
         vertices=vertices,
         faces=faces,
@@ -178,6 +196,7 @@ def load_mesh(path: str | Path) -> LoadedMesh:
         winding_consistent=bool(loaded.is_winding_consistent),
         component_count=int(components),
         finite_vertices=bool(np.isfinite(vertices).all()),
+        spurious_component_volume_fraction=spurious_fraction,
     )
 
 

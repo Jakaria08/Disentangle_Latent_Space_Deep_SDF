@@ -1,0 +1,73 @@
+{
+  "automatic_reasons": {
+    "hard_mesh_scans": 0,
+    "post_qc_singleton_scans": 2,
+    "strong_pair_endpoint_scans": 6,
+    "strong_pairs": 8
+  },
+  "checks": {
+    "age_norm_train_max": 84.30116358658454,
+    "age_norm_train_min": 27.0,
+    "all_mesh_paths_exist": true,
+    "face_counts": [
+      16688
+    ],
+    "hard_qc_failures_in_keep_manifest": 0,
+    "strong_pair_endpoints_in_keep_manifest": 0,
+    "topology_hash": "9cf6370ea3ec3898efa8443f5de879b6e2d8c740dac2e3387c966ac725cd7c0e",
+    "vertex_counts": [
+      8346
+    ]
+  },
+  "counts": {
+    "automatic_excluded_scans": 8,
+    "scans": 799,
+    "subjects": 301,
+    "subjects_removed_from_master": 2
+  },
+  "failures": [],
+  "manifest": "/home/jakaria/INR/Deep3DComp/examples/CrossCohort_LHipp_v1/cohorts/calsnic/cohort/lateral_ventricle_pca_cocycle_v4/metadata/lateral_ventricle_qc_keep_manifest.csv",
+  "manifest_sha256": "6297a6d91e2f7297c2d8ecc4537e0dc43626ca4b7245ca746ad87a08750b68a6",
+  "passed": true,
+  "pca_policy": {
+    "candidate_components": [
+      32,
+      64,
+      100,
+      128,
+      150
+    ],
+    "coordinate_space": "final_ply_mm",
+    "fit_split": "train",
+    "independent_structure_pca": true,
+    "max_components": 150,
+    "no_cross_structure_features": true
+  },
+  "split_counts": {
+    "test": {
+      "scans": 81,
+      "subjects": 29,
+      "subjects_by_diagnosis": {
+        "ALS": 14,
+        "Control": 15
+      }
+    },
+    "train": {
+      "scans": 639,
+      "subjects": 242,
+      "subjects_by_diagnosis": {
+        "ALS": 115,
+        "Control": 127
+      }
+    },
+    "val": {
+      "scans": 79,
+      "subjects": 30,
+      "subjects_by_diagnosis": {
+        "ALS": 14,
+        "Control": 16
+      }
+    }
+  },
+  "structure": "left_lateral_ventricle"
+}

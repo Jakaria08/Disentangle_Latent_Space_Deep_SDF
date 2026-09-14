@@ -1,0 +1,62 @@
+{
+  "method": "latent_ode_residual",
+  "source": "New, and a documented departure from Rubanova et al. (2019), added by user decision on 2026-09-12. Identical to latent_ode (ODE-RNN posterior, latent ODE, extrapolation ELBO, same search grid and sampler seed, so trials are paired) except that the decoded latent trajectory predicts change from the last observed visit: x_hat(t) = x_ref + g(z(t)) - g(z(t_ref)).",
+  "rationale": "Stage 2 diagnostics showed the faithful model cannot rebuild a new subject's 128-D code from z0 more accurately than two years of atrophy (validation 1.7-1.9x no-change). This variant keeps the Latent ODE machinery but anchors predictions on the observation, as the cocycle and ODE transports are anchored, so the comparison isolates the dynamics. It predicts exactly no-change before training.",
+  "trainer_semantics": "Same trainer, sampling, selection and early stopping as latent_ode. In the loss the reference is the last visit of the sampled prefix; for evaluation it is the last observed visit.",
+  "config": {
+    "method": "latent_ode_residual",
+    "model": {
+      "latent_dim": 128,
+      "z0_dim": 64,
+      "encoder_hidden": 256,
+      "encoder_ode_width": 256,
+      "dynamics_width": 256,
+      "dynamics_residual_blocks": 2,
+      "decoder_width": 256,
+      "dropout": 0.0,
+      "observation_std": 0.1,
+      "condition_in_encoder": true,
+      "condition_in_dynamics": true,
+      "residual": true,
+      "integrator": "fixed RK4"
+    },
+    "training": {
+      "epochs": 100,
+      "batch_size": 64,
+      "samples_per_epoch": 4096,
+      "learning_rate": 0.0003,
+      "weight_decay": 0.0001,
+      "scheduler_step_size": 20,
+      "scheduler_gamma": 0.5,
+      "kl_anneal_epochs": 10,
+      "free_bits_per_dim": 0.1,
+      "integration_substeps": 4,
+      "gradient_clip_norm": 1.0,
+      "early_stopping_patience": 25,
+      "seed": 42,
+      "smoke_train_batches": 2,
+      "smoke_val_records": 8
+    },
+    "loss": {"gaussian_nll_weight": 1.0, "kl_weight_final": 1.0},
+    "selection": {
+      "primary": "macro CN/AD first-to-last decoded transport shape ratio",
+      "test_used_for_selection": false
+    }
+  },
+  "representation_overrides": {"pca128": {}, "spiralnet128": {}, "adaptive128": {}, "lamm128": {}},
+  "search": {
+    "view": "p0_internal_adni",
+    "representation": "pca128",
+    "training_seed": 42,
+    "trials": 16,
+    "sampler_seed": 2026,
+    "space": {
+      "model.z0_dim": [32, 64, 128],
+      "model.encoder_hidden": [128, 256],
+      "training.learning_rate": [0.0003, 0.001],
+      "model.observation_std": [0.05, 0.1, 0.3],
+      "training.kl_anneal_epochs": [5, 20]
+    },
+    "rule": "Same as latent_ode; selected independently on validation."
+  }
+}

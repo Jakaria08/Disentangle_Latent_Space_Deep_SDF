@@ -10,5 +10,4 @@ PY="/home/jakaria/anaconda3/envs/inr_sdf/bin/python"
   --n-trials "${1:-18}" \
   --trial-epochs "${2:-80}" \
   --trial-samples-per-epoch "${3:-384}" \
-  --study-tag main_v1
-
+  --study-tag architecture_main_v2

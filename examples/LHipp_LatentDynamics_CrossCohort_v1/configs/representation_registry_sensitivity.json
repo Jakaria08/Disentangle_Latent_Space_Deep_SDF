@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "name": "stage5_sensitivity_representations",
+  "note": "Sensitivity-only representations (PLAN Part 4, analysis 6). They are kept out of representation_registry.json so R1 stays exactly the four frozen ADNI representations; dynamics_core.view_registry adds them to the views listed under `views`.",
+  "latent_dim": 128,
+  "representations": {
+    "pca128_pooled": {
+      "kind": "pca",
+      "pca_model_root": "/mnt/bulk10tb/Deep3DComp/LHipp_LatentDynamics_CrossCohort_v1/stage5_brainode_style/sensitivity/pooled_pca/model",
+      "components_file": "components_150.npy",
+      "fit": "PCA-150 on the p3_pooled train split (ADNI + AIBL + OASIS strict train scans), centered SVD with the same procedure as R1's ADNI PCA-150; the first 128 components are the code.",
+      "recipe_representation": "pca128",
+      "views": ["p3_pooled"]
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "structure": "left_hippocampus",
+  "short_name": "hippocampus",
+  "reference_cohort": "adni",
+  "topology": {
+    "vertex_count": 2746,
+    "face_count": 5488,
+    "correspondence_topology_hash": "a8485554b4637ef929b5b05da9e34e10cdb7997a8e861aa6558c3847d7fd9d57"
+  },
+  "split_ratios": {
+    "train": 0.8,
+    "val": 0.1,
+    "test": 0.1
+  },
+  "seed": 42,
+  "qc_settings": {
+    "multi_component_volume_tolerance_pct": 1.0,
+    "pair_outlier_method": "stratified_mad",
+    "pair_outlier_mad_multiplier": 8.0,
+    "pair_exclusion_policy": "culprit"
+  },
+  "cohorts": {
+    "adni": {
+      "role": "reference",
+      "already_prepared": true,
+      "mesh_root": "/home/jakaria/ADNI/ADNI_1_GO_Large/synthseg_minimal_correspondence/full",
+      "keep_manifest": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/metadata/hippocampus_qc_keep_manifest.csv",
+      "pca_model_dir": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/hippocampus_pca_cocycle_v4/pca/model",
+      "cohort_filter": "strict_no_mci",
+      "allowed_diagnoses": [
+        "CN",
+        "AD"
+      ],
+      "negative_diagnosis": "CN",
+      "positive_diagnosis": "AD",
+      "pooled_eligible": true,
+      "note": "Reference cohort. Its QC and cohort manifests already exist and are never rebuilt here."
+    },
+    "aibl": {
+      "role": "target",
+      "already_prepared": false,
+      "mesh_root": "/mnt/bulk10tb/AIBL/synthseg_minimal_correspondence/full",
+      "cohort_filter": "strict_no_mci",
+      "allowed_diagnoses": [
+        "CN",
+        "AD"
+      ],
+      "negative_diagnosis": "CN",
+      "positive_diagnosis": "AD",
+      "pooled_eligible": true,
+      "note": "Same CN/AD axis as ADNI; 18-month visit spacing."
+    },
+    "oasis": {
+      "role": "target",
+      "already_prepared": false,
+      "mesh_root": "/mnt/bulk10tb/OASIS_3_Long/synthseg_minimal_correspondence/full",
+      "cohort_filter": "strict_no_mci",
+      "allowed_diagnoses": [
+        "CN",
+        "AD"
+      ],
+      "negative_diagnosis": "CN",
+      "positive_diagnosis": "AD",
+      "pooled_eligible": true,
+      "note": "CDR-derived labels: CDR 0 -> CN, 0.5 -> MCI, >=1 -> AD. Median interval 2.5 y."
+    },
+    "calsnic": {
+      "role": "target",
+      "already_prepared": false,
+      "mesh_root": "/mnt/bulk10tb/CALSNIC_Long/synthseg_minimal_correspondence/full",
+      "cohort_filter": "all",
+      "allowed_diagnoses": [
+        "any"
+      ],
+      "keep_diagnosis_changers": false,
+      "restrict_diagnoses": [
+        "Control",
+        "ALS"
+      ],
+      "negative_diagnosis": "Control",
+      "positive_diagnosis": "ALS",
+      "pooled_eligible": false,
+      "note": "ALS, not Alzheimer's. Control vs ALS only; other patient groups are meshed but excluded from the cohort. Excluded from pooled AD training; used as a held-out cohort and an out-of-distribution reconstruction test. One subject has two visit labels sharing an MRI date (same-session repeat); the later label is dropped.",
+      "drop_duplicate_visit_months": true
+    }
+  }
+}

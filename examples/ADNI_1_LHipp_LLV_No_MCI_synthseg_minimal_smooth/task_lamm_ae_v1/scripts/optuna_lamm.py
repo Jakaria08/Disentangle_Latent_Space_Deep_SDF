@@ -48,8 +48,9 @@ def parse_args():
     p.add_argument("--space", choices=("v1", "v2", "scales", "scales3", "moments", "decoder",
                             "fit", "finescale", "unbound", "latentsplit",
                             "arch_tuned", "mixup", "optim", "scaleset",
-                            "subjweight"), default="v1")
+                            "subjweight", "aligned"), default="v1")
     p.add_argument("--max-params", type=float, default=22e6)
+    p.add_argument("--out-root", default=str(OUT))
     p.add_argument("--gpu", type=int, default=1)
     p.add_argument("--n-trials", type=int, default=20)
     p.add_argument("--epochs", type=int, default=400)
@@ -540,16 +541,55 @@ def suggest_subjweight(t, backbone):
     }
 
 
+def suggest_aligned(t, backbone):
+    """EXPERIMENT A -- re-tune under the CORRECTED objective.
+
+    All 216 previous LAMM trials minimised a mis-specified loss: L1 on (x-mu)/sigma while the
+    score is per-coordinate RMSE in mm. Correcting it moved the model from 0.038051 to
+    0.033916 (10.8%, ~16 sigma), so every architecture and hyperparameter verdict in this
+    project was reached against the wrong target and has no reason to remain optimal.
+
+    That correction is 10x larger than the two previous mis-specifications, and re-searching
+    after each of those paid: the lr ceiling (expE) gave +1.2%, depth/width at the corrected
+    lr (expG) gave +1.0%. The gap to PCA is now 0.74%.
+
+    Fixed: --metric-weighted-loss with sigma-normalised inputs (arm N3, the best of the
+    three at 0.033916 +- 0.000131 over 3 seeds). Everything else is re-opened."""
+    cfg = {
+        "region_mode": "raw", "dim_head": 64, "warmup_epochs": 10, "deep_sup": 0.0,
+        "loss": "l1", "ema_decay": 0.999, "residual": True, "mixup_prob": 0.5,
+        "norm_mode": "std", "metric_weighted_loss": True,
+        "scales": t.suggest_categorical("scales", ["43,86", "86,172", "43,172", "22,86",
+                                                   "43,86,172"]),
+        "dim": t.suggest_categorical("dim", [192, 256, 320]),
+        "enc_depth": t.suggest_categorical("enc_depth", [4, 6, 8]),
+        "dec_depth": t.suggest_categorical("dec_depth", [4, 6]),
+        "heads": t.suggest_categorical("heads", [4, 8]),
+        "batch_size": t.suggest_categorical("batch_size", [16, 32]),
+        "mixup_alpha": t.suggest_categorical("mixup_alpha", [0.0, 0.4, 0.8]),
+        "epochs_override": t.suggest_categorical("epochs_override", [200, 250, 300]),
+        "lr": t.suggest_float("lr", 4e-4, 2.5e-3, log=True),
+        "weight_decay": t.suggest_float("weight_decay", 1e-6, 1e-4, log=True),
+        "dropout": t.suggest_float("dropout", 0.0, 0.15, step=0.05),
+    }
+    if backbone == "search":
+        cfg["backbone"] = t.suggest_categorical("backbone", ["transformer", "mlpmixer"])
+    return cfg
+
+
 SPACES = {"v1": lambda t, bb: suggest(t), "v2": suggest_v2, "scales": suggest_scales,
           "scales3": suggest_scales3, "moments": suggest_moments, "decoder": suggest_decoder,
           "fit": suggest_fit, "finescale": suggest_finescale, "unbound": suggest_unbound,
           "latentsplit": suggest_latentsplit, "arch_tuned": suggest_arch_tuned,
           "mixup": suggest_mixup, "optim": suggest_optim,
-          "scaleset": suggest_scaleset, "subjweight": suggest_subjweight}
+          "scaleset": suggest_scaleset, "subjweight": suggest_subjweight,
+          "aligned": suggest_aligned}
 
 
 def main():
     a = parse_args()
+    global OUT
+    OUT = Path(a.out_root)
     root = OUT / "studies" / a.study
     root.mkdir(parents=True, exist_ok=True)
     csv_fp = root / "trial_metrics.csv"
@@ -571,15 +611,15 @@ def main():
                "--run-name", name, "--gpu", str(a.gpu),
                "--backbone", bb, "--latent", str(a.latent), "--patch-level", "3",
                "--lr-final", "1e-6", "--ema-decay", "0.999",
-               "--max-params", str(a.max_params),
+               "--max-params", str(a.max_params), "--out-root", str(OUT),
                "--epochs", str(n_epochs), "--eval-every", "1",
                "--min-epochs", str(a.min_epochs), "--patience", str(a.patience),
                "--time-budget", str(a.trial_time_budget)]
         for k, v in cfg.items():
             if k == "share_regions":
                 if v: cmd += ["--share-regions"]
-            elif k in ("residual", "subject_weight"):   # BooleanOptionalAction flags
-                f = k.replace("_", "-")
+            elif k in ("residual", "subject_weight", "metric_weighted_loss"):
+                f = k.replace("_", "-")                 # BooleanOptionalAction flags
                 cmd += [f"--{f}" if v else f"--no-{f}"]
             else:
                 cmd += [f"--{k.replace('_', '-')}", str(v)]

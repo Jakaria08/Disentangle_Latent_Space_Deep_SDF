@@ -245,12 +245,28 @@ class ConditionalLAMMFlow(nn.Module):
         self.layout_source = layout.source
         self.n_vertices = int(layout.n_vertices)
         self.token_dim = int(model["token_dim"])
-        self.latent_dim = int(model["latent_dim"])
-        self.latent_split = [int(value) for value in model["latent_split"]]
-        if len(self.latent_split) != len(layout.scales) or sum(self.latent_split) != self.latent_dim:
-            raise ValueError("latent_split must be positive, per-scale, and sum to latent_dim")
-        if any(value <= 0 for value in self.latent_split):
-            raise ValueError("latent_split entries must be positive")
+        self.bottleneck_mode = str(model.get("bottleneck_mode", "global"))
+        if self.bottleneck_mode not in {"global", "regional_tokens"}:
+            raise ValueError("bottleneck_mode must be global or regional_tokens")
+        self.global_latent_bottleneck = self.bottleneck_mode == "global"
+        self.latent_dim = (
+            int(model["latent_dim"]) if self.bottleneck_mode == "global" else None
+        )
+        self.latent_split = (
+            [int(value) for value in model["latent_split"]]
+            if self.bottleneck_mode == "global"
+            else []
+        )
+        if self.bottleneck_mode == "global":
+            if (
+                len(self.latent_split) != len(layout.scales)
+                or sum(self.latent_split) != self.latent_dim
+            ):
+                raise ValueError(
+                    "latent_split must be positive, per-scale, and sum to latent_dim"
+                )
+            if any(value <= 0 for value in self.latent_split):
+                raise ValueError("latent_split entries must be positive")
         condition_dim = int(model["condition_dim"])
         dropout = float(model["dropout"])
         token_expansion = float(model.get("token_expansion", 4.0))
@@ -293,20 +309,36 @@ class ConditionalLAMMFlow(nn.Module):
             channel_expansion,
             dropout,
         )
-        self.w_down = nn.ModuleList(
-            nn.Linear(self.token_dim * scale.regions, width)
-            for scale, width in zip(scales, self.latent_split)
-        )
-        latent_width = int(model["latent_width"])
-        self.latent_input = nn.Linear(self.latent_dim + condition_dim, latent_width)
-        self.latent_blocks = nn.ModuleList(
-            LatentResidualBlock(latent_width, condition_dim, dropout)
-            for _ in range(int(model["latent_residual_blocks"]))
-        )
-        self.latent_output = nn.Linear(latent_width, self.latent_dim)
-        self.w_up = nn.ModuleList(
-            nn.Linear(width, self.token_dim) for width in self.latent_split
-        )
+        if self.bottleneck_mode == "global":
+            assert self.latent_dim is not None
+            self.w_down = nn.ModuleList(
+                nn.Linear(self.token_dim * scale.regions, width)
+                for scale, width in zip(scales, self.latent_split)
+            )
+            latent_width = int(model["latent_width"])
+            self.latent_input = nn.Linear(
+                self.latent_dim + condition_dim, latent_width
+            )
+            self.latent_blocks = nn.ModuleList(
+                LatentResidualBlock(latent_width, condition_dim, dropout)
+                for _ in range(int(model["latent_residual_blocks"]))
+            )
+            self.latent_output = nn.Linear(latent_width, self.latent_dim)
+            self.w_up = nn.ModuleList(
+                nn.Linear(width, self.token_dim) for width in self.latent_split
+            )
+        else:
+            # No flattening or global vector: all 129 spatial region tokens remain the
+            # subject-specific state seen by the velocity decoder.
+            self.token_flow = ConditionalMixerBackbone(
+                self.token_dim,
+                int(model["token_flow_depth"]),
+                n_tokens,
+                condition_dim,
+                token_expansion,
+                channel_expansion,
+                dropout,
+            )
         self.region_tokens = nn.ParameterList(
             nn.Parameter(torch.zeros(1, scale.regions, self.token_dim)) for scale in scales
         )
@@ -340,7 +372,7 @@ class ConditionalLAMMFlow(nn.Module):
     def input_features(self, vertices: torch.Tensor) -> torch.Tensor:
         return (vertices - self.template.unsqueeze(0)) / self.coordinate_scale
 
-    def encode(
+    def encode_tokens(
         self,
         vertices: torch.Tensor,
         source_age: torch.Tensor,
@@ -351,6 +383,20 @@ class ConditionalLAMMFlow(nn.Module):
         features = self.input_features(vertices)
         tokens = torch.cat([tokenizer(features) for tokenizer in self.tokenizers], dim=1)
         tokens = self.encoder(tokens, condition)
+        return tokens, condition
+
+    def encode(
+        self,
+        vertices: torch.Tensor,
+        source_age: torch.Tensor,
+        target_age: torch.Tensor,
+        disease: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        tokens, condition = self.encode_tokens(
+            vertices, source_age, target_age, disease
+        )
+        if self.bottleneck_mode == "regional_tokens":
+            return tokens, condition
         latents = []
         offset = 0
         for tokenizer, projection in zip(self.tokenizers, self.w_down):
@@ -360,6 +406,8 @@ class ConditionalLAMMFlow(nn.Module):
         return torch.cat(latents, dim=-1), condition
 
     def conditioned_latent(self, latent: torch.Tensor, condition: torch.Tensor) -> torch.Tensor:
+        if self.bottleneck_mode != "global":
+            raise RuntimeError("conditioned_latent is only defined for the global model")
         hidden = F.silu(self.latent_input(torch.cat((latent, condition), dim=-1)))
         for block in self.latent_blocks:
             hidden = block(hidden, condition)
@@ -372,16 +420,32 @@ class ConditionalLAMMFlow(nn.Module):
         target_age: torch.Tensor,
         disease: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        latent, condition = self.encode(vertices, source_age, target_age, disease)
-        latent = self.conditioned_latent(latent, condition)
-        pieces = torch.split(latent, self.latent_split, dim=-1)
-        tokens = torch.cat(
-            [
-                projection(piece).unsqueeze(1) + regional.expand(piece.shape[0], -1, -1)
-                for piece, projection, regional in zip(pieces, self.w_up, self.region_tokens)
-            ],
-            dim=1,
+        representation, condition = self.encode(
+            vertices, source_age, target_age, disease
         )
+        if self.bottleneck_mode == "global":
+            latent = self.conditioned_latent(representation, condition)
+            pieces = torch.split(latent, self.latent_split, dim=-1)
+            tokens = torch.cat(
+                [
+                    projection(piece).unsqueeze(1)
+                    + regional.expand(piece.shape[0], -1, -1)
+                    for piece, projection, regional in zip(
+                        pieces, self.w_up, self.region_tokens
+                    )
+                ],
+                dim=1,
+            )
+        else:
+            tokens = self.token_flow(representation, condition)
+            regional = torch.cat(
+                [
+                    value.expand(representation.shape[0], -1, -1)
+                    for value in self.region_tokens
+                ],
+                dim=1,
+            )
+            tokens = tokens + regional
         tokens = self.decoder(tokens, condition)
         fields = []
         offset = 0
@@ -428,17 +492,27 @@ class ConditionalLAMMFlow(nn.Module):
 
     def parameter_breakdown(self) -> dict[str, int]:
         count = lambda module: sum(value.numel() for value in module.parameters())
-        return {
+        output = {
             "condition": count(self.condition),
             "tokenizers": count(self.tokenizers),
             "encoder": count(self.encoder),
-            "down_projection": count(self.w_down),
-            "latent_flow": count(self.latent_input) + count(self.latent_blocks) + count(self.latent_output),
-            "up_projection": count(self.w_up),
             "decoder": count(self.decoder),
             "velocity_heads": count(self.velocity_heads),
             "total": sum(value.numel() for value in self.parameters()),
         }
+        if self.bottleneck_mode == "global":
+            output.update(
+                {
+                    "down_projection": count(self.w_down),
+                    "latent_flow": count(self.latent_input)
+                    + count(self.latent_blocks)
+                    + count(self.latent_output),
+                    "up_projection": count(self.w_up),
+                }
+            )
+        else:
+            output["token_flow"] = count(self.token_flow)
+        return output
 
     @torch.no_grad()
     def set_test_velocity_bias(self, cn: float, ad_residual: float) -> None:

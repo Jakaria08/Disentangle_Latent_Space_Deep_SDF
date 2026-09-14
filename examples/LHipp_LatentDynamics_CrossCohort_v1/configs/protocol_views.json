@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "note": "A view fixes which scans a protocol trains on, selects on, and tests on. Every fitted statistic (latent standardization, age scaling, population drift) comes from the view's train rows only. Members are [cohort, split] pairs; split 'all' means the whole strict cohort.",
+  "views": {
+    "p0_internal_adni": {
+      "protocol": "P0", "description": "ADNI internal (headline).",
+      "train": [["adni", "train"]], "val": [["adni", "val"]], "test": [["adni", "test"]]
+    },
+    "p1_external_aibl_testsplit": {
+      "protocol": "P1", "description": "ADNI-trained, zero-shot on the AIBL test split.",
+      "train": [["adni", "train"]], "val": [["adni", "val"]], "test": [["aibl", "test"]]
+    },
+    "p1_external_aibl_wholecohort": {
+      "protocol": "P1", "description": "ADNI-trained, zero-shot on every AIBL subject.",
+      "train": [["adni", "train"]], "val": [["adni", "val"]], "test": [["aibl", "all"]]
+    },
+    "p1_external_oasis_testsplit": {
+      "protocol": "P1", "description": "ADNI-trained, zero-shot on the OASIS test split.",
+      "train": [["adni", "train"]], "val": [["adni", "val"]], "test": [["oasis", "test"]]
+    },
+    "p1_external_oasis_wholecohort": {
+      "protocol": "P1", "description": "ADNI-trained, zero-shot on every OASIS subject.",
+      "train": [["adni", "train"]], "val": [["adni", "val"]], "test": [["oasis", "all"]]
+    },
+    "p1_external_calsnic_testsplit": {
+      "protocol": "P1", "description": "ADNI-trained, zero-shot on the CALSNIC test split (ALS is out of distribution).",
+      "train": [["adni", "train"]], "val": [["adni", "val"]], "test": [["calsnic", "test"]]
+    },
+    "p1_external_calsnic_wholecohort": {
+      "protocol": "P1", "description": "ADNI-trained, zero-shot on every CALSNIC subject.",
+      "train": [["adni", "train"]], "val": [["adni", "val"]], "test": [["calsnic", "all"]]
+    },
+    "p2_internal_aibl": {
+      "protocol": "P2", "description": "AIBL internal.",
+      "train": [["aibl", "train"]], "val": [["aibl", "val"]], "test": [["aibl", "test"]]
+    },
+    "p2_internal_oasis": {
+      "protocol": "P2", "description": "OASIS internal.",
+      "train": [["oasis", "train"]], "val": [["oasis", "val"]], "test": [["oasis", "test"]]
+    },
+    "p2_internal_calsnic": {
+      "protocol": "P2", "description": "CALSNIC internal (Control=0, ALS=1).",
+      "train": [["calsnic", "train"]], "val": [["calsnic", "val"]], "test": [["calsnic", "test"]]
+    },
+    "p3_pooled": {
+      "protocol": "P3", "description": "ADNI+AIBL+OASIS pooled (BrainODE Table 2 analog).",
+      "train": [["adni", "train"], ["aibl", "train"], ["oasis", "train"]],
+      "val": [["adni", "val"], ["aibl", "val"], ["oasis", "val"]],
+      "test": [["adni", "test"], ["aibl", "test"], ["oasis", "test"]]
+    },
+    "p4_loco_without_adni": {
+      "protocol": "P4", "description": "Train AIBL+OASIS, test all of ADNI.",
+      "train": [["aibl", "train"], ["oasis", "train"]], "val": [["aibl", "val"], ["oasis", "val"]], "test": [["adni", "all"]]
+    },
+    "p4_loco_without_aibl": {
+      "protocol": "P4", "description": "Train ADNI+OASIS, test all of AIBL.",
+      "train": [["adni", "train"], ["oasis", "train"]], "val": [["adni", "val"], ["oasis", "val"]], "test": [["aibl", "all"]]
+    },
+    "p4_loco_without_oasis": {
+      "protocol": "P4", "description": "Train ADNI+AIBL, test all of OASIS.",
+      "train": [["adni", "train"], ["aibl", "train"]], "val": [["adni", "val"], ["aibl", "val"]], "test": [["oasis", "all"]]
+    },
+    "p4b_exp1_aibl_to_adni_oasis": {
+      "protocol": "P4b", "description": "BrainODE Exp1 replica: train AIBL, test all of ADNI and OASIS.",
+      "train": [["aibl", "train"]], "val": [["aibl", "val"]], "test": [["adni", "all"], ["oasis", "all"]]
+    },
+    "p4c_exp2_pooled_to_calsnic": {
+      "protocol": "P4c", "description": "BrainODE Exp2 analog: pooled training, test all of CALSNIC (Control = unseen cohort, ALS = OOD condition).",
+      "train": [["adni", "train"], ["aibl", "train"], ["oasis", "train"]],
+      "val": [["adni", "val"], ["aibl", "val"], ["oasis", "val"]],
+      "test": [["calsnic", "all"]]
+    }
+  },
+  "crossfit": {
+    "protocol": "P2-CF",
+    "description": "Subject-level 5-fold cross-fitting: fold k is test, fold k+1 is the inner validation, the rest is train.",
+    "cohorts": ["aibl", "oasis"],
+    "folds": 5,
+    "seed": 42,
+    "strata": ["diagnosis", "visit_count_bin"]
+  }
+}

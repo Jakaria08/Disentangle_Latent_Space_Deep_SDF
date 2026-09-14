@@ -28,6 +28,7 @@ import argparse
 import json
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Iterable
 
@@ -55,6 +56,51 @@ def parse_args() -> argparse.Namespace:
         "--skip-mesh-qc",
         action="store_true",
         help="Reuse output-dir/mesh_qc from a completed run.  Normal use should omit this.",
+    )
+    parser.add_argument(
+        "--cohort-filter",
+        choices=("strict_no_mci", "all"),
+        default="strict_no_mci",
+        help=(
+            "Cohort selection passed to the mesh QC.  'strict_no_mci' keeps baseline-CN/AD subjects "
+            "with no MCI-labelled visit, as for ADNI.  'all' keeps whatever the manifest contains, "
+            "which is required for a cohort outside the CN/MCI/AD axis such as CALSNIC (Control/ALS)."
+        ),
+    )
+    parser.add_argument(
+        "--keep-diagnosis-changers",
+        action="store_true",
+        help="Retain subjects whose visit diagnosis changes, instead of excluding them as ADNI does.",
+    )
+    parser.add_argument(
+        "--pair-exclusion-policy",
+        choices=("both_endpoints", "culprit"),
+        default="both_endpoints",
+        help=(
+            "Which scans a strong adjacent-pair failure excludes.  'both_endpoints' removes both "
+            "scans, which discards a good scan whenever only one of the two is at fault.  'culprit' "
+            "removes the scan shared by two consecutive failing pairs, falling back to whichever "
+            "endpoint independently carries a scan-level review flag, and to the later scan when "
+            "neither does."
+        ),
+    )
+    parser.add_argument(
+        "--multi-component-volume-tolerance-pct",
+        type=float,
+        default=0.0,
+        help="Forwarded to the mesh QC: extra components below this volume share are review-only.",
+    )
+    parser.add_argument(
+        "--pair-outlier-method",
+        choices=("quantile", "stratified_mad"),
+        default="quantile",
+        help="Forwarded to the mesh QC: how adjacent-pair shape outliers are chosen.",
+    )
+    parser.add_argument(
+        "--pair-outlier-mad-multiplier",
+        type=float,
+        default=8.0,
+        help="Forwarded to the mesh QC when --pair-outlier-method=stratified_mad.",
     )
     return parser.parse_args()
 
@@ -114,15 +160,55 @@ def _at_least_two_visits(scans: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
     return scans.loc[scans["subject_id"].astype(str).isin(eligible)].copy(), dropped
 
 
-def _reasons_by_scan(scan_qc: pd.DataFrame, pair_qc: pd.DataFrame) -> pd.DataFrame:
+def _blamed_endpoints(
+    strong_pairs: pd.DataFrame, scan_qc: pd.DataFrame, policy: str
+) -> dict[int, tuple[str, ...]]:
+    """Decide which scan of each failing pair is actually at fault.
+
+    A pair failure says the transition is implausible, not which of the two scans caused
+    it.  A scan shared by two consecutive failing pairs is the common factor, and failing
+    that, an endpoint that independently trips a scan-level review flag is the better
+    suspect than its neighbour.
+    """
+
+    endpoints = [
+        (index, str(row.structure), str(row.source_scan_id), str(row.target_scan_id))
+        for index, row in enumerate(strong_pairs.itertuples(index=False))
+    ]
+    if policy == "both_endpoints":
+        return {index: (source, target) for index, _structure, source, target in endpoints}
+
+    appearances: Counter[tuple[str, str]] = Counter()
+    for _index, structure, source, target in endpoints:
+        appearances[(structure, source)] += 1
+        appearances[(structure, target)] += 1
+    reviewed = {
+        (str(row.structure), str(row.scan_id))
+        for row in scan_qc.loc[_flag(scan_qc, "review_mesh_qc_flag")].itertuples(index=False)
+    }
+    blamed: dict[int, tuple[str, ...]] = {}
+    for index, structure, source, target in endpoints:
+        shared = [scan for scan in (source, target) if appearances[(structure, scan)] > 1]
+        if shared:
+            blamed[index] = tuple(dict.fromkeys(shared))
+            continue
+        suspect = [scan for scan in (source, target) if (structure, scan) in reviewed]
+        blamed[index] = (suspect[0],) if len(suspect) == 1 else (target,)
+    return blamed
+
+
+def _reasons_by_scan(
+    scan_qc: pd.DataFrame, pair_qc: pd.DataFrame, policy: str = "both_endpoints"
+) -> pd.DataFrame:
     """Combine hard geometry flags and objective strong pair flags across structures."""
     hard = scan_qc.loc[_flag(scan_qc, "hard_mesh_qc_flag"), ["scan_id", "structure"]].copy()
     hard["reason"] = "hard_mesh_geometry_or_correspondence_failure"
 
     strong = _flag(pair_qc, "strong_pair_qc_flag")
     strong_pairs = pair_qc.loc[strong].copy()
+    blamed = _blamed_endpoints(strong_pairs, scan_qc, policy)
     pair_rows: list[dict[str, str]] = []
-    for row in strong_pairs.itertuples(index=False):
+    for position, row in enumerate(strong_pairs.itertuples(index=False)):
         pair_reasons: list[str] = []
         if _truthy(getattr(row, "flag_shape_rms_displacement_mm_per_year_outlier", False)) or _truthy(
             getattr(row, "flag_shape_p95_displacement_mm_per_year_outlier", False)
@@ -134,7 +220,7 @@ def _reasons_by_scan(scan_qc: pd.DataFrame, pair_qc: pd.DataFrame) -> pd.DataFra
             pair_reasons.append("raw_smooth_volume_change_sign_disagreement")
         if not pair_reasons:
             pair_reasons.append("strong_adjacent_pair_qc_failure")
-        for scan_id in (str(row.source_scan_id), str(row.target_scan_id)):
+        for scan_id in blamed[position]:
             for reason in pair_reasons:
                 pair_rows.append({"scan_id": scan_id, "structure": str(row.structure), "reason": reason})
     pair = pd.DataFrame(pair_rows, columns=["scan_id", "structure", "reason"])
@@ -195,10 +281,16 @@ def _run_mesh_qc(args: argparse.Namespace, mesh_qc_dir: Path) -> None:
         "--structures",
         ",".join(STRUCTURES),
         "--cohort-filter",
-        "strict_no_mci",
+        args.cohort_filter,
         "--cohort-label",
         "baseline",
         "--no-html",
+        "--multi-component-volume-tolerance-pct",
+        str(args.multi_component_volume_tolerance_pct),
+        "--pair-outlier-method",
+        args.pair_outlier_method,
+        "--pair-outlier-mad-multiplier",
+        str(args.pair_outlier_mad_multiplier),
     ]
     print("\n[1/3] Running mesh, topology, and adjacent-pair QC (source meshes are read only)…", flush=True)
     print("      " + " ".join(command), flush=True)
@@ -240,14 +332,18 @@ def main() -> int:
     pair_qc = pd.read_csv(pair_qc_path, dtype={"source_scan_id": str, "target_scan_id": str, "subject_id": str})
     scans = _scan_table(records)
 
-    stable_scans, direct_changers = _stable_diagnosis_scans(scans)
+    if args.keep_diagnosis_changers:
+        stable_scans = scans.copy()
+        direct_changers = pd.DataFrame(columns=["subject_id", "observed_visit_diagnoses", "reason"])
+    else:
+        stable_scans, direct_changers = _stable_diagnosis_scans(scans)
     longitudinal_pre_qc, singleton_before_qc = _at_least_two_visits(stable_scans)
     _write_csv(stable_scans, manifests_dir / "strict_no_mci_diagnosis_stable_all_scans.csv")
     _write_csv(direct_changers, manifests_dir / "excluded_direct_CN_AD_changers.csv")
     _write_csv(singleton_before_qc, manifests_dir / "excluded_single_visit_before_mesh_qc.csv")
 
     candidate_ids = set(longitudinal_pre_qc["scan_id"].astype(str))
-    reasons = _reasons_by_scan(scan_qc, pair_qc)
+    reasons = _reasons_by_scan(scan_qc, pair_qc, args.pair_exclusion_policy)
     automatic_exclusions = reasons.loc[reasons["scan_id"].astype(str).isin(candidate_ids)].copy()
     automatic_exclusions = automatic_exclusions.merge(
         longitudinal_pre_qc.drop_duplicates("scan_id"), on="scan_id", how="left", validate="one_to_one"
@@ -281,6 +377,12 @@ def main() -> int:
         "source_root": str(source),
         "structures": list(STRUCTURES),
         "policy": {
+            "cohort_filter": args.cohort_filter,
+            "keep_diagnosis_changers": bool(args.keep_diagnosis_changers),
+            "pair_exclusion_policy": args.pair_exclusion_policy,
+            "multi_component_volume_tolerance_pct": float(args.multi_component_volume_tolerance_pct),
+            "pair_outlier_method": args.pair_outlier_method,
+            "pair_outlier_mad_multiplier": float(args.pair_outlier_mad_multiplier),
             "clinical": "baseline CN/AD and strict_subject_no_mci from the source manifest; direct CN<->AD changers excluded",
             "longitudinal": "at least two visits before and after automatic QC",
             "automatic_mesh_exclusions": "hard final smooth/correspondence geometry failure in either structure, or endpoint of a strong adjacent correspondence-shape failure",

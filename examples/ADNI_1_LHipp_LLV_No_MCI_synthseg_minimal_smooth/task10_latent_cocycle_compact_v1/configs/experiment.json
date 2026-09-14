@@ -1,0 +1,159 @@
+{
+  "schema_version": 2,
+  "name": "latent_preserving_compact_objective_v1",
+  "representations": ["pca128", "spiralnet128", "adaptive128", "lamm128"],
+  "seeds": [42, 43, 44],
+  "arms": [
+    {
+      "name": "compact6_standard",
+      "objective": "compact6",
+      "learning_rate_profile": "standard",
+      "representations": ["pca128", "spiralnet128", "adaptive128", "lamm128"],
+      "comparison_control": "task9_full13_standard"
+    },
+    {
+      "name": "compact5_standard",
+      "objective": "compact5",
+      "learning_rate_profile": "standard",
+      "representations": ["pca128", "spiralnet128", "adaptive128", "lamm128"],
+      "comparison_control": "task9_full13_standard"
+    },
+    {
+      "name": "full13_pca_low",
+      "objective": "full13",
+      "learning_rate_profile": "pca_low",
+      "representations": ["pca128"],
+      "comparison_control": "task9_full13_standard"
+    },
+    {
+      "name": "compact6_pca_low",
+      "objective": "compact6",
+      "learning_rate_profile": "pca_low",
+      "representations": ["pca128"],
+      "comparison_control": "full13_pca_low"
+    },
+    {
+      "name": "compact5_pca_low",
+      "objective": "compact5",
+      "learning_rate_profile": "pca_low",
+      "representations": ["pca128"],
+      "comparison_control": "full13_pca_low"
+    }
+  ],
+  "model": {
+    "latent_dim": 128,
+    "width": 256,
+    "residual_blocks": 2,
+    "dropout": 0.0,
+    "transport": "Phi(z,s,t,d)=z+(t-s)*[v_CN(z,s,t)+d*v_AD(z,s,t)]"
+  },
+  "training": {
+    "epochs": 60,
+    "steps_per_epoch": 32,
+    "batch_size_by_representation": {
+      "pca128": 96,
+      "spiralnet128": 24,
+      "adaptive128": 8,
+      "lamm128": 24
+    },
+    "decoder_batch_size_by_representation": {
+      "pca128": 512,
+      "spiralnet128": 64,
+      "adaptive128": 16,
+      "lamm128": 64
+    },
+    "evaluation_batch_size_by_representation": {
+      "pca128": 512,
+      "spiralnet128": 64,
+      "adaptive128": 16,
+      "lamm128": 64
+    },
+    "learning_rate_profiles": {
+      "standard": {
+        "initial_learning_rate": 0.00001,
+        "peak_learning_rate": 0.0003,
+        "minimum_learning_rate": 0.00003
+      },
+      "pca_low": {
+        "initial_learning_rate": 0.00001,
+        "peak_learning_rate": 0.0001,
+        "minimum_learning_rate": 0.00001
+      }
+    },
+    "warmup_steps": 128,
+    "weight_decay": 0.0001,
+    "gradient_clip_norm": 1.0,
+    "consistency_ramp_steps": 0,
+    "anatomy_ramp_steps": 0,
+    "selection_start_step": 128,
+    "early_stopping_enabled": false,
+    "early_stopping_patience_evaluations": 20,
+    "early_stopping_min_step": 640,
+    "early_stopping_min_delta": 0.00001,
+    "fixed_train_evaluation_pairs": 128,
+    "smoke_pair_limit": 16,
+    "smoke_steps": 4
+  },
+  "loss_weights": {
+    "real_latent": 0.25,
+    "real_vertex": 1.0,
+    "observed_semigroup": 0.1,
+    "virtual_semigroup": 0.1,
+    "inverse": 0.05,
+    "sequence_latent": 0.0625,
+    "sequence_vertex": 0.25,
+    "sequence_semigroup": 0.1,
+    "volume": 0.1,
+    "rate": 0.1,
+    "slope": 0.05,
+    "group_rate": 0.02,
+    "disease_gap": 0.02
+  },
+  "selection": {
+    "primary": "legacy task3 decoded-transport validation score",
+    "all_pair_shape_weight": 0.2,
+    "volume_tiebreak_weight": 0.001,
+    "latent_nochange_tolerance": 0.01,
+    "coordinate_nochange_tolerance": 0.01,
+    "max_relative_semigroup_defect": 0.25,
+    "max_relative_inverse_defect": 0.25,
+    "test_used_for_selection": false
+  },
+  "adoption": {
+    "minimum_seeds": 3,
+    "max_mean_legacy_score_increase_vs_control": 0.0015,
+    "max_mean_legacy_score_increase_vs_historical": 0.0015,
+    "max_mean_observed_mesh_error_increase_mm_vs_control": 0.002,
+    "max_mean_group_rate_error_increase_vs_control": 0.002,
+    "max_defect_ratio_vs_control": 1.25,
+    "require_all_best_any_epochs_after_epoch_one": true,
+    "recipe_preference": ["compact5", "compact6"],
+    "recipe_learning_rate_profile": {
+      "pca128": "pca_low",
+      "spiralnet128": "standard",
+      "adaptive128": "standard",
+      "lamm128": "standard"
+    }
+  },
+  "external_controls": {
+    "task9_experiment_config": "examples/ADNI_1_LHipp_LLV_No_MCI_synthseg_minimal_smooth/task9_latent_cocycle_controlled_v1/configs/experiment.json",
+    "task9_full13_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task9_latent_cocycle_controlled_v1/runs",
+    "historical_roots": {
+      "pca128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/pca128/direct_c4/pca128_direct_c4_s42",
+      "spiralnet128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/spiralnet128/direct_c4/spiralnet128_direct_c4_s42",
+      "adaptive128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v1/training/adaptive128/direct_c4/adaptive128_direct_c4_s42",
+      "lamm128": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/training/lamm128/direct_c4/lamm128_direct_c4_s42"
+    }
+  },
+  "scientific_contract": {
+    "latent_only": true,
+    "direct_non_ode": true,
+    "architecture_fixed_across_arms": true,
+    "paired_seed_batches": true,
+    "decoder_frozen": true,
+    "decoder_in_optimizer_loss": true,
+    "all_raw_terms_logged": true,
+    "task9_controls_read_only": true,
+    "test_loaded_during_training": false
+  }
+}

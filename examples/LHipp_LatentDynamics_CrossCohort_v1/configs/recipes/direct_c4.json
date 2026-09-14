@@ -1,0 +1,73 @@
+{
+  "method": "direct_c4",
+  "source": "August_Version/configs/august_<rep>_direct_c4.json. Identical across PCA/SpiralNet/Adaptive except the memory-driven batch sizes in representation_overrides. These produced the August anchors (pca128/spiralnet128/adaptive128 direct_c4 s42_v2).",
+  "trainer_semantics": "August train_c4.py: early-stopping patience counts genuine (unconstrained) score improvement; best.pt is the best feasible epoch; best_unconstrained.pt is also kept.",
+  "config": {
+    "method": "direct_c4",
+    "model": {
+      "latent_dim": 128,
+      "variant": "direct",
+      "width": 256,
+      "residual_blocks": 2,
+      "dropout": 0.3,
+      "transport": "Phi(z,s,t,d)=z+(t-s)*phi(z,s,t,d)",
+      "ode_used": false,
+      "attention_used": false
+    },
+    "training": {
+      "epochs": 180,
+      "batch_size": 96,
+      "samples_per_epoch": 4096,
+      "decoder_batch_size": 512,
+      "learning_rate": 5e-05,
+      "minimum_learning_rate": 3e-05,
+      "weight_decay": 0.01,
+      "gradient_clip_norm": 1.0,
+      "consistency_ramp_epochs": 10,
+      "anatomy_ramp_epochs": 15,
+      "evaluation_batch_size": 512,
+      "early_stopping_patience": 40,
+      "early_stopping_min_delta": 1e-05,
+      "seed": 42,
+      "smoke_train_batches": 2,
+      "smoke_pair_limit": 16
+    },
+    "loss": {
+      "real_latent_weight": 0.25,
+      "real_vertex_weight": 1.0,
+      "observed_semigroup_weight": 0.1,
+      "virtual_semigroup_weight": 0.1,
+      "inverse_weight": 0.05,
+      "sequence_latent_weight": 0.0625,
+      "sequence_vertex_weight": 0.25,
+      "sequence_semigroup_weight": 0.1,
+      "volume_weight": 0.1,
+      "rate_weight": 0.1,
+      "slope_weight": 0.05,
+      "group_rate_weight": 0.02,
+      "disease_gap_weight": 0.02,
+      "coboundary_weight": 0.0
+    },
+    "selection": {
+      "primary": "macro CN/AD first-to-last decoded transport shape ratio",
+      "all_pair_shape_weight": 0.2,
+      "volume_tiebreak_weight": 0.001,
+      "latent_nochange_tolerance": 0.05,
+      "coordinate_nochange_tolerance": 0.05,
+      "max_relative_semigroup_defect": 0.25,
+      "max_relative_inverse_defect": 0.25,
+      "min_selection_epoch_sensitivity": 15,
+      "test_used_for_selection": false
+    }
+  },
+  "representation_overrides": {
+    "pca128": {},
+    "spiralnet128": {"training": {"batch_size": 24, "decoder_batch_size": 64, "evaluation_batch_size": 64}},
+    "adaptive128": {"training": {"batch_size": 8, "decoder_batch_size": 16, "evaluation_batch_size": 16}},
+    "lamm128": {}
+  },
+  "notes": {
+    "lamm128": "No August-recipe LAMM run exists. Batch 96 / decoder 512 is what the earlier LAMM cocycle (task3_v3_lamm_latest, older recipe) ran with, so it fits in memory.",
+    "min_selection_epoch_sensitivity": "Extra checkpoint best_min_epoch.pt: best feasible epoch at or after this epoch (the anchors selected epochs 1-5, before the 10/15-epoch ramps finish). Reported as a sensitivity analysis; best.pt stays primary."
+  }
+}

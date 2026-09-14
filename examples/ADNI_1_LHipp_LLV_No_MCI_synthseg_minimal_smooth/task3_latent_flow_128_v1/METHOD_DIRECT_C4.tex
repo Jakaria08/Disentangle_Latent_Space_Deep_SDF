@@ -1,0 +1,476 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{empheq}
+\usepackage{multirow}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{microtype}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\z}{\bm{z}}
+\newcommand{\X}{\bm{X}}
+\newcommand{\vel}{\bm{v}}
+\newcommand{\Loss}{\mathcal{L}}
+\newcommand{\SL}{\operatorname{SmoothL}_1}
+\newcommand{\vol}{\operatorname{vol}}
+\newcommand{\Dec}{\mathcal{D}}
+
+\title{Direct C4: A Non-ODE Latent Cocycle Flow\\
+\large Model, Objective, and Training Procedure}
+\author{Task \texttt{task3\_latent\_flow\_128\_v1}, method \texttt{direct\_c4}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Setting}
+
+\subsection{Frozen latent representation}
+
+Longitudinal left-hippocampus surfaces are compressed once, offline, into a fixed
+$D = 128$ dimensional latent space by a \emph{frozen} representation. Three
+interchangeable representations are used, all producing the same latent dimension:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Name & Decoder $\Dec$ & Validation coordinate RMSE \\
+\midrule
+\texttt{pca128}       & first 128 components of a train-only PCA-150 basis (linear) & --- \\
+\texttt{spiralnet128} & saved SpiralNet autoencoder decoder & $0.03721$ mm \\
+\texttt{adaptive128}  & saved Adaptive-Spiral autoencoder decoder & $0.03676$ mm \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Latents are standardized with train-only moments, so a state is
+$\z \in \R^{D}$ with $\z = (\z_{\mathrm{raw}} - \mu_z)/\sigma_z$. The decoder
+\begin{equation}
+  \Dec : \R^{D} \longrightarrow \R^{N \times 3}, \qquad N = 2746,
+\end{equation}
+maps a standardized latent to millimetre vertex coordinates. For \texttt{pca128} this is
+the affine map $\Dec(\z) = \bigl((\z \odot \sigma_z + \mu_z) W_{\mathrm{pca}} + \bar{\bm{x}}\bigr)$
+reshaped to $N \times 3$; for the two autoencoders it is the saved decoder network.
+
+\paragraph{Decoder contract.} $\Dec$ has \texttt{requires\_grad=False} and stays in
+evaluation mode, but it \emph{remains inside the differentiable graph}. Reconstruction
+gradients therefore flow through $\Dec$ into the predicted latent and into the flow, while
+no decoder weight is ever updated. The trainer explicitly audits this at startup: it
+backpropagates the vertex reconstruction term alone and asserts that the flow receives a
+strictly positive gradient norm while every decoder parameter gradient is \texttt{None}.
+
+\paragraph{Mesh volume.} For vertices $\X$ with fixed face set $\mathcal{F}$,
+\begin{equation}
+  \vol(\X) = \Biggl| \frac{1}{6} \sum_{(a,b,c) \in \mathcal{F}}
+    \bigl\langle \X_a,\; \X_b \times \X_c \bigr\rangle \Biggr| .
+\end{equation}
+
+\subsection{Data}
+
+A longitudinal observation is $(\z_s, \z_t, s, t, d)$: two visits of the same subject at
+ages $s, t$ (years) with diagnosis $d \in \{0,1\}$, $0 = \mathrm{CN}$, $1 = \mathrm{AD}$.
+Write $\Delta = t - s$. Some pairs carry an observed intermediate visit at age $a_m$.
+Subjects are additionally available as whole trajectories
+$(\z_0, \dots, \z_{n-1})$ at ages $(a_0, \dots, a_{n-1})$.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Split & Pairs & Subjects & CN / AD pairs & adjacent / non-adjacent \\
+\midrule
+train & 4208 & 475 & 3345 / 863 & 1562 / 2646 \\
+val   &  549 &  61 &  423 / 126 &  208 /  341 \\
+test  &  619 &  61 &  501 / 118 &  216 /  403 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Train-only normalization scales}
+
+Every loss term is divided by a robust scale estimated on the training split only, so the
+thirteen terms are commensurate at initialization. With $\Delta\z = \z_t - \z_s$ and
+$\Delta\X = \Dec(\z_t) - \Dec(\z_s)$, each scale is the median over subject-balanced
+training pairs:
+\begin{align}
+  \sigma_{\mathrm{lat}} &= \operatorname{med}\bigl[ \tfrac{1}{D}\|\Delta\z\|_2^2 \bigr], &
+  \sigma_{\mathrm{crd}} &= \operatorname{med}\bigl[ \tfrac{1}{3N}\|\Delta\X\|_1 \bigr], &
+  \sigma_{\mathrm{euc}} &= \operatorname{med}\bigl[ \tfrac{1}{N}\textstyle\sum_i \|\Delta\X_i\|_2 \bigr], \nonumber\\
+  \sigma_{\mathrm{vol}} &= \operatorname{med}\bigl[ |\Delta \log \vol| \bigr], &
+  \sigma_{\mathrm{rate}} &= \operatorname{med}\bigl[ |\Delta \log \vol / \Delta y| \bigr], &
+  \sigma_{\mathrm{dsp}} &= \operatorname{med}\bigl[ \tfrac{1}{\sqrt{D}}\|\Delta\z\|_2 \bigr],
+\end{align}
+plus $\sigma_{\mathrm{slp}}$, the median over training subjects of the absolute
+least-squares slope of $\log \vol$ against years. Group targets
+$\rho_{\mathrm{CN}}, \rho_{\mathrm{AD}}$ are subject-averaged log-volume rates per
+diagnosis, and $\rho_{\Delta} = \rho_{\mathrm{AD}} - \rho_{\mathrm{CN}}$.
+
+\section{The transport map}
+
+\subsection{Definition}
+
+The flow is \textbf{not} an ODE. There is no integrator, no adjoint, and no attention. A
+single network emits an average latent velocity over the interval $[s,t]$, and transport is
+one explicit residual step:
+\begin{empheq}[box=\fbox]{equation}
+  \Phi_\theta(\z, s, t, d) \;=\; \z \;+\; (t - s)\,
+  \bigl[ \vel^{\mathrm{CN}}_\theta(\z, s, t) + d\,\vel^{\mathrm{AD}}_\theta(\z, s, t) \bigr].
+  \label{eq:transport}
+\end{empheq}
+The instantaneous velocity is the diagonal $\vel_\theta(\z,a,d) = \Phi$'s time derivative at
+$t = a$, obtained by evaluating the same network at $s = t = a$.
+
+\subsection{Structural properties}
+
+\paragraph{Exact identity.} For all $\z, a, d, \theta$:
+$\Phi_\theta(\z, a, a, d) = \z$ bit-exactly, because the elapsed-time factor $(t-s)$
+multiplies the network output. No penalty enforces this and no integrator can erode it.
+
+\paragraph{Exact no-change initialization.} Both output heads are zero-initialized, so
+$\Phi_{\theta_0} = \mathrm{id}$. Epoch~0 is exactly the no-change baseline and is saved as
+the initial \texttt{best.pt}.
+
+\paragraph{Cocycle / semigroup property (learned).} The target algebraic law is
+\begin{empheq}[box=\fbox]{equation}
+  \Phi_\theta\bigl(\Phi_\theta(\z, s, r, d),\, r,\, t,\, d\bigr) = \Phi_\theta(\z, s, t, d)
+  \qquad \forall\, r,
+  \label{eq:cocycle}
+\end{empheq}
+whose $r = t$ instance is the inverse law
+$\Phi_\theta(\Phi_\theta(\z,s,t,d),t,s,d) = \z$. Unlike the identity, \eqref{eq:cocycle}
+is \emph{not} structural: because $\vel_\theta$ depends on the endpoints $(s,t)$ and on the
+state $\z$, composing two sub-intervals invokes the network at different arguments than the
+direct interval. Agreement is imposed by penalty and audited as a validation gate. The
+coboundary term of the original C4 formulation is prohibited by config validation and fixed
+to exactly zero.
+
+\section{Network}
+
+\texttt{DirectC4Flow} is a small conditioned residual MLP. With width $W = 256$ and
+$B = 2$ residual blocks, the input feature vector is the latent concatenated with five
+scalar time features:
+\begin{equation}
+  \bm{f} = \Bigl[\, \z \;\Vert\; s \;\Vert\; t \;\Vert\; (t-s) \;\Vert\; |t-s| \;\Vert\;
+  \tfrac{1}{2}(s+t) \,\Bigr] \in \R^{D+5} = \R^{133}.
+\end{equation}
+Note that both endpoints enter, so the field is a function of the interval and not merely of
+its length. The trunk is
+\begin{align}
+  \bm{h}_0 &= \operatorname{SiLU}\bigl(W_{\mathrm{in}} \bm{f} + \bm{b}_{\mathrm{in}}\bigr), \\
+  \bm{h}_b &= \operatorname{SiLU}\Bigl( \bm{h}_{b-1} +
+    W_2 \operatorname{SiLU}\bigl(W_1 \operatorname{LN}(\bm{h}_{b-1})\bigr) \Bigr),
+    \qquad b = 1, \dots, B,
+  \label{eq:resblock}
+\end{align}
+and the two zero-initialized heads give the gated velocity
+\begin{equation}
+  \vel_\theta(\z,s,t,d) = W_{\mathrm{CN}} \bm{h}_B + \bm{b}_{\mathrm{CN}}
+  \;+\; d\,\bigl( W_{\mathrm{AD}} \bm{h}_B + \bm{b}_{\mathrm{AD}} \bigr).
+\end{equation}
+The diagnosis label enters \emph{only} through this output gate, never as a trunk input.
+
+\paragraph{Parameters.} $364{,}288$ total: input $34{,}304$; two residual blocks
+$264{,}192$; CN head $32{,}896$; AD-residual head $32{,}896$.
+
+\paragraph{Remark on \eqref{eq:resblock}.} The activation is applied to the sum,
+$\bm{h}_b = \operatorname{SiLU}(\bm{h}_{b-1} + f(\bm{h}_{b-1}))$, rather than to the branch
+only. This is a post-activation residual and does not preserve a clean identity path
+through the trunk.
+
+\section{Objective}
+
+\subsection{Reduction helpers}
+
+For a predicted latent $\hat{\z}$ against target latent $\z$ with reference vertices $\X$:
+\begin{align}
+  \ell_{\mathrm{lat}}(\hat{\z}, \z) &= \frac{1}{\sigma_{\mathrm{lat}}}\,
+    \bigl\langle (\hat{\z} - \z)^2 \bigr\rangle, \\
+  \ell_{\mathrm{crd}}(\hat{\z}, \X) &= \frac{1}{\sigma_{\mathrm{crd}}}\,
+    \bigl\langle \bigl| \Dec(\hat{\z}) - \X \bigr| \bigr\rangle, \\
+  \ell_{\mathrm{euc}}(\hat{\z}, \X) &= \frac{1}{\sigma_{\mathrm{euc}}}\,
+    \Bigl\langle \bigl\| \Dec(\hat{\z})_i - \X_i \bigr\|_2 \Bigr\rangle_i, \\
+  \ell_{\mathrm{vtx}}(\hat{\z}, \X) &= \tfrac{1}{2}\bigl[
+    \ell_{\mathrm{crd}}(\hat{\z}, \X) + \ell_{\mathrm{euc}}(\hat{\z}, \X) \bigr],
+    \label{eq:vtx}\\
+  m_\sigma(\bm{a}, \bm{b}) &= \frac{1}{\sigma}\bigl\langle (\bm{a} - \bm{b})^2 \bigr\rangle,
+\end{align}
+where $\langle\cdot\rangle$ denotes the mean over all remaining axes. Equation
+\eqref{eq:vtx} deliberately averages a per-coordinate $L_1$ term with a true per-vertex
+Euclidean distance, so the loss is not dominated by axis-aligned error.
+
+\subsection{Pair terms}
+
+With $\hat{\z}_t = \Phi_\theta(\z_s, s, t, d)$ and $\hat{\z}_s = \Phi_\theta(\z_t, t, s, d)$:
+
+\paragraph{1--2. Real reconstruction (latent and decoded vertex).}
+\begin{align}
+  \Loss_{\mathrm{r\text{-}lat}} &= \tfrac{1}{2}\bigl[
+    \ell_{\mathrm{lat}}(\hat{\z}_t, \z_t) + \ell_{\mathrm{lat}}(\hat{\z}_s, \z_s) \bigr], \\
+  \Loss_{\mathrm{r\text{-}vtx}} &= \tfrac{1}{2}\bigl[
+    \ell_{\mathrm{vtx}}(\hat{\z}_t, \X_t) + \ell_{\mathrm{vtx}}(\hat{\z}_s, \X_s) \bigr].
+\end{align}
+
+\paragraph{3. Observed semigroup.} For pairs possessing a real intermediate visit at $a_m$,
+\begin{equation}
+  \Loss_{\mathrm{obs}} = \tfrac{1}{2}\Bigl[
+    m_{\sigma_{\mathrm{lat}}}\bigl(\hat{\z}_t, \Phi(\Phi(\z_s,s,a_m),a_m,t)\bigr)
+  + m_{\sigma_{\mathrm{lat}}}\bigl(\hat{\z}_s, \Phi(\Phi(\z_t,t,a_m),a_m,s)\bigr) \Bigr].
+\end{equation}
+
+\paragraph{4. Virtual semigroup.} Draw $u \sim \mathcal{U}(0.2, 0.8)$, set $a_v = s + u\Delta$,
+\begin{equation}
+  \Loss_{\mathrm{vrt}} = \tfrac{1}{2}\Bigl[
+    m_{\sigma_{\mathrm{lat}}}\bigl(\hat{\z}_t, \Phi(\Phi(\z_s,s,a_v),a_v,t)\bigr)
+  + m_{\sigma_{\mathrm{lat}}}\bigl(\hat{\z}_s, \Phi(\Phi(\z_t,t,a_v),a_v,s)\bigr) \Bigr].
+\end{equation}
+
+\paragraph{5. Inverse consistency.}
+\begin{equation}
+  \Loss_{\mathrm{inv}} = \tfrac{1}{2}\Bigl[
+    m_{\sigma_{\mathrm{lat}}}\bigl(\Phi(\hat{\z}_t, t, s), \z_s\bigr)
+  + m_{\sigma_{\mathrm{lat}}}\bigl(\Phi(\hat{\z}_s, s, t), \z_t\bigr) \Bigr].
+\end{equation}
+
+\paragraph{6. Decoded volume.} With $\hat{V}_t = \vol(\Dec(\hat{\z}_t))$ and
+$\hat{V}_s = \vol(\Dec(\hat{\z}_s))$,
+\begin{equation}
+  \Loss_{\mathrm{vol}} = \tfrac{1}{2}\Bigl[
+    \SL\Bigl(\tfrac{\log \hat{V}_t - \log V_t}{\sigma_{\mathrm{vol}}}, 0\Bigr) +
+    \SL\Bigl(\tfrac{\log \hat{V}_s - \log V_s}{\sigma_{\mathrm{vol}}}, 0\Bigr) \Bigr].
+\end{equation}
+
+\paragraph{7. Log-volume rate.} With $y = \max(\Delta, 10^{-6})$,
+\begin{equation}
+  r_{\mathrm{obs}} = \frac{\log V_t - \log V_s}{y}, \quad
+  r_f = \frac{\log \hat{V}_t - \log V_s}{y}, \quad
+  r_b = \frac{\log \hat{V}_s - \log V_t}{-y},
+\end{equation}
+\begin{equation}
+  \Loss_{\mathrm{rate}} = \tfrac{1}{2}\Bigl[
+    \SL\Bigl(\tfrac{r_f - r_{\mathrm{obs}}}{\sigma_{\mathrm{rate}}}, 0\Bigr) +
+    \SL\Bigl(\tfrac{r_b - r_{\mathrm{obs}}}{\sigma_{\mathrm{rate}}}, 0\Bigr) \Bigr].
+\end{equation}
+
+\paragraph{8--9. Diagnosis-group rate and AD$-$CN gap.} Active only when both groups occur
+in the batch:
+\begin{equation}
+  \Loss_{\mathrm{grp}} = \frac{1}{2}\!\!\sum_{g \in \{\mathrm{CN},\mathrm{AD}\}}\!\!
+    \SL\Bigl(\tfrac{\overline{r}_f^{\,g} - \rho_g}{\sigma_{\mathrm{rate}}}, 0\Bigr),
+  \qquad
+  \Loss_{\mathrm{gap}} = \SL\Bigl(
+    \tfrac{(\overline{r}_f^{\,\mathrm{AD}} - \overline{r}_f^{\,\mathrm{CN}}) - \rho_\Delta}
+          {\sigma_{\mathrm{rate}}}, 0\Bigr).
+\end{equation}
+
+\subsection{Sequence terms}
+
+Exactly one full subject trajectory $(\z_0,\dots,\z_{n-1})$ at ages $(a_0,\dots,a_{n-1})$ is
+evaluated per optimizer step, alternating CN and AD. Four predicted families are formed:
+\begin{alignat}{2}
+  \text{direct forward:}\quad  &\hat{\z}^{\,\mathrm{df}}_k = \Phi(\z_0, a_0, a_k, d),
+  &\qquad k &= 1,\dots,n-1, \\
+  \text{rollout forward:}\quad &\hat{\z}^{\,\mathrm{rf}}_k = \Phi(\hat{\z}^{\,\mathrm{rf}}_{k-1}, a_{k-1}, a_k, d),
+  &\qquad \hat{\z}^{\,\mathrm{rf}}_0 &= \z_0, \\
+  \text{direct backward:}\quad &\hat{\z}^{\,\mathrm{db}}_k = \Phi(\z_{n-1}, a_{n-1}, a_k, d),
+  &\qquad k &= n-2,\dots,0, \\
+  \text{rollout backward:}\quad &\hat{\z}^{\,\mathrm{rb}}_k = \Phi(\hat{\z}^{\,\mathrm{rb}}_{k+1}, a_{k+1}, a_k, d).&&
+\end{alignat}
+
+\paragraph{10--11. Sequence reconstruction.} Averaging the four families,
+\begin{equation}
+  \Loss_{\mathrm{s\text{-}lat}} = \tfrac{1}{4}\!\!\sum_{\star \in \{\mathrm{df,rf,db,rb}\}}\!\!
+    \ell_{\mathrm{lat}}(\hat{\z}^{\,\star}, \z^{\star}), \qquad
+  \Loss_{\mathrm{s\text{-}vtx}} = \tfrac{1}{4}\!\!\sum_{\star}\!
+    \ell_{\mathrm{vtx}}(\hat{\z}^{\,\star}, \X^{\star}).
+\end{equation}
+
+\paragraph{12. Sequence semigroup.} The direct and rolled-out families must agree; this is
+\eqref{eq:cocycle} applied along a whole observed trajectory:
+\begin{equation}
+  \Loss_{\mathrm{s\text{-}sg}} = \tfrac{1}{2}\Bigl[
+    m_{\sigma_{\mathrm{lat}}}\bigl(\hat{\z}^{\,\mathrm{df}}, \hat{\z}^{\,\mathrm{rf}}\bigr) +
+    m_{\sigma_{\mathrm{lat}}}\bigl(\hat{\z}^{\,\mathrm{db}}, \hat{\z}^{\,\mathrm{rb}}\bigr) \Bigr].
+\end{equation}
+
+\paragraph{13. Volume-trajectory slope.} With
+$\operatorname{slp}(\bm{y}, \bm{v}) = \sum_k (y_k - \bar{y})(v_k - \bar{v}) / \sum_k (y_k-\bar{y})^2$
+the least-squares slope, and $\hat{V}^{\mathrm{f}}, \hat{V}^{\mathrm{b}}$ the decoded volume
+trajectories obtained by prepending the true anchor visit,
+\begin{equation}
+  \Loss_{\mathrm{slp}} = \tfrac{1}{2}\Bigl[
+    \SL\Bigl(\tfrac{\operatorname{slp}(\bm{y}, \log \hat{V}^{\mathrm{f}}) - \operatorname{slp}(\bm{y}, \log V)}{\sigma_{\mathrm{slp}}}, 0\Bigr)
+  + \SL\Bigl(\tfrac{\operatorname{slp}(\bm{y}^{\mathrm{rev}}, \log \hat{V}^{\mathrm{b}}) - \operatorname{slp}(\bm{y}, \log V)}{\sigma_{\mathrm{slp}}}, 0\Bigr) \Bigr].
+\end{equation}
+
+\subsection{Curriculum ramps and total loss}
+
+With $E_c = 10$ and $E_a = 15$, at epoch $e$:
+\begin{equation}
+  \rho_c(e) = \min\!\left(1, \frac{e}{E_c}\right), \qquad
+  \rho_a(e) = \min\!\left(1, \frac{e}{E_a}\right).
+\end{equation}
+\begin{empheq}[box=\fbox]{align}
+  \Loss(e) =\;\;& w_{\mathrm{r\text{-}lat}}\Loss_{\mathrm{r\text{-}lat}}
+                 + w_{\mathrm{r\text{-}vtx}}\Loss_{\mathrm{r\text{-}vtx}} \nonumber\\
+  &+ \rho_c(e)\Bigl[ w_{\mathrm{obs}}\Loss_{\mathrm{obs}} + w_{\mathrm{vrt}}\Loss_{\mathrm{vrt}}
+     + w_{\mathrm{inv}}\Loss_{\mathrm{inv}}
+     + w_{\mathrm{s\text{-}lat}}\Loss_{\mathrm{s\text{-}lat}}
+     + w_{\mathrm{s\text{-}vtx}}\Loss_{\mathrm{s\text{-}vtx}}
+     + w_{\mathrm{s\text{-}sg}}\Loss_{\mathrm{s\text{-}sg}} \Bigr] \nonumber\\
+  &+ \rho_a(e)\Bigl[ w_{\mathrm{vol}}\Loss_{\mathrm{vol}} + w_{\mathrm{rate}}\Loss_{\mathrm{rate}}
+     + w_{\mathrm{slp}}\Loss_{\mathrm{slp}} + w_{\mathrm{grp}}\Loss_{\mathrm{grp}}
+     + w_{\mathrm{gap}}\Loss_{\mathrm{gap}} \Bigr].
+  \label{eq:total}
+\end{empheq}
+
+\paragraph{Weights and measured share.} Measured on run
+\texttt{spiralnet128\_direct\_c4\_s42} at epoch 20, where $\rho_c = \rho_a = 1$.
+
+\begin{center}
+\begin{tabular}{llrrrr}
+\toprule
+Block & Term & $w$ & Raw $\Loss$ & $w\Loss$ & Share \\
+\midrule
+\multirow{2}{*}{Reconstruction}
+ & $\Loss_{\mathrm{r\text{-}vtx}}$   & $1.0$    & $0.8349$ & $0.8349$ & $59.14\%$ \\
+ & $\Loss_{\mathrm{r\text{-}lat}}$   & $0.25$   & $0.8821$ & $0.2205$ & $15.62\%$ \\
+\midrule
+\multirow{4}{*}{Consistency}
+ & $\Loss_{\mathrm{s\text{-}vtx}}$   & $0.25$   & $0.8086$ & $0.2022$ & $14.32\%$ \\
+ & $\Loss_{\mathrm{s\text{-}lat}}$   & $0.0625$ & $0.8639$ & $0.0540$ & $3.82\%$ \\
+ & $\Loss_{\mathrm{inv}}$            & $0.05$   & $0.0084$ & $0.00042$ & $0.03\%$ \\
+ & $\Loss_{\mathrm{s\text{-}sg}}$    & $0.1$    & $0.0017$ & $0.00017$ & $0.01\%$ \\
+\midrule
+\multirow{2}{*}{(consistency, cont.)}
+ & $\Loss_{\mathrm{obs}}$            & $0.1$    & $0.00072$ & $0.00007$ & $0.01\%$ \\
+ & $\Loss_{\mathrm{vrt}}$            & $0.1$    & $0.00044$ & $0.00004$ & $0.00\%$ \\
+\midrule
+\multirow{5}{*}{Anatomy}
+ & $\Loss_{\mathrm{rate}}$           & $0.1$    & $0.6973$ & $0.0697$ & $4.94\%$ \\
+ & $\Loss_{\mathrm{vol}}$            & $0.1$    & $0.2004$ & $0.0200$ & $1.42\%$ \\
+ & $\Loss_{\mathrm{gap}}$            & $0.02$   & $0.2175$ & $0.0044$ & $0.31\%$ \\
+ & $\Loss_{\mathrm{slp}}$            & $0.05$   & $0.0616$ & $0.0031$ & $0.22\%$ \\
+ & $\Loss_{\mathrm{grp}}$            & $0.02$   & $0.1120$ & $0.0022$ & $0.16\%$ \\
+\midrule
+\multicolumn{4}{r}{\textbf{Total}} & $\bm{1.4118}$ & $100\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The four cocycle/consistency penalties that give the method its name
+($\Loss_{\mathrm{obs}}, \Loss_{\mathrm{vrt}}, \Loss_{\mathrm{inv}}, \Loss_{\mathrm{s\text{-}sg}}$)
+together contribute $0.05\%$ of the objective.
+
+\section{Training procedure}
+
+\subsection{Stratified sampling}
+
+Pairs are drawn by a \texttt{WeightedRandomSampler} with replacement. Weight of a pair
+belonging to subject $u$ in stratum $\kappa \in \{\mathrm{CN},\mathrm{AD}\} \times
+\{\text{adjacent}, \text{non-adjacent}\}$:
+\begin{equation}
+  w(\text{pair}) = \frac{0.25}{|\mathcal{U}_\kappa| \cdot |\mathcal{P}_{u,\kappa}|},
+\end{equation}
+giving each of the four strata equal mass, each subject within a stratum equal mass, and
+each pair within a subject equal mass. Sequence subjects are drawn from a separate
+CN/AD-alternating shuffle, one trajectory per optimizer step.
+
+\subsection{Optimization}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Setting & Value \\
+\midrule
+Optimizer & AdamW, $\eta = 3\times10^{-4}$, weight decay $10^{-4}$ \\
+Schedule & Cosine annealing, $T_{\max} = $ epochs, $\eta_{\min} = 3\times10^{-5}$ \\
+Gradient clipping & Global $\ell_2$ norm $\le 1.0$ \\
+Precision & Full fp32 (no AMP) \\
+Accumulation & None (one optimizer step per batch) \\
+\texttt{samples\_per\_epoch} & 4096 (all representations) \\
+\texttt{batch\_size} & 96 (\texttt{pca128}), 24 (\texttt{spiralnet128}), 8 (\texttt{adaptive128}) \\
+\textbf{Optimizer steps / epoch} & \textbf{43}, \textbf{171}, \textbf{512} respectively \\
+Epochs requested & 180 \\
+Early stopping & patience 30, $\min\Delta = 10^{-5}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The batch size varies by representation because the frozen decoder's memory cost differs
+(\texttt{pca128} is a single matrix product; the two autoencoder decoders are mesh
+networks). Since \texttt{samples\_per\_epoch} is held fixed at 4096, \emph{one ``epoch''
+denotes a $12\times$ different amount of optimization across the three runs}.
+
+\subsection{Validation and model selection}
+
+For group $g$ on first-to-last subject pairs, let $c_g, e_g, \ell_g$ be the ratios of
+predicted to no-change coordinate error, Euclidean error, and latent error, and let
+$\bar{c}, \bar{e}, \bar{\nu}$ be the corresponding all-pair coordinate, Euclidean, and
+relative-volume ratios. The selection score is
+\begin{empheq}[box=\fbox]{equation}
+  S = \underbrace{\frac{1}{2}\!\!\sum_{g \in \{\mathrm{CN},\mathrm{AD}\}}\!\! \frac{c_g + e_g}{2}}
+      _{\text{macro first-to-last shape}}
+    \;+\; \underbrace{0.2 \cdot \frac{\bar{c} + \bar{e}}{2}}_{\text{all-pair shape}}
+    \;+\; \underbrace{0.001 \cdot \bar{\nu}}_{\text{volume tie-break}} .
+  \label{eq:score}
+\end{empheq}
+A checkpoint is eligible only if all of the following hold:
+\begin{equation}
+  \ell_g \le 1.01 \;\;\text{and}\;\; c_g \le 1.01 \;\; \forall g \in \{\mathrm{CN}, \mathrm{AD}\},
+  \qquad
+  \bar{D}_{\mathrm{sg}} \le 0.25, \qquad
+  \bar{D}_{\mathrm{inv}} \le 0.25, \qquad S \text{ finite},
+  \label{eq:gates}
+\end{equation}
+where the relative midpoint defects, normalized by the displacement scale
+$\sigma_{\mathrm{dsp}}$, are
+\begin{equation}
+  D_{\mathrm{sg}} = \frac{\bigl\| \Phi(\z_s,s,t) - \Phi(\Phi(\z_s,s,\tfrac{s+t}{2}),\tfrac{s+t}{2},t) \bigr\|_2 / \sqrt{D}}{\sigma_{\mathrm{dsp}}},
+  \qquad
+  D_{\mathrm{inv}} = \frac{\bigl\| \Phi(\Phi(\z_s,s,t),t,s) - \z_s \bigr\|_2 / \sqrt{D}}{\sigma_{\mathrm{dsp}}}.
+\end{equation}
+The best checkpoint updates only when feasible and $S < S_{\mathrm{best}} - 10^{-5}$;
+training halts after 30 consecutive epochs without such an update. The epoch-0 identity map
+seeds $S_{\mathrm{best}}$, and for the identity all ratios equal 1, so
+$S_{\mathrm{best}}^{(0)} = 1 + 0.2 + 0.001 = 1.201$.
+
+\section{Observed training behaviour}
+
+All three runs requested 180 epochs.
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+Run & Batch & Steps/epoch & Last epoch & Best epoch & Steps to best \\
+\midrule
+\texttt{pca128\_direct\_c4\_s42}       & 96 &  43 & 37 & 7 & 301 \\
+\texttt{spiralnet128\_direct\_c4\_s42} & 24 & 171 & 31 & 1 & $\le 171$ \\
+\texttt{adaptive128\_direct\_c4\_s42}  &  8 & 512 & 31 & 1 & $\le 512$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two facts characterize every run. First, \emph{all training terms improve monotonically}
+throughout: for \texttt{spiralnet128}, $\Loss_{\mathrm{r\text{-}vtx}}$ falls
+$1.021 \to 0.790$ and $\Loss_{\mathrm{s\text{-}vtx}}$ falls $1.046 \to 0.736$ over 31
+epochs. The reported total \eqref{eq:total} nonetheless \emph{rises} during epochs 1--15
+purely because $\rho_c$ and $\rho_a$ are still opening; it is not comparable across the ramp
+window.
+
+Second, validation degrades from the very first epoch. The macro first-to-last shape ratio
+for \texttt{spiralnet128} moves $0.899 \to 1.102$, i.e. from $10\%$ better than no-change to
+$10\%$ worse, while the semigroup and inverse defects grow from $\approx 0$ (trivially
+satisfied at the identity initialization) to $0.056$ and $0.187$. Feasibility under
+\eqref{eq:gates} is lost at epoch 4 through the per-group $c_g \le 1.01$ condition, long
+before the loose $0.25$ defect gates bind.
+
+Notably, the \emph{volumetric} predictions are accurate and remain stable: at epoch 1 the
+predicted first-to-last log-volume rates are $-0.0129$ (CN) and $-0.0440$ (AD) against
+observed $-0.0142$ and $-0.0445$, and the volume ratio stays near $0.45$-$0.49$ for the
+whole run. The model captures the group-level atrophy trend and holds it; what degrades is
+the per-vertex spatial direction of the predicted latent displacement.
+
+\end{document}

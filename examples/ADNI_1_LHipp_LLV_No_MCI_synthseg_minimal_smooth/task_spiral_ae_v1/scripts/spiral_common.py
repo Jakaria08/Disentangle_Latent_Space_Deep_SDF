@@ -24,12 +24,27 @@ if str(_THIS_DIR) not in sys.path:
     sys.path.insert(0, str(_THIS_DIR))
 
 BULK_ROOT = Path("/mnt/bulk10tb")
-OUTPUT_ROOT = BULK_ROOT / "Deep3DComp" / "ADNI_1_LHipp" / "task_spiral_ae_v1"
+
+# Cohort overrides.  The defaults reproduce the original ADNI behaviour exactly - same
+# paths, same cache filenames - so existing studies and caches are unaffected.  Setting
+# these lets the identical training code run on another cohort's meshes.
+#
+# COHORT_TAG namespaces the vertex/template caches.  Without it a second cohort would
+# silently read ADNI's cached vertices, because the cache key used to be the split alone.
+COHORT_TAG = os.environ.get("SPIRAL_COHORT_TAG", "adni")
+OUTPUT_ROOT = Path(
+    os.environ.get("SPIRAL_OUTPUT_ROOT", str(BULK_ROOT / "Deep3DComp" / "ADNI_1_LHipp" / "task_spiral_ae_v1"))
+)
 CACHE_DIR = OUTPUT_ROOT / "cache"
+# The ADNI run predates cohort namespacing and other tasks read its cache by name, so the
+# default tag keeps every legacy filename byte-identical; only new cohorts get a prefix.
+_CACHE_PREFIX = "" if COHORT_TAG == "adni" else f"{COHORT_TAG}_"
 
 REPO_TASK_ROOT = _THIS_DIR.parent
 COHORT_ROOT = REPO_TASK_ROOT.parent / "hippocampus_pca_cocycle_v4"
-MANIFEST_FP = COHORT_ROOT / "metadata" / "hippocampus_qc_keep_manifest.csv"
+MANIFEST_FP = Path(
+    os.environ.get("SPIRAL_MANIFEST_FP", str(COHORT_ROOT / "metadata" / "hippocampus_qc_keep_manifest.csv"))
+)
 PCA_REFERENCE_METRICS_FP = COHORT_ROOT / "pca" / "metrics" / "pca_reconstruction_summary.csv"
 PCA_REFERENCE_COEFF_FP = COHORT_ROOT / "pca" / "coefficients" / "train_coefficients.npz"
 
@@ -114,7 +129,7 @@ def load_split_vertices(split, rows=None, refresh=False) -> np.ndarray:
     """(N, V, 3) float32 vertices in mm, cached on bulk. Order matches split_rows()."""
     import openmesh as om
 
-    cache_fp = makedirs(CACHE_DIR) / f"adni_{split}_V.npy"
+    cache_fp = makedirs(CACHE_DIR) / f"{COHORT_TAG}_{split}_V.npy"
     if cache_fp.exists() and not refresh:
         return np.load(cache_fp)
 
@@ -133,7 +148,7 @@ def load_split_vertices(split, rows=None, refresh=False) -> np.ndarray:
 def load_faces(rows=None) -> np.ndarray:
     import openmesh as om
 
-    cache_fp = makedirs(CACHE_DIR) / "adni_faces.npy"
+    cache_fp = makedirs(CACHE_DIR) / f"{COHORT_TAG}_faces.npy"
     if cache_fp.exists():
         return np.load(cache_fp)
     rows = rows if rows is not None else read_manifest()
@@ -144,8 +159,8 @@ def load_faces(rows=None) -> np.ndarray:
 
 def build_template(rows=None, refresh=False):
     """Template = mean training shape on the shared topology (all scans are in correspondence)."""
-    v_fp = makedirs(CACHE_DIR) / "template_V.npy"
-    f_fp = CACHE_DIR / "template_F.npy"
+    v_fp = makedirs(CACHE_DIR) / f"{_CACHE_PREFIX}template_V.npy"
+    f_fp = CACHE_DIR / f"{_CACHE_PREFIX}template_F.npy"
     if v_fp.exists() and f_fp.exists() and not refresh:
         return np.load(v_fp), np.load(f_fp)
 
@@ -169,7 +184,8 @@ def ds_tag(ds_factors) -> str:
 def get_transform(ds_factors, rows=None, refresh=False) -> dict:
     """Quadric-decimation hierarchy, cached per ds_factors so Optuna trials reuse it."""
     tag = ds_tag(ds_factors)
-    fp = makedirs(CACHE_DIR) / f"transform_{tag}.pkl"
+    # The hierarchy is decimated from the cohort's own mean shape, so it is cohort-specific.
+    fp = makedirs(CACHE_DIR) / f"{_CACHE_PREFIX}transform_{tag}.pkl"
     if fp.exists() and not refresh:
         with open(fp, "rb") as handle:
             return pickle.load(handle)

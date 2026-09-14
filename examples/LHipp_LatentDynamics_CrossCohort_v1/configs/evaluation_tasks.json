@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "target": "latest_visit",
+  "note": "One target per subject: the latest visit. BrainODE's n-shot averages one prediction per observed time point; all-prior-k is the same rule with k = min(n-1, 4) for cohorts that never reach five visits.",
+  "tasks": {
+    "one_shot_first": {"min_visits": 2, "prefix": "first", "k": 1, "primary": true},
+    "one_shot_prev": {"min_visits": 2, "prefix": "previous", "k": 1},
+    "four_shot": {"min_visits": 5, "prefix": "last_k_before_target", "k": 4, "brainode_exact": true},
+    "all_prior_k": {"min_visits": 3, "prefix": "last_k_before_target", "k_max": 4}
+  },
+  "report_min_subjects": 10,
+  "baselines": ["nochange_raw", "nochange_decoded", "linear_extrapolation", "population_drift"]
+}

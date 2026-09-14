@@ -1,0 +1,25 @@
+{
+  "candidate_components": [
+    32,
+    64,
+    100,
+    128,
+    150
+  ],
+  "coordinate_space": "final_ply_mm",
+  "fit_split": "train",
+  "master_manifest": "/home/jakaria/INR/Deep3DComp/examples/CrossCohort_LHipp_v1/cohorts/calsnic/cohort/cohort_master/metadata/master_strict_no_mci_stable_min2_manifest.csv",
+  "master_manifest_sha256": "5e5b7b47422856fac59ece10c08188b97b40983c6fbf80a7ef52ffa62c5f3e38",
+  "max_components": 150,
+  "name": "adni_synthseg_lateral_ventricle_strict_no_mci_pca_input",
+  "source_meshes_modified": false,
+  "status": "PCA input prepared; PCA/Cocycle/Brain-ODE not fitted",
+  "structure": "left_lateral_ventricle",
+  "structure_manifest": "/home/jakaria/INR/Deep3DComp/examples/CrossCohort_LHipp_v1/cohorts/calsnic/cohort/lateral_ventricle_pca_cocycle_v4/metadata/lateral_ventricle_qc_keep_manifest.csv",
+  "structure_manifest_sha256": "6297a6d91e2f7297c2d8ecc4537e0dc43626ca4b7245ca746ad87a08750b68a6",
+  "topology": {
+    "correspondence_topology_hash": "9cf6370ea3ec3898efa8443f5de879b6e2d8c740dac2e3387c966ac725cd7c0e",
+    "face_count": 16688,
+    "vertex_count": 8346
+  }
+}

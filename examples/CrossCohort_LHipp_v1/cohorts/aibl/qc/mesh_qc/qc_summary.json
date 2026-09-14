@@ -1,0 +1,222 @@
+{
+  "source_meshes_modified": false,
+  "input": {
+    "input_root": "/mnt/bulk10tb/AIBL/synthseg_minimal_correspondence/full",
+    "records": 1484,
+    "subjects": 398,
+    "structures": [
+      "left_hippocampus",
+      "left_lateral_ventricle"
+    ],
+    "cohort_diagnosis_counts_per_structure": {
+      "CN": 1280,
+      "AD": 204
+    },
+    "pipeline_validation": {
+      "passed": true,
+      "structures": {
+        "left_hippocampus": {
+          "passed": true,
+          "failures": [],
+          "successful_meshes": 938,
+          "failed_or_blocked_meshes": 0,
+          "non_watertight_minimal_smooth_meshes": [],
+          "vertex_count": 2746,
+          "face_count": 5488,
+          "identical_face_connectivity": true,
+          "max_normalized_volume_error_pct": 1.0508670629589662e-06,
+          "max_final_vs_smooth_volume_error_pct": 1.861966240422248e-06,
+          "scaled_obj_min": -0.93013178,
+          "scaled_obj_max": 0.9469851,
+          "scaled_obj_target_range": [
+            -0.9,
+            0.9
+          ]
+        },
+        "left_lateral_ventricle": {
+          "passed": true,
+          "failures": [],
+          "successful_meshes": 938,
+          "failed_or_blocked_meshes": 0,
+          "non_watertight_minimal_smooth_meshes": [],
+          "vertex_count": 8346,
+          "face_count": 16688,
+          "identical_face_connectivity": true,
+          "max_normalized_volume_error_pct": 1.0297216456658968e-06,
+          "max_final_vs_smooth_volume_error_pct": 2.0231702570288927e-06,
+          "scaled_obj_min": -0.78734889,
+          "scaled_obj_max": 0.89853085,
+          "scaled_obj_target_range": [
+            -0.9,
+            0.9
+          ]
+        }
+      }
+    }
+  },
+  "cohort_filter": "strict_no_mci",
+  "cohort_label": "baseline",
+  "structures": [
+    "left_hippocampus",
+    "left_lateral_ventricle"
+  ],
+  "scan_records": 1484,
+  "adjacent_pairs": 688,
+  "scan_actions": {
+    "pass": 1155,
+    "review_scan": 311,
+    "review_pair_context": 18
+  },
+  "strong_flagged_pairs": 8,
+  "subject_actions": {
+    "pass": 612,
+    "review_subject": 179,
+    "exclude_subject": 5
+  },
+  "scan_thresholds": {
+    "left_hippocampus.raw_vs_mask_volume_pct": {
+      "median": null,
+      "mad": null,
+      "low": null,
+      "high": null
+    },
+    "left_hippocampus.smooth_vs_mask_volume_pct_actual": {
+      "median": null,
+      "mad": null,
+      "low": null,
+      "high": null
+    },
+    "left_hippocampus.smooth_surface_area_volume_ratio": {
+      "median": 8.39218244892697,
+      "mad": 0.1543104756742224,
+      "low": 7.24827889275396,
+      "high": 9.536086005099982
+    },
+    "left_lateral_ventricle.raw_vs_mask_volume_pct": {
+      "median": null,
+      "mad": null,
+      "low": null,
+      "high": null
+    },
+    "left_lateral_ventricle.smooth_vs_mask_volume_pct_actual": {
+      "median": null,
+      "mad": null,
+      "low": null,
+      "high": null
+    },
+    "left_lateral_ventricle.smooth_surface_area_volume_ratio": {
+      "median": 8.813111788421583,
+      "mad": 0.5654221851103474,
+      "low": 4.621637130198578,
+      "high": 13.004586446644588
+    }
+  },
+  "pair_thresholds": {
+    "pair_outlier_method": "stratified_mad",
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_0.83": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_0.92": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.0": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.08": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.17": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.25": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.33": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.42": 0.8284187080002299,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.5": 0.9453748862193662,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.58": 0.9048123426269167,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.67": 0.76872413024479,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.75": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.83": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_1.92": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_2.0": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_2.08": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_2.17": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_2.25": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_2.58": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_2.67": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_2.92": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_3.0": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_3.25": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_3.33": 0.9122393560692852,
+    "left_hippocampus.shape_rms_displacement_mm_per_year_total_mm_interval_3.67": 0.9122393560692852,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_0.83": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_0.92": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.0": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.08": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.17": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.25": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.33": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.42": 1.5839290779300264,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.5": 1.7901905787109038,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.58": 1.633530982665608,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.67": 1.7788540782507796,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.75": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.83": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_1.92": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_2.0": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_2.08": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_2.17": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_2.25": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_2.58": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_2.67": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_2.92": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_3.0": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_3.25": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_3.33": 1.7581899399021963,
+    "left_hippocampus.shape_p95_displacement_mm_per_year_total_mm_interval_3.67": 1.7581899399021963,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_0.83": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_0.92": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.0": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.08": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.17": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.25": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.33": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.42": 2.214711403792465,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.5": 1.962040514006845,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.58": 2.478011490319365,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.67": 1.6112367773040421,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.75": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.83": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_1.92": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_2.0": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_2.08": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_2.17": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_2.25": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_2.58": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_2.67": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_2.92": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_3.0": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_3.25": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_3.33": 2.220311197162922,
+    "left_lateral_ventricle.shape_rms_displacement_mm_per_year_total_mm_interval_3.67": 2.220311197162922,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_0.83": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_0.92": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.0": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.08": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.17": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.25": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.33": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.42": 3.7914421067373434,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.5": 3.5105022324617385,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.58": 4.538625603124344,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.67": 2.3785062792707548,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.75": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.83": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_1.92": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_2.0": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_2.08": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_2.17": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_2.25": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_2.58": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_2.67": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_2.92": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_3.0": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_3.25": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_3.33": 3.886434793551646,
+    "left_lateral_ventricle.shape_p95_displacement_mm_per_year_total_mm_interval_3.67": 3.886434793551646
+  },
+  "notes": [
+    "Raw multiple-component meshes are review-only because the raw segmentation is preserved and the correspondence pipeline uses a one-component smooth mesh.",
+    "The QC recommendation tables do not delete or modify source meshes.",
+    "The default strict_no_mci filter retains only baseline-CN/AD subjects with no MCI-labelled meshed visit; it excludes MCI converters/reverters and unknown baseline groups."
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "method": "latent_ode",
+  "source": "New. Faithful Latent ODE of Rubanova, Chen & Duvenaud (NeurIPS 2019): ODE-RNN encoder run backward in time -> q(z0 | observed prefix, d) -> latent ODE dz/dt = f(z, t, d) -> decoder to the absolute 128-D representation code. Trained with the extrapolation ELBO. The defaults below are the pre-search setting; the stage 2 search (validation only, ADNI PCA-128 seed 42) replaces them.",
+  "trainer_semantics": "Each epoch draws samples_per_epoch training subjects with replacement. Each draw shows the encoder a uniformly sampled prefix of k in 1..n-1 visits, and the loss scores all n visits (reconstruct the prefix, extrapolate the rest). Codes are train-standardized; time is visit_age_norm_train, as for every other method. best.pt is the lowest validation first-to-last selection score, computed exactly as for the ODE methods, with the one-observation encoder. Training stops after early_stopping_patience epochs without validation improvement.",
+  "revision_history": [
+    "attempt 1 (discarded, 2026-09-12): learned per-dimension observation sigma and one pass over the 475 subjects per epoch (8 steps). Every trial kept code MSE ~1 and validation score ~2 (worse than no-change), because the model widened sigma instead of reconstructing codes and saw too few updates. Fixed: sigma is a fixed searched value (as in Rubanova's released code) and samples_per_epoch = 4096 (matching the cocycle's draws per epoch).",
+    "early stopping (2026-09-12): stage 2 diagnostics peaked at epochs 3-13 and then overfit (train code MSE falling, validation worsening), so runs stop after 25 epochs without validation improvement."
+  ],
+  "config": {
+    "method": "latent_ode",
+    "model": {
+      "latent_dim": 128,
+      "z0_dim": 64,
+      "encoder_hidden": 256,
+      "encoder_ode_width": 256,
+      "dynamics_width": 256,
+      "dynamics_residual_blocks": 2,
+      "decoder_width": 256,
+      "dropout": 0.0,
+      "observation_std": 0.1,
+      "condition_in_encoder": true,
+      "condition_in_dynamics": true,
+      "residual": false,
+      "integrator": "fixed RK4"
+    },
+    "training": {
+      "epochs": 100,
+      "batch_size": 64,
+      "samples_per_epoch": 4096,
+      "learning_rate": 0.0003,
+      "weight_decay": 0.0001,
+      "scheduler_step_size": 20,
+      "scheduler_gamma": 0.5,
+      "kl_anneal_epochs": 10,
+      "free_bits_per_dim": 0.1,
+      "integration_substeps": 4,
+      "gradient_clip_norm": 1.0,
+      "early_stopping_patience": 25,
+      "seed": 42,
+      "smoke_train_batches": 2,
+      "smoke_val_records": 8
+    },
+    "loss": {"gaussian_nll_weight": 1.0, "kl_weight_final": 1.0},
+    "selection": {
+      "primary": "macro CN/AD first-to-last decoded transport shape ratio",
+      "test_used_for_selection": false
+    }
+  },
+  "representation_overrides": {"pca128": {}, "spiralnet128": {}, "adaptive128": {}, "lamm128": {}},
+  "search": {
+    "view": "p0_internal_adni",
+    "representation": "pca128",
+    "training_seed": 42,
+    "trials": 16,
+    "sampler_seed": 2026,
+    "space": {
+      "model.z0_dim": [32, 64, 128],
+      "model.encoder_hidden": [128, 256],
+      "training.learning_rate": [0.0003, 0.001],
+      "model.observation_std": [0.05, 0.1, 0.3],
+      "training.kl_anneal_epochs": [5, 20]
+    },
+    "rule": "Distinct configurations drawn without replacement from the grid; winner = lowest best_validation_selection_score; reused unchanged for every representation, view and seed."
+  }
+}

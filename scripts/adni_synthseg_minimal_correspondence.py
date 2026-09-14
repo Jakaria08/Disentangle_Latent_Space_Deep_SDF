@@ -34,8 +34,10 @@ import io
 import json
 import math
 import os
+import platform
 import random
 import re
+import shutil
 import subprocess
 import sys
 import traceback
@@ -101,7 +103,11 @@ DEFAULT_STRUCTURES = ("left_hippocampus", "left_lateral_ventricle")
 DEFAULT_DIAGNOSES = ("CN", "AD")
 DIAGNOSIS_CHOICES = ("CN", "AD", "MCI")
 STRUCTURE_ARGUMENT_CHOICES = ("all", *STRUCTURES)
-DIAGNOSIS_ARGUMENT_CHOICES = ("all", *DIAGNOSIS_CHOICES)
+DIAGNOSIS_ARGUMENT_CHOICES = ("all", "any", *DIAGNOSIS_CHOICES)
+# ``any`` keeps every clinically matched scan, including diagnoses outside the ADNI
+# CN/MCI/AD vocabulary (e.g. CALSNIC ALS) and scans with no usable label.  Cohort
+# selection then happens in the QC stage, which is how the ADNI cohort was built.
+ANY_DIAGNOSIS = "any"
 SUCCESS_STATUSES = frozenset({"ok", "skipped_existing"})
 
 
@@ -268,6 +274,8 @@ def parse_structures(values: Sequence[str] | None) -> list[StructureSpec]:
 
 def parse_diagnoses(values: Sequence[str] | None) -> list[str]:
     diagnoses = [str(value).upper() for value in (values or DEFAULT_DIAGNOSES)]
+    if ANY_DIAGNOSIS.upper() in diagnoses:
+        return [ANY_DIAGNOSIS]
     if "ALL" in diagnoses:
         diagnoses = list(DIAGNOSIS_CHOICES)
     invalid = sorted(set(diagnoses).difference(DIAGNOSIS_CHOICES))
@@ -287,11 +295,35 @@ def read_clinical(path: Path):
     frame["RID"] = frame["RID"].astype(str).str.strip()
     frame["VISCODE"] = frame["VISCODE"].astype(str).str.strip()
     frame["scan_id"] = frame["RID"] + "_" + frame["VISCODE"]
+
+    def _supplied(column: str) -> "pd.Series | None":
+        """Values a cohort adapter provided directly, or None when the column is absent."""
+        if column not in frame:
+            return None
+        values = frame[column].replace({"": None})
+        return values if values.notna().any() else None
+
+    # Cohorts whose visit codes carry no month (OASIS ``V1``, CALSNIC ``V2``) and whose
+    # diagnoses are outside the ADNI vocabulary (CALSNIC is ALS) supply these directly.
+    # Derived values are still computed and used wherever the adapter left a gap.
+    supplied_month = _supplied("month_from_viscode")
+    supplied_visit_dx = _supplied("visit_dx_3class")
+    supplied_baseline_dx = _supplied("baseline_dx_3class")
+
     frame["month_from_viscode"] = frame["VISCODE"].map(viscode_to_month)
+    if supplied_month is not None:
+        numeric = pd.to_numeric(supplied_month, errors="coerce")
+        frame["month_from_viscode"] = numeric.fillna(frame["month_from_viscode"])
     frame["visit_dx_3class"] = frame["DX"].map(VISIT_DX_MAP)
+    if supplied_visit_dx is not None:
+        frame["visit_dx_3class"] = supplied_visit_dx.where(supplied_visit_dx.notna(), frame["visit_dx_3class"])
     frame["baseline_dx_3class"] = frame["DX.bl"].map(
         {"CN": "CN", "NL": "CN", "EMCI": "MCI", "LMCI": "MCI", "MCI": "MCI", "AD": "AD", "Dementia": "AD"}
     )
+    if supplied_baseline_dx is not None:
+        frame["baseline_dx_3class"] = supplied_baseline_dx.where(
+            supplied_baseline_dx.notna(), frame["baseline_dx_3class"]
+        )
     frame["age_numeric"] = pd.to_numeric(frame["AGE"].replace({"": None, "NA": None}), errors="coerce")
     frame["sex_numeric"] = frame["PTGENDER"].map(normalize_sex)
     return frame
@@ -406,7 +438,11 @@ def run_stage_manifest(args: argparse.Namespace) -> None:
 
     clinical_keys = set(segments["scan_id"])
     unmatched_clinical = clinical[~clinical["scan_id"].isin(clinical_keys)].copy()
-    matched["eligible_diagnosis"] = matched["visit_dx_3class"].isin(diagnoses)
+    matched["eligible_diagnosis"] = (
+        pd.Series(True, index=matched.index)
+        if diagnoses == [ANY_DIAGNOSIS]
+        else matched["visit_dx_3class"].isin(diagnoses)
+    )
     matched["strict_subject_no_mci"] = ~matched.groupby("RID")["visit_dx_3class"].transform(
         lambda values: values.fillna("").eq("MCI").any()
     )
@@ -1174,6 +1210,45 @@ def mesh_max_dimension(mesh) -> float:
     return float((mesh.bounds[1] - mesh.bounds[0]).max())
 
 
+def reference_metadata(reference_root: object, spec: StructureSpec) -> dict[str, Any] | None:
+    """Load the artifacts of a completed run that define a shared shape space.
+
+    Passing ``--reference-root`` makes this cohort reuse another cohort's prepared
+    scale, rigid frame, and template instead of deriving its own.  That is what puts
+    several datasets in one vertex space: same ordering, same faces, same units, so a
+    model fitted on the reference cohort applies directly to the new one.  Returns
+    ``None`` for a stand-alone run, which reproduces the original behaviour exactly.
+    """
+
+    if reference_root in (None, ""):
+        return None
+    root = Path(str(reference_root)).expanduser().resolve()
+    prepare_meta_path = metadata_path(root, spec.name)
+    rigid_meta_path = structure_root(root, spec.name) / "rigid_metadata.json"
+    template_vtk = correspondence_root(root, spec.name) / "template.vtk"
+    for path in (prepare_meta_path, rigid_meta_path, template_vtk):
+        if not path.is_file():
+            raise FileNotFoundError(f"Reference root is missing a required artifact: {path}")
+    prepare_meta = json.loads(prepare_meta_path.read_text())
+    rigid_meta = json.loads(rigid_meta_path.read_text())
+    medoid = str(rigid_meta["reference_medoid"])
+    medoid_prepared = prepared_ply_dir(root, spec.name) / f"{medoid}.ply"
+    if not medoid_prepared.is_file():
+        raise FileNotFoundError(f"Reference rigid medoid mesh is missing: {medoid_prepared}")
+    obj_scale_path = scaled_obj_dir(root, spec.name) / "scale_info.json"
+    return {
+        "reference_root": str(root),
+        "global_scale_factor": float(prepare_meta["global_scale_factor"]),
+        "distance_unscale_factor": float(prepare_meta["distance_unscale_factor"]),
+        "volume_unscale_factor": float(prepare_meta["volume_unscale_factor"]),
+        "dimension_max_mm": float(prepare_meta["dimension_max_mm"]),
+        "reference_medoid": medoid,
+        "reference_medoid_prepared_ply": str(medoid_prepared),
+        "template_vtk": str(template_vtk),
+        "obj_scale_info": json.loads(obj_scale_path.read_text()) if obj_scale_path.is_file() else None,
+    }
+
+
 def run_stage_prepare(args: argparse.Namespace) -> None:
     import pandas as pd
 
@@ -1191,7 +1266,24 @@ def run_stage_prepare(args: argparse.Namespace) -> None:
             )
         dimensions = [mesh_max_dimension(mesh) for _path, mesh in source_meshes]
         maximum = max(dimensions)
-        scale = 1.0 / (maximum * GLOBAL_SCALE_BUFFER)
+        reference = reference_metadata(getattr(args, "reference_root", None), spec)
+        if reference is None:
+            scale = 1.0 / (maximum * GLOBAL_SCALE_BUFFER)
+        else:
+            # Deriving a scale from this cohort would put it in its own normalisation and
+            # silently break comparability with the reference cohort's meshes.
+            scale = reference["global_scale_factor"]
+            headroom = reference["dimension_max_mm"] * GLOBAL_SCALE_BUFFER
+            if maximum > headroom:
+                raise RuntimeError(
+                    f"{spec.name}: largest mesh is {maximum:.2f} mm but the reference scale only spans "
+                    f"{headroom:.2f} mm, so shared-space meshes would fall outside the unit box."
+                )
+            if maximum > reference["dimension_max_mm"]:
+                print(
+                    f"  note: largest {spec.name} mesh is {maximum:.2f} mm versus the reference maximum "
+                    f"{reference['dimension_max_mm']:.2f} mm; still inside the shared box."
+                )
         destination = prepared_ply_dir(output_root, spec.name)
         destination.mkdir(parents=True, exist_ok=True)
         details: list[dict[str, Any]] = []
@@ -1224,6 +1316,8 @@ def run_stage_prepare(args: argparse.Namespace) -> None:
         metadata = {
             "structure": asdict(spec),
             "input_count": len(source_paths),
+            "reference": reference,
+            "scale_source": "reference_root" if reference else "cohort_maximum_dimension",
             "dimension_min_mm": float(min(dimensions)),
             "dimension_max_mm": float(maximum),
             "global_scale_factor": float(scale),
@@ -1263,8 +1357,18 @@ def run_stage_rigid(args: argparse.Namespace) -> None:
             for source_path in source_paths:
                 with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
                     items.append((source_path.stem, sw.Mesh(str(source_path))))
-            reference_index = sw.find_reference_mesh_index([mesh for _, mesh in items])
-            reference_name, reference_mesh = items[reference_index]
+            reference = reference_metadata(getattr(args, "reference_root", None), spec)
+            if reference is None:
+                reference_index = sw.find_reference_mesh_index([mesh for _, mesh in items])
+                reference_name, reference_mesh = items[reference_index]
+                reference_source = "cohort_medoid"
+            else:
+                # Aligning to the reference cohort's medoid puts both cohorts in one rigid
+                # frame, and skips the all-pairs medoid search, which dominates this stage.
+                reference_name = reference["reference_medoid"]
+                with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+                    reference_mesh = sw.Mesh(reference["reference_medoid_prepared_ply"])
+                reference_source = "reference_root_medoid"
             destination = rigid_ply_dir(output_root, spec.name)
             destination.mkdir(parents=True, exist_ok=True)
             details: list[dict[str, Any]] = []
@@ -1296,6 +1400,8 @@ def run_stage_rigid(args: argparse.Namespace) -> None:
                 "input_count": len(items),
                 "registered": len(items),
                 "reference_medoid": reference_name,
+                "reference_source": reference_source,
+                "reference_root": reference["reference_root"] if reference else None,
                 "iterations": int(args.shapeworks_iterations),
                 "output_dir": str(destination),
             }
@@ -1361,7 +1467,42 @@ def subject_id_from_reconstruction(path: Path) -> str:
     return match.group(1)
 
 
-def run_deformetrica_atlas(vtk_dir: Path, template_file: Path, output_dir: Path, iterations: int, gpu_mode: str) -> None:
+def ensure_keops_build_folder() -> None:
+    """Create the keops build folder implied by a pinned GPU.
+
+    keopscore appends ``_CUDA_VISIBLE_DEVICES_<devices>`` to its build-folder name but
+    never creates that directory, so pinning a card - which is how several cohorts share
+    the three GPUs - otherwise fails at import with a missing temporary file.
+    """
+
+    devices = os.environ.get("CUDA_VISIBLE_DEVICES", "").strip()
+    if not devices:
+        return
+    marker = "_CUDA_VISIBLE_DEVICES_"
+    suffix = marker + devices.replace(",", "_")
+    cache_root = Path(os.environ.get("KEOPS_CACHE_FOLDER", str(Path.home() / ".cache")))
+    for keops_root in sorted(cache_root.glob("keops*")):
+        for existing in sorted(keops_root.glob(f"*{platform.release()}*")):
+            # Only ever extend an unsuffixed base folder, or the suffixes compound.
+            if existing.is_dir() and marker not in existing.name:
+                (keops_root / f"{existing.name}{suffix}").mkdir(parents=True, exist_ok=True)
+
+
+def run_deformetrica_atlas(
+    vtk_dir: Path,
+    template_file: Path,
+    output_dir: Path,
+    iterations: int,
+    gpu_mode: str,
+    freeze_template: bool = False,
+) -> None:
+    """Deform ``template_file`` onto every mesh in ``vtk_dir``.
+
+    With ``freeze_template`` the template is held fixed (Deformetrica's registration
+    model), so the output inherits the reference cohort's vertex ordering and faces
+    rather than a template re-estimated from this cohort.
+    """
+
     import deformetrica as dfca
 
     vtk_files = sorted(vtk_dir.glob("*.vtk"))
@@ -1395,8 +1536,11 @@ def run_deformetrica_atlas(vtk_dir: Path, template_file: Path, output_dir: Path,
     }
     output_dir.mkdir(parents=True, exist_ok=True)
     deformetrica = dfca.Deformetrica(output_dir=str(output_dir), verbosity="ERROR")
+    estimate = (
+        deformetrica.estimate_registration if freeze_template else deformetrica.estimate_deterministic_atlas
+    )
     with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-        deformetrica.estimate_deterministic_atlas(
+        estimate(
             template_specifications,
             {"dataset_filenames": dataset_filenames, "subject_ids": subject_ids},
             estimator_options=estimator_options,
@@ -1405,7 +1549,10 @@ def run_deformetrica_atlas(vtk_dir: Path, template_file: Path, output_dir: Path,
 
 
 def export_old_style_range_objects(
-    output_root: Path, spec: StructureSpec, subject_paths: Sequence[Path]
+    output_root: Path,
+    spec: StructureSpec,
+    subject_paths: Sequence[Path],
+    reference: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Match the legacy pipeline's one-scalar affine OBJ mapping to [-0.9, 0.9]."""
     import numpy as np
@@ -1414,12 +1561,21 @@ def export_old_style_range_objects(
     source_paths = [*subject_paths, *([template_path] if template_path.is_file() else [])]
     if not source_paths:
         raise RuntimeError(f"No final PLY files are available for fixed-range export: {spec.name}")
-    global_min = math.inf
-    global_max = -math.inf
-    for path in source_paths:
-        vertices = np.asarray(load_mesh(path).vertices)
-        global_min = min(global_min, float(vertices.min()))
-        global_max = max(global_max, float(vertices.max()))
+    range_source = "cohort_coordinate_range"
+    if reference is not None and reference.get("obj_scale_info"):
+        # Re-deriving the range from this cohort would give the same mesh different OBJ
+        # coordinates in each dataset, which defeats the shared space.
+        info = reference["obj_scale_info"]
+        global_min = float(info["global_min"])
+        global_max = float(info["global_max"])
+        range_source = "reference_root"
+    else:
+        global_min = math.inf
+        global_max = -math.inf
+        for path in source_paths:
+            vertices = np.asarray(load_mesh(path).vertices)
+            global_min = min(global_min, float(vertices.min()))
+            global_max = max(global_max, float(vertices.max()))
     if not math.isfinite(global_min) or not math.isfinite(global_max) or global_max <= global_min:
         raise RuntimeError(f"Could not compute a valid global coordinate range for {spec.name}.")
     scale = (TARGET_RANGE_MAX - TARGET_RANGE_MIN) / (global_max - global_min)
@@ -1431,6 +1587,7 @@ def export_old_style_range_objects(
         mesh.export(destination / path.with_suffix(".obj").name)
     metadata = {
         "source_coordinate_system": "prepared_correspondence_scale",
+        "range_source": range_source,
         "global_min": float(global_min),
         "global_max": float(global_max),
         "target_min": float(TARGET_RANGE_MIN),
@@ -1450,6 +1607,7 @@ def run_stage_correspond(args: argparse.Namespace) -> None:
     import trimesh
 
     print_header("Stage: Deformetrica point correspondence")
+    ensure_keops_build_folder()
     output_root = Path(args.output_root).resolve()
     structures = parse_structures(args.structures)
     summary: dict[str, Any] = {"structures": {}}
@@ -1491,9 +1649,17 @@ def run_stage_correspond(args: argparse.Namespace) -> None:
         distance_unscale = float(scale_metadata["distance_unscale_factor"])
         volume_unscale = float(scale_metadata["volume_unscale_factor"])
         rigid_metadata = json.loads((structure_root(output_root, spec.name) / "rigid_metadata.json").read_text())
-        template_input = vtk_input / f"{rigid_metadata['reference_medoid']}.vtk"
-        if not template_input.is_file():
-            raise RuntimeError(f"Rigid-registration medoid is missing: {template_input}")
+        reference = reference_metadata(getattr(args, "reference_root", None), spec)
+        if reference is None:
+            template_input = vtk_input / f"{rigid_metadata['reference_medoid']}.vtk"
+            if not template_input.is_file():
+                raise RuntimeError(f"Rigid-registration medoid is missing: {template_input}")
+        else:
+            # The template must sit outside vtk_input: every VTK in that directory is
+            # treated as a subject to deform.
+            template_input = correspondence_root(output_root, spec.name) / "reference_template.vtk"
+            template_input.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(reference["template_vtk"], template_input)
         reconstructions = sorted(deforms.glob("DeterministicAtlas__Reconstruction__*.vtk"))
         template_output = deforms / "DeterministicAtlas__EstimatedParameters__Template_structure.vtk"
         expected_stems = {path.stem for path in rigid_paths}
@@ -1513,11 +1679,22 @@ def run_stage_correspond(args: argparse.Namespace) -> None:
                     json.loads(previous_summary.read_text()).get("deformetrica_iterations", effective_iterations)
                 )
         else:
-            print(f"  estimating Deformetrica atlas for {spec.name} ({int(args.deformetrica_iterations)} iterations)")
+            action = "registration to the reference template" if reference else "atlas estimation"
+            print(f"  Deformetrica {action} for {spec.name} ({int(args.deformetrica_iterations)} iterations)")
             run_deformetrica_atlas(
-                vtk_input, template_input, deforms, int(args.deformetrica_iterations), args.deformetrica_gpu_mode
+                vtk_input,
+                template_input,
+                deforms,
+                int(args.deformetrica_iterations),
+                args.deformetrica_gpu_mode,
+                freeze_template=reference is not None,
             )
+            atlas_action = "registered_to_reference" if reference else "estimated"
             reconstructions = sorted(deforms.glob("DeterministicAtlas__Reconstruction__*.vtk"))
+        if reference is not None and reconstructions and not template_output.is_file():
+            # A frozen template is not re-estimated, so Deformetrica need not re-emit it;
+            # the reference template is by definition the template that was used.
+            shutil.copyfile(template_input, template_output)
         if not reconstructions or not template_output.is_file():
             raise RuntimeError(f"Deformetrica did not create the expected outputs for {spec.name}.")
 
@@ -1573,7 +1750,7 @@ def run_stage_correspond(args: argparse.Namespace) -> None:
                 }
             )
         range_metadata = export_old_style_range_objects(
-            output_root, spec, [final_ply / filenames[stem] for stem in sorted(volumes)]
+            output_root, spec, [final_ply / filenames[stem] for stem in sorted(volumes)], reference=reference
         )
         for row in rescale_rows:
             row.update(
@@ -1593,6 +1770,8 @@ def run_stage_correspond(args: argparse.Namespace) -> None:
             "input_count": len(rigid_paths),
             "final_count": len(rescale_rows),
             "reference_medoid": rigid_metadata["reference_medoid"],
+            "reference_root": reference["reference_root"] if reference else None,
+            "template_source": "reference_root" if reference else "cohort_atlas",
             "deformetrica_iterations": effective_iterations,
             "requested_deformetrica_iterations": int(args.deformetrica_iterations),
             "atlas_action": atlas_action,
@@ -1681,12 +1860,20 @@ def run_stage_validate(args: argparse.Namespace) -> None:
             failures.append("final_mm_stem_set_mismatch")
         if scaled_obj_stems != expected_stems:
             failures.append("scaled_obj_stem_set_mismatch")
-        if not set(successful["diagnosis"].astype(str)).issubset(requested_diagnoses):
+        if ANY_DIAGNOSIS not in requested_diagnoses and not set(
+            successful["diagnosis"].astype(str)
+        ).issubset(requested_diagnoses):
             failures.append("diagnosis_filter_mismatch")
         final_paths = [final_ply_dir(output_root, spec.name) / f"{stem}.ply" for stem in sorted(expected_stems)]
         vertex_count, face_count, identical_topology = validate_topology(final_paths)
         if not identical_topology:
             failures.append("correspondence_topology_mismatch")
+        reference = reference_metadata(getattr(args, "reference_root", None), spec)
+        if reference is not None:
+            # A shared space is only real if the topology matches the reference exactly.
+            reference_vertices, reference_faces = read_legacy_vtk(Path(reference["template_vtk"]))
+            if vertex_count != len(reference_vertices) or face_count != len(reference_faces):
+                failures.append("reference_template_topology_mismatch")
         final_mm_paths = [final_ply_mm_dir(output_root, spec.name) / f"{stem}.ply" for stem in sorted(expected_stems)]
         _mm_vertices, _mm_faces, mm_topology = validate_topology(final_mm_paths)
         if not mm_topology:
@@ -1731,11 +1918,21 @@ def run_stage_validate(args: argparse.Namespace) -> None:
 
                 all_vertices = np.concatenate(scaled_vertices, axis=0)
                 scaled_min, scaled_max = float(all_vertices.min()), float(all_vertices.max())
+                if reference is None:
+                    lower, upper = TARGET_RANGE_MIN, TARGET_RANGE_MAX
+                    overflow_failure = "scaled_obj_range_out_of_bounds"
+                else:
+                    # The shared affine comes from the reference cohort, so only that cohort is
+                    # guaranteed to land inside [-0.9, 0.9]; a slightly larger structure here is
+                    # expected and is the price of one common coordinate system.  The wider bound
+                    # still catches a genuinely wrong scale, which would be orders of magnitude off.
+                    lower, upper = -1.0, 1.0
+                    overflow_failure = "scaled_obj_range_outside_unit_box"
                 if (
-                    scaled_min < TARGET_RANGE_MIN - float(args.range_tolerance)
-                    or scaled_max > TARGET_RANGE_MAX + float(args.range_tolerance)
+                    scaled_min < lower - float(args.range_tolerance)
+                    or scaled_max > upper + float(args.range_tolerance)
                 ):
-                    failures.append("scaled_obj_range_out_of_bounds")
+                    failures.append(overflow_failure)
         if max_normalized_volume_error > float(args.volume_error_threshold_pct):
             failures.append("normalized_volume_preservation_error")
         if max_physical_volume_error > float(args.volume_error_threshold_pct):
@@ -1786,8 +1983,15 @@ def run_stage_notebook(args: argparse.Namespace) -> None:
     subprocess.run(command, check=True)
 
 
+REFERENCE_ROOT_HELP = (
+    "Output root of a completed run whose prepared scale, rigid frame, and template this "
+    "cohort should reuse, so both cohorts share one vertex space. Omit for a stand-alone run."
+)
+
+
 def add_common_stage_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--output-root", required=True, type=Path)
+    parser.add_argument("--reference-root", type=Path, default=None, help=REFERENCE_ROOT_HELP)
     parser.add_argument(
         "--structures", nargs="+", default=list(DEFAULT_STRUCTURES), choices=list(STRUCTURE_ARGUMENT_CHOICES)
     )
@@ -1809,6 +2013,8 @@ def run_pipeline(args: argparse.Namespace) -> None:
     structures = [spec.name for spec in parse_structures(args.structures)]
     diagnoses = parse_diagnoses(args.diagnoses)
     shared = ["--output-root", str(output_root), "--structures", *structures]
+    if args.reference_root is not None:
+        shared += ["--reference-root", str(Path(args.reference_root).expanduser().resolve())]
     manifest_command = [
         args.inr_python,
         str(script),
@@ -1938,6 +2144,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--segmentation-root", type=Path, default=DEFAULT_SEGMENTATION_ROOT)
     run_parser.add_argument("--clinical-csv", type=Path, default=DEFAULT_CLINICAL_CSV)
     run_parser.add_argument("--output-root", type=Path, default=None)
+    run_parser.add_argument("--reference-root", type=Path, default=None, help=REFERENCE_ROOT_HELP)
     run_parser.add_argument(
         "--structures", nargs="+", default=list(DEFAULT_STRUCTURES), choices=list(STRUCTURE_ARGUMENT_CHOICES)
     )

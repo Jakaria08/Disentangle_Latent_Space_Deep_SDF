@@ -1,0 +1,48 @@
+{
+  "cohorts": {
+    "adni": {
+      "external_minus_internal_mm": 0.0,
+      "external_vertex_rmse_mm": 0.034380665866822584,
+      "faces_identical_to_reference": true,
+      "internal_vertex_rmse_mm": 0.034380665866822584,
+      "mean_abs_z_vs_reference_train": 0.8521019109921382,
+      "note": "",
+      "p95_abs_z_vs_reference_train": 2.108476471018787,
+      "scans_evaluated": 277
+    },
+    "aibl": {
+      "external_minus_internal_mm": -0.008262808299805371,
+      "external_vertex_rmse_mm": 0.08002154184189529,
+      "faces_identical_to_reference": true,
+      "internal_vertex_rmse_mm": 0.08828435014170066,
+      "mean_abs_z_vs_reference_train": 1.2206021397437103,
+      "note": "",
+      "p95_abs_z_vs_reference_train": 3.262411872954547,
+      "scans_evaluated": 48
+    },
+    "calsnic": {
+      "external_minus_internal_mm": 0.003923415046361858,
+      "external_vertex_rmse_mm": 0.08099397461509823,
+      "faces_identical_to_reference": true,
+      "internal_vertex_rmse_mm": 0.07707055956873637,
+      "mean_abs_z_vs_reference_train": 1.2269924520187487,
+      "note": "",
+      "p95_abs_z_vs_reference_train": 3.193932770894169,
+      "scans_evaluated": 83
+    },
+    "oasis": {
+      "external_minus_internal_mm": 0.004746588930103893,
+      "external_vertex_rmse_mm": 0.08487324087084222,
+      "faces_identical_to_reference": true,
+      "internal_vertex_rmse_mm": 0.08012665194073833,
+      "mean_abs_z_vs_reference_train": 1.3154143410695032,
+      "note": "",
+      "p95_abs_z_vs_reference_train": 3.461866813959155,
+      "scans_evaluated": 116
+    }
+  },
+  "k": 128,
+  "reference": "adni",
+  "split": "test",
+  "topology_ok": true
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "worker_python": "/home/jakaria/anaconda3/envs/pytorch_geo/bin/python",
+  "direct_mesh_data_root": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task5_direct_mesh_cocycle_spiral_unet_v1",
+  "methods": [
+    {
+      "name": "lamm_global_256",
+      "family": "direct_lamm",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/runs/direct_mesh_lamm_global_c4_z256_s42/checkpoints/best.pt"
+    },
+    {
+      "name": "lamm_global_384",
+      "family": "direct_lamm",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/runs/direct_mesh_lamm_global_c4_z384_s42/checkpoints/best.pt"
+    },
+    {
+      "name": "lamm_regional_tokens",
+      "family": "direct_lamm",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task7_direct_mesh_cocycle_lamm_v1/runs/direct_mesh_lamm_token_c4_s42/checkpoints/best.pt"
+    },
+    {
+      "name": "spiral_mesh_direct",
+      "family": "direct_spiral",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task5_direct_mesh_cocycle_spiral_unet_v1/runs/optuna_spiral_velocity_main_v2_trial_0013/checkpoints/best.pt"
+    },
+    {
+      "name": "adaptive_spiral_mesh_direct",
+      "family": "direct_spiral",
+      "checkpoint": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task5_direct_mesh_cocycle_spiral_unet_v1/runs/optuna_adaptive_velocity_main_v2_trial_0014/checkpoints/best.pt"
+    },
+    {
+      "name": "lamm_latent_flow_128",
+      "family": "latent",
+      "run_dir": "/mnt/bulk10tb/Deep3DComp/ADNI_1_LHipp/task3_latent_flow_128_v3_lamm_latest/training/lamm128/direct_c4/lamm128_direct_c4_s42"
+    }
+  ]
+}

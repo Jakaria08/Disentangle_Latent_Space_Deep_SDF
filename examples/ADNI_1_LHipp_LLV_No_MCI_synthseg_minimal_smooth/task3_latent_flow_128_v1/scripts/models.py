@@ -103,11 +103,16 @@ class BrainODEAttentionFunc(nn.Module):
             raise ValueError(f"Expected latent [B,{self.latent_dim}], got {tuple(latent.shape)}")
         times = _column(time, latent)
         conditions = _column(condition, latent)
-        outputs = [
-            self._singleton(torch.cat((latent[index : index + 1], times[index : index + 1], conditions[index : index + 1]), dim=1))
-            for index in range(latent.shape[0])
-        ]
-        return torch.cat(outputs, dim=0)
+        features = torch.cat((latent, times, conditions), dim=1)
+        # Under the enforced one-case attention contract every attention matrix
+        # is 1x1, so softmax(q k^T / sqrt(d)) is exactly one.  Vectorizing the
+        # resulting value path is mathematically identical to calling
+        # _singleton once per row, while avoiding thousands of tiny Python and
+        # autograd operations.  Query/key parameters intentionally remain in
+        # the released architecture/state dict but cannot influence singleton
+        # outputs.
+        hidden = self.value(features)
+        return self.fc2(self.dropout(F.gelu(self.fc1(hidden))))
 
 
 def rk4_step(

@@ -61,6 +61,38 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--surface-area-jump-warning-pct", type=float, default=20.0)
     parser.add_argument("--shape-rate-outlier-quantile", type=float, default=0.995)
     parser.add_argument("--scan-outlier-mad-multiplier", type=float, default=5.0)
+    parser.add_argument(
+        "--multi-component-volume-tolerance-pct",
+        type=float,
+        default=0.0,
+        help=(
+            "Treat extra mesh components as a review warning rather than a hard failure when they "
+            "hold at most this percentage of the mesh volume.  The default 0.0 keeps the original "
+            "behaviour, where any extra component is a hard failure.  Use a small value (e.g. 1.0) "
+            "to stop discarding scans over sub-voxel interior bubbles that the volume-matched "
+            "correspondence mesh never inherits."
+        ),
+    )
+    parser.add_argument(
+        "--pair-outlier-method",
+        choices=("quantile", "stratified_mad"),
+        default="quantile",
+        help=(
+            "How adjacent-pair shape outliers are chosen.  'quantile' applies a fixed quantile to "
+            "the annualised displacement, which always flags a fixed fraction of pairs and, because "
+            "the rate divides by the interval, preferentially flags the shortest intervals.  "
+            "'stratified_mad' thresholds the total (not annualised) displacement with a robust "
+            "median+k*MAD bound computed within each visit-interval stratum, so the criterion is "
+            "interval-neutral and can return no flags on clean data."
+        ),
+    )
+    parser.add_argument("--pair-outlier-mad-multiplier", type=float, default=8.0)
+    parser.add_argument(
+        "--pair-interval-stratum-min",
+        type=int,
+        default=30,
+        help="Interval strata smaller than this borrow the structure-wide bound.",
+    )
     parser.add_argument("--correspondence-volume-error-warning-pct", type=float, default=1.0)
     parser.add_argument("--top-overlays", type=int, default=12)
     parser.add_argument("--no-html", action="store_true")
@@ -81,6 +113,7 @@ def inspect_one_mesh(path_value: object, prefix: str) -> dict[str, Any]:
         f"{prefix}_finite_vertices_actual": False,
         f"{prefix}_volume_actual_mm3": np.nan,
         f"{prefix}_surface_area_actual_mm2": np.nan,
+        f"{prefix}_spurious_component_volume_pct": np.nan,
     }
     if not path.is_file():
         result[f"{prefix}_mesh_load_error"] = "missing mesh file"
@@ -98,6 +131,7 @@ def inspect_one_mesh(path_value: object, prefix: str) -> dict[str, Any]:
                 f"{prefix}_finite_vertices_actual": bool(mesh.finite_vertices),
                 f"{prefix}_volume_actual_mm3": float(mesh.volume),
                 f"{prefix}_surface_area_actual_mm2": float(mesh.area),
+                f"{prefix}_spurious_component_volume_pct": 100.0 * float(mesh.spurious_component_volume_fraction),
             }
         )
         if prefix == "correspondence":
@@ -184,6 +218,16 @@ def scan_mesh_quality(records: pd.DataFrame, args: argparse.Namespace) -> tuple[
         quality[f"flag_{prefix}_not_watertight"] = ~quality[f"{prefix}_watertight_actual"].astype(bool)
         quality[f"flag_{prefix}_bad_winding"] = ~quality[f"{prefix}_winding_consistent_actual"].astype(bool)
         quality[f"flag_{prefix}_multiple_components"] = quality[f"{prefix}_components_actual"].fillna(0).ne(1)
+    tolerance_pct = float(getattr(args, "multi_component_volume_tolerance_pct", 0.0))
+    if tolerance_pct > 0.0:
+        # An extra component holding a negligible share of the volume is a cosmetic defect of
+        # the intermediate mesh, not a reason to discard the scan: the correspondence mesh is
+        # rescaled to the same net volume, so what propagates is a tiny isotropic scale error.
+        for prefix in ("smooth", "correspondence"):
+            minor = quality[f"{prefix}_spurious_component_volume_pct"].fillna(0.0).le(tolerance_pct)
+            split_flag = quality[f"flag_{prefix}_multiple_components"]
+            quality[f"flag_{prefix}_minor_extra_components_review"] = split_flag & minor
+            quality[f"flag_{prefix}_multiple_components"] = split_flag & ~minor
     quality["flag_correspondence_volume_error"] = quality[
         "correspondence_vs_smooth_volume_pct"
     ].abs().gt(float(args.correspondence_volume_error_warning_pct))
@@ -195,7 +239,10 @@ def scan_mesh_quality(records: pd.DataFrame, args: argparse.Namespace) -> tuple[
             thresholds[f"{structure}.{metric}"] = {"median": median, "mad": mad, "low": low, "high": high}
             quality.loc[index, f"flag_{slug}_outlier"] = quality.loc[index, metric].lt(low) | quality.loc[index, metric].gt(high)
 
-    quality["flag_pipeline_status_not_ok"] = ~quality["pipeline_status"].eq("ok")
+    # The mesh pipeline reports "skipped_existing" for a mesh that was already on disk from an
+    # earlier pass, and treats it as success (SUCCESS_STATUSES).  Accepting only "ok" here marks
+    # every scan of any resumed run as a hard failure, which empties the cohort.
+    quality["flag_pipeline_status_not_ok"] = ~quality["pipeline_status"].isin(("ok", "skipped_existing"))
     hard_flags = [
         *[f"flag_{prefix}_mesh_missing" for prefix in hard_prefixes],
         *[f"flag_{prefix}_mesh_load_failed" for prefix in hard_prefixes],
@@ -274,12 +321,36 @@ def pair_quality(records: pd.DataFrame, scan_qc: pd.DataFrame, args: argparse.Na
     ) & pairs["signed_volume_change_pct_per_year"].abs().gt(5.0) & pairs["raw_signed_volume_change_pct_per_year"].abs().gt(5.0)
     thresholds: dict[str, Any] = {}
     quantile = float(args.shape_rate_outlier_quantile)
+    method = getattr(args, "pair_outlier_method", "quantile")
+    multiplier = float(getattr(args, "pair_outlier_mad_multiplier", 8.0))
+    stratum_minimum = int(getattr(args, "pair_interval_stratum_min", 30))
+    thresholds["pair_outlier_method"] = method
     for structure, index in pairs.groupby("structure").groups.items():
         for metric in ("shape_rms_displacement_mm_per_year", "shape_p95_displacement_mm_per_year"):
-            finite = pairs.loc[index, metric].replace([np.inf, -np.inf], np.nan).dropna()
-            threshold = float(finite.quantile(quantile)) if not finite.empty else np.nan
-            thresholds[f"{structure}.{metric}_q{quantile}"] = threshold
-            pairs.loc[index, f"flag_{metric}_outlier"] = pairs.loc[index, metric].gt(threshold)
+            values = pairs.loc[index, metric].replace([np.inf, -np.inf], np.nan)
+            if method == "quantile":
+                finite = values.dropna()
+                threshold = float(finite.quantile(quantile)) if not finite.empty else np.nan
+                thresholds[f"{structure}.{metric}_q{quantile}"] = threshold
+                pairs.loc[index, f"flag_{metric}_outlier"] = values.gt(threshold)
+                continue
+            # The annualised rate divides a roughly constant measurement floor by the
+            # interval, so a single global bound on it is mostly a short-interval detector.
+            # Threshold the total displacement within each interval stratum instead.
+            totals = values * pairs.loc[index, "delta_years"]
+            strata = pairs.loc[index, "delta_years"].round(2)
+            flagged = pd.Series(False, index=index)
+            for interval, positions in totals.groupby(strata).groups.items():
+                sample = totals.loc[positions].dropna()
+                reference = sample if len(sample) >= stratum_minimum else totals.dropna()
+                if reference.empty:
+                    continue
+                median = float(reference.median())
+                mad = float((reference - median).abs().median()) * 1.4826
+                threshold = median + multiplier * mad
+                thresholds[f"{structure}.{metric}_total_mm_interval_{interval}"] = threshold
+                flagged.loc[positions] = totals.loc[positions].gt(threshold)
+            pairs.loc[index, f"flag_{metric}_outlier"] = flagged
     shape_flags = [column for column in pairs if column.startswith("flag_shape_")]
     pairs["flag_pair_involves_review_scan"] = (
         pairs["source_review_mesh_qc_flag"].fillna(True).astype(bool)

@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "note": "Stage 5 step 2: converter line (PLAN Part 5B). Values not given by PLAN are fixed here before any converter result is seen and are recorded in every run.",
+  "view": "p5_converter_pooled",
+  "base_view": "p3_pooled",
+  "representations": ["pca128", "adaptive128"],
+  "seeds": [42, 43, 44],
+  "groups": {
+    "kept": ["CN-stable", "AD-stable", "CN->AD", "MCI->AD", "CN->MCI"],
+    "excluded": ["MCI-stable", "reverter"],
+    "evaluation_groups": ["CN-stable", "AD-stable", "CN->AD", "MCI->AD"],
+    "fixed_label_coding": "source-visit label; MCI is coded 0 (not yet AD), as in the inclusive manifests"
+  },
+  "dose": {
+    "width_years": 0.25,
+    "width_years_sensitivity": 0.5,
+    "onset_window": "tau_i = a_i + (b_i - a_i) sigmoid(theta_i), [a_i, b_i] = last visit before the first AD label and that first AD visit",
+    "mci_partial_dose": "exploratory variant only: CN->MCI subjects receive kappa_MCI * c_i(tau) on their MCI window, kappa_MCI = sigmoid(k) learned globally"
+  },
+  "fit": {
+    "initialization": "P3 pooled direct_c4 best.pt of the same representation and seed (trained on stable subjects only)",
+    "training_subjects": "view train split: stable subjects keep constant conditions; train converters get a learned onset",
+    "onset_penalty_lambda": 0.1,
+    "onset_learning_rate": 0.01,
+    "head_learning_rate_multiplier": 0.1,
+    "epochs": 60,
+    "early_stopping_patience": 20,
+    "samples_per_epoch": 4096,
+    "converter_sampling_fraction": 0.25,
+    "objective": "direct_c4 recipe losses and ramps (fully ramped: training continues from a trained cocycle), condition = per-leg average dose; group-rate and disease-gap leaves use stable subjects only; plus lambda * mean(theta^2)"
+  },
+  "variants": {
+    "c1": {"heads": "fine-tuned at head_learning_rate_multiplier x recipe lr", "width_years": 0.25, "mci_partial_dose": false, "representations": ["pca128", "adaptive128"]},
+    "c1_frozen": {"heads": "frozen", "width_years": 0.25, "mci_partial_dose": false, "representations": ["pca128", "adaptive128"]},
+    "c1_mci": {"heads": "fine-tuned", "width_years": 0.25, "mci_partial_dose": true, "representations": ["pca128"]},
+    "c1_w050": {"heads": "fine-tuned", "width_years": 0.5, "mci_partial_dose": false, "representations": ["pca128"]}
+  },
+  "selection": {
+    "rule": "macro over {CN-stable, AD-stable, converters} of the first-to-last decoded-shape ratio to no-change + 0.2 x all-pair shape ratio; val converters use their oracle-window midpoint onset (validation labels only)",
+    "max_relative_semigroup_defect": 0.25,
+    "max_relative_inverse_defect": 0.25,
+    "stable_non_inferiority": "test error on stable subjects within 1% of the P3 cocycle (gate G5.7)"
+  },
+  "test_onset": {
+    "prefix_only": "if the observed prefix already contains the post-conversion label, tau = midpoint of the prefix window; otherwise the current label is kept (constant condition)",
+    "oracle_window": "window from all visits, tau at its midpoint; reported separately as an upper bound"
+  },
+  "comparators": {
+    "c0": "P3 pooled direct_c4 checkpoint, source-visit label",
+    "brainode_core": "P3 pooled brainode checkpoint, source-visit label",
+    "brainode_full": "PCA only: P3 pooled BrainODE-core field with the condition re-estimated from the predicted shape at every RK4 substep by a voxel 3-D CNN (task3 brainode_cognition), trained on stable train shapes plus pseudo-cognitive samples"
+  },
+  "brainode_full": {
+    "representation": "pca128",
+    "voxel_resolution": 32,
+    "padding_voxels": 2,
+    "pseudo_samples_per_epoch": 2048,
+    "pseudo_sampling": "pairs of a CN-stable and an AD-stable train visit of similar age (|age difference| <= 5 y); code z = (1 - alpha) z_CN + alpha z_AD, alpha ~ U(0, 1), target c = alpha",
+    "estimator": "task3 VoxelCognitionCNN settings, BCE on observed labels plus soft pseudo targets (the two terms averaged), temperature fitted on validation",
+    "estimator_input": "solid voxelizations of decoded PCA-128 shapes (the shapes the estimator sees during feedback), never raw meshes",
+    "estimator_settings": {"base_channels": 12, "dropout": 0.15, "learning_rate": 0.0002, "minimum_learning_rate": 5e-06, "weight_decay": 0.0001,
+                           "batch_size": 32, "evaluation_batch_size": 64, "epochs": 40, "early_stopping_patience": 10,
+                           "scheduler_patience": 3, "gradient_clip_norm": 1.0},
+    "pseudo_bank_size": 8192,
+    "pseudo_max_age_difference_years": 5.0,
+    "voxel_workers": 12,
+    "feedback_substeps": 4
+  },
+  "synthetic_recovery": {
+    "subjects": 200,
+    "seed": 2026,
+    "baselines": "first visits of CN-stable subjects in the view's val split (the test split stays sealed)",
+    "schedules": "visit times and conversion windows of real train converters (CN->AD and MCI->AD)",
+    "noise": "Gaussian per code coordinate with the RMS residual of C0 on stable val first-to-last pairs",
+    "grid_points": 201,
+    "interval": [0.1, 0.9],
+    "gate_median_abs_error_years": 0.5
+  }
+}

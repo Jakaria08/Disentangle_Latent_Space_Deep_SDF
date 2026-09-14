@@ -1,0 +1,547 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{empheq}
+\usepackage{multirow}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{microtype}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\X}{\bm{X}}
+\newcommand{\V}{\bm{V}}
+\newcommand{\vel}{\bm{v}}
+\newcommand{\cond}{\bm{c}}
+\newcommand{\nrm}{\bm{n}}
+\newcommand{\Loss}{\mathcal{L}}
+\newcommand{\Faces}{\mathcal{F}}
+\newcommand{\Edges}{\mathcal{E}}
+\newcommand{\SL}{\operatorname{SmoothL}_1}
+\newcommand{\vol}{\operatorname{vol}}
+\newcommand{\Tr}{\mathcal{T}}
+
+\title{End-to-End Direct LAMM Surface Cocycle Flow\\
+\large Model, Objective, and Training Procedure}
+\author{Task \texttt{task7\_direct\_mesh\_cocycle\_lamm\_v1}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Problem setting and notation}
+
+Let $\X \in \R^{N \times 3}$ be a vertex-corresponded triangular surface mesh with
+$N = 2746$ vertices and a fixed face set $\Faces$ ($|\Faces| = 5488$) shared across the
+whole cohort. Every scan is rigidly aligned to a common frame, so vertex $i$ denotes the
+same anatomical location in every subject and at every visit.
+
+A longitudinal observation is a tuple
+\begin{equation}
+  \bigl(\X_s,\, \X_t,\, s,\, t,\, d\bigr),
+\end{equation}
+where $\X_s, \X_t$ are two visits of the \emph{same} subject, $s, t \in \R$ are the ages in
+years at those visits, and $d \in \{0, 1\}$ is the diagnosis label ($0 = \mathrm{CN}$,
+$1 = \mathrm{AD}$). Write the elapsed time as
+\begin{equation}
+  \Delta \;=\; t - s .
+\end{equation}
+Some pairs additionally carry an \emph{observed} intermediate visit of the same subject at
+age $a_m$ with mesh $\X_{a_m}$.
+
+The dataset is partitioned by subject into disjoint train / validation / test splits:
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Split & Pairs & Subjects & CN / AD pairs & adjacent / non-adjacent \\
+\midrule
+train & 4208 & 475 & 3345 / 863 & 1562 / 2646 \\
+val   &  549 &  61 &  423 / 126 &  208 /  341 \\
+test  &  619 &  61 &  501 / 118 &  216 /  403 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Normalization constants.} Fixed scalars estimated on the training split only:
+the template mesh $\overline{\X}$, coordinate scale $\sigma_{\mathrm{c}}$, endpoint scale
+$\lambda$ (mm), velocity scale $\sigma_{v}$ (mm/yr), velocity-reference scale $\lambda_v$,
+and age moments $\mu_a, \sigma_a$.
+
+\section{Transport map and the cocycle property}
+
+\subsection{Definition}
+
+The model is a single network that outputs an \emph{average velocity field} over the
+interval $[s,t]$,
+\begin{equation}
+  \V_\theta(\X, s, t, d) \;\in\; \R^{N \times 3},
+\end{equation}
+from which the transport map is defined by the explicit, non-ODE residual
+\begin{empheq}[box=\fbox]{equation}
+  \Phi_\theta(\X, s, t, d) \;=\; \X \;+\; (t-s)\,\V_\theta(\X, s, t, d).
+  \label{eq:transport}
+\end{empheq}
+The velocity itself is decomposed into a control field and a disease residual field,
+\begin{equation}
+  \V_\theta(\X, s, t, d) \;=\; \V^{\mathrm{CN}}_\theta(\X, s, t) \;+\; d \cdot
+  \V^{\mathrm{AD}}_\theta(\X, s, t),
+  \label{eq:velocity-split}
+\end{equation}
+so that $d$ enters both through the conditioning embedding and through this explicit gate.
+The \emph{instantaneous} velocity is the diagonal of the average velocity,
+\begin{equation}
+  \vel_\theta(\X, a, d) \;=\; \V_\theta(\X, a, a, d)
+  \;=\; \left. \frac{\partial}{\partial t} \Phi_\theta(\X, a, t, d) \right|_{t=a}.
+  \label{eq:instantaneous}
+\end{equation}
+
+\subsection{Structural properties}
+
+\paragraph{Exact identity (by construction).} From \eqref{eq:transport}, for all
+$\X, a, d$ and all parameters $\theta$,
+\begin{equation}
+  \Phi_\theta(\X, a, a, d) \;=\; \X \qquad \text{bit-exactly.}
+  \label{eq:identity}
+\end{equation}
+This holds because the elapsed-time factor $(t-s)$ multiplies the network output; no loss
+term is needed to enforce it and no numerical integrator can erode it.
+
+\paragraph{Exact no-change initialization.} All parameters of the regional velocity heads
+(weights \emph{and} biases) are zero-initialized, so at $\theta = \theta_0$ we have
+$\V_{\theta_0} \equiv \bm{0}$ and hence $\Phi_{\theta_0} = \mathrm{id}$. The untrained
+model is exactly the no-change baseline against which it is later scored.
+
+\paragraph{Cocycle property (learned, not structural).} The desired flow property is
+\begin{empheq}[box=\fbox]{equation}
+  \Phi_\theta\bigl(\Phi_\theta(\X, s, r, d),\, r,\, t,\, d\bigr)
+  \;=\; \Phi_\theta(\X, s, t, d)
+  \qquad \forall\, r,
+  \label{eq:cocycle}
+\end{empheq}
+with the special case $r = s$ giving the inverse property
+$\Phi_\theta(\Phi_\theta(\X,s,t,d), t, s, d) = \X$. Unlike \eqref{eq:identity},
+\eqref{eq:cocycle} is \emph{not} structural: the same network is applied to the direct and
+composed intervals and agreement is imposed by penalty. The residual
+\begin{equation}
+  D_{\mathrm{coc}}(\X,s,r,t,d) \;=\;
+  \Bigl\| \Phi_\theta(\Phi_\theta(\X,s,r,d),r,t,d) - \Phi_\theta(\X,s,t,d) \Bigr\|
+\end{equation}
+is the \emph{cocycle defect} and is reported as a validation gate.
+
+\section{Network architecture}
+
+\subsection{Time--disease conditioning}
+
+Let $\hat{s} = (s - \mu_a)/\sigma_a$, $\hat{t} = (t - \mu_a)/\sigma_a$,
+$\delta = (t-s)/\sigma_a$, $m = \tfrac{1}{2}(\hat{s} + \hat{t})$. With $F = 2$ Fourier
+frequencies and a learned diagnosis embedding $E(d) \in \R^{8}$, the raw condition vector is
+\begin{equation}
+  \bm{r} = \Bigl[\, \hat{s},\; \hat{t},\; \delta,\; |\delta|,\; m,\; \log(1 + |\Delta|),\;
+  \bigl\{ \sin(\pi 2^{f} \hat{s}), \cos(\pi 2^{f} \hat{s}),
+          \sin(\pi 2^{f} \hat{t}), \cos(\pi 2^{f} \hat{t}) \bigr\}_{f=0}^{F-1},\;
+  E(d) \,\Bigr],
+\end{equation}
+of dimension $6 + 4F + 8 = 22$, mapped by a two-layer SiLU MLP to the condition code
+\begin{equation}
+  \cond = \mathrm{MLP}(\bm{r}) \in \R^{D_c}, \qquad D_c = 32 .
+\end{equation}
+Both $\hat s$ and $\hat t$ appear, so the field is a genuine function of the interval, not
+only of its length.
+
+\subsection{Regional tokenization (LAMM)}
+
+Vertices are partitioned by a fixed two-scale LAMM region layout with
+$K_1 = 43$ coarse and $K_2 = 86$ fine regions, $K = K_1 + K_2 = 129$ tokens. Region $k$ at
+scale $\ell$ owns up to $P_\ell$ vertex slots with membership index $\iota_k$ and mask
+$m_k$. Input features are template-centred and scaled,
+\begin{equation}
+  \widehat{\X} \;=\; \frac{\X - \overline{\X}}{\sigma_{\mathrm{c}}} .
+\end{equation}
+Each region has its own (non-shared) linear tokenizer:
+\begin{equation}
+  \bm{u}^{(\ell)}_k \;=\; \bigl( m_k \odot \widehat{\X}[\iota_k] \bigr)^{\!\top}
+  \! \operatorname{vec} W^{(\ell)}_k \;+\; \bm{b}^{(\ell)}_k \;\in\; \R^{D},
+  \qquad D = 256 .
+\end{equation}
+Concatenating both scales gives the token matrix $U \in \R^{K \times D}$. No graph
+convolution and no scatter operation appear in a forward pass.
+
+\subsection{FiLM-conditioned MLPMixer block}
+
+Every backbone block is a pre-norm MLPMixer block with a zero-initialized FiLM modulation
+inserted after each normalization. Writing $(\gamma, \beta) = W_{\mathrm{film}} \cond$ and
+$\mathrm{FiLM}(H,\cond) = \mathrm{LN}(H) \odot (1 + \gamma) + \beta$:
+\begin{align}
+  U &\;\leftarrow\; U + \mathrm{TokenMix}\bigl( \mathrm{FiLM}_{\tau}(U, \cond) \bigr), \\
+  U &\;\leftarrow\; U + \mathrm{ChannelMix}\bigl( \mathrm{FiLM}_{\chi}(U, \cond) \bigr),
+\end{align}
+where $\mathrm{TokenMix}$ is a two-layer $1{\times}1$ convolution across the token axis with
+hidden width $\lfloor 4K \rfloor$ and GELU, and $\mathrm{ChannelMix}$ is a two-layer MLP
+across the channel axis with hidden width $\lfloor D/2 \rfloor$ and GELU. Because
+$W_{\mathrm{film}}$ and its bias start at zero, every block begins as an unconditioned
+identity-residual block.
+
+\subsection{Encoder, internal state, decoder}
+
+The encoder applies $L_{\mathrm{enc}} = 8$ such blocks followed by a LayerNorm. Three
+internal-state variants are compared.
+
+\paragraph{(a) Global bottleneck ($z \in \R^{256}$ or $\R^{384}$).}
+Per-scale flattening and projection,
+\begin{equation}
+  \bm{z} \;=\; \Bigl[\, W^{(1)}_{\downarrow} \operatorname{vec}\bigl(U^{(1)}\bigr)
+  \;\Vert\; W^{(2)}_{\downarrow} \operatorname{vec}\bigl(U^{(2)}\bigr) \,\Bigr]
+  \in \R^{D_z}, \qquad D_z = D_z^{(1)} + D_z^{(2)},
+\end{equation}
+with allocation $[96, 160]$ for $D_z = 256$ and $[128, 256]$ for $D_z = 384$. A conditioned
+residual flow acts on the code,
+\begin{equation}
+  \bm{h}_0 = \mathrm{SiLU}\bigl( W_{\mathrm{in}} [\bm{z} \Vert \cond] \bigr),\qquad
+  \bm{h}_{b} = \bm{h}_{b-1} + \mathrm{MLP}_b\bigl(\mathrm{FiLM}_b(\bm{h}_{b-1}, \cond)\bigr),\qquad
+  \bm{z}' = \bm{z} + W_{\mathrm{out}} \bm{h}_{B},
+\end{equation}
+with $B = 2$ blocks of width $256$. The code is expanded back to tokens and added to learned
+per-region embeddings $R^{(\ell)}$:
+$U^{(\ell)} = W^{(\ell)}_{\uparrow} \bm{z}'^{(\ell)} \oplus R^{(\ell)}$.
+
+\paragraph{(b) Regional tokens (no global vector).} The full $129 \times 256$ token field is
+retained and pushed through a conditioned token-flow backbone of depth $2$:
+$U \leftarrow \mathrm{TokenFlow}(U, \cond) + R$.
+
+\paragraph{Decoder and heads.} $L_{\mathrm{dec}} = 6$ conditioned mixer blocks, then
+non-shared regional inverse-tokenization heads emitting six channels per vertex slot,
+scattered back to vertices and summed over scales:
+\begin{equation}
+  \bigl[\, \V^{\mathrm{CN}} \;\Vert\; \V^{\mathrm{AD}} \,\bigr]
+  \;=\; \sigma_{v} \sum_{\ell \in \{1,2\}} \operatorname{Scatter}_\ell\!
+  \bigl( U^{(\ell)} W^{(\ell)}_{\mathrm{head}} + \bm{b}^{(\ell)}_{\mathrm{head}} \bigr)
+  \;\in\; \R^{N \times 6},
+\end{equation}
+whose two halves feed \eqref{eq:velocity-split}.
+
+\paragraph{Parameter counts.}
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+Variant & $D_z$ & Internal flow & Parameters \\
+\midrule
+\texttt{lamm\_global\_c4\_z256} & 256 & $2 \times 256$ residual & 33{,}431{,}224 \\
+\texttt{lamm\_global\_c4\_z384} & 384 & $2 \times 384$ residual & 36{,}771{,}640 \\
+\texttt{lamm\_token\_c4}        & --- & depth-2 token flow      & 28{,}554{,}706 \\
+\bottomrule
+\end{tabular}
+\end{center}
+For the $D_z = 256$ variant the breakdown is: tokenizers $8.26$M, encoder $1.88$M,
+down-projection $4.58$M, latent flow $0.70$M, up-projection $0.07$M, decoder $1.41$M,
+velocity heads $16.51$M, conditioning $1.8$K.
+
+\section{Objective}
+
+\subsection{Per-batch predicted quantities}
+
+For a training pair, define the forward and backward average velocities and the two
+endpoint predictions:
+\begin{align}
+  \V_f &= \V_\theta(\X_s, s, t, d), &
+  \widehat{\X}_t &= \X_s + \Delta \V_f = \Phi_\theta(\X_s, s, t, d), \\
+  \V_b &= \V_\theta(\X_t, t, s, d), &
+  \widehat{\X}_s &= \X_t - \Delta \V_b = \Phi_\theta(\X_t, t, s, d).
+\end{align}
+Two reduction helpers are used throughout, with $\lambda$ the endpoint scale in mm:
+\begin{align}
+  \ell_{\mathrm{vtx}}(A, B) &= \tfrac{1}{2}\Bigl[
+    \SL\!\bigl(A/\lambda,\, B/\lambda\bigr)
+    \;+\; \tfrac{1}{N}\textstyle\sum_{i} \|A_i - B_i\|_2 / \lambda \Bigr],
+    \label{eq:vtxloss}\\
+  \ell_{\mathrm{mse}}(A, B) &= \tfrac{1}{3N} \bigl\| (A - B)/\lambda \bigr\|_F^2 .
+  \label{eq:mseloss}
+\end{align}
+Equation \eqref{eq:vtxloss} deliberately mixes a robust per-coordinate term with a true
+Euclidean per-vertex distance so that the loss is not dominated by axis-aligned error.
+
+\subsection{The fifteen loss terms}
+
+\paragraph{1. Endpoint (both directions).}
+\begin{equation}
+  \Loss_{\mathrm{end}} = \tfrac{1}{2}\Bigl[
+    \ell_{\mathrm{vtx}}(\widehat{\X}_t, \X_t) +
+    \ell_{\mathrm{vtx}}(\widehat{\X}_s, \X_s) \Bigr].
+\end{equation}
+
+\paragraph{2. Normal-displacement endpoint.} With $\nrm(\X)$ the area-weighted vertex
+normals of $\X$, and projecting displacement onto the source normal,
+\begin{equation}
+  \Loss_{\mathrm{nrm}} = \tfrac{1}{2}\Bigl[
+    \SL\!\Bigl(\tfrac{\langle \widehat{\X}_t - \X_s, \nrm(\X_s)\rangle}{\lambda},
+               \tfrac{\langle \X_t - \X_s, \nrm(\X_s)\rangle}{\lambda}\Bigr)
+  + \SL\!\Bigl(\tfrac{\langle \widehat{\X}_s - \X_t, \nrm(\X_t)\rangle}{\lambda},
+               \tfrac{\langle \X_s - \X_t, \nrm(\X_t)\rangle}{\lambda}\Bigr) \Bigr].
+\end{equation}
+This isolates the inward/outward atrophy component from tangential sliding.
+
+\paragraph{3. Virtual-interval cocycle.} Draw $u \sim \mathcal{U}(0.15, 0.85)$ and set
+$a_v = s + u\Delta$. Then
+\begin{equation}
+  \Loss_{\mathrm{vrt}} = \tfrac{1}{2}\Bigl[
+    \ell_{\mathrm{mse}}\bigl(\widehat{\X}_t,\; \Phi_\theta(\Phi_\theta(\X_s,s,a_v,d),a_v,t,d)\bigr)
+  + \ell_{\mathrm{mse}}\bigl(\widehat{\X}_s,\; \Phi_\theta(\Phi_\theta(\X_t,t,a_v,d),a_v,s,d)\bigr)
+  \Bigr].
+\end{equation}
+
+\paragraph{4. Observed-interval cocycle.} For the subset of pairs possessing a real
+intermediate visit at age $a_m$,
+\begin{equation}
+  \Loss_{\mathrm{obs}} = \ell_{\mathrm{mse}}\bigl(\widehat{\X}_t,\;
+    \Phi_\theta(\Phi_\theta(\X_s,s,a_m,d), a_m, t, d)\bigr).
+\end{equation}
+
+\paragraph{5. Local (short-interval) cocycle.} With
+$\varepsilon = \max\bigl(0.02, \min(0.25,\, 0.1|\Delta|)\bigr)$ years,
+\begin{equation}
+  \Loss_{\mathrm{loc}} = \ell_{\mathrm{mse}}\bigl(
+    \Phi_\theta(\X_s, s, s + 2\varepsilon, d),\;
+    \Phi_\theta(\Phi_\theta(\X_s, s, s+\varepsilon, d), s+\varepsilon, s+2\varepsilon, d)\bigr),
+\end{equation}
+which probes the generator consistency of \eqref{eq:cocycle} in the limit $r \to s$.
+
+\paragraph{6. Inverse consistency.}
+\begin{equation}
+  \Loss_{\mathrm{inv}} = \tfrac{1}{2}\Bigl[
+    \ell_{\mathrm{mse}}\bigl(\Phi_\theta(\widehat{\X}_t, t, s, d), \X_s\bigr)
+  + \ell_{\mathrm{mse}}\bigl(\Phi_\theta(\widehat{\X}_s, s, t, d), \X_t\bigr) \Bigr].
+\end{equation}
+
+\paragraph{7. Diagonal (fitted) velocity.} Each scan carries a reliability-weighted
+longitudinal velocity fit $\bm{u}$ with scalar weight $w \ge 0$. With $\lambda_v$ the
+velocity-reference scale,
+\begin{equation}
+  \Loss_{\mathrm{vel}} = \frac{
+    \bigl\langle w_s \cdot \SL\bigl(\vel_\theta(\X_s,s,d)/\lambda_v,\; \bm{u}_s/\lambda_v\bigr)\bigr\rangle
+  + \bigl\langle w_t \cdot \SL\bigl(\vel_\theta(\X_t,t,d)/\lambda_v,\; \bm{u}_t/\lambda_v\bigr)\bigr\rangle
+  }{\max\bigl(\langle w_s\rangle + \langle w_t\rangle,\; 10^{-6}\bigr)} ,
+\end{equation}
+where $\langle\cdot\rangle$ is the mean over batch, vertices, and coordinates. This is the
+only term that constrains the diagonal \eqref{eq:instantaneous}; the reference is a fitted
+longitudinal estimate, not direct ground truth.
+
+\paragraph{8. Volume.} With $\vol(\cdot)$ the signed divergence-theorem mesh volume,
+\begin{equation}
+  \Loss_{\mathrm{vol}} = \tfrac{1}{2}\Bigl[
+    \SL\bigl(\log \vol(\widehat{\X}_t), \log \vol(\X_t)\bigr) +
+    \SL\bigl(\log \vol(\widehat{\X}_s), \log \vol(\X_s)\bigr) \Bigr].
+\end{equation}
+
+\paragraph{9. Atrophy rate.} With $y = \max(\Delta, 10^{-6})$ years,
+\begin{equation}
+  r_{\mathrm{obs}} = \frac{\log \vol(\X_t) - \log \vol(\X_s)}{y}, \qquad
+  r_{\mathrm{pred}} = \frac{\log \vol(\widehat{\X}_t) - \log \vol(\X_s)}{y}, \qquad
+  \Loss_{\mathrm{rate}} = \SL\bigl(r_{\mathrm{pred}}, r_{\mathrm{obs}}\bigr).
+\end{equation}
+
+\paragraph{10. Group rate.} When both groups occur in the batch, with cohort targets
+$\rho_{\mathrm{CN}}, \rho_{\mathrm{AD}}$,
+\begin{equation}
+  \Loss_{\mathrm{grp}} = \tfrac{1}{2}\Bigl[
+    \SL\bigl(\overline{r}_{\mathrm{pred}}^{\,\mathrm{CN}}, \rho_{\mathrm{CN}}\bigr) +
+    \SL\bigl(\overline{r}_{\mathrm{pred}}^{\,\mathrm{AD}}, \rho_{\mathrm{AD}}\bigr) \Bigr].
+\end{equation}
+
+\paragraph{11. Disease gap.} With cohort target $\rho_{\Delta}$,
+\begin{equation}
+  \Loss_{\mathrm{gap}} = \SL\bigl(
+    \overline{r}_{\mathrm{pred}}^{\,\mathrm{AD}} - \overline{r}_{\mathrm{pred}}^{\,\mathrm{CN}},\;
+    \rho_{\Delta}\bigr).
+\end{equation}
+
+\paragraph{12--15. Mesh regularizers.} Over the unique edge set $\Edges$ and faces
+$\Faces$, with $\bm{e} = (e_0, e_1)$:
+\begin{align}
+  \Loss_{\mathrm{edge}} &= \SL\!\left(
+      \frac{\bigl\| \widehat{\X}_t[e_0] - \widehat{\X}_t[e_1] \bigr\|}
+           {\max\bigl(\| \X_s[e_0] - \X_s[e_1] \|,\, 10^{-6}\bigr)},\; \bm{1}\right),
+  &&\text{(edge-length preservation)}\\
+  \Loss_{\mathrm{smo}} &= \bigl\langle \bigl\| \V_f[e_0] - \V_f[e_1] \bigr\|^2 \bigr\rangle,
+  &&\text{(spatial smoothness)}\\
+  \Loss_{\mathrm{tan}} &= \bigl\langle \bigl\| \V_f - \langle \V_f, \nrm(\X_s)\rangle \nrm(\X_s) \bigr\|^2 \bigr\rangle,
+  &&\text{(tangential-drift penalty)}\\
+  \Loss_{\mathrm{flip}} &= \Bigl\langle \operatorname{ReLU}\!\Bigl(
+      0.1 - \bigl\langle \widehat{\bm{\eta}}_{\mathrm{src}}, \widehat{\bm{\eta}}_{\mathrm{pred}} \bigr\rangle
+      \Bigr) \Bigr\rangle,
+  &&\text{(face-orientation preservation)}
+\end{align}
+where $\widehat{\bm{\eta}}$ denotes the unit face normal from the triangle cross product.
+
+\subsection{Curriculum ramps and total loss}
+
+Two linear ramps delay the consistency and anatomy blocks so that the endpoint fit is
+established first. At epoch $e$, with $E_c = 15$ and $E_a = 20$:
+\begin{equation}
+  \rho_c(e) = \min\!\left(1, \frac{e}{E_c}\right), \qquad
+  \rho_a(e) = \min\!\left(1, \frac{e}{E_a}\right).
+\end{equation}
+The total objective is
+\begin{empheq}[box=\fbox]{align}
+  \Loss(e) \;=\;\;& w_{\mathrm{end}} \Loss_{\mathrm{end}} + w_{\mathrm{nrm}} \Loss_{\mathrm{nrm}}
+  \nonumber\\
+  &+ \rho_c(e)\Bigl[
+      w_{\mathrm{obs}} \Loss_{\mathrm{obs}} + w_{\mathrm{vrt}} \Loss_{\mathrm{vrt}}
+    + w_{\mathrm{loc}} \Loss_{\mathrm{loc}} + w_{\mathrm{inv}} \Loss_{\mathrm{inv}}
+    + w_{\mathrm{vel}} \Loss_{\mathrm{vel}} \Bigr]
+  \nonumber\\
+  &+ \rho_a(e)\Bigl[
+      w_{\mathrm{vol}} \Loss_{\mathrm{vol}} + w_{\mathrm{rate}} \Loss_{\mathrm{rate}}
+    + w_{\mathrm{grp}} \Loss_{\mathrm{grp}} + w_{\mathrm{gap}} \Loss_{\mathrm{gap}}
+  \nonumber\\
+  &\hphantom{+ \rho_a(e)\Bigl[}
+    + w_{\mathrm{edge}} \Loss_{\mathrm{edge}} + w_{\mathrm{smo}} \Loss_{\mathrm{smo}}
+    + w_{\mathrm{tan}} \Loss_{\mathrm{tan}} + w_{\mathrm{flip}} \Loss_{\mathrm{flip}} \Bigr].
+  \label{eq:total}
+\end{empheq}
+
+\paragraph{Configured weights and their measured share.} The right-hand columns report the
+weighted contribution $w \Loss$ measured on run
+\texttt{direct\_mesh\_lamm\_global\_c4\_z256\_s42} at epoch 25, where both ramps are
+saturated ($\rho_c = \rho_a = 1$).
+
+\begin{center}
+\begin{tabular}{llrrrr}
+\toprule
+Block & Term & Weight $w$ & Raw $\Loss$ & $w\Loss$ & Share \\
+\midrule
+\multirow{2}{*}{Endpoint}
+ & $\Loss_{\mathrm{end}}$   & $1.0$    & $5.44\!\times\!10^{-1}$ & $5.44\!\times\!10^{-1}$ & $81.50\%$ \\
+ & $\Loss_{\mathrm{nrm}}$   & $0.25$   & $2.94\!\times\!10^{-1}$ & $7.34\!\times\!10^{-2}$ & $11.00\%$ \\
+\midrule
+\multirow{5}{*}{Consistency}
+ & $\Loss_{\mathrm{vel}}$   & $0.1$    & $4.98\!\times\!10^{-1}$ & $4.98\!\times\!10^{-2}$ & $7.46\%$ \\
+ & $\Loss_{\mathrm{vrt}}$   & $0.19$   & $4.94\!\times\!10^{-4}$ & $9.38\!\times\!10^{-5}$ & $0.014\%$ \\
+ & $\Loss_{\mathrm{inv}}$   & $0.022$  & $3.73\!\times\!10^{-3}$ & $8.20\!\times\!10^{-5}$ & $0.012\%$ \\
+ & $\Loss_{\mathrm{obs}}$   & $0.1$    & $6.58\!\times\!10^{-4}$ & $6.58\!\times\!10^{-5}$ & $0.010\%$ \\
+ & $\Loss_{\mathrm{loc}}$   & $0.02$   & $1.16\!\times\!10^{-5}$ & $2.32\!\times\!10^{-7}$ & $0.000\%$ \\
+\midrule
+\multirow{8}{*}{Anatomy}
+ & $\Loss_{\mathrm{rate}}$  & $0.1$    & $4.30\!\times\!10^{-4}$ & $4.30\!\times\!10^{-5}$ & $0.006\%$ \\
+ & $\Loss_{\mathrm{vol}}$   & $0.1$    & $2.59\!\times\!10^{-4}$ & $2.59\!\times\!10^{-5}$ & $0.004\%$ \\
+ & $\Loss_{\mathrm{tan}}$   & $0.002$  & $2.60\!\times\!10^{-3}$ & $5.20\!\times\!10^{-6}$ & $0.001\%$ \\
+ & $\Loss_{\mathrm{gap}}$   & $0.02$   & $1.91\!\times\!10^{-4}$ & $3.81\!\times\!10^{-6}$ & $0.001\%$ \\
+ & $\Loss_{\mathrm{grp}}$   & $0.02$   & $9.27\!\times\!10^{-5}$ & $1.86\!\times\!10^{-6}$ & $0.000\%$ \\
+ & $\Loss_{\mathrm{edge}}$  & $0.01$   & $1.85\!\times\!10^{-4}$ & $1.85\!\times\!10^{-6}$ & $0.000\%$ \\
+ & $\Loss_{\mathrm{smo}}$   & $0.003$  & $2.31\!\times\!10^{-4}$ & $6.93\!\times\!10^{-7}$ & $0.000\%$ \\
+ & $\Loss_{\mathrm{flip}}$  & $0.02$   & $0.00$                  & $0.00$                  & $0.000\%$ \\
+\midrule
+\multicolumn{4}{r}{\textbf{Total}} & $\bm{6.68\!\times\!10^{-1}}$ & $100\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The three leading terms account for $99.95\%$ of the objective; the remaining
+twelve contribute $0.05\%$ combined.
+
+\section{Training procedure}
+
+\subsection{Stratified pair sampling}
+
+Each epoch draws $M = 512$ pair indices by cycling deterministically through the four
+strata $\{\mathrm{CN}, \mathrm{AD}\} \times \{\text{adjacent}, \text{non-adjacent}\}$,
+sampling a subject uniformly within the stratum and then a pair uniformly within that
+subject. This equalizes mass over diagnosis, interval type, and subject, correcting the
+$3345\!:\!863$ CN$:$AD imbalance, at the cost of visiting only $M / 4208 \approx 12\%$ of
+the training pairs per epoch.
+
+\subsection{Optimization}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Setting & Value \\
+\midrule
+Optimizer & AdamW, $\eta = 3\times 10^{-4}$, weight decay $10^{-5}$ \\
+Schedule & Cosine annealing, $T_{\max} = 200$ epochs, $\eta_{\min} = 3\times10^{-5}$ \\
+Precision & Mixed precision (fp16 autocast) with dynamic \texttt{GradScaler} \\
+Micro-batch $B$ & 2 pairs \\
+Accumulation $A$ & 8 \\
+Effective batch & $B \cdot A = 16$ pairs \\
+Micro-steps / epoch & $M / B = 256$ \\
+\textbf{Optimizer steps / epoch} & $M / (B A) = \bm{32}$ \\
+Gradient clipping & Global $\ell_2$ norm $\le 1.0$, applied after unscaling \\
+Epochs requested & 200 \\
+Early stopping & patience 30, $\min\Delta = 10^{-5}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The inner loop is
+\begin{equation}
+  \theta \;\leftarrow\; \mathrm{AdamW}\!\left(\theta,\;
+    \operatorname{clip}_{1.0}\!\Bigl( \frac{1}{A} \sum_{a=1}^{A}
+      \nabla_\theta \Loss^{(a)}(e) \Bigr) \right),
+\end{equation}
+with a non-finite-loss guard that aborts training if any micro-batch loss is not finite.
+
+\subsection{Validation and model selection}
+
+After every epoch the model is evaluated on the validation split. Let
+$R_g$ be the ratio of mean predicted vertex error to mean no-change vertex error on
+first-to-last subject pairs of group $g$, and define the macro ratio
+\begin{equation}
+  R = \tfrac{1}{2}\bigl( R_{\mathrm{CN}} + R_{\mathrm{AD}} \bigr).
+\end{equation}
+Let $D_{\mathrm{coc}}, D_{\mathrm{inv}}$ be the mean relative cocycle and inverse defects
+over midpoint compositions, and let $Q$ be the reliability-weighted normalized velocity
+error ratio, i.e. the mean of the vector and normal RMSE-to-zero ratios. The selection
+score is
+\begin{empheq}[box=\fbox]{equation}
+  S \;=\; R \;+\; \tau\, D_{\mathrm{coc}} \;+\; w_Q\, Q,
+  \qquad \tau = 0.01,\quad w_Q = 0.05 .
+  \label{eq:score}
+\end{empheq}
+A checkpoint is eligible only if \emph{all} feasibility gates pass:
+\begin{align}
+  D_{\mathrm{coc}} \le 0.02, \qquad
+  D_{\mathrm{inv}} \le 0.02, \qquad
+  Q \le 0.98, \qquad
+  0.4 \le \frac{\bar{\sigma}_{\mathrm{pred}}}{\bar{\sigma}_{\mathrm{obs}}} \le 1.6,
+  \nonumber\\
+  \overline{r}_{\mathrm{pred}}^{\,\mathrm{AD}} < \overline{r}_{\mathrm{pred}}^{\,\mathrm{CN}}, \qquad
+  \text{flipped-face fraction} \le 10^{-3},
+  \label{eq:gates}
+\end{align}
+where $\bar{\sigma}$ denotes mean surface speed. The best checkpoint is updated only when
+\begin{equation}
+  \text{feasible} \;\wedge\; S < S_{\mathrm{best}} - 10^{-5},
+\end{equation}
+and training halts after 30 consecutive epochs without such an update. Note that the epoch-0
+no-change baseline seeds $S_{\mathrm{best}}$ regardless of its own feasibility, so a trained
+epoch must beat the identity map to be recorded at all.
+
+\section{Observed training behaviour}
+
+All three variants were launched for 200 epochs and stopped at epoch 33 with best epoch 3.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Run & Params & Last epoch & Best epoch & $S_{\mathrm{best}}$ \\
+\midrule
+\texttt{lamm\_global\_c4\_z256\_s42} & 33.4M & 33 & 3 & 0.95347 \\
+\texttt{lamm\_global\_c4\_z384\_s42} & 36.8M & 33 & 3 & 0.95330 \\
+\texttt{lamm\_token\_c4\_s42}        & 28.6M & 33 & 3 & 0.95493 \\
+\midrule
+\textit{Spiral reference (task 5)}   & \textit{0.71M} & \textit{76} & \textit{56} & \textit{0.95022} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The training loss decreases monotonically ($0.704 \to 0.604$) while the validation macro
+ratio degrades ($0.909 \to 0.971$) and the inverse defect grows by an order of magnitude
+($0.0094 \to 0.078$), breaching the $0.02$ gate from epoch~8 onward. Every subsequent epoch
+is therefore infeasible under \eqref{eq:gates}, the stale counter increments monotonically,
+and early stopping fires at epoch $3 + 30 = 33$. The 47$\times$ smaller Spiral model, run
+under the identical objective and identical training hyperparameters, shows a flat-to-rising
+training loss, a stable inverse defect below $0.01$, and continues improving until epoch 56.
+This is the signature of capacity-driven overfitting on 475 training subjects, not of a
+defect in \eqref{eq:total}.
+
+\end{document}

@@ -16,10 +16,10 @@ import common as C
 from train import train_experiment, validate_config
 
 
-LATENT_LAYOUTS = {
-    "z128_equal": (128, [64, 64], 256),
-    "z256_equal": (256, [128, 128], 384),
-    "z256_fine": (256, [96, 160], 384),
+ARCHITECTURES = {
+    "global_z256": {"latent_dim": 256, "latent_split": [96, 160]},
+    "global_z384": {"latent_dim": 384, "latent_split": [128, 256]},
+    "regional_tokens": None,
 }
 
 
@@ -32,32 +32,51 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--trial-epochs", type=int, default=80)
     parser.add_argument("--trial-samples-per-epoch", type=int, default=384)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--study-tag", default="main_v1")
+    parser.add_argument("--study-tag", default="architecture_main_v2")
     parser.add_argument("--smoke", action="store_true")
     return parser.parse_args()
 
 
 def base_config() -> dict:
-    return C.read_json(C.TASK_ROOT / "configs" / "lamm_direct_c4_z128_s42.json")
+    return C.read_json(C.TASK_ROOT / "configs" / "lamm_global_c4_z256_s42.json")
 
 
 def sampled_config(
     trial: optuna.Trial, args: argparse.Namespace, effective_tag: str
 ) -> dict:
     config = copy.deepcopy(base_config())
-    layout_name = trial.suggest_categorical("latent_layout", list(LATENT_LAYOUTS))
-    latent, split, default_width = LATENT_LAYOUTS[layout_name]
+    architecture = trial.suggest_categorical("architecture", list(ARCHITECTURES))
     model = config["model"]
-    model["latent_dim"] = latent
-    model["latent_split"] = split
+    contract = config["scientific_contract"]
+    specification = ARCHITECTURES[architecture]
+    if specification is None:
+        model["bottleneck_mode"] = "regional_tokens"
+        for name in (
+            "latent_dim",
+            "latent_split",
+            "latent_width",
+            "latent_residual_blocks",
+        ):
+            model.pop(name, None)
+        model["token_flow_depth"] = trial.suggest_int("token_flow_depth", 1, 3)
+        contract["global_latent_bottleneck"] = False
+        contract["latent_is_internal_only"] = False
+    else:
+        model["bottleneck_mode"] = "global"
+        model.update(copy.deepcopy(specification))
+        model.pop("token_flow_depth", None)
+        model["latent_width"] = trial.suggest_categorical(
+            "latent_width", [256, 384, 512]
+        )
+        model["latent_residual_blocks"] = trial.suggest_int(
+            "latent_residual_blocks", 1, 3
+        )
+        contract["global_latent_bottleneck"] = True
+        contract["latent_is_internal_only"] = True
     model["token_dim"] = trial.suggest_categorical("token_dim", [192, 256])
     model["encoder_depth"] = trial.suggest_categorical("encoder_depth", [4, 6, 8])
     model["decoder_depth"] = trial.suggest_categorical("decoder_depth", [3, 4, 6])
     model["condition_dim"] = trial.suggest_categorical("condition_dim", [32, 64])
-    model["latent_width"] = trial.suggest_categorical(
-        "latent_width", sorted({256, default_width, 512})
-    )
-    model["latent_residual_blocks"] = trial.suggest_int("latent_residual_blocks", 1, 3)
     model["dropout"] = trial.suggest_categorical("dropout", [0.05, 0.1, 0.15])
     training = config["training"]
     training["learning_rate"] = trial.suggest_float(
@@ -88,16 +107,35 @@ def sampled_config(
 
 def apply_best_params(config: dict, params: dict) -> dict:
     output = copy.deepcopy(config)
-    latent, split, _ = LATENT_LAYOUTS[str(params["latent_layout"])]
-    output["model"]["latent_dim"] = latent
-    output["model"]["latent_split"] = split
+    architecture = str(params["architecture"])
+    specification = ARCHITECTURES[architecture]
+    if specification is None:
+        output["model"]["bottleneck_mode"] = "regional_tokens"
+        for name in (
+            "latent_dim",
+            "latent_split",
+            "latent_width",
+            "latent_residual_blocks",
+        ):
+            output["model"].pop(name, None)
+        output["model"]["token_flow_depth"] = params["token_flow_depth"]
+        output["scientific_contract"]["global_latent_bottleneck"] = False
+        output["scientific_contract"]["latent_is_internal_only"] = False
+    else:
+        output["model"]["bottleneck_mode"] = "global"
+        output["model"].update(copy.deepcopy(specification))
+        output["model"].pop("token_flow_depth", None)
+        output["model"]["latent_width"] = params["latent_width"]
+        output["model"]["latent_residual_blocks"] = params[
+            "latent_residual_blocks"
+        ]
+        output["scientific_contract"]["global_latent_bottleneck"] = True
+        output["scientific_contract"]["latent_is_internal_only"] = True
     for name in (
         "token_dim",
         "encoder_depth",
         "decoder_depth",
         "condition_dim",
-        "latent_width",
-        "latent_residual_blocks",
         "dropout",
     ):
         output["model"][name] = params[name]
@@ -169,20 +207,38 @@ def main() -> int:
         ),
     )
     if not study.trials:
-        study.enqueue_trial(
-            {
-                "latent_layout": "z128_equal",
+        common_anchor = {
                 "token_dim": 256,
                 "encoder_depth": 8,
                 "decoder_depth": 6,
                 "condition_dim": 32,
-                "latent_width": 256,
-                "latent_residual_blocks": 2,
                 "dropout": 0.05,
                 "learning_rate": 3.0e-4,
                 "weight_decay": 1.0e-5,
                 "diagonal_velocity_weight": 0.1,
                 "smoothness_weight": 0.003,
+        }
+        study.enqueue_trial(
+            {
+                **common_anchor,
+                "architecture": "global_z256",
+                "latent_width": 256,
+                "latent_residual_blocks": 2,
+            }
+        )
+        study.enqueue_trial(
+            {
+                **common_anchor,
+                "architecture": "global_z384",
+                "latent_width": 384,
+                "latent_residual_blocks": 2,
+            }
+        )
+        study.enqueue_trial(
+            {
+                **common_anchor,
+                "architecture": "regional_tokens",
+                "token_flow_depth": 2,
             }
         )
 
@@ -202,6 +258,7 @@ def main() -> int:
         )
         trial.set_user_attr("run_name", config["training"]["run_name"])
         trial.set_user_attr("best_epoch", status["best_epoch"])
+        trial.set_user_attr("bottleneck_mode", status["bottleneck_mode"])
         trial.set_user_attr("latent_dim", status["latent_dim"])
         trial.set_user_attr("all_components_received_gradient", status["all_components_received_gradient"])
         return float(status["best_score"])
@@ -225,4 +282,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

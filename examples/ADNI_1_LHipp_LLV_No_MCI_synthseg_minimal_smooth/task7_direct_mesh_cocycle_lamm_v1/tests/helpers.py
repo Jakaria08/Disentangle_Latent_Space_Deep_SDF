@@ -40,27 +40,38 @@ def synthetic_statistics() -> dict:
     }
 
 
-def synthetic_config(latent_dim: int) -> dict:
+def synthetic_config(latent_dim: int = 16, bottleneck_mode: str = "global") -> dict:
     split = [latent_dim // 2, latent_dim - latent_dim // 2]
+    model = {
+        "operator": "lamm_mlpmixer",
+        "bottleneck_mode": bottleneck_mode,
+        "region_scales": [2, 3],
+        "token_dim": 16,
+        "encoder_depth": 1,
+        "decoder_depth": 1,
+        "token_expansion": 2.0,
+        "channel_expansion": 1.0,
+        "condition_dim": 8,
+        "time_frequencies": 1,
+        "dropout": 0.0,
+    }
+    if bottleneck_mode == "global":
+        model.update(
+            {
+                "latent_dim": latent_dim,
+                "latent_split": split,
+                "latent_width": 32,
+                "latent_residual_blocks": 1,
+            }
+        )
+    elif bottleneck_mode == "regional_tokens":
+        model["token_flow_depth"] = 1
+    else:
+        raise ValueError(bottleneck_mode)
     return {
         "name": f"synthetic_z{latent_dim}",
         "method": "direct_surface_cocycle",
-        "model": {
-            "operator": "lamm_mlpmixer",
-            "region_scales": [2, 3],
-            "token_dim": 16,
-            "encoder_depth": 1,
-            "decoder_depth": 1,
-            "token_expansion": 2.0,
-            "channel_expansion": 1.0,
-            "latent_dim": latent_dim,
-            "latent_split": split,
-            "latent_width": 32,
-            "latent_residual_blocks": 1,
-            "condition_dim": 8,
-            "time_frequencies": 1,
-            "dropout": 0.0,
-        },
+        "model": model,
     }
 
 
@@ -71,4 +82,3 @@ def make_batch(batch: int = 2):
     target = torch.tensor([74.0, 81.0])[:batch]
     disease = torch.tensor([0.0, 1.0])[:batch]
     return vertices, source, target, disease
-

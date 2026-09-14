@@ -1,0 +1,97 @@
+{
+  "source_meshes_modified": false,
+  "source_root": "/mnt/bulk10tb/OASIS_3_Long/synthseg_minimal_correspondence/full",
+  "structures": [
+    "left_hippocampus",
+    "left_lateral_ventricle"
+  ],
+  "policy": {
+    "cohort_filter": "all",
+    "keep_diagnosis_changers": true,
+    "pair_exclusion_policy": "culprit",
+    "multi_component_volume_tolerance_pct": 1.0,
+    "pair_outlier_method": "stratified_mad",
+    "pair_outlier_mad_multiplier": 8.0,
+    "clinical": "baseline CN/AD and strict_subject_no_mci from the source manifest; direct CN<->AD changers excluded",
+    "longitudinal": "at least two visits before and after automatic QC",
+    "automatic_mesh_exclusions": "hard final smooth/correspondence geometry failure in either structure, or endpoint of a strong adjacent correspondence-shape failure",
+    "not_automatically_excluded": "distributional volume/compactness outliers and ordinary trajectory warnings; retained in separate warning manifests because they can be biological"
+  },
+  "counts": {
+    "strict_no_mci_input": {
+      "scans": 2158,
+      "subjects": 1098,
+      "scans_by_baseline_group": {
+        "AD": 105,
+        "CN": 1639,
+        "MCI": 324,
+        "nan": 90
+      },
+      "subjects_by_baseline_group": {
+        "AD": 94,
+        "CN": 744,
+        "MCI": 225,
+        "nan": 35
+      }
+    },
+    "after_direct_CN_AD_change_exclusion": {
+      "scans": 2158,
+      "subjects": 1098,
+      "scans_by_baseline_group": {
+        "AD": 105,
+        "CN": 1639,
+        "MCI": 324,
+        "nan": 90
+      },
+      "subjects_by_baseline_group": {
+        "AD": 94,
+        "CN": 744,
+        "MCI": 225,
+        "nan": 35
+      }
+    },
+    "longitudinal_before_mesh_qc": {
+      "scans": 1610,
+      "subjects": 550,
+      "scans_by_baseline_group": {
+        "AD": 19,
+        "CN": 1345,
+        "MCI": 171,
+        "nan": 75
+      },
+      "subjects_by_baseline_group": {
+        "AD": 8,
+        "CN": 450,
+        "MCI": 72,
+        "nan": 20
+      }
+    },
+    "recommended_keep": {
+      "scans": 1521,
+      "subjects": 536,
+      "scans_by_baseline_group": {
+        "AD": 19,
+        "CN": 1266,
+        "MCI": 165,
+        "nan": 71
+      },
+      "subjects_by_baseline_group": {
+        "AD": 8,
+        "CN": 438,
+        "MCI": 70,
+        "nan": 20
+      }
+    },
+    "direct_CN_AD_changer_subjects": 0,
+    "single_visit_scans_before_mesh_qc": 548,
+    "automatic_scan_exclusions": 89,
+    "subjects_lost_after_mesh_qc": 14,
+    "kept_scan_warnings": 623,
+    "kept_pair_warnings": 525
+  },
+  "files": {
+    "recommended_manifest": "/home/jakaria/INR/Deep3DComp/examples/CrossCohort_LHipp_v1/cohorts_inclusive/oasis/qc/manifests/strict_no_mci_longitudinal_keep_conservative.csv",
+    "automatic_exclusions": "/home/jakaria/INR/Deep3DComp/examples/CrossCohort_LHipp_v1/cohorts_inclusive/oasis/qc/manifests/auto_excluded_scans_conservative.csv",
+    "mesh_qc_summary": "/home/jakaria/INR/Deep3DComp/examples/CrossCohort_LHipp_v1/cohorts_inclusive/oasis/qc/mesh_qc/qc_summary.json"
+  }
+}

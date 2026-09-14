@@ -10,7 +10,7 @@ set -euo pipefail
 
 UUID="5933C2372974E040"
 MNT="/mnt/bulk10tb"
-LINE="UUID=${UUID}  ${MNT}  ntfs-3g  rw,noatime,allow_other,default_permissions,nofail,x-systemd.device-timeout=10  0  0"
+LINE="UUID=${UUID}  ${MNT}  ntfs-3g  rw,uid=1001,gid=1001,noatime,allow_other,default_permissions,nofail,x-systemd.device-timeout=10  0  0"
 
 [[ $EUID -eq 0 ]] || { echo "must run as root: sudo bash $0"; exit 1; }
 
